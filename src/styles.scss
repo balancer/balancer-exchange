@@ -1,0 +1,42 @@
+@import './styles/third-party/normalize';
+@import '../../configs/theme/config-styles';
+@import './styles/typography';
+@import './styles/links';
+@import './styles/animations';
+
+/* global styles go here */
+:global(body) {
+  background: $white;
+  color: $darkGrey35;
+  font-family: 'Asap-Regular', sans-serif;
+
+  .container {
+    max-width: 1000px;
+    padding: 20px;
+    margin: 0 auto;
+  }
+
+  ul {
+    margin: 0;
+    padding: 0;
+  }
+
+  li {
+    list-style-type: none;
+    list-style-position: outside;
+  }
+
+  .app-shell {
+    margin-top: 140px;
+    margin-bottom: 100px;
+  }
+
+  @media (min-width: 1100px) {
+    .app-shell {
+      width: 1000px;
+      padding: 20px;
+      margin: 0 auto;
+      margin-top: 70px;
+    }
+  }
+}
