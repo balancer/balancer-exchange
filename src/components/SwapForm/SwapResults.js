@@ -1,5 +1,6 @@
 import React from 'react'
-import { Card, CardContent, Typography } from '@material-ui/core'
+import { Link } from 'react-router-dom'
+import { Card, CardContent, Typography, Table, TableBody, TableCell, TableHead, TableRow } from '@material-ui/core'
 import { observer, inject } from 'mobx-react'
 import { labels, methodNames } from 'stores/SwapForm'
 import * as helpers from 'utils/helpers'
@@ -50,12 +51,43 @@ class SwapResults extends React.Component {
                     <Typography variant="body1">{`${labels.outputs.EFFECTIVE_PRICE}: ${effectivePrice}`}</Typography>
                 </React.Fragment>
             )
-        } else if (swapMethod === methodNames.EXACT_MARGINAL_PRICE) {
+        }
+    }
+
+    buildTable() {
+
+        const { swapFormStore } = this.props.root
+        const { outputs } = swapFormStore
+        const validSwap = outputs.validSwap
+
+        if (validSwap) {
             return (
-                <React.Fragment>
-                    <Typography variant="body1">{`${labels.outputs.INPUT_AMOUNT}: ${inputAmount}`}</Typography>
-                    <Typography variant="body1">{`${labels.outputs.OUTPUT_AMOUNT}: ${outputAmount}`}</Typography>
-                </React.Fragment>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                        <TableCell>
+                            Pool
+                        </TableCell>
+                        <TableCell>
+                            Amount
+                        </TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {outputs.swaps.slice().map((row) => {
+                      return (
+                        <TableRow hover tabIndex={-1} key={row[0]}>
+                            <TableCell key={`${row[0]}`}>
+                                <Link href={`/${row[0]}`} to={`/${row[0]}`}>{row[0]}</Link>
+                            </TableCell>
+                            <TableCell>
+                                {helpers.fromWei(row[1])}
+                            </TableCell>
+                        </TableRow>
+                      )
+                    })}
+                  </TableBody>
+                </Table>
             )
         }
     }
@@ -80,6 +112,7 @@ class SwapResults extends React.Component {
                                 <Typography color="textSecondary" variant="body1">(Invalid Swap Parameters)</Typography>
                             </React.Fragment>
                     }
+                    {this.buildTable()}
                 </CardContent>
 
             </Card>

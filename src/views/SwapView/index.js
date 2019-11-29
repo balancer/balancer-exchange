@@ -24,10 +24,6 @@ class PoolSwapView extends Component {
     if (!providerStore.defaultAccount) {
       await providerStore.setWeb3WebClient()
     }
-
-    // Get pool params
-    // await poolStore.fetchParams(address)
-    // await poolStore.fetchTokenParams(address)
   }
 
   render() {

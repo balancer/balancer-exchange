@@ -28,12 +28,10 @@ class App extends Component {
   // }
 
   async componentDidMount() {
-    const { providerStore, poolStore } = this.props.root
+    const { providerStore } = this.props.root
     if (!providerStore.provider) {
       await providerStore.setWeb3WebClient()
     }
-
-    await poolStore.fetchKnownPools()
   }
 
   NotificationComponent = () => {

@@ -7,25 +7,19 @@ export const formNames = {
 
 export const methodNames = {
     EXACT_AMOUNT_IN: 'exactAmountIn',
-    EXACT_AMOUNT_OUT: 'exactAmountOut',
-    EXACT_MARGINAL_PRICE: 'exactMarginalPrice',
+    EXACT_AMOUNT_OUT: 'exactAmountOut'
 }
 
 export const labels = {
     methods: {
         EXACT_AMOUNT_IN: 'Exact Amount In',
-        EXACT_AMOUNT_OUT: 'Exact Amount Out',
-        EXACT_MARGINAL_PRICE: 'Exact Marginal Price',
+        EXACT_AMOUNT_OUT: 'Exact Amount Out'
     },
     inputs: {
         INPUT_TOKEN: 'Input Token',
         OUTPUT_TOKEN: 'Output Token',
         INPUT_AMOUNT: 'Input Amount',
-        OUTPUT_AMOUNT: 'Output Amount',
-        OUTPUT_LIMIT: 'Minimum Output Amount',
-        INPUT_LIMIT: 'Maximum Input Amount',
-        LIMIT_PRICE: 'Maximum Price',
-        MARGINAL_PRICE: 'Marginal Price'
+        OUTPUT_AMOUNT: 'Output Amount'
     },
     outputs: {
         INPUT_AMOUNT: 'Input Amount',
@@ -41,16 +35,13 @@ export default class SwapFormStore {
         inputToken: '',
         outputtoken: '',
         inputAmount: '',
-        outputAmount: '',
-        outputLimit: '',
-        inputLimit: '',
-        limitPrice: '',
-        marginalPrice: ''
+        outputAmount: ''
     }
     @observable outputs = {
         inputAmount: '',
         outputAmount: '',
         effectivePrice: '',
+        swaps: [],
         validSwap: false
     }
 
@@ -58,18 +49,6 @@ export default class SwapFormStore {
         this.outputs = {
             ...this.outputs,
             ...output
-        }
-    }
-
-    @action setSwapMethod(newSwapMethod) {
-        const oldSwapMethod = this.swapMethod
-
-        if (oldSwapMethod !== newSwapMethod) {
-            this.swapMethod = newSwapMethod
-
-            // Reset form fields when changing swap method
-            this.resetInputs()
-            this.resetOutputs()
         }
     }
 
@@ -81,11 +60,7 @@ export default class SwapFormStore {
         this.inputs = {
             ...this.inputs,
             inputAmount: '',
-            outputAmount: '',
-            outputLimit: '',
-            inputLimit: '',
-            limitPrice: '',
-            marginalPrice: ''
+            outputAmount: ''
         }
     }
 
@@ -93,7 +68,8 @@ export default class SwapFormStore {
         this.outputs = {
             inputAmount: '',
             outputAmount: '',
-            effectivePrice: ''
+            effectivePrice: '',
+            swaps: []
         }
     }
 

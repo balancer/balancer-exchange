@@ -9,10 +9,10 @@ const TEN15 = new BN('1000000000000000');
 const TEN9 = new BN('1000000000');
 
 const schema = {
-    BPool: require('../lib/balancer-core/build/contracts/BPool'),
-    BFactory: require('../lib/balancer-core/build/contracts/BFactory'),
+    BPool: require('../src/abi/BPool'),
+    BFactory: require('../src/abi/BFactory'),
     TestToken: require('../src/abi/TestToken'),
-    ExchangeProxy: require('../lib/exchange-proxy/build/contracts/ExchangeProxy')
+    ExchangeProxy: require('../src/abi/ExchangeProxy')
 }
 
 module.exports = {

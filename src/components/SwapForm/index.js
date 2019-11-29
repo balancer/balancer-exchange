@@ -99,6 +99,7 @@ class SwapForm extends React.Component {
             return {
                 outputAmount: helpers.fromWei(call.outputAmount),
                 effectivePrice: call.effectivePrice,
+                swaps: call.swaps,
                 validSwap: call.validSwap
             }
         } else {
@@ -197,28 +198,10 @@ class SwapForm extends React.Component {
                                 </Grid>
                                 <Grid item xs={12} sm={6}>
                                     <TextValidator
-                                        id="limit-out"
-                                        name="outputLimit"
-                                        label={labels.inputs.OUTPUT_LIMIT}
-                                        value={inputs.outputLimit}
-                                        onChange={e => this.onChange(e, formNames.INPUT_FORM)}
-                                        type="number"
-                                        InputLabelProps={{
-                                            shrink: true
-                                        }}
-                                        margin="normal"
-                                        variant="outlined"
-                                        fullWidth
-                                        validators={validators.optionalTokenValueValidators}
-                                        errorMessages={validators.optionalTokenValueValidatorErrors}
-                                    />
-                                </Grid>
-                                <Grid item xs={12} sm={6}>
-                                    <TextValidator
-                                        id="limit-price"
-                                        name="limitPrice"
-                                        label={labels.inputs.LIMIT_PRICE}
-                                        value={inputs.limitPrice}
+                                        id="amount-out"
+                                        name="outputAmount"
+                                        label={labels.inputs.OUTPUT_AMOUNT}
+                                        value={inputs.outputAmount}
                                         onChange={e => this.onChange(e, formNames.INPUT_FORM)}
                                         type="number"
                                         InputLabelProps={{
