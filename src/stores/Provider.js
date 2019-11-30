@@ -25,12 +25,6 @@ export default class ProviderStore {
 
         this.accounts = accounts
         this.defaultAccount = account
-
-        const poolStore = this.rootStore.poolStore
-
-        if (poolStore.hasCurrentPool()) {
-            this.rootStore.setDataUpdateInterval(poolStore.getCurrentPool(), account)
-        }
     }
 
     getDefaultAccount = () => {

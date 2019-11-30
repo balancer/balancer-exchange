@@ -3,7 +3,7 @@ import * as deployed from "../deployed";
 import * as blockchain from "utils/blockchain"
 import * as helpers from "utils/helpers"
 import sor from 'balancer-sor'
-import Big from 'big.js/big.mjs';
+import {Decimal} from 'decimal.js'
 import * as log from 'loglevel'
 
 export const statusCodes = {
@@ -46,11 +46,11 @@ export default class ProxyStore {
             let tO = p.tokens.find(t => helpers.toChecksum(t.address) === tokenOut)
             let obj = {}
             obj.id = helpers.toChecksum(p.id)
-            obj.Bi = Number(tI.balance)
-            obj.Bo = Number(tO.balance)
-            obj.wi = tI.denormWeight / p.totalWeight
-            obj.wo = tO.denormWeight / p.totalWeight
-            obj.fee = Number(p.swapFee)
+            obj.balanceIn = Decimal(tI.balance)
+            obj.balanceOut = Decimal(tO.balance)
+            obj.weightIn = Decimal(tI.denormWeight).div(Decimal(p.totalWeight))
+            obj.weightOut = Decimal(tO.denormWeight).div(Decimal(p.totalWeight))
+            obj.swapFee = Decimal(p.swapFee)
             poolData.push(obj)
         })
 
@@ -65,9 +65,8 @@ export default class ProxyStore {
         
         let swaps = []
         for (let i = 0; i < sorSwaps.inputAmounts.length; i++) {
-            let fWAmount = helpers.fromWei(String(sorSwaps.inputAmounts[0]))
-            let tWAmount = helpers.toWei(fWAmount)
-            let swap = [ sorSwaps.selectedBalancers[i], tWAmount, helpers.toWei('0'), maxPrice ]
+            let swapAmount = sorSwaps.inputAmounts[i].toString()
+            let swap = [ sorSwaps.selectedBalancers[i], swapAmount, helpers.toWei('0'), maxPrice ]
             swaps.push(swap)
         }
         await proxy.methods.batchSwapExactIn(swaps, tokenIn, tokenOut, tokenAmountIn, minAmountOut).send()
@@ -84,11 +83,11 @@ export default class ProxyStore {
             let tO = p.tokens.find(t => helpers.toChecksum(t.address) === tokenOut)
             let obj = {}
             obj.id = helpers.toChecksum(p.id)
-            obj.Bi = Number(tI.balance)
-            obj.Bo = Number(tO.balance)
-            obj.wi = tI.denormWeight / p.totalWeight
-            obj.wo = tO.denormWeight / p.totalWeight
-            obj.fee = Number(p.swapFee)
+            obj.balanceIn = Decimal(tI.balance)
+            obj.balanceOut = Decimal(tO.balance)
+            obj.weightIn = Decimal(tI.denormWeight).div(Decimal(p.totalWeight))
+            obj.weightOut = Decimal(tO.denormWeight).div(Decimal(p.totalWeight))
+            obj.swapFee = Decimal(p.swapFee)
             poolData.push(obj)
         })
 
@@ -103,17 +102,16 @@ export default class ProxyStore {
         
         let swaps = []
         for (let i = 0; i < sorSwaps.inputAmounts.length; i++) {
-            let fWAmount = helpers.fromWei(String(sorSwaps.inputAmounts[0]))
-            let tWAmount = helpers.toWei(fWAmount)
-            let swap = [ sorSwaps.selectedBalancers[i], tWAmount, helpers.toWei('0'), maxPrice ]
+            let swapAmount = sorSwaps.inputAmounts[i].toString()
+            let swap = [ sorSwaps.selectedBalancers[i], swapAmount, helpers.toWei('0'), maxPrice ]
             swaps.push(swap)
         }
         await proxy.methods.batchSwapExactOut(swaps, tokenIn, tokenOut, maxAmountIn, tokenAmountOut).send()
     }
 
     calcEffectivePrice(tokenAmountIn, tokenAmountOut) {
-        const amountIn = new Big(tokenAmountIn)
-        const amountOut = new Big(tokenAmountOut)
+        const amountIn = Decimal(tokenAmountIn)
+        const amountOut = Decimal(tokenAmountOut)
         const effectivePrice = amountIn.div(amountOut).toString()
 
         return effectivePrice
@@ -140,11 +138,11 @@ export default class ProxyStore {
                 let tO = p.tokens.find(t => helpers.toChecksum(t.address) === tokenOut)
                 let obj = {}
                 obj.id = helpers.toChecksum(p.id)
-                obj.Bi = Number(tI.balance)
-                obj.Bo = Number(tO.balance)
-                obj.wi = tI.denormWeight / p.totalWeight
-                obj.wo = tO.denormWeight / p.totalWeight
-                obj.fee = Number(p.swapFee)
+                obj.balanceIn = Decimal(tI.balance)
+                obj.balanceOut = Decimal(tO.balance)
+                obj.weightIn = Decimal(tI.denormWeight).div(Decimal(p.totalWeight))
+                obj.weightOut = Decimal(tO.denormWeight).div(Decimal(p.totalWeight))
+                obj.swapFee = Decimal(p.swapFee)
                 poolData.push(obj)
             })
 
@@ -159,12 +157,12 @@ export default class ProxyStore {
 
             console.log('Swaps froms SOR:')
             console.log(sorSwaps)
+            console.log(sorSwaps.totalOutput.toString())
             
             let swaps = []
             for (let i = 0; i < sorSwaps.inputAmounts.length; i++) {
-                let fWAmount = helpers.fromWei(String(sorSwaps.inputAmounts[0]))
-                let tWAmount = helpers.toWei(fWAmount)
-                let swap = [ sorSwaps.selectedBalancers[i], tWAmount, helpers.toWei('0'), maxPrice ]
+                let swapAmount = sorSwaps.inputAmounts[i].toString()
+                let swap = [ sorSwaps.selectedBalancers[i], swapAmount, helpers.toWei('0'), maxPrice ]
                 swaps.push(swap)
             }
 
@@ -208,11 +206,11 @@ export default class ProxyStore {
                 let tO = p.tokens.find(t => helpers.toChecksum(t.address) === tokenOut)
                 let obj = {}
                 obj.id = helpers.toChecksum(p.id)
-                obj.Bi = Number(tI.balance)
-                obj.Bo = Number(tO.balance)
-                obj.wi = tI.denormWeight / p.totalWeight
-                obj.wo = tO.denormWeight / p.totalWeight
-                obj.fee = Number(p.swapFee)
+                obj.balanceIn = Decimal(tI.balance)
+                obj.balanceOut = Decimal(tO.balance)
+                obj.weightIn = Decimal(tI.denormWeight).div(Decimal(p.totalWeight))
+                obj.weightOut = Decimal(tO.denormWeight).div(Decimal(p.totalWeight))
+                obj.swapFee = Decimal(p.swapFee)
                 poolData.push(obj)
             })
 
@@ -223,16 +221,19 @@ export default class ProxyStore {
             let costPerTrade = gasPrice * gasPerTrade // eg. 210k gas @ 10 Gwei
             let costOutputToken = costPerTrade * outTokenEthPrice
 
+            console.log('poolData')
+            console.log(poolData)
+
             let sorSwaps = await sor.linearizedSolution(poolData, 'swapExactOut', tokenAmountOut, 20, costOutputToken)
 
             console.log('Swaps froms SOR:')
             console.log(sorSwaps)
+            console.log(sorSwaps.totalOutput.toString())
             
             let swaps = []
             for (let i = 0; i < sorSwaps.inputAmounts.length; i++) {
-                let fWAmount = helpers.fromWei(String(sorSwaps.inputAmounts[0]))
-                let tWAmount = helpers.toWei(fWAmount)
-                let swap = [ sorSwaps.selectedBalancers[i], tWAmount, helpers.toWei('0'), maxPrice ]
+                let swapAmount = sorSwaps.inputAmounts[i].toString()
+                let swap = [ sorSwaps.selectedBalancers[i], swapAmount, helpers.toWei('0'), maxPrice ]
                 swaps.push(swap)
             }
 
@@ -241,7 +242,7 @@ export default class ProxyStore {
             const effectivePrice = this.calcEffectivePrice(tokenAmountOut, preview)
 
             const data = {
-                outputAmount: preview,
+                inputAmount: preview,
                 effectivePrice,
                 validSwap: true
             }

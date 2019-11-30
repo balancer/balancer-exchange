@@ -24,15 +24,16 @@ class SwapForm extends React.Component {
     onChange = async (event, form) => {
         const { swapFormStore } = this.props.root
         this.updateProperty(form, event.target.name, event.target.value)
-        const { inputAmount, inputToken, outputToken } = swapFormStore.inputs
+        const { inputAmount, inputToken, outputAmount, outputToken } = swapFormStore.inputs
 
         // Get preview if all necessary fields are filled out
-        if (
-            !helpers.checkIsPropertyEmpty(inputAmount) &&
-            !helpers.checkIsPropertyEmpty(inputToken) &&
-            !helpers.checkIsPropertyEmpty(outputToken)
-        ) {
+        if (event.target.name === 'inputAmount' && !helpers.checkIsPropertyEmpty(inputAmount)) {
+            this.updateProperty(form, 'type', 'exactIn')
             const output = await this.previewSwapExactAmountInHandler()
+            swapFormStore.updateOutputsFromObject(output)
+        } else if (event.target.name === 'outputAmount' && !helpers.checkIsPropertyEmpty(outputAmount)) {
+            this.updateProperty(form, 'type', 'exactOut')
+            const output = await this.previewSwapExactAmountOutHandler()
             swapFormStore.updateOutputsFromObject(output)
         }
 
@@ -48,37 +49,67 @@ class SwapForm extends React.Component {
         const { swapFormStore } = this.props.root
         const inputs = swapFormStore.inputs
 
-        const { inputAmount, inputToken, outputToken } = inputs
-        let outputLimit = inputs['outputLimit']
-        let limitPrice = inputs['limitPrice']
+        if (inputs.type === 'exactIn') {
+            const { inputAmount, inputToken, outputToken } = inputs
+            let outputLimit = inputs['outputLimit']
+            let limitPrice = inputs['limitPrice']
 
-        // Empty limit price = no price limit
-        limitPrice = helpers.setPropertyToMaxUintIfEmpty(limitPrice)
-        // Empty output limit = no minimum
-        outputLimit = helpers.setPropertyToZeroIfEmpty(outputLimit)
+            // Empty limit price = no price limit
+            limitPrice = helpers.setPropertyToMaxUintIfEmpty(limitPrice)
+            // Empty output limit = no minimum
+            outputLimit = helpers.setPropertyToZeroIfEmpty(outputLimit)
 
-        return {
-            inputAmount,
-            inputToken,
-            outputToken,
-            outputLimit,
-            limitPrice,
+            return {
+                inputAmount,
+                inputToken,
+                outputToken,
+                outputLimit,
+                limitPrice,
+            }
+        } else if (inputs.type === 'exactOut') {
+            const { outputAmount, inputToken, outputToken } = inputs
+            let inputLimit = inputs['inputLimit']
+            let limitPrice = inputs['limitPrice']
+
+            // Empty limit price = no price limit
+            limitPrice = helpers.setPropertyToMaxUintIfEmpty(limitPrice)
+            // Empty output limit = no minimum
+            inputLimit = helpers.setPropertyToMaxUintIfEmpty(inputLimit)
+
+            return {
+                outputAmount,
+                inputToken,
+                outputToken,
+                inputLimit,
+                limitPrice,
+            }
         }
     }
 
-    swapExactAmountInHandler = async () => {
+    swapHandler = async () => {
         const { proxyStore } = this.props.root
 
         const inputs = this.getSanitizedInputValues()
-        const { inputAmount, inputToken, outputToken, outputLimit, limitPrice } = inputs
 
-        await proxyStore.batchSwapExactIn(
-            inputToken,
-            helpers.toWei(inputAmount),
-            outputToken,
-            helpers.toWei(outputLimit),
-            helpers.toWei(limitPrice)
-        )
+        if (inputs.type === 'exactIn') {
+            const { inputAmount, inputToken, outputToken, outputLimit, limitPrice } = inputs
+            await proxyStore.batchSwapExactIn(
+                inputToken,
+                helpers.toWei(inputAmount),
+                outputToken,
+                helpers.toWei(outputLimit),
+                helpers.toWei(limitPrice)
+            )
+        } else if (inputs.type === 'exactOut') {
+            const { inputLimit, inputToken, outputToken, outputAmount, limitPrice } = inputs
+            await proxyStore.batchSwapExactOut(
+                inputToken,
+                helpers.toWei(inputLimit),
+                outputToken,
+                helpers.toWei(outputAmount),
+                helpers.toWei(limitPrice)
+            )
+        }
     }
 
     previewSwapExactAmountInHandler = async () => {
@@ -109,13 +140,39 @@ class SwapForm extends React.Component {
         }
     }
 
+    previewSwapExactAmountOutHandler = async () => {
+        const { proxyStore } = this.props.root
+
+        const inputs = this.getSanitizedInputValues()
+        const { inputLimit, inputToken, outputToken, outputAmount, limitPrice } = inputs
+
+        const call = await proxyStore.previewBatchSwapExactOut(
+            inputToken,
+            helpers.toWei(inputLimit),
+            outputToken,
+            helpers.toWei(outputAmount),
+            helpers.toWei(limitPrice)
+        )
+
+        if (call.validSwap) {
+            return {
+                inputAmount: helpers.fromWei(call.inputAmount),
+                effectivePrice: call.effectivePrice,
+                swaps: call.swaps,
+                validSwap: call.validSwap
+            }
+        } else {
+            return {
+                validSwap: call.validSwap
+            }
+        }
+    }
+
     render() {
         const { swapFormStore } = this.props.root
         const { inputs } = swapFormStore
 
-        // const pool = poolStore.getPool(poolAddress)
         const tokenList = swapFormStore.getTokenList()
-        // const tokens = utilStore.generateTokenDropdownData(tokenList)
 
         if (helpers.checkIsPropertyEmpty(swapFormStore.inputs.inputToken)) {
             swapFormStore.inputs.inputToken = tokenList[0].address
@@ -131,7 +188,7 @@ class SwapForm extends React.Component {
                     <Grid item xs={12} sm={12}>
                         <ValidatorForm
                             ref="form"
-                            onSubmit={() => { this.swapExactAmountInHandler() }}
+                            onSubmit={() => { this.swapHandler() }}
                             onError={errors => console.log(errors)}>
                             <Grid container spacing={1}>
                                 <Grid item xs={12} sm={6}>
@@ -150,9 +207,9 @@ class SwapForm extends React.Component {
                                         fullWidth
                                     >
                                     {tokenList.map(option => (
-                                            <option key={option.address} value={option.address}>
-                                                {option.symbol}
-                                            </option>
+                                        <option key={option.address} value={option.address}>
+                                            {option.symbol}
+                                        </option>
                                     ))}
                                     </TextField>
                                 </Grid>
@@ -170,8 +227,8 @@ class SwapForm extends React.Component {
                                         margin="normal"
                                         variant="outlined"
                                         fullWidth
-                                        validators={validators.requiredTokenValueValidators}
-                                        errorMessages={validators.requiredTokenValueValidatorErrors}
+                                        validators={validators.optionalTokenValueValidators}
+                                        errorMessages={validators.optionalTokenValueValidatorErrors}
                                     />
                                 </Grid>
                                 <Grid item xs={12} sm={6}>

@@ -8,7 +8,7 @@ import web3 from "./web3";
 // Settings
 import settings from "../settings.json";
 
-export const { toBN, toWei, fromWei, isAddress, BN } = web3.utils;
+export const { toBN, toHex, toWei, fromWei, isAddress, BN } = web3.utils;
 
 export const MAX_GAS = 0xffffffff;
 export const MAX_UINT = web3.utils.toTwosComplement('-1');

@@ -5,16 +5,7 @@ export const formNames = {
     INPUT_FORM: 'inputs'
 }
 
-export const methodNames = {
-    EXACT_AMOUNT_IN: 'exactAmountIn',
-    EXACT_AMOUNT_OUT: 'exactAmountOut'
-}
-
 export const labels = {
-    methods: {
-        EXACT_AMOUNT_IN: 'Exact Amount In',
-        EXACT_AMOUNT_OUT: 'Exact Amount Out'
-    },
     inputs: {
         INPUT_TOKEN: 'Input Token',
         OUTPUT_TOKEN: 'Output Token',
@@ -30,7 +21,6 @@ export const labels = {
 }
 
 export default class SwapFormStore {
-    @observable swapMethod = methodNames.EXACT_AMOUNT_IN
     @observable inputs = {
         inputToken: '',
         outputtoken: '',

@@ -2,7 +2,7 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import { Card, CardContent, Typography, Table, TableBody, TableCell, TableHead, TableRow } from '@material-ui/core'
 import { observer, inject } from 'mobx-react'
-import { labels, methodNames } from 'stores/SwapForm'
+import { labels } from 'stores/SwapForm'
 import * as helpers from 'utils/helpers'
 import { withStyles } from '@material-ui/core/styles';
 
@@ -24,7 +24,7 @@ class SwapResults extends React.Component {
 
     buildCardContentByMethod() {
         const { swapFormStore } = this.props.root
-        const { swapMethod, outputs } = swapFormStore
+        const { outputs } = swapFormStore
 
         const validSwap = outputs.validSwap
         let inputAmount = helpers.roundValue(outputs.inputAmount)
@@ -37,21 +37,13 @@ class SwapResults extends React.Component {
             effectivePrice = '--'
         }
 
-        if (swapMethod === methodNames.EXACT_AMOUNT_IN) {
-            return (
-                <React.Fragment>
-                    <Typography variant="body1">{`${labels.outputs.OUTPUT_AMOUNT}: ${outputAmount}`}</Typography>
-                    <Typography variant="body1">{`${labels.outputs.EFFECTIVE_PRICE}: ${effectivePrice}`}</Typography>
-                </React.Fragment>
-            )
-        } else if (swapMethod === methodNames.EXACT_AMOUNT_OUT) {
-            return (
-                <React.Fragment>
-                    <Typography variant="body1">{`${labels.outputs.INPUT_AMOUNT}: ${inputAmount}`}</Typography>
-                    <Typography variant="body1">{`${labels.outputs.EFFECTIVE_PRICE}: ${effectivePrice}`}</Typography>
-                </React.Fragment>
-            )
-        }
+
+        return (
+            <React.Fragment>
+                <Typography variant="body1">{`${labels.outputs.OUTPUT_AMOUNT}: ${outputAmount}`}</Typography>
+                <Typography variant="body1">{`${labels.outputs.EFFECTIVE_PRICE}: ${effectivePrice}`}</Typography>
+            </React.Fragment>
+        )
     }
 
     buildTable() {
