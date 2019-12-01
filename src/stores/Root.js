@@ -3,7 +3,6 @@ import ProxyStore from "./Proxy";
 import ProviderStore from "./Provider";
 import SwapFormStore from "./SwapForm"
 import TokenStore from "./Token"
-import UtilStore from "./Util"
 
 class RootStore {
     constructor() {
@@ -11,7 +10,6 @@ class RootStore {
         this.providerStore = new ProviderStore(this);
         this.swapFormStore = new SwapFormStore(this);
         this.tokenStore = new TokenStore(this);
-        this.utilStore = new UtilStore(this);
         this.asyncSetup()
     }
 

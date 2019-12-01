@@ -39,53 +39,10 @@ class SwapForm extends React.Component {
 
     }
 
-    getSanitizedInputValues() {
-        const { swapFormStore } = this.props.root
-        const inputs = swapFormStore.inputs
-
-        if (inputs.type === 'exactIn') {
-            const { inputAmount, inputToken, outputToken } = inputs
-            let outputLimit = inputs['outputLimit']
-            let limitPrice = inputs['limitPrice']
-
-            // Empty limit price = no price limit
-            limitPrice = helpers.setPropertyToMaxUintIfEmpty(limitPrice)
-            // Empty output limit = no minimum
-            outputLimit = helpers.setPropertyToZeroIfEmpty(outputLimit)
-
-            return {
-                type: inputs.type,
-                inputAmount,
-                inputToken,
-                outputToken,
-                outputLimit,
-                limitPrice,
-            }
-        } else if (inputs.type === 'exactOut') {
-            const { outputAmount, inputToken, outputToken } = inputs
-            let inputLimit = inputs['inputLimit']
-            let limitPrice = inputs['limitPrice']
-
-            // Empty limit price = no price limit
-            limitPrice = helpers.setPropertyToMaxUintIfEmpty(limitPrice)
-            // Empty output limit = no minimum
-            inputLimit = helpers.setPropertyToMaxUintIfEmpty(inputLimit)
-
-            return {
-                type: inputs.type,
-                outputAmount,
-                inputToken,
-                outputToken,
-                inputLimit,
-                limitPrice,
-            }
-        }
-    }
-
     swapHandler = async () => {
-        const { proxyStore } = this.props.root
+        const { proxyStore, swapFormStore } = this.props.root
 
-        const inputs = this.getSanitizedInputValues()
+        const inputs = swapFormStore.inputs
 
         if (inputs.type === 'exactIn') {
             const { inputAmount, inputToken, outputToken, outputLimit, limitPrice } = inputs
@@ -109,17 +66,15 @@ class SwapForm extends React.Component {
     }
 
     previewSwapExactAmountInHandler = async () => {
-        const { proxyStore } = this.props.root
+        const { proxyStore, swapFormStore } = this.props.root
 
-        const inputs = this.getSanitizedInputValues()
-        const { inputAmount, inputToken, outputToken, outputLimit, limitPrice } = inputs
+        const inputs = swapFormStore.inputs
+        const { inputToken, outputToken, inputAmount } = inputs
 
         const call = await proxyStore.previewBatchSwapExactIn(
             inputToken,
-            inputAmount,
             outputToken,
-            helpers.toWei(outputLimit),
-            helpers.toWei(limitPrice)
+            inputAmount
         )
 
         if (call.validSwap) {
@@ -137,18 +92,15 @@ class SwapForm extends React.Component {
     }
 
     previewSwapExactAmountOutHandler = async () => {
-        const { proxyStore } = this.props.root
+        const { proxyStore, swapFormStore } = this.props.root
 
-        const inputs = this.getSanitizedInputValues()
-        const { inputLimit, inputToken, outputToken, outputAmount, limitPrice } = inputs
+        const inputs = swapFormStore.inputs
+        const { inputToken, outputToken, outputAmount } = inputs
 
         const call = await proxyStore.previewBatchSwapExactOut(
             inputToken,
-            // TODO make maxInputAmount a percent
-            helpers.toWei('2'),
             outputToken,
-            outputAmount,
-            helpers.toWei(limitPrice)
+            outputAmount
         )
 
         if (call.validSwap) {

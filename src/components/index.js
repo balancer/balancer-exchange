@@ -3,8 +3,6 @@ import BottomNavigation from './BottomNavigation'
 import Button from './Button'
 import EmptyState from './EmptyState'
 import IconCard from './IconCard'
-import TokenText from './TokenText'
-import SpotPriceGrid from './SpotPriceGrid'
 import Loading from './Loading'
 import LoadingCard from './LoadingCard'
 import SwapForm from './SwapForm'
@@ -19,8 +17,6 @@ export {
   Button,
   EmptyState,
   IconCard,
-  TokenText,
-  SpotPriceGrid,
   Loading,
   LoadingCard,
   SwapForm

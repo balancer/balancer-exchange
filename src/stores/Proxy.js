@@ -116,9 +116,9 @@ export default class ProxyStore {
     /* 
         Swap Methods - Preview
     */
-    previewBatchSwapExactIn = async (tokenIn, tokenAmountIn, tokenOut, minAmountOut, maxPrice) => {
+    previewBatchSwapExactIn = async (tokenIn, tokenOut, tokenAmountIn) => {
         const proxy = blockchain.loadObject('ExchangeProxy', deployed.proxy, 'ExchangeProxy')
-        console.log('[Action] previewBatchSwapExactIn', tokenIn, tokenAmountIn, tokenOut, minAmountOut, maxPrice)
+        console.log('[Action] previewBatchSwapExactIn', tokenIn, tokenOut, tokenAmountIn)
 
         try {
             this.setPreviewPending(true)
@@ -137,6 +137,9 @@ export default class ProxyStore {
                 obj.swapFee = Decimal(p.swapFee)
                 poolData.push(obj)
             })
+
+            let maxPrice = helpers.setPropertyToMaxUintIfEmpty()
+            let minAmountOut = helpers.setPropertyToZeroIfEmpty()
 
             let gasPrice = 0.00000001 // 1 Gwei
             let gasPerTrade = 210000 // eg. 210k gas
@@ -176,9 +179,9 @@ export default class ProxyStore {
 
     }
     
-    previewBatchSwapExactOut = async (tokenIn, maxAmountIn, tokenOut, tokenAmountOut, maxPrice) => {
+    previewBatchSwapExactOut = async (tokenIn, tokenOut, tokenAmountOut) => {
         const proxy = blockchain.loadObject('ExchangeProxy', deployed.proxy, 'ExchangeProxy')
-        console.log('[Action] previewBatchSwapExactOut', tokenIn, maxAmountIn, tokenOut, tokenAmountOut, maxPrice)
+        console.log('[Action] previewBatchSwapExactOut', tokenIn, tokenOut, tokenAmountOut)
 
         try {
             this.setPreviewPending(true)
@@ -197,6 +200,9 @@ export default class ProxyStore {
                 obj.swapFee = Decimal(p.swapFee)
                 poolData.push(obj)
             })
+
+            let maxPrice = helpers.setPropertyToMaxUintIfEmpty()
+            let maxAmountIn = helpers.setPropertyToMaxUintIfEmpty()
 
             let gasPrice = 0.00000001 // 1 Gwei
             let gasPerTrade = 210000 // eg. 210k gas
