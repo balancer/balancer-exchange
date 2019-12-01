@@ -36,7 +36,7 @@ class SwapForm extends React.Component {
             const output = await this.previewSwapExactAmountOutHandler()
             swapFormStore.updateOutputsFromObject(output)
         }
-        
+
     }
 
     getSanitizedInputValues() {
@@ -54,6 +54,7 @@ class SwapForm extends React.Component {
             outputLimit = helpers.setPropertyToZeroIfEmpty(outputLimit)
 
             return {
+                type: inputs.type,
                 inputAmount,
                 inputToken,
                 outputToken,
@@ -71,6 +72,7 @@ class SwapForm extends React.Component {
             inputLimit = helpers.setPropertyToMaxUintIfEmpty(inputLimit)
 
             return {
+                type: inputs.type,
                 outputAmount,
                 inputToken,
                 outputToken,
@@ -89,7 +91,7 @@ class SwapForm extends React.Component {
             const { inputAmount, inputToken, outputToken, outputLimit, limitPrice } = inputs
             await proxyStore.batchSwapExactIn(
                 inputToken,
-                helpers.toWei(inputAmount),
+                inputAmount,
                 outputToken,
                 helpers.toWei(outputLimit),
                 helpers.toWei(limitPrice)
@@ -100,7 +102,7 @@ class SwapForm extends React.Component {
                 inputToken,
                 helpers.toWei(inputLimit),
                 outputToken,
-                helpers.toWei(outputAmount),
+                outputAmount,
                 helpers.toWei(limitPrice)
             )
         }
@@ -114,7 +116,7 @@ class SwapForm extends React.Component {
 
         const call = await proxyStore.previewBatchSwapExactIn(
             inputToken,
-            helpers.toWei(inputAmount),
+            inputAmount,
             outputToken,
             helpers.toWei(outputLimit),
             helpers.toWei(limitPrice)
@@ -145,7 +147,7 @@ class SwapForm extends React.Component {
             // TODO make maxInputAmount a percent
             helpers.toWei('2'),
             outputToken,
-            helpers.toWei(outputAmount),
+            outputAmount,
             helpers.toWei(limitPrice)
         )
 

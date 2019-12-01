@@ -57,15 +57,15 @@ export default class ProxyStore {
         let costPerTrade = gasPrice * gasPerTrade // eg. 210k gas @ 10 Gwei
         let costOutputToken = costPerTrade * outTokenEthPrice
 
-        let sorSwaps = await sor.linearizedSolution(poolData, 'swapExactIn', tokenAmountIn, 20, costOutputToken)
+        let sorSwaps = sor.linearizedSolution(poolData, 'swapExactIn', tokenAmountIn, 20, costOutputToken)
         
         let swaps = []
         for (let i = 0; i < sorSwaps.inputAmounts.length; i++) {
             let swapAmount = sorSwaps.inputAmounts[i].toString()
-            let swap = [ sorSwaps.selectedBalancers[i], swapAmount, helpers.toWei('0'), maxPrice ]
+            let swap = [ sorSwaps.selectedBalancers[i], helpers.toWei(swapAmount), helpers.toWei('0'), maxPrice ]
             swaps.push(swap)
         }
-        await proxy.methods.batchSwapExactIn(swaps, tokenIn, tokenOut, tokenAmountIn, minAmountOut).send()
+        await proxy.methods.batchSwapExactIn(swaps, tokenIn, tokenOut, helpers.toWei(tokenAmountIn), minAmountOut).send()
     }
 
     @action batchSwapExactOut = async (tokenIn, maxAmountIn, tokenOut, tokenAmountOut, maxPrice) => {
@@ -94,15 +94,15 @@ export default class ProxyStore {
         let costPerTrade = gasPrice * gasPerTrade // eg. 210k gas @ 10 Gwei
         let costOutputToken = costPerTrade * outTokenEthPrice
 
-        let sorSwaps = await sor.linearizedSolution(poolData, 'swapExactOut', tokenAmountOut, 20, costOutputToken)
+        let sorSwaps = sor.linearizedSolution(poolData, 'swapExactOut', tokenAmountOut, 20, costOutputToken)
         
         let swaps = []
         for (let i = 0; i < sorSwaps.inputAmounts.length; i++) {
             let swapAmount = sorSwaps.inputAmounts[i].toString()
-            let swap = [ sorSwaps.selectedBalancers[i], maxAmountIn, swapAmount, maxPrice ]
+            let swap = [ sorSwaps.selectedBalancers[i], maxAmountIn, helpers.toWei(swapAmount), maxPrice ]
             swaps.push(swap)
         }
-        await proxy.methods.batchSwapExactOut(swaps, tokenIn, tokenOut, maxAmountIn, tokenAmountOut).send()
+        await proxy.methods.batchSwapExactOut(swaps, tokenIn, tokenOut, maxAmountIn, helpers.toWei(tokenAmountOut)).send()
     }
 
     calcEffectivePrice(tokenAmountIn, tokenAmountOut) {
@@ -124,11 +124,7 @@ export default class ProxyStore {
             this.setPreviewPending(true)
             let pools = await sor.getPoolsWithTokens(tokenIn, tokenOut)
 
-            console.log('Pools with tokens from subgraph:')
-            console.log(pools.pools)
-
             let poolData = []
-
             pools.pools.forEach(p=> {
                 let tI = p.tokens.find(t => helpers.toChecksum(t.address) === tokenIn)
                 let tO = p.tokens.find(t => helpers.toChecksum(t.address) === tokenOut)
@@ -149,22 +145,18 @@ export default class ProxyStore {
             let costPerTrade = gasPrice * gasPerTrade // eg. 210k gas @ 10 Gwei
             let costOutputToken = costPerTrade * outTokenEthPrice
 
-            let sorSwaps = await sor.linearizedSolution(poolData, 'swapExactIn', tokenAmountIn, 20, costOutputToken)
-
-            console.log('Swaps froms SOR:')
-            console.log(sorSwaps)
+            let sorSwaps = sor.linearizedSolution(poolData, 'swapExactIn', tokenAmountIn, 20, costOutputToken)
             
             let swaps = []
             for (let i = 0; i < sorSwaps.inputAmounts.length; i++) {
                 let swapAmount = sorSwaps.inputAmounts[i].toString()
-                let swap = [ sorSwaps.selectedBalancers[i], swapAmount, helpers.toWei('0'), maxPrice ]
+                let swap = [ sorSwaps.selectedBalancers[i], helpers.toWei(swapAmount), helpers.toWei('0'), maxPrice ]
                 swaps.push(swap)
             }
 
-            const preview = await proxy.methods.batchSwapExactIn(swaps, tokenIn, tokenOut, tokenAmountIn, minAmountOut).call()
-            console.log(preview.toString())
+            const preview = await proxy.methods.batchSwapExactIn(swaps, tokenIn, tokenOut, helpers.toWei(tokenAmountIn), minAmountOut).call()
 
-            const effectivePrice = this.calcEffectivePrice(tokenAmountIn, preview)
+            const effectivePrice = this.calcEffectivePrice(tokenAmountIn, helpers.fromWei(preview))
 
             const data = {
                 outputAmount: preview,
@@ -192,11 +184,7 @@ export default class ProxyStore {
             this.setPreviewPending(true)
             let pools = await sor.getPoolsWithTokens(tokenIn, tokenOut)
 
-            console.log('Pools with tokens from subgraph:')
-            console.log(pools.pools)
-
             let poolData = []
-
             pools.pools.forEach(p=> {
                 let tI = p.tokens.find(t => helpers.toChecksum(t.address) === tokenIn)
                 let tO = p.tokens.find(t => helpers.toChecksum(t.address) === tokenOut)
@@ -217,24 +205,18 @@ export default class ProxyStore {
             let costPerTrade = gasPrice * gasPerTrade // eg. 210k gas @ 10 Gwei
             let costOutputToken = costPerTrade * outTokenEthPrice
 
-            console.log('poolData')
-            console.log(poolData)
-
-            let sorSwaps = await sor.linearizedSolution(poolData, 'swapExactOut', tokenAmountOut, 20, costOutputToken)
-
-            console.log('Swaps froms SOR:')
-            console.log(sorSwaps)
+            let sorSwaps = sor.linearizedSolution(poolData, 'swapExactOut', tokenAmountOut, 20, costOutputToken)
             
             let swaps = []
             for (let i = 0; i < sorSwaps.inputAmounts.length; i++) {
                 let swapAmount = sorSwaps.inputAmounts[i].toString()
-                let swap = [ sorSwaps.selectedBalancers[i], maxAmountIn, swapAmount, maxPrice ]
+                let swap = [ sorSwaps.selectedBalancers[i], maxAmountIn, helpers.toWei(swapAmount), maxPrice ]
                 swaps.push(swap)
             }
 
-            const preview = await proxy.methods.batchSwapExactOut(swaps, tokenIn, tokenOut, tokenAmountOut, maxAmountIn).call()
+            const preview = await proxy.methods.batchSwapExactOut(swaps, tokenIn, tokenOut, helpers.toWei(tokenAmountOut), maxAmountIn).call()
 
-            const effectivePrice = this.calcEffectivePrice(tokenAmountOut, preview)
+            const effectivePrice = this.calcEffectivePrice(tokenAmountOut, helpers.fromWei(preview))
 
             const data = {
                 inputAmount: preview,
