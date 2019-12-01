@@ -27,20 +27,14 @@ class SwapResults extends React.Component {
         const { outputs } = swapFormStore
 
         const validSwap = outputs.validSwap
-        let inputAmount = helpers.roundValue(outputs.inputAmount)
-        let outputAmount = helpers.roundValue(outputs.outputAmount)
         let effectivePrice = helpers.roundValue(outputs.effectivePrice)
 
         if (!validSwap) {
-            inputAmount = '--'
-            outputAmount = '--'
             effectivePrice = '--'
         }
 
-
         return (
             <React.Fragment>
-                <Typography variant="body1">{`${labels.outputs.OUTPUT_AMOUNT}: ${outputAmount}`}</Typography>
                 <Typography variant="body1">{`${labels.outputs.EFFECTIVE_PRICE}: ${effectivePrice}`}</Typography>
             </React.Fragment>
         )
@@ -73,7 +67,7 @@ class SwapResults extends React.Component {
                                 <Link href={`/${row[0]}`} to={`/${row[0]}`}>{row[0]}</Link>
                             </TableCell>
                             <TableCell>
-                                {helpers.fromWei(row[1])}
+                                { swapFormStore.inputs.type === 'exactIn' ? helpers.fromWei(row[1]) : helpers.fromWei(row[2])}
                             </TableCell>
                         </TableRow>
                       )
@@ -89,7 +83,6 @@ class SwapResults extends React.Component {
         const { outputs } = swapFormStore
 
         const validSwap = outputs.validSwap
-
         return (
             <Card>
                 <CardContent>

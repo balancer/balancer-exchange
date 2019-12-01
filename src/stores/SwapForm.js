@@ -23,7 +23,7 @@ export const labels = {
 export default class SwapFormStore {
     @observable inputs = {
         inputToken: '',
-        outputtoken: '',
+        outputToken: '',
         inputAmount: '',
         outputAmount: ''
     }

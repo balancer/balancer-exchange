@@ -14,10 +14,6 @@ export const statusCodes = {
 }
 
 export default class ProxyStore {
-    @observable knownPools = {}
-    @observable knownPoolsLoaded = false
-    @observable currentPool = undefined
-    @observable poolData = {}
     @observable previewPending = false
 
     constructor(rootStore) {
@@ -103,7 +99,7 @@ export default class ProxyStore {
         let swaps = []
         for (let i = 0; i < sorSwaps.inputAmounts.length; i++) {
             let swapAmount = sorSwaps.inputAmounts[i].toString()
-            let swap = [ sorSwaps.selectedBalancers[i], swapAmount, helpers.toWei('0'), maxPrice ]
+            let swap = [ sorSwaps.selectedBalancers[i], maxAmountIn, swapAmount, maxPrice ]
             swaps.push(swap)
         }
         await proxy.methods.batchSwapExactOut(swaps, tokenIn, tokenOut, maxAmountIn, tokenAmountOut).send()
@@ -157,7 +153,6 @@ export default class ProxyStore {
 
             console.log('Swaps froms SOR:')
             console.log(sorSwaps)
-            console.log(sorSwaps.totalOutput.toString())
             
             let swaps = []
             for (let i = 0; i < sorSwaps.inputAmounts.length; i++) {
@@ -167,6 +162,7 @@ export default class ProxyStore {
             }
 
             const preview = await proxy.methods.batchSwapExactIn(swaps, tokenIn, tokenOut, tokenAmountIn, minAmountOut).call()
+            console.log(preview.toString())
 
             const effectivePrice = this.calcEffectivePrice(tokenAmountIn, preview)
 
@@ -228,24 +224,25 @@ export default class ProxyStore {
 
             console.log('Swaps froms SOR:')
             console.log(sorSwaps)
-            console.log(sorSwaps.totalOutput.toString())
             
             let swaps = []
             for (let i = 0; i < sorSwaps.inputAmounts.length; i++) {
                 let swapAmount = sorSwaps.inputAmounts[i].toString()
-                let swap = [ sorSwaps.selectedBalancers[i], swapAmount, helpers.toWei('0'), maxPrice ]
+                let swap = [ sorSwaps.selectedBalancers[i], maxAmountIn, swapAmount, maxPrice ]
                 swaps.push(swap)
             }
 
-            const preview = await proxy.methods.batchSwapExactOut(swaps, tokenIn, tokenOut, maxAmountIn, tokenAmountOut).call()
+            const preview = await proxy.methods.batchSwapExactOut(swaps, tokenIn, tokenOut, tokenAmountOut, maxAmountIn).call()
 
             const effectivePrice = this.calcEffectivePrice(tokenAmountOut, preview)
 
             const data = {
                 inputAmount: preview,
                 effectivePrice,
+                swaps,
                 validSwap: true
             }
+
             this.setPreviewPending(false)
             return data
         } catch (e) {

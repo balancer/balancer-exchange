@@ -24,7 +24,7 @@ class SwapForm extends React.Component {
     onChange = async (event, form) => {
         const { swapFormStore } = this.props.root
         this.updateProperty(form, event.target.name, event.target.value)
-        const { inputAmount, inputToken, outputAmount, outputToken } = swapFormStore.inputs
+        const { inputAmount, outputAmount } = swapFormStore.inputs
 
         // Get preview if all necessary fields are filled out
         if (event.target.name === 'inputAmount' && !helpers.checkIsPropertyEmpty(inputAmount)) {
@@ -36,13 +36,7 @@ class SwapForm extends React.Component {
             const output = await this.previewSwapExactAmountOutHandler()
             swapFormStore.updateOutputsFromObject(output)
         }
-
-        // The view fails to update if this becomes empty?
-        if (helpers.checkIsPropertyEmpty(inputAmount)) {
-            swapFormStore.updateOutputsFromObject({
-                validSwap: false
-            })
-        }
+        
     }
 
     getSanitizedInputValues() {
@@ -148,7 +142,8 @@ class SwapForm extends React.Component {
 
         const call = await proxyStore.previewBatchSwapExactOut(
             inputToken,
-            helpers.toWei(inputLimit),
+            // TODO make maxInputAmount a percent
+            helpers.toWei('2'),
             outputToken,
             helpers.toWei(outputAmount),
             helpers.toWei(limitPrice)
