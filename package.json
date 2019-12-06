@@ -88,23 +88,9 @@
     "workbox-webpack-plugin": "4.3.1"
   },
   "scripts": {
-    "ganache": " ganache-cli --deterministic -l 4294967295 --allowUnlimitedContractSize",
-    "deploy": "node scripts/deployPreConfigured.js",
     "start": "node scripts/start.js",
     "build": "node scripts/build.js",
-    "test": "node scripts/test.js",
-    "compile:core": "cd ./lib/balancer-core && truffle compile",
-    "compile:proxy": "cd ./lib/exchange-proxy && truffle compile",
-    "compile:abis": "cp ./lib/balancer-core/build/contracts/{BFactory.json,BPool.json} ./src/abi/ && cp ./lib/exchange-proxy/build/contracts/ExchangeProxy.json ./src/abi/",
-    "compile": "yarn compile:core && yarn compile:proxy && yarn compile:abis",
-    "graph:node": "docker-compose -f ./lib/graph-node/docker/docker-compose.yml up",
-    "graph:clean": "docker-compose -f ./lib/graph-node/docker/docker-compose.yml kill && docker-compose -f ./lib/graph-node/docker/docker-compose.yml rm -f && rm -rf ./lib/graph-node/docker/data",
-    "graph:codegen": "yarn --cwd ./lib/balancer-subgraph/ codegen",
-    "graph:createlocal": "yarn --cwd ./lib/balancer-subgraph/ create-local",
-    "graph:install": "yarn --cwd ./lib/balancer-subgraph install",
-    "graph:setup": "yarn graph:install && yarn graph:createlocal",
-    "graph:deploylocal": "yarn --cwd ./lib/balancer-subgraph/ deploy-local",
-    "graph": "yarn graph:codegen && yarn graph:deploylocal"
+    "test": "node scripts/test.js"
   },
   "eslintConfig": {
     "extends": "react-app"

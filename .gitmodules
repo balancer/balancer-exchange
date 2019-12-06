@@ -1,20 +1,4 @@
-[submodule "lib/graph-node"]
-	path = lib/graph-node
-	url = git@github.com:graphprotocol/graph-node.git
-  ignore = all
-[submodule "lib/balancer-subgraph"]
-	path = lib/balancer-subgraph
-	url = git@github.com:balancer-labs/balancer-subgraph.git
-  ignore = all
 [submodule "lib/balancer-sor"]
 	path = lib/balancer-sor
 	url = git@github.com:balancer-labs/balancer-sor.git
-  ignore = all
-[submodule "lib/exchange-proxy"]
-	path = lib/exchange-proxy
-	url = git@github.com:balancer-labs/exchange-proxy.git
-  ignore = all
-[submodule "lib/balancer-core"]
-	path = lib/balancer-core
-	url = git@github.com:balancer-labs/balancer-core.git
   ignore = all
