@@ -11,7 +11,6 @@ import { observer, inject } from 'mobx-react'
 import { theme } from 'configs'
 import { Notification } from './components'
 import Header from 'components/Header'
-import Footer from 'components/Footer'
 import SwapView from 'views/SwapView';
 import ErrorHandler, { Error } from 'provider'
 import './styles.scss' // global styles
@@ -77,7 +76,6 @@ class App extends Component {
           <HashRouter>
             <div>
               <Header />
-              <Footer />
               <Route component={this.NotificationComponent} />
               {providerLoaded ? this.renderViews() : <div></div>}
             </div>

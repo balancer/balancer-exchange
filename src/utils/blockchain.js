@@ -3,7 +3,6 @@ import Promise from "bluebird";
 
 // Utils
 import web3 from "./web3";
-import { excludes } from "./tokens";
 
 const promisify = Promise.promisify;
 
@@ -101,9 +100,11 @@ export const resetFilters = bool => {
 }
 
 export const fetchBalanceOf = (token, address) => {
-  if (token === 'eth') return getEthBalanceOf(address);
-  if (excludes("eth").includes(token)) return getTokenBalanceOf(token, address);
-  return null;
+  if (token === 'eth') {
+    return getEthBalanceOf(address);
+  } else {
+    return getTokenBalanceOf(token, address);
+  }
 }
 
 
