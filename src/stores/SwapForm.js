@@ -43,7 +43,7 @@ export default class SwapFormStore {
     }
 
     getTokenList = () => {
-        return deployed.tokens
+        return deployed['kovan'].tokens
     }
 
     resetInputs() {

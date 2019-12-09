@@ -2,7 +2,7 @@ import { observable, action } from 'mobx'
 import * as helpers from "utils/helpers"
 import * as blockchain from "utils/blockchain"
 
-export default class PoolStore {
+export default class TokenStore {
     @observable symbols = {}
     @observable balances = {}
     @observable allowances = {}

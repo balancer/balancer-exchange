@@ -7,5 +7,5 @@ export {
   AppBar,
   Loading,
   LoadingCard,
-  SwapForm
+  SwapForm,
 }
