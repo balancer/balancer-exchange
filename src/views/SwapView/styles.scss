@@ -1,26 +1,25 @@
 :local(.styles) {
     container: {
         display: 'flex';
-        flexWrap: 'wrap';
+        flexwrap: 'wrap';
     }
-    textField: {
-        marginLeft: 10px;
-        marginRight: 10px;
+    textfield: {
+        marginleft: 10px;
+        marginright: 10px;
     }
     dense: {
-        marginTop: 5px;
+        margintop: 5px;
     }
     menu: {
         width: 200;
     }
     .root {
-      width: '100%';
-      overflow-x: 'auto';
+        width: '100%';
+        overflow-x: 'auto';
     }
 
     .table {
-      overflow-x: 'auto';
-      width: '100%';
+        overflow-x: 'auto';
+        width: '100%';
     }
 }
-

@@ -1,24 +1,20 @@
-import { createMuiTheme } from '@material-ui/core/styles'
-import { getStyles } from './lib-style-helpers'
+import { createMuiTheme } from '@material-ui/core/styles';
+import { getStyles } from './lib-style-helpers';
 
-const colors = getStyles([
-  'error',
-  'primary',
-  'secondary'
-])
+const colors = getStyles(['error', 'primary', 'secondary']);
 
 const theme = createMuiTheme({
-  palette: {
-    primary: {
-      main: colors.primary
+    palette: {
+        primary: {
+            main: colors.primary,
+        },
+        secondary: {
+            main: colors.secondary,
+        },
+        error: {
+            main: colors.error,
+        },
     },
-    secondary: {
-      main: colors.secondary
-    },
-    error: {
-      main: colors.error
-    }
-  }
-})
+});
 
-export default theme
+export default theme;

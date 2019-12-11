@@ -1,1 +1,64 @@
-{"bFactory":"0xD86C8F0327494034F60e25074420BcCF560D5610","proxy":"0x4bf749ec68270027C5910220CEAB30Cc284c7BA2","pools":["0xc43d5F3D92Fa39089Fd5E3b67841bFB8d62457F3","0x690a718e4d98dfd711AE0E5F1c14977eD3dd47F3","0xA41cCa6221C0081aB619585646a70C6e51Cb05da","0x8932E72Ce5a71b3e24dF17c8eab577fF122Da97c"],"tokens":[{"symbol":"WETH","address":"0xe78A0F7E598Cc8b0Bb87894B0F60dD2a88d6a8Ab"},{"symbol":"MKR","address":"0x5b1869D9A4C187F2EAa108f3062412ecf0526b24"},{"symbol":"DAI","address":"0xCfEB869F69431e42cdB54A4F4f105C19C080A601"}],"extraTokens":[{"symbol":"TokenD","address":"0x2612Af3A521c2df9EAF28422Ca335b04AdF3ac66"},{"symbol":"TokenE","address":"0xA57B8a5584442B467b4689F1144D269d096A3daF"},{"symbol":"TokenF","address":"0x26b4AFb60d6C903165150C6F0AA14F8016bE4aec"}],"allTokens":[{"symbol":"WETH","address":"0xe78A0F7E598Cc8b0Bb87894B0F60dD2a88d6a8Ab"},{"symbol":"MKR","address":"0x5b1869D9A4C187F2EAa108f3062412ecf0526b24"},{"symbol":"DAI","address":"0xCfEB869F69431e42cdB54A4F4f105C19C080A601"},{"symbol":"TokenD","address":"0x2612Af3A521c2df9EAF28422Ca335b04AdF3ac66"},{"symbol":"TokenE","address":"0xA57B8a5584442B467b4689F1144D269d096A3daF"},{"symbol":"TokenF","address":"0x26b4AFb60d6C903165150C6F0AA14F8016bE4aec"}]}
+{
+    "bFactory": "0xD86C8F0327494034F60e25074420BcCF560D5610",
+    "proxy": "0x4bf749ec68270027C5910220CEAB30Cc284c7BA2",
+    "pools": [
+        "0xc43d5F3D92Fa39089Fd5E3b67841bFB8d62457F3",
+        "0x690a718e4d98dfd711AE0E5F1c14977eD3dd47F3",
+        "0xA41cCa6221C0081aB619585646a70C6e51Cb05da",
+        "0x8932E72Ce5a71b3e24dF17c8eab577fF122Da97c"
+    ],
+    "tokens": [
+        {
+            "symbol": "WETH",
+            "address": "0xe78A0F7E598Cc8b0Bb87894B0F60dD2a88d6a8Ab"
+        },
+        {
+            "symbol": "MKR",
+            "address": "0x5b1869D9A4C187F2EAa108f3062412ecf0526b24"
+        },
+        {
+            "symbol": "DAI",
+            "address": "0xCfEB869F69431e42cdB54A4F4f105C19C080A601"
+        }
+    ],
+    "extraTokens": [
+        {
+            "symbol": "TokenD",
+            "address": "0x2612Af3A521c2df9EAF28422Ca335b04AdF3ac66"
+        },
+        {
+            "symbol": "TokenE",
+            "address": "0xA57B8a5584442B467b4689F1144D269d096A3daF"
+        },
+        {
+            "symbol": "TokenF",
+            "address": "0x26b4AFb60d6C903165150C6F0AA14F8016bE4aec"
+        }
+    ],
+    "allTokens": [
+        {
+            "symbol": "WETH",
+            "address": "0xe78A0F7E598Cc8b0Bb87894B0F60dD2a88d6a8Ab"
+        },
+        {
+            "symbol": "MKR",
+            "address": "0x5b1869D9A4C187F2EAa108f3062412ecf0526b24"
+        },
+        {
+            "symbol": "DAI",
+            "address": "0xCfEB869F69431e42cdB54A4F4f105C19C080A601"
+        },
+        {
+            "symbol": "TokenD",
+            "address": "0x2612Af3A521c2df9EAF28422Ca335b04AdF3ac66"
+        },
+        {
+            "symbol": "TokenE",
+            "address": "0xA57B8a5584442B467b4689F1144D269d096A3daF"
+        },
+        {
+            "symbol": "TokenF",
+            "address": "0x26b4AFb60d6C903165150C6F0AA14F8016bE4aec"
+        }
+    ]
+}
