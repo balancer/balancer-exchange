@@ -1,25 +1,19 @@
-import React, { Component } from 'react'
-import {
-  HashRouter,
-  Route,
-  Redirect,
-  Switch
-} from 'react-router-dom'
-import { MuiThemeProvider } from '@material-ui/core/styles'
-import { observer, inject } from 'mobx-react'
+import React, { Component } from "react";
+import { HashRouter, Route, Redirect, Switch } from "react-router-dom";
+import { MuiThemeProvider } from "@material-ui/core/styles";
+import { observer, inject } from "mobx-react";
 
-import { theme } from 'configs'
-import { Notification } from './components'
-import Header from 'components/Header'
-import SwapView from 'views/SwapView';
-import ErrorHandler, { Error } from 'provider'
-import './styles.scss' // global styles
-import { Container } from '@material-ui/core'
+import { theme } from "configs";
+import { Notification } from "./components";
+import Header from "components/Header";
+import SwapView from "views/SwapView";
+import ErrorHandler, { Error } from "provider";
+import "./styles.scss"; // global styles
+import { Container } from "@material-ui/core";
 
-@inject('root')
+@inject("root")
 @observer
-class App extends Component {
-
+class App extends Component<any, any> {
   // componentDidUpdate = prevProps => {
   //   if (this.props.location.pathname !== prevProps.location.pathname) {
   //     window.scrollTo(0, 0);
@@ -27,26 +21,21 @@ class App extends Component {
   // }
 
   async componentDidMount() {
-    const { providerStore } = this.props.root
+    const { providerStore } = this.props.root;
     if (!providerStore.provider) {
-      await providerStore.setWeb3WebClient()
+      await providerStore.setWeb3WebClient();
     }
   }
 
   NotificationComponent = () => {
     return (
       <Error.Consumer>
-        {
-          ({ error, setError }) => {
-            return (<Notification
-              errorMessage={error}
-              setError={setError}
-            />)
-          }
-        }
+        {({ error, setError }) => {
+          return <Notification errorMessage={error} setError={setError} />;
+        }}
       </Error.Consumer>
-    )
-  }
+    );
+  };
 
   renderViews() {
     return (
@@ -58,16 +47,16 @@ class App extends Component {
           </Switch>
         </div>
       </Container>
-    )
+    );
   }
 
   render() {
-    const { providerStore } = this.props.root
-    let providerLoaded = false
+    const { providerStore } = this.props.root;
+    let providerLoaded = false;
     if (!providerStore.defaultAccount) {
-      providerLoaded = false
+      providerLoaded = false;
     } else {
-      providerLoaded = true
+      providerLoaded = true;
     }
 
     return (
@@ -82,8 +71,8 @@ class App extends Component {
           </HashRouter>
         </MuiThemeProvider>
       </ErrorHandler>
-    )
+    );
   }
 }
 
-export default App
+export default App;
