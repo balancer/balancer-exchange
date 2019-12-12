@@ -32,7 +32,7 @@ export default class ProxyStore {
         Swap Methods - Action
     */
     @action batchSwapExactIn = async (tokenIn, tokenAmountIn, tokenOut, minAmountOut, maxPrice) => {
-        const proxy = blockchain.loadObject('ExchangeProxy', deployed['kovan'].proxy, 'ExchangeProxy')
+        const proxy = blockchain.loadObject('ExchangeProxy', deployed.proxy, 'ExchangeProxy')
         let pools = await sor.getPoolsWithTokens(tokenIn, tokenOut)
 
         let poolData = []
@@ -69,7 +69,7 @@ export default class ProxyStore {
     }
 
     @action batchSwapExactOut = async (tokenIn, maxAmountIn, tokenOut, tokenAmountOut, maxPrice) => {
-        const proxy = blockchain.loadObject('ExchangeProxy', deployed['kovan'].proxy, 'ExchangeProxy')
+        const proxy = blockchain.loadObject('ExchangeProxy', deployed.proxy, 'ExchangeProxy')
         let pools = await sor.getPoolsWithTokens(tokenIn, tokenOut)
 
         let poolData = []
@@ -117,7 +117,7 @@ export default class ProxyStore {
         Swap Methods - Preview
     */
     previewBatchSwapExactIn = async (tokenIn, tokenOut, tokenAmountIn) => {
-        const proxy = blockchain.loadObject('ExchangeProxy', deployed['kovan'].proxy, 'ExchangeProxy')
+        const proxy = blockchain.loadObject('ExchangeProxy', deployed.proxy, 'ExchangeProxy')
         console.log('[Action] previewBatchSwapExactIn', tokenIn, tokenOut, tokenAmountIn)
 
         try {
@@ -182,7 +182,7 @@ export default class ProxyStore {
     }
     
     previewBatchSwapExactOut = async (tokenIn, tokenOut, tokenAmountOut) => {
-        const proxy = blockchain.loadObject('ExchangeProxy', deployed['kovan'].proxy, 'ExchangeProxy')
+        const proxy = blockchain.loadObject('ExchangeProxy', deployed.proxy, 'ExchangeProxy')
         console.log('[Action] previewBatchSwapExactOut', tokenIn, tokenOut, tokenAmountOut)
 
         try {
@@ -190,7 +190,7 @@ export default class ProxyStore {
             let pools = await sor.getPoolsWithTokens(tokenIn, tokenOut)
 
             if (pools.pools.length === 0) throw Error('There are no pools with selected tokens')
-                
+
             let poolData = []
             pools.pools.forEach(p=> {
                 let tI = p.tokens.find(t => helpers.toChecksum(t.address) === tokenIn)

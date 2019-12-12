@@ -1,16 +1,16 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import './index.css';
+import 'index.css';
 import App from 'views/App';
 import * as serviceWorker from './serviceWorker';
-import { Provider } from 'mobx-react'
-import RootStore from './stores/Root'
+import { Provider } from 'mobx-react';
+import RootStore from 'stores/Root';
 
 const Root = (
     <Provider root={RootStore}>
         <App />
     </Provider>
-)
+);
 ReactDOM.render(Root, document.getElementById('root'));
 
 // If you want your app to work offline and load faster, you can change
