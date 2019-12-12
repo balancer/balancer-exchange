@@ -31,7 +31,7 @@ export default class ProxyStore {
         this.previewPending = value;
     }
 
-    /* 
+    /*
         Swap Methods - Action
     */
     @action batchSwapExactIn = async (
@@ -43,7 +43,7 @@ export default class ProxyStore {
     ) => {
         const proxy = blockchain.loadObject(
             'ExchangeProxy',
-            deployed.proxy,
+            deployed['kovan'].proxy,
             'ExchangeProxy'
         );
         let pools = await sor.getPoolsWithTokens(tokenIn, tokenOut);
@@ -51,19 +51,17 @@ export default class ProxyStore {
         let poolData = [];
 
         pools.pools.forEach(p => {
-            let tI = p.tokens.find(
+            let tI: any = p.tokens.find(
                 t => helpers.toChecksum(t.address) === tokenIn
             );
-            let tO = p.tokens.find(
+            let tO: any = p.tokens.find(
                 t => helpers.toChecksum(t.address) === tokenOut
             );
             let obj: any = {};
             obj.id = helpers.toChecksum(p.id);
             obj.balanceIn = new Decimal(tI.balance);
             obj.balanceOut = new Decimal(tO.balance);
-            obj.weightIn = new Decimal(tI.denormWeight).div(
-                new Decimal(p.totalWeight)
-            );
+            obj.weightIn = new Decimal(tI.denormWeight).div(new Decimal(p.totalWeight));
             obj.weightOut = new Decimal(tO.denormWeight).div(
                 new Decimal(p.totalWeight)
             );
@@ -117,7 +115,7 @@ export default class ProxyStore {
     ) => {
         const proxy = blockchain.loadObject(
             'ExchangeProxy',
-            deployed.proxy,
+            deployed['kovan'].proxy,
             'ExchangeProxy'
         );
         let pools = await sor.getPoolsWithTokens(tokenIn, tokenOut);
@@ -125,18 +123,20 @@ export default class ProxyStore {
         let poolData = [];
 
         pools.pools.forEach(p => {
-            let tI = p.tokens.find(
+            let tI: any = p.tokens.find(
                 t => helpers.toChecksum(t.address) === tokenIn
             );
-            let tO = p.tokens.find(
+            let tO: any = p.tokens.find(
                 t => helpers.toChecksum(t.address) === tokenOut
             );
             let obj: any = {};
             obj.id = helpers.toChecksum(p.id);
             obj.balanceIn = new Decimal(tI.balance);
             obj.balanceOut = new Decimal(tO.balance);
-            obj.weightIn = new Decimal(tI.denormWeight).div(p.totalWeight);
-            obj.weightOut = new Decimal(tO.denormWeight).div(p.totalWeight);
+            obj.weightIn = new Decimal(tI.denormWeight).div(new Decimal(p.totalWeight));
+            obj.weightOut = new Decimal(tO.denormWeight).div(
+                new Decimal(p.totalWeight)
+            );
             obj.swapFee = new Decimal(p.swapFee);
             poolData.push(obj);
         });
@@ -186,13 +186,13 @@ export default class ProxyStore {
         return effectivePrice;
     }
 
-    /* 
+    /*
         Swap Methods - Preview
     */
     previewBatchSwapExactIn = async (tokenIn, tokenOut, tokenAmountIn) => {
         const proxy = blockchain.loadObject(
             'ExchangeProxy',
-            deployed.proxy,
+            deployed['kovan'].proxy,
             'ExchangeProxy'
         );
         console.log(
@@ -206,20 +206,27 @@ export default class ProxyStore {
             this.setPreviewPending(true);
             let pools = await sor.getPoolsWithTokens(tokenIn, tokenOut);
 
+            if (pools.pools.length === 0)
+                throw Error('There are no pools with selected tokens');
+
             let poolData = [];
             pools.pools.forEach(p => {
-                let tI = p.tokens.find(
+                let tI: any = p.tokens.find(
                     t => helpers.toChecksum(t.address) === tokenIn
                 );
-                let tO = p.tokens.find(
+                let tO: any = p.tokens.find(
                     t => helpers.toChecksum(t.address) === tokenOut
                 );
                 let obj: any = {};
                 obj.id = helpers.toChecksum(p.id);
                 obj.balanceIn = new Decimal(tI.balance);
                 obj.balanceOut = new Decimal(tO.balance);
-                obj.weightIn = new Decimal(tI.denormWeight).div(p.totalWeight);
-                obj.weightOut = new Decimal(tO.denormWeight).div(p.totalWeight);
+                obj.weightIn = new Decimal(tI.denormWeight).div(
+                    new Decimal(p.totalWeight)
+                );
+                obj.weightOut = new Decimal(tO.denormWeight).div(
+                    new Decimal(p.totalWeight)
+                );
                 obj.swapFee = new Decimal(p.swapFee);
                 poolData.push(obj);
             });
@@ -289,7 +296,7 @@ export default class ProxyStore {
     previewBatchSwapExactOut = async (tokenIn, tokenOut, tokenAmountOut) => {
         const proxy = blockchain.loadObject(
             'ExchangeProxy',
-            deployed.proxy,
+            deployed['kovan'].proxy,
             'ExchangeProxy'
         );
         console.log(
@@ -303,12 +310,15 @@ export default class ProxyStore {
             this.setPreviewPending(true);
             let pools = await sor.getPoolsWithTokens(tokenIn, tokenOut);
 
+            if (pools.pools.length === 0)
+                throw Error('There are no pools with selected tokens');
+
             let poolData = [];
             pools.pools.forEach(p => {
-                let tI = p.tokens.find(
+                let tI: any = p.tokens.find(
                     t => helpers.toChecksum(t.address) === tokenIn
                 );
-                let tO = p.tokens.find(
+                let tO: any = p.tokens.find(
                     t => helpers.toChecksum(t.address) === tokenOut
                 );
                 let obj: any = {};
