@@ -61,7 +61,9 @@ export default class ProxyStore {
             obj.id = helpers.toChecksum(p.id);
             obj.balanceIn = new Decimal(tI.balance);
             obj.balanceOut = new Decimal(tO.balance);
-            obj.weightIn = new Decimal(tI.denormWeight).div(new Decimal(p.totalWeight));
+            obj.weightIn = new Decimal(tI.denormWeight).div(
+                new Decimal(p.totalWeight)
+            );
             obj.weightOut = new Decimal(tO.denormWeight).div(
                 new Decimal(p.totalWeight)
             );
@@ -133,7 +135,9 @@ export default class ProxyStore {
             obj.id = helpers.toChecksum(p.id);
             obj.balanceIn = new Decimal(tI.balance);
             obj.balanceOut = new Decimal(tO.balance);
-            obj.weightIn = new Decimal(tI.denormWeight).div(new Decimal(p.totalWeight));
+            obj.weightIn = new Decimal(tI.denormWeight).div(
+                new Decimal(p.totalWeight)
+            );
             obj.weightOut = new Decimal(tO.denormWeight).div(
                 new Decimal(p.totalWeight)
             );

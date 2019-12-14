@@ -20,10 +20,6 @@ class PoolSwapView extends Component<any, any> {
         const { providerStore } = this.props.root;
         // poolStore.setCurrentPool(address)
         this.setState({ tokenIn, tokenOut });
-
-        if (!providerStore.defaultAccount) {
-            await providerStore.setWeb3WebClient();
-        }
     }
 
     render() {

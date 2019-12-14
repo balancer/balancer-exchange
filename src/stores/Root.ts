@@ -15,11 +15,9 @@ export class RootStore {
         this.providerStore = new ProviderStore(this);
         this.swapFormStore = new SwapFormStore(this);
         this.tokenStore = new TokenStore(this);
-        this.asyncSetup();
     }
 
     asyncSetup = async () => {
-        await this.providerStore.setWeb3WebClient();
     };
 }
 
