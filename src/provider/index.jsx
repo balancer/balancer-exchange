@@ -1,23 +1,38 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useWeb3React as useWeb3ReactCore } from '@web3-react/core';
 import { isMobile } from 'react-device-detect';
-
-import { NetworkContextName } from 'configs/network';
+import { web3ContextNames } from 'configs/network';
 import { injected } from 'provider/connectors';
 
-export function useWeb3React() {
-    const context = useWeb3ReactCore();
-    const contextNetwork = useWeb3ReactCore(NetworkContextName);
-
-    return context.active ? context : contextNetwork;
-}
-
+/*  Attempt to connect to & activate injected connector
+    If we're on mobile and have an injected connector, attempt even if not authorized (legacy support)
+    If we tried to connect, or it's active, return true;
+ */
 export function useEagerConnect() {
-    const { activate, active } = useWeb3ReactCore(); // specifically using useWeb3ReactCore because of what this hook does
+    const { activate, active } = useWeb3ReactCore(web3ContextNames.injected);
 
     const [tried, setTried] = useState(false);
 
     useEffect(() => {
+        // const activateIfAuthorized = async () => {
+        //     const isAuthorized = await injected.isAuthorized();
+        //     if (isAuthorized) {
+        //         activate(injected, undefined, true).catch(() => {
+        //             setTried(true);
+        //         });
+        //     } else {
+        //         if (isMobile && window.ethereum) {
+        //             activate(injected, undefined, true).catch(() => {
+        //                 setTried(true);
+        //             });
+        //         } else {
+        //             setTried(true);
+        //         }
+        //     }
+        // };
+        //
+        // activateIfAuthorized();
+
         injected.isAuthorized().then(isAuthorized => {
             if (isAuthorized) {
                 activate(injected, undefined, true).catch(() => {
@@ -50,7 +65,9 @@ export function useEagerConnect() {
  * and out after checking what network they're on
  */
 export function useInactiveListener(suppress = false) {
-    const { active, error, activate } = useWeb3ReactCore(); // specifically using useWeb3React because of what this hook does
+    const { active, error, activate } = useWeb3ReactCore(
+        web3ContextNames.injected
+    );
 
     useEffect(() => {
         const { ethereum } = window;

@@ -1,11 +1,66 @@
-import { observable, action } from 'mobx';
+import { action, observable } from 'mobx';
 import * as deployed from 'deployed.json';
-import * as blockchain from 'utils/blockchain';
 import * as helpers from 'utils/helpers';
-import { RootStore } from 'stores/Root';
+import {str} from 'utils/helpers';
+import RootStore from 'stores/Root';
 import sor from 'balancer-sor';
 import { Decimal } from 'decimal.js';
 import * as log from 'loglevel';
+import { ContractTypes } from './Provider';
+
+export interface ExactAmountOutPreview {
+    preview: {
+        inputAmount: any;
+        effectivePrice: any;
+        swaps: any;
+    };
+    validSwap: boolean;
+}
+
+export interface ExactAmountInPreview {
+    preview: {
+        outputAmount: any;
+        effectivePrice: any;
+        swaps: any;
+    };
+    validSwap: boolean;
+}
+
+export interface Pool {
+    id: string;
+    balanceIn: Decimal;
+    balanceOut: Decimal;
+    weightIn: Decimal;
+    weightOut: Decimal;
+    swapFee: Decimal;
+}
+
+class CostCalculator {
+    gasPrice: Decimal;
+    gasPerTrade: Decimal;
+    outTokenEthPrice: Decimal;
+    costPerTrade: Decimal;
+    costOutputToken: Decimal;
+
+    constructor(params: {
+        gasPrice: Decimal;
+        gasPerTrade: Decimal;
+        outTokenEthPrice: Decimal;
+    }) {
+        const { gasPrice, gasPerTrade, outTokenEthPrice } = params;
+        this.gasPrice = gasPrice;
+        this.gasPerTrade = gasPerTrade;
+        this.outTokenEthPrice = outTokenEthPrice;
+        this.costPerTrade = gasPrice.times(gasPerTrade);
+        this.costOutputToken = this.costPerTrade.times(outTokenEthPrice);
+    }
+
+    getCostOutputToken(): Decimal {
+        return this.costOutputToken;
+    }
+}
+
+export interface Swap {}
 
 export const statusCodes = {
     NOT_LOADED: 0,
@@ -16,11 +71,17 @@ export const statusCodes = {
 
 export default class ProxyStore {
     @observable previewPending: boolean;
+    costCalculator: CostCalculator;
     rootStore: RootStore;
 
     constructor(rootStore) {
         this.rootStore = rootStore;
         this.previewPending = false;
+        this.costCalculator = new CostCalculator({
+            gasPrice: new Decimal(0.00000001),
+            gasPerTrade: new Decimal(210000),
+            outTokenEthPrice: new Decimal(100),
+        });
     }
 
     isPreviewPending() {
@@ -29,6 +90,40 @@ export default class ProxyStore {
 
     setPreviewPending(value) {
         this.previewPending = value;
+    }
+
+    async getPoolsWithToken(
+        tokenIn: string,
+        tokenOut: string
+    ): Promise<Pool[]> {
+        let pools = await sor.getPoolsWithTokens(tokenIn, tokenOut);
+
+        if (pools.pools.length === 0)
+            throw Error('There are no pools with selected tokens');
+
+        let poolData: Pool[] = [];
+        pools.pools.forEach(p => {
+            let tI: any = p.tokens.find(
+                t => helpers.toChecksum(t.address) === tokenIn
+            );
+            let tO: any = p.tokens.find(
+                t => helpers.toChecksum(t.address) === tokenOut
+            );
+            let obj: Pool = {
+                id: helpers.toChecksum(p.id),
+                balanceIn: new Decimal(tI.balance),
+                balanceOut: new Decimal(tO.balance),
+                weightIn: new Decimal(tI.denormWeight).div(
+                    new Decimal(p.totalWeight)
+                ),
+                weightOut: new Decimal(tO.denormWeight).div(
+                    new Decimal(p.totalWeight)
+                ),
+                swapFee: new Decimal(p.swapFee),
+            };
+            poolData.push(obj);
+        });
+        return poolData;
     }
 
     /*
@@ -41,42 +136,13 @@ export default class ProxyStore {
         minAmountOut,
         maxPrice
     ) => {
-        const proxy = blockchain.loadObject(
-            'ExchangeProxy',
-            deployed['kovan'].proxy,
-            'ExchangeProxy'
+        const proxy = this.rootStore.providerStore.getContract(
+            ContractTypes.ExchangeProxy,
+            deployed['kovan'].proxy
         );
-        let pools = await sor.getPoolsWithTokens(tokenIn, tokenOut);
 
-        let poolData = [];
-
-        pools.pools.forEach(p => {
-            let tI: any = p.tokens.find(
-                t => helpers.toChecksum(t.address) === tokenIn
-            );
-            let tO: any = p.tokens.find(
-                t => helpers.toChecksum(t.address) === tokenOut
-            );
-            let obj: any = {};
-            obj.id = helpers.toChecksum(p.id);
-            obj.balanceIn = new Decimal(tI.balance);
-            obj.balanceOut = new Decimal(tO.balance);
-            obj.weightIn = new Decimal(tI.denormWeight).div(
-                new Decimal(p.totalWeight)
-            );
-            obj.weightOut = new Decimal(tO.denormWeight).div(
-                new Decimal(p.totalWeight)
-            );
-            obj.swapFee = new Decimal(p.swapFee);
-            poolData.push(obj);
-        });
-
-        let gasPrice = 0.00000001; // 1 Gwei
-        let gasPerTrade = 210000; // eg. 210k gas
-        let outTokenEthPrice = 100;
-
-        let costPerTrade = gasPrice * gasPerTrade; // eg. 210k gas @ 10 Gwei
-        let costOutputToken = costPerTrade * outTokenEthPrice;
+        const poolData = await this.getPoolsWithToken(tokenIn, tokenOut);
+        const costOutputToken = this.costCalculator.getCostOutputToken();
 
         let sorSwaps = sor.linearizedSolution(
             poolData,
@@ -86,7 +152,7 @@ export default class ProxyStore {
             costOutputToken
         );
 
-        let swaps = [];
+        let swaps: any[] = [];
         for (let i = 0; i < sorSwaps.inputAmounts.length; i++) {
             let swapAmount = sorSwaps.inputAmounts[i].toString();
             let swap = [
@@ -115,42 +181,13 @@ export default class ProxyStore {
         tokenAmountOut,
         maxPrice
     ) => {
-        const proxy = blockchain.loadObject(
-            'ExchangeProxy',
-            deployed['kovan'].proxy,
-            'ExchangeProxy'
+        const proxy = this.rootStore.providerStore.getContract(
+            ContractTypes.ExchangeProxy,
+            deployed['kovan'].proxy
         );
-        let pools = await sor.getPoolsWithTokens(tokenIn, tokenOut);
 
-        let poolData = [];
-
-        pools.pools.forEach(p => {
-            let tI: any = p.tokens.find(
-                t => helpers.toChecksum(t.address) === tokenIn
-            );
-            let tO: any = p.tokens.find(
-                t => helpers.toChecksum(t.address) === tokenOut
-            );
-            let obj: any = {};
-            obj.id = helpers.toChecksum(p.id);
-            obj.balanceIn = new Decimal(tI.balance);
-            obj.balanceOut = new Decimal(tO.balance);
-            obj.weightIn = new Decimal(tI.denormWeight).div(
-                new Decimal(p.totalWeight)
-            );
-            obj.weightOut = new Decimal(tO.denormWeight).div(
-                new Decimal(p.totalWeight)
-            );
-            obj.swapFee = new Decimal(p.swapFee);
-            poolData.push(obj);
-        });
-
-        let gasPrice = 0.00000001; // 1 Gwei
-        let gasPerTrade = 210000; // eg. 210k gas
-        let outTokenEthPrice = 100;
-
-        let costPerTrade = gasPrice * gasPerTrade; // eg. 210k gas @ 10 Gwei
-        let costOutputToken = costPerTrade * outTokenEthPrice;
+        const poolData = await this.getPoolsWithToken(tokenIn, tokenOut);
+        const costOutputToken = this.costCalculator.getCostOutputToken();
 
         let sorSwaps = sor.linearizedSolution(
             poolData,
@@ -160,7 +197,7 @@ export default class ProxyStore {
             costOutputToken
         );
 
-        let swaps = [];
+        let swaps: any[] = [];
         for (let i = 0; i < sorSwaps.inputAmounts.length; i++) {
             let swapAmount = sorSwaps.inputAmounts[i].toString();
             let swap = [
@@ -185,20 +222,22 @@ export default class ProxyStore {
     calcEffectivePrice(tokenAmountIn, tokenAmountOut) {
         const amountIn = new Decimal(tokenAmountIn);
         const amountOut = new Decimal(tokenAmountOut);
-        const effectivePrice = amountIn.div(amountOut).toString();
-
-        return effectivePrice;
+        return amountIn.div(amountOut).toString();
     }
 
     /*
         Swap Methods - Preview
     */
-    previewBatchSwapExactIn = async (tokenIn, tokenOut, tokenAmountIn) => {
-        const proxy = blockchain.loadObject(
-            'ExchangeProxy',
-            deployed['kovan'].proxy,
-            'ExchangeProxy'
+    previewBatchSwapExactIn = async (
+        tokenIn,
+        tokenOut,
+        tokenAmountIn
+    ): Promise<ExactAmountInPreview> => {
+        const proxy = this.rootStore.providerStore.getContract(
+            ContractTypes.ExchangeProxy,
+            deployed['kovan'].proxy
         );
+
         console.log(
             '[Action] previewBatchSwapExactIn',
             tokenIn,
@@ -208,42 +247,12 @@ export default class ProxyStore {
 
         try {
             this.setPreviewPending(true);
-            let pools = await sor.getPoolsWithTokens(tokenIn, tokenOut);
 
-            if (pools.pools.length === 0)
-                throw Error('There are no pools with selected tokens');
-
-            let poolData = [];
-            pools.pools.forEach(p => {
-                let tI: any = p.tokens.find(
-                    t => helpers.toChecksum(t.address) === tokenIn
-                );
-                let tO: any = p.tokens.find(
-                    t => helpers.toChecksum(t.address) === tokenOut
-                );
-                let obj: any = {};
-                obj.id = helpers.toChecksum(p.id);
-                obj.balanceIn = new Decimal(tI.balance);
-                obj.balanceOut = new Decimal(tO.balance);
-                obj.weightIn = new Decimal(tI.denormWeight).div(
-                    new Decimal(p.totalWeight)
-                );
-                obj.weightOut = new Decimal(tO.denormWeight).div(
-                    new Decimal(p.totalWeight)
-                );
-                obj.swapFee = new Decimal(p.swapFee);
-                poolData.push(obj);
-            });
+            const poolData = await this.getPoolsWithToken(tokenIn, tokenOut);
+            const costOutputToken = this.costCalculator.getCostOutputToken();
 
             let maxPrice = helpers.setPropertyToMaxUintIfEmpty();
             let minAmountOut = helpers.setPropertyToZeroIfEmpty();
-
-            let gasPrice = 0.00000001; // 1 Gwei
-            let gasPerTrade = 210000; // eg. 210k gas
-            let outTokenEthPrice = 100;
-
-            let costPerTrade = gasPrice * gasPerTrade; // eg. 210k gas @ 10 Gwei
-            let costOutputToken = costPerTrade * outTokenEthPrice;
 
             let sorSwaps = sor.linearizedSolution(
                 poolData,
@@ -253,7 +262,7 @@ export default class ProxyStore {
                 costOutputToken
             );
 
-            let swaps = [];
+            let swaps: any[] = [];
             for (let i = 0; i < sorSwaps.inputAmounts.length; i++) {
                 let swapAmount = sorSwaps.inputAmounts[i].toString();
                 let swap = [
@@ -280,29 +289,39 @@ export default class ProxyStore {
                 helpers.fromWei(preview)
             );
 
-            const data = {
-                outputAmount: preview,
-                effectivePrice,
-                swaps,
+            this.setPreviewPending(false);
+            return {
+                preview: {
+                    outputAmount: preview,
+                    effectivePrice,
+                    swaps,
+                },
                 validSwap: true,
             };
-            this.setPreviewPending(false);
-            return data;
         } catch (e) {
             log.error('[Error] previewSwapExactAmountIn', e);
             this.setPreviewPending(false);
             return {
+                preview: {
+                    outputAmount: null,
+                    effectivePrice: null,
+                    swaps: null,
+                },
                 validSwap: false,
             };
         }
     };
 
-    previewBatchSwapExactOut = async (tokenIn, tokenOut, tokenAmountOut) => {
-        const proxy = blockchain.loadObject(
-            'ExchangeProxy',
-            deployed['kovan'].proxy,
-            'ExchangeProxy'
+    previewBatchSwapExactOut = async (
+        tokenIn: string,
+        tokenOut: string,
+        tokenAmountOut: string
+    ): Promise<ExactAmountOutPreview> => {
+        const proxy = this.rootStore.providerStore.getContract(
+            ContractTypes.ExchangeProxy,
+            deployed['kovan'].proxy
         );
+
         console.log(
             '[Action] previewBatchSwapExactOut',
             tokenIn,
@@ -312,42 +331,12 @@ export default class ProxyStore {
 
         try {
             this.setPreviewPending(true);
-            let pools = await sor.getPoolsWithTokens(tokenIn, tokenOut);
 
-            if (pools.pools.length === 0)
-                throw Error('There are no pools with selected tokens');
-
-            let poolData = [];
-            pools.pools.forEach(p => {
-                let tI: any = p.tokens.find(
-                    t => helpers.toChecksum(t.address) === tokenIn
-                );
-                let tO: any = p.tokens.find(
-                    t => helpers.toChecksum(t.address) === tokenOut
-                );
-                let obj: any = {};
-                obj.id = helpers.toChecksum(p.id);
-                obj.balanceIn = new Decimal(tI.balance);
-                obj.balanceOut = new Decimal(tO.balance);
-                obj.weightIn = new Decimal(tI.denormWeight).div(
-                    new Decimal(p.totalWeight)
-                );
-                obj.weightOut = new Decimal(tO.denormWeight).div(
-                    new Decimal(p.totalWeight)
-                );
-                obj.swapFee = new Decimal(p.swapFee);
-                poolData.push(obj);
-            });
+            const poolData = await this.getPoolsWithToken(tokenIn, tokenOut);
+            const costOutputToken = this.costCalculator.getCostOutputToken();
 
             let maxPrice = helpers.setPropertyToMaxUintIfEmpty();
             let maxAmountIn = helpers.setPropertyToMaxUintIfEmpty();
-
-            let gasPrice = 0.00000001; // 1 Gwei
-            let gasPerTrade = 210000; // eg. 210k gas
-            let outTokenEthPrice = 100;
-
-            let costPerTrade = gasPrice * gasPerTrade; // eg. 210k gas @ 10 Gwei
-            let costOutputToken = costPerTrade * outTokenEthPrice;
 
             let sorSwaps = sor.linearizedSolution(
                 poolData,
@@ -357,7 +346,7 @@ export default class ProxyStore {
                 costOutputToken
             );
 
-            let swaps = [];
+            let swaps: any[] = [];
             for (let i = 0; i < sorSwaps.inputAmounts.length; i++) {
                 let swapAmount = sorSwaps.inputAmounts[i].toString();
                 let swap = [
@@ -384,19 +373,24 @@ export default class ProxyStore {
                 helpers.fromWei(preview)
             );
 
-            const data = {
-                inputAmount: preview,
-                effectivePrice,
-                swaps,
+            this.setPreviewPending(false);
+            return {
+                preview: {
+                    inputAmount: preview,
+                    effectivePrice,
+                    swaps,
+                },
                 validSwap: true,
             };
-
-            this.setPreviewPending(false);
-            return data;
         } catch (e) {
             log.error('[Error] previewSwapExactAmountOut', e);
             this.setPreviewPending(false);
             return {
+                preview: {
+                    inputAmount: null,
+                    effectivePrice: null,
+                    swaps: null,
+                },
                 validSwap: false,
             };
         }

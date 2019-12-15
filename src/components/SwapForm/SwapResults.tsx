@@ -10,28 +10,17 @@ import {
     TableHead,
     TableRow,
 } from '@material-ui/core';
-import { observer, inject } from 'mobx-react';
+import { observer } from 'mobx-react';
 import { labels } from 'stores/SwapForm';
 import * as helpers from 'utils/helpers';
-import { withStyles } from '@material-ui/core/styles';
+import { useStores } from "../../contexts/storesContext";
 
-const styles = theme => ({
-    button: {
-        display: 'block',
-        marginTop: theme.spacing(2),
-    },
-    formControl: {
-        margin: theme.spacing(1),
-        paddingLeft: theme.spacing(1),
-        minWidth: 120,
-    },
-});
+const SwapResults = props => {
+    const {
+        root: { proxyStore, swapFormStore },
+    } = useStores();
 
-@inject('root')
-@observer
-class SwapResults extends React.Component<any, any> {
-    buildCardContentByMethod() {
-        const { swapFormStore } = this.props.root;
+    function buildCardContentByMethod() {
         const { outputs } = swapFormStore;
 
         const validSwap = outputs.validSwap;
@@ -48,8 +37,7 @@ class SwapResults extends React.Component<any, any> {
         );
     }
 
-    buildTable() {
-        const { swapFormStore } = this.props.root;
+    function buildTable() {
         const { outputs } = swapFormStore;
         const validSwap = outputs.validSwap;
 
@@ -88,34 +76,31 @@ class SwapResults extends React.Component<any, any> {
         }
     }
 
-    render() {
-        const { swapFormStore } = this.props.root;
-        const { outputs } = swapFormStore;
+    const { outputs } = swapFormStore;
+    const validSwap = outputs.validSwap;
 
-        const validSwap = outputs.validSwap;
-        return (
-            <Card>
-                <CardContent>
-                    <Typography variant="h5">Result Preview</Typography>
-                    {this.buildCardContentByMethod()}
-                    {validSwap ? (
-                        <React.Fragment>
-                            <br />
-                            <br />
-                        </React.Fragment>
-                    ) : (
-                        <React.Fragment>
-                            <br />
-                            <Typography color="textSecondary" variant="body1">
-                                (Invalid Swap Parameters)
-                            </Typography>
-                        </React.Fragment>
-                    )}
-                    {this.buildTable()}
-                </CardContent>
-            </Card>
-        );
-    }
-}
+    return (
+        <Card>
+            <CardContent>
+                <Typography variant="h5">Result Preview</Typography>
+                {buildCardContentByMethod()}
+                {validSwap ? (
+                    <React.Fragment>
+                        <br />
+                        <br />
+                    </React.Fragment>
+                ) : (
+                    <React.Fragment>
+                        <br />
+                        <Typography color="textSecondary" variant="body1">
+                            (Invalid Swap Parameters)
+                        </Typography>
+                    </React.Fragment>
+                )}
+                {buildTable()}
+            </CardContent>
+        </Card>
+    );
+};
 
-export default withStyles(styles)(SwapResults);
+export default SwapResults;

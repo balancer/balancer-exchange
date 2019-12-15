@@ -1,5 +1,5 @@
 import { observable, action } from 'mobx';
-import { RootStore } from 'stores/Root';
+import RootStore from 'stores/Root';
 import * as deployed from 'deployed.json';
 
 export const formNames = {
@@ -27,6 +27,10 @@ export default class SwapFormStore {
         outputToken: '',
         inputAmount: '',
         outputAmount: '',
+        type: 'exactIn',
+        outputLimit: '0',
+        inputLimit: '0',
+        limitPrice: '0',
     };
     @observable outputs = {
         inputAmount: '',
@@ -45,8 +49,8 @@ export default class SwapFormStore {
     }
 
     getTokenList = () => {
-        return deployed['kovan'].tokens
-    }
+        return deployed['kovan'].tokens;
+    };
 
     resetInputs() {
         this.inputs = {

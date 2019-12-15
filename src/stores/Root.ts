@@ -4,7 +4,7 @@ import ProviderStore from 'stores/Provider';
 import SwapFormStore from 'stores/SwapForm';
 import TokenStore from 'stores/Token';
 
-export class RootStore {
+export default class RootStore {
     proxyStore: ProxyStore;
     providerStore: ProviderStore;
     swapFormStore: SwapFormStore;
@@ -16,10 +16,4 @@ export class RootStore {
         this.swapFormStore = new SwapFormStore(this);
         this.tokenStore = new TokenStore(this);
     }
-
-    asyncSetup = async () => {
-    };
 }
-
-const store = new RootStore();
-export default store;

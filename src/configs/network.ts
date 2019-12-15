@@ -1,1 +1,4 @@
-export const NetworkContextName = 'NETWORK';
+export const web3ContextNames = {
+    backup: 'BACKUP',
+    injected: 'INJECTED',
+};

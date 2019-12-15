@@ -1,7 +1,7 @@
-import { observable, action } from 'mobx';
-import { RootStore } from 'stores/Root';
-import * as helpers from 'utils/helpers';
-import * as blockchain from 'utils/blockchain';
+import { action, observable } from "mobx";
+import RootStore from "stores/Root";
+import * as helpers from "utils/helpers";
+import { ContractTypes } from "stores/Provider";
 
 export default class PoolStore {
     @observable symbols = {};
@@ -50,12 +50,13 @@ export default class PoolStore {
     }
 
     @action approveMax = async (tokenAddress, spender) => {
-        const token = blockchain.loadObject(
-            'TestToken',
-            tokenAddress,
-            'TestToken'
+        const {providerStore} = this.rootStore;
+        const token = providerStore.getContract(
+          ContractTypes.TestToken,
+          tokenAddress
         );
-        const account = await blockchain.getDefaultAccount();
+
+        const account = await providerStore.getActiveAccount();
 
         try {
             await token.methods.approve(spender, helpers.MAX_UINT).send();
@@ -66,12 +67,13 @@ export default class PoolStore {
     };
 
     @action revokeApproval = async (tokenAddress, spender) => {
-        const token = blockchain.loadObject(
-            'TestToken',
-            tokenAddress,
-            'TestToken'
+        const {providerStore} = this.rootStore;
+        const token = providerStore.getContract(
+          ContractTypes.TestToken,
+          tokenAddress
         );
-        const account = await blockchain.getDefaultAccount();
+
+        const account = await providerStore.getActiveAccount();
 
         try {
             await token.methods.approve(spender, 0).send();
@@ -82,35 +84,40 @@ export default class PoolStore {
     };
 
     @action fetchSymbol = async tokenAddress => {
-        const token = blockchain.loadObject(
-            'TestToken',
-            tokenAddress,
-            'TestToken'
+        const {providerStore} = this.rootStore;
+        const token = providerStore.getContract(
+          ContractTypes.TestToken,
+          tokenAddress
         );
-        const symbol = await token.methods.symbol().call();
-        this.symbols[tokenAddress] = symbol;
+        this.symbols[tokenAddress] = await token.methods.symbol().call();
     };
 
+    @action fetchEtherBalance = async (tokenAddress, account) => {};
+
     @action fetchBalanceOf = async (tokenAddress, account) => {
-        const token = blockchain.loadObject(
-            'TestToken',
-            tokenAddress,
-            'TestToken'
+        const {providerStore} = this.rootStore;
+        const token = providerStore.getContract(
+          ContractTypes.TestToken,
+          tokenAddress
         );
+
         const balance = await token.methods.balanceOf(account).call();
         this.setBalanceProperty(tokenAddress, account, balance);
     };
 
     @action fetchAllowance = async (tokenAddress, account, spender) => {
-        const token = blockchain.loadObject(
-            'TestToken',
-            tokenAddress,
-            'TestToken'
+        const {providerStore} = this.rootStore;
+        const token = providerStore.getContract(
+          ContractTypes.TestToken,
+          tokenAddress
         );
+
         const allowance = await token.methods
             .allowance(account, spender)
             .call();
+
         this.setAllowanceProperty(tokenAddress, account, spender, allowance);
+
         console.log(
             'Allowance Property Set',
             tokenAddress,
