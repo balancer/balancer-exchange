@@ -40,18 +40,17 @@ export default function Web3ReactManager({ children }) {
     useEffect(() => {
         if (triedEager && !networkActive && !networkError && !injectedActive) {
             activateNetwork(backup);
-            console.log(
-              {
-                  action: 'activateNetwork',
-                  provider: backup
-              })
+            console.log({
+                action: 'activateNetwork',
+                provider: backup,
+            });
         }
     }, [
         triedEager,
         networkActive,
         networkError,
         activateNetwork,
-        injectedActive
+        injectedActive,
     ]);
 
     // 'pause' the network connector if we're ever connected to an account and it's active
@@ -98,7 +97,7 @@ export default function Web3ReactManager({ children }) {
 
     // on page load, do nothing until we've tried to connect to the injected connector
     if (!triedEager) {
-        console.log('render-no-eager')
+        console.log('render-no-eager');
         return null;
     }
 
@@ -113,7 +112,7 @@ export default function Web3ReactManager({ children }) {
 
     // if neither context is active, spin
     if (!injectedActive && !networkActive) {
-        console.log('render-no-active-network')
+        console.log('render-no-active-network');
         return showLoader ? (
             <MessageWrapper>
                 <Message>Loading</Message>
@@ -121,6 +120,6 @@ export default function Web3ReactManager({ children }) {
         ) : null;
     }
 
-    console.log('render-active')
+    console.log('render-active');
     return children;
 }

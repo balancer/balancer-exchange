@@ -1,8 +1,7 @@
 import { observable, action } from 'mobx';
-import { injected, backup } from 'provider/connectors';
 import RootStore from 'stores/Root';
 import { web3ContextNames } from 'configs/network';
-import { ethers, utils } from 'ethers';
+import { ethers, utils, providers } from 'ethers';
 import { Web3ReactContextInterface } from '@web3-react/core/dist/types';
 
 export enum ContractTypes {
@@ -10,13 +9,15 @@ export enum ContractTypes {
     BFactory = 'BFactory',
     TestToken = 'TestToken',
     ExchangeProxy = 'ExchangeProxy',
+    ExchangeProxyCallable = 'ExchangeProxyCallable',
 }
 
 export const schema = {
-    BPool: require('../abi/BPool'),
-    BFactory: require('../abi/BFactory'),
-    TestToken: require('../abi/TestToken'),
-    ExchangeProxy: require('../abi/ExchangeProxy'),
+    BPool: require('../abi/BPool').abi,
+    BFactory: require('../abi/BFactory').abi,
+    TestToken: require('../abi/TestToken').abi,
+    ExchangeProxy: require('../abi/ExchangeProxy').abi,
+    ExchangeProxyCallable: require('../abi/ExchangeProxyCallable').abi,
 };
 
 export default class ProviderStore {
@@ -55,41 +56,52 @@ export default class ProviderStore {
 
     getActiveProviderName(): string {
         if (
-          !this.contexts[web3ContextNames.injected] ||
-          !this.contexts[web3ContextNames.backup]
+            !this.contexts[web3ContextNames.injected] ||
+            !this.contexts[web3ContextNames.backup]
         ) {
             throw new Error('Contexts not loaded to store');
         }
 
         const contextInjected = this.contexts[web3ContextNames.injected];
         const contextNetwork = this.contexts[web3ContextNames.backup];
-        return contextInjected.active ? web3ContextNames.injected : web3ContextNames.backup;
+        return contextInjected.active
+            ? web3ContextNames.injected
+            : web3ContextNames.backup;
     }
 
-    getActiveLibrary() {
+    getLibrary(provider: any): providers.Web3Provider {
+        return new providers.Web3Provider(provider);
+    }
+
+    getActiveLibrary(): providers.Web3Provider {
         const context = this.getWeb3React();
-        return context.library;
+        return this.getLibrary(context.library);
     }
 
+    getContract(
+        type: ContractTypes,
+        address: string,
+        signerAccount?: string
+    ): ethers.Contract {
+        console.log(this.getWeb3React());
 
-    getContract(type: ContractTypes, address: string, signerAccount?: string): ethers.Contract {
-        const checksum = utils.getAddress(address);
+        const lib = this.getActiveLibrary();
+        console.log(lib);
 
-        console.log(this.getActiveLibrary())
+        const randomWallet = ethers.Wallet.createRandom();
+        const wallet = new ethers.Wallet(randomWallet.privateKey);
+        let provider = ethers.getDefaultProvider('kovan');
 
         if (signerAccount) {
             return new ethers.Contract(
-              checksum,
-              schema[type],
-              this.getActiveLibrary().getSigner(signerAccount)
+                address,
+                schema[type],
+                provider
+                // lib.getSigner(signerAccount)
             );
         }
 
-        return new ethers.Contract(
-            checksum,
-            schema[type],
-            this.getActiveLibrary()
-        );
+        return new ethers.Contract(address, schema[type], provider);
     }
 
     @action setWeb3Context(name, context) {

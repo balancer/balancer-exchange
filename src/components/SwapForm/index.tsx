@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, {useRef} from 'react';
+import React, { useRef } from 'react';
 import { Grid, TextField, Button } from '@material-ui/core';
 import { observer } from 'mobx-react';
 import { ValidatorForm, TextValidator } from 'react-material-ui-form-validator';
@@ -21,8 +21,8 @@ const SwapForm = observer(props => {
     const onChange = async (event, form) => {
         console.log({
             name: event.target.name,
-            value: event.target.value
-        })
+            value: event.target.value,
+        });
         updateProperty(form, event.target.name, event.target.value);
         const { inputAmount, outputAmount } = swapFormStore.inputs;
 

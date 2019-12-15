@@ -18,11 +18,11 @@ function getLibrary(provider) {
 }
 
 const Root = (
-        <Web3ProviderInjected getLibrary={getLibrary}>
-            <Web3ProviderBackup getLibrary={getLibrary}>
-                <App />
-            </Web3ProviderBackup>
-        </Web3ProviderInjected>
+    <Web3ProviderInjected getLibrary={getLibrary}>
+        <Web3ProviderBackup getLibrary={getLibrary}>
+            <App />
+        </Web3ProviderBackup>
+    </Web3ProviderInjected>
 );
 ReactDOM.render(Root, document.getElementById('root'));
 

@@ -1,7 +1,7 @@
 import { action, observable } from 'mobx';
 import * as deployed from 'deployed.json';
 import * as helpers from 'utils/helpers';
-import {str} from 'utils/helpers';
+import { str } from 'utils/helpers';
 import RootStore from 'stores/Root';
 import sor from 'balancer-sor';
 import { Decimal } from 'decimal.js';
@@ -28,11 +28,11 @@ export interface ExactAmountInPreview {
 
 export interface Pool {
     id: string;
-    balanceIn: Decimal;
-    balanceOut: Decimal;
-    weightIn: Decimal;
-    weightOut: Decimal;
-    swapFee: Decimal;
+    balanceIn: string;
+    balanceOut: string;
+    weightIn: string;
+    weightOut: string;
+    swapFee: string;
 }
 
 class CostCalculator {
@@ -55,8 +55,8 @@ class CostCalculator {
         this.costOutputToken = this.costPerTrade.times(outTokenEthPrice);
     }
 
-    getCostOutputToken(): Decimal {
-        return this.costOutputToken;
+    getCostOutputToken(): string {
+        return str(this.costOutputToken);
     }
 }
 
@@ -111,15 +111,15 @@ export default class ProxyStore {
             );
             let obj: Pool = {
                 id: helpers.toChecksum(p.id),
-                balanceIn: new Decimal(tI.balance),
-                balanceOut: new Decimal(tO.balance),
-                weightIn: new Decimal(tI.denormWeight).div(
-                    new Decimal(p.totalWeight)
+                balanceIn: str(new Decimal(tI.balance)),
+                balanceOut: str(new Decimal(tO.balance)),
+                weightIn: str(
+                    new Decimal(tI.denormWeight).div(new Decimal(p.totalWeight))
                 ),
-                weightOut: new Decimal(tO.denormWeight).div(
-                    new Decimal(p.totalWeight)
+                weightOut: str(
+                    new Decimal(tO.denormWeight).div(new Decimal(p.totalWeight))
                 ),
-                swapFee: new Decimal(p.swapFee),
+                swapFee: str(new Decimal(p.swapFee)),
             };
             poolData.push(obj);
         });
@@ -163,7 +163,7 @@ export default class ProxyStore {
             ];
             swaps.push(swap);
         }
-        await proxy.methods
+        await proxy
             .batchSwapExactIn(
                 swaps,
                 tokenIn,
@@ -208,7 +208,7 @@ export default class ProxyStore {
             ];
             swaps.push(swap);
         }
-        await proxy.methods
+        await proxy
             .batchSwapExactOut(
                 swaps,
                 tokenIn,
@@ -234,7 +234,7 @@ export default class ProxyStore {
         tokenAmountIn
     ): Promise<ExactAmountInPreview> => {
         const proxy = this.rootStore.providerStore.getContract(
-            ContractTypes.ExchangeProxy,
+            ContractTypes.ExchangeProxyCallable,
             deployed['kovan'].proxy
         );
 
@@ -274,15 +274,13 @@ export default class ProxyStore {
                 swaps.push(swap);
             }
 
-            const preview = await proxy.methods
-                .batchSwapExactIn(
-                    swaps,
-                    tokenIn,
-                    tokenOut,
-                    helpers.toWei(tokenAmountIn),
-                    minAmountOut
-                )
-                .call();
+            const preview = await proxy.batchSwapExactIn(
+                swaps,
+                tokenIn,
+                tokenOut,
+                helpers.toWei(tokenAmountIn),
+                minAmountOut
+            );
 
             const effectivePrice = this.calcEffectivePrice(
                 tokenAmountIn,
@@ -318,7 +316,7 @@ export default class ProxyStore {
         tokenAmountOut: string
     ): Promise<ExactAmountOutPreview> => {
         const proxy = this.rootStore.providerStore.getContract(
-            ContractTypes.ExchangeProxy,
+            ContractTypes.ExchangeProxyCallable,
             deployed['kovan'].proxy
         );
 
@@ -358,15 +356,13 @@ export default class ProxyStore {
                 swaps.push(swap);
             }
 
-            const preview = await proxy.methods
-                .batchSwapExactOut(
-                    swaps,
-                    tokenIn,
-                    tokenOut,
-                    helpers.toWei(tokenAmountOut),
-                    maxAmountIn
-                )
-                .call();
+            const preview = await proxy.batchSwapExactOut(
+                swaps,
+                tokenIn,
+                tokenOut,
+                helpers.toWei(tokenAmountOut),
+                maxAmountIn
+            );
 
             const effectivePrice = this.calcEffectivePrice(
                 tokenAmountOut,

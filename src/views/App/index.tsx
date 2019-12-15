@@ -31,8 +31,8 @@ const App = () => {
         <Web3ReactManager>
             <MuiThemeProvider theme={theme}>
                 <HashRouter>
-                        <Header />
-                        {renderViews()}
+                    <Header />
+                    {renderViews()}
                 </HashRouter>
             </MuiThemeProvider>
         </Web3ReactManager>

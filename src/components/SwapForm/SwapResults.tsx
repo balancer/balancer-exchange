@@ -13,7 +13,7 @@ import {
 import { observer } from 'mobx-react';
 import { labels } from 'stores/SwapForm';
 import * as helpers from 'utils/helpers';
-import { useStores } from "../../contexts/storesContext";
+import { useStores } from '../../contexts/storesContext';
 
 const SwapResults = props => {
     const {
