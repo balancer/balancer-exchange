@@ -12,7 +12,7 @@ import { Link } from '../../theme';
 import MetamaskIcon from '../../assets/images/metamask.png';
 import { ReactComponent as Close } from '../../assets/images/x.svg';
 import { SUPPORTED_WALLETS, injected } from 'provider/connectors';
-import { useStores } from 'contexts/storesContext'
+import { useStores } from 'contexts/storesContext';
 
 const CloseIcon = styled.div`
     position: absolute;
@@ -114,17 +114,17 @@ export default function WalletModal({
     pendingTransactions,
     confirmedTransactions,
 }) {
-  const {
-    root: { providerStore, modalStore, transactionStore },
-  } = useStores();
-  const {
-    chainId,
-    active,
-    account,
-    connector,
-    error,
-    activate
-  } = providerStore.getActiveWeb3React();
+    const {
+        root: { providerStore, modalStore, transactionStore },
+    } = useStores();
+    const {
+        chainId,
+        active,
+        account,
+        connector,
+        error,
+        activate,
+    } = providerStore.getActiveWeb3React();
 
     const [walletView, setWalletView] = useState(WALLET_VIEWS.ACCOUNT);
     const [pendingWallet, setPendingWallet] = useState();

@@ -11,12 +11,12 @@ import { ValidatorForm, TextValidator } from 'react-material-ui-form-validator';
 import * as helpers from 'utils/helpers';
 
 const TestPanel = observer(() => {
-  return (
-    <Grid container spacing = {1}>
-      <Grid item xs={12}>
-        <Button>Max Approval</Button>
-        <Button>Mint</Button>
-      </Grid>
-    </Grid>
-  )
+    return (
+        <Grid container spacing={1}>
+            <Grid item xs={12}>
+                <Button>Max Approval</Button>
+                <Button>Mint</Button>
+            </Grid>
+        </Grid>
+    );
 });

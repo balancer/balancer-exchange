@@ -3,10 +3,10 @@ import ProxyStore from 'stores/Proxy';
 import ProviderStore from 'stores/Provider';
 import SwapFormStore from 'stores/SwapForm';
 import TokenStore from 'stores/Token';
-import ModalStore from "./Modal";
-import TransactionStore from "./Transaction";
-import {supportedNetworks} from 'provider/connectors'
-import AppSettingsStore from "./AppSettings";
+import ModalStore from './Modal';
+import TransactionStore from './Transaction';
+import { supportedNetworks } from 'provider/connectors';
+import AppSettingsStore from './AppSettings';
 
 export default class RootStore {
     proxyStore: ProxyStore;

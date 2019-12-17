@@ -18,7 +18,7 @@ export const labels = {
         OUTPUT_AMOUNT: 'Output Amount',
         EFFECTIVE_PRICE: 'Effective Price',
         MARGINAL_PRICE: 'Marginal Price',
-    }
+    },
 };
 
 export default class SwapFormStore {

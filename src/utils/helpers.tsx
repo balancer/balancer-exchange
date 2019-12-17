@@ -1,13 +1,15 @@
 // Libraries
 import React from 'react';
 import jazzicon from 'jazzicon';
-import {ethers, utils} from 'ethers'
+import { ethers, utils } from 'ethers';
 import { Decimal } from 'decimal.js';
-import {SUPPORTED_THEMES} from "../theme";
+import { SUPPORTED_THEMES } from '../theme';
 
 // Utils
 export const MAX_GAS = toDecimal(utils.bigNumberify('0xffffffff'));
-export const MAX_UINT = toDecimal(utils.bigNumberify(ethers.constants.MaxUint256));
+export const MAX_UINT = toDecimal(
+    utils.bigNumberify(ethers.constants.MaxUint256)
+);
 
 export function toChecksum(address) {
     return utils.getAddress(address);
@@ -24,7 +26,9 @@ export const addZero = value => {
     return value > 9 ? value : `0${value}`;
 };
 
-export function toDecimal(val: string | number | utils.BigNumber | Decimal): Decimal {
+export function toDecimal(
+    val: string | number | utils.BigNumber | Decimal
+): Decimal {
     return new Decimal(val.toString());
 }
 
@@ -78,20 +82,22 @@ export function str(value: any): string {
 
 export function shortenAddress(address, digits = 4) {
     if (!isAddress(address)) {
-        throw Error(`Invalid 'address' parameter '${address}'.`)
+        throw Error(`Invalid 'address' parameter '${address}'.`);
     }
-    return `${address.substring(0, digits + 2)}...${address.substring(42 - digits)}`
+    return `${address.substring(0, digits + 2)}...${address.substring(
+        42 - digits
+    )}`;
 }
 
 export function shortenTransactionHash(hash, digits = 4) {
-    return `${hash.substring(0, digits + 2)}...${hash.substring(66 - digits)}`
+    return `${hash.substring(0, digits + 2)}...${hash.substring(66 - digits)}`;
 }
 
 export function isAddress(value) {
     try {
-        return ethers.utils.getAddress(value.toLowerCase())
+        return ethers.utils.getAddress(value.toLowerCase());
     } catch {
-        return false
+        return false;
     }
 }
 
@@ -101,39 +107,41 @@ export function fromFeeToPercentage(value) {
     return percentageValue;
 }
 
-
 const ETHERSCAN_PREFIXES = {
     1: '',
     3: 'ropsten.',
     4: 'rinkeby.',
     5: 'goerli.',
-    42: 'kovan.'
-}
+    42: 'kovan.',
+};
 
 export function getEtherscanLink(networkId, data, type) {
-    const prefix = `https://${ETHERSCAN_PREFIXES[networkId] || ETHERSCAN_PREFIXES[1]}etherscan.io`
+    const prefix = `https://${ETHERSCAN_PREFIXES[networkId] ||
+        ETHERSCAN_PREFIXES[1]}etherscan.io`;
 
     switch (type) {
         case 'transaction': {
-            return `${prefix}/tx/${data}`
+            return `${prefix}/tx/${data}`;
         }
         case 'address':
         default: {
-            return `${prefix}/address/${data}`
+            return `${prefix}/address/${data}`;
         }
     }
 }
 
 export function getQueryParam(windowLocation, name) {
-    var q = windowLocation.search.match(new RegExp('[?&]' + name + '=([^&#?]*)'))
-    return q && q[1]
+    var q = windowLocation.search.match(
+        new RegExp('[?&]' + name + '=([^&#?]*)')
+    );
+    return q && q[1];
 }
 
 export function checkSupportedTheme(themeName) {
     if (themeName && themeName.toUpperCase() in SUPPORTED_THEMES) {
-        return themeName.toUpperCase()
+        return themeName.toUpperCase();
     }
-    return null
+    return null;
 }
 
 export const copyToClipboard = e => {

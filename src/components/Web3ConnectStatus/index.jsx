@@ -3,14 +3,12 @@ import styled, { css } from 'styled-components';
 import { UnsupportedChainIdError } from '@web3-react/core';
 import { darken, transparentize } from 'polished';
 import { Activity } from 'react-feather';
-import {observer} from "mobx-react";
+import { observer } from 'mobx-react';
 import { shortenAddress } from 'utils/helpers';
 import WalletModal from 'components/WalletModal';
 import { Spinner } from '../../theme';
 import Circle from 'assets/images/circle.svg';
-import {
-    injected
-} from 'provider/connectors';
+import { injected } from 'provider/connectors';
 import { web3ContextNames } from 'provider/connectors';
 import Identicon from '../Identicon';
 import { useStores } from '../../contexts/storesContext';

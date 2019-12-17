@@ -38,9 +38,7 @@ export default class ProviderStore {
     }
 
     getWeb3React(name: string): Web3ReactContextInterface {
-        if (
-          !this.contexts[name]
-        ) {
+        if (!this.contexts[name]) {
             throw new Error('Context not loaded to store');
         }
 

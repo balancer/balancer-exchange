@@ -10,57 +10,57 @@ import AppBar from 'components/AppBar';
 import { appConfig } from 'configs';
 import { makeStyles } from '@material-ui/core/styles';
 import { useStores } from '../../contexts/storesContext';
-import styled from 'styled-components'
-import { Link } from '../../theme'
-import Web3ConnectStatus from 'components/Web3ConnectStatus'
-import { darken } from 'polished'
+import styled from 'styled-components';
+import { Link } from '../../theme';
+import Web3ConnectStatus from 'components/Web3ConnectStatus';
+import { darken } from 'polished';
 
 const HeaderFrame = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-`
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+`;
 
 const HeaderElement = styled.div`
-  margin: 1.25rem;
-  display: flex;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-`
+    margin: 1.25rem;
+    display: flex;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+`;
 
 const Nod = styled.span`
-  transform: rotate(0deg);
-  transition: transform 150ms ease-out;
+    transform: rotate(0deg);
+    transition: transform 150ms ease-out;
 
-  :hover {
-    transform: rotate(-10deg);
-  }
-`
+    :hover {
+        transform: rotate(-10deg);
+    }
+`;
 
 const Title = styled.div`
-  display: flex;
-  align-items: center;
+    display: flex;
+    align-items: center;
 
-  :hover {
-    cursor: pointer;
-  }
-
-  #link {
-    text-decoration-color: ${({ theme }) => theme.UniswapPink};
-  }
-
-  #title {
-    display: inline;
-    font-size: 1rem;
-    font-weight: 500;
-    color: ${({ theme }) => theme.wisteriaPurple};
     :hover {
-      color: ${({ theme }) => darken(0.1, theme.wisteriaPurple)};
+        cursor: pointer;
     }
-  }
-`
+
+    #link {
+        text-decoration-color: ${({ theme }) => theme.UniswapPink};
+    }
+
+    #title {
+        display: inline;
+        font-size: 1rem;
+        font-weight: 500;
+        color: ${({ theme }) => theme.wisteriaPurple};
+        :hover {
+            color: ${({ theme }) => darken(0.1, theme.wisteriaPurple)};
+        }
+    }
+`;
 
 const useStyles = makeStyles({
     styles: {
@@ -75,25 +75,25 @@ const Header = () => {
     } = useStores();
 
     return (
-      <HeaderFrame>
-          <HeaderElement>
-              <Title>
-                  <Nod>
-                      <Link id="link" href="/">
-              <span role="img" aria-label="unicorn">
-                ⚖️{'  '}
-              </span>
-                      </Link>
-                  </Nod>
-                  <Link id="link" href="/" to="/list">
-                      <h1 id="title"> {appConfig.name}</h1>
-                  </Link>
-              </Title>
-          </HeaderElement>
-          <HeaderElement>
-              <Web3ConnectStatus />
-          </HeaderElement>
-      </HeaderFrame>
+        <HeaderFrame>
+            <HeaderElement>
+                <Title>
+                    <Nod>
+                        <Link id="link" href="/">
+                            <span role="img" aria-label="unicorn">
+                                ⚖️{'  '}
+                            </span>
+                        </Link>
+                    </Nod>
+                    <Link id="link" href="/" to="/list">
+                        <h1 id="title"> {appConfig.name}</h1>
+                    </Link>
+                </Title>
+            </HeaderElement>
+            <HeaderElement>
+                <Web3ConnectStatus />
+            </HeaderElement>
+        </HeaderFrame>
     );
 };
 

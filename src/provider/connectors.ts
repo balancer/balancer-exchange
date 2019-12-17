@@ -40,7 +40,7 @@ export const SUPPORTED_WALLETS = {
         description: 'Injected web3 provider.',
         href: null,
         color: '#010101',
-        primary: true
+        primary: true,
     },
     METAMASK: {
         connector: injected,
@@ -48,6 +48,6 @@ export const SUPPORTED_WALLETS = {
         iconName: 'metamask.png',
         description: 'Easy-to-use browser extension.',
         href: null,
-        color: '#E8831D'
-    }
+        color: '#E8831D',
+    },
 };
