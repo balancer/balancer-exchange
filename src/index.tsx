@@ -6,7 +6,8 @@ import 'index.css';
 import App from 'views/App';
 import * as serviceWorker from './serviceWorker';
 import { Provider } from 'mobx-react';
-import { web3ContextNames } from 'configs/network';
+import { web3ContextNames } from 'provider/connectors';
+import ThemeProvider, {GlobalStyle} from "./theme";
 
 const Web3ProviderInjected = createWeb3ReactRoot(web3ContextNames.injected);
 const Web3ProviderBackup = createWeb3ReactRoot(web3ContextNames.backup);
@@ -20,7 +21,12 @@ function getLibrary(provider) {
 const Root = (
     <Web3ProviderInjected getLibrary={getLibrary}>
         <Web3ProviderBackup getLibrary={getLibrary}>
-            <App />
+          <ThemeProvider>
+            <>
+              <GlobalStyle />
+              <App />
+            </>
+          </ThemeProvider>
         </Web3ProviderBackup>
     </Web3ProviderInjected>
 );

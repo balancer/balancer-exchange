@@ -1,6 +1,6 @@
 import { observable, action } from 'mobx';
 import RootStore from 'stores/Root';
-import { web3ContextNames } from 'configs/network';
+import { web3ContextNames } from 'provider/connectors';
 import { ethers, utils, providers } from 'ethers';
 import { Web3ReactContextInterface } from '@web3-react/core/dist/types';
 
@@ -32,7 +32,22 @@ export default class ProviderStore {
         this.contexts = {};
     }
 
-    getWeb3React(): Web3ReactContextInterface {
+    async getCurrentBlockNumber(): Promise<number> {
+        const lib = this.getActiveLibrary();
+        return lib.getBlockNumber();
+    }
+
+    getWeb3React(name: string): Web3ReactContextInterface {
+        if (
+          !this.contexts[name]
+        ) {
+            throw new Error('Context not loaded to store');
+        }
+
+        return this.contexts[name];
+    }
+
+    getActiveWeb3React(): Web3ReactContextInterface {
         if (
             !this.contexts[web3ContextNames.injected] ||
             !this.contexts[web3ContextNames.backup]
@@ -74,7 +89,7 @@ export default class ProviderStore {
     }
 
     getActiveLibrary(): providers.Web3Provider {
-        const context = this.getWeb3React();
+        const context = this.getActiveWeb3React();
         return this.getLibrary(context.library);
     }
 
@@ -83,7 +98,7 @@ export default class ProviderStore {
         address: string,
         signerAccount?: string
     ): ethers.Contract {
-        console.log(this.getWeb3React());
+        console.log(this.getActiveWeb3React());
 
         const lib = this.getActiveLibrary();
         console.log(lib);

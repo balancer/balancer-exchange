@@ -3,7 +3,7 @@ import { useWeb3React } from '@web3-react/core';
 import styled from 'styled-components';
 import { backup, injected } from 'provider/connectors';
 import { useEagerConnect, useInactiveListener } from 'provider/index';
-import { web3ContextNames } from 'configs/network';
+import { web3ContextNames } from 'provider/connectors';
 import { useStores } from 'contexts/storesContext';
 
 const MessageWrapper = styled.div`

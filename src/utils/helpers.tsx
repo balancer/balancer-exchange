@@ -1,18 +1,16 @@
 // Libraries
 import React from 'react';
 import jazzicon from 'jazzicon';
+import {ethers, utils} from 'ethers'
 import { Decimal } from 'decimal.js';
+import {SUPPORTED_THEMES} from "../theme";
 
 // Utils
-import web3 from './web3';
-
-export const { toWei, fromWei, isAddress } = web3.utils;
-
-export const MAX_GAS = 0xffffffff;
-export const MAX_UINT = web3.utils.toTwosComplement('-1');
+export const MAX_GAS = toDecimal(utils.bigNumberify('0xffffffff'));
+export const MAX_UINT = toDecimal(utils.bigNumberify(ethers.constants.MaxUint256));
 
 export function toChecksum(address) {
-    return web3.utils.toChecksumAddress(address);
+    return utils.getAddress(address);
 }
 
 export const formatDate = timestamp => {
@@ -26,14 +24,26 @@ export const addZero = value => {
     return value > 9 ? value : `0${value}`;
 };
 
-export function setPropertyToMaxUintIfEmpty(value?) {
+export function toDecimal(val: string | number | utils.BigNumber | Decimal): Decimal {
+    return new Decimal(val.toString());
+}
+
+export function fromWei(val: string | utils.BigNumber | Decimal): string {
+    return utils.formatEther(val.toString());
+}
+
+export function toWei(val: string | utils.BigNumber | Decimal): Decimal {
+    return toDecimal(utils.parseEther(val.toString()));
+}
+
+export function setPropertyToMaxUintIfEmpty(value?): string {
     if (!value || value === 0 || value === '') {
-        value = hexToNumberString(MAX_UINT);
+        value = MAX_UINT.toString();
     }
     return value;
 }
 
-export function setPropertyToZeroIfEmpty(value?) {
+export function setPropertyToZeroIfEmpty(value?): string {
     if (!value || value === '') {
         value = '0';
     }
@@ -62,18 +72,68 @@ export function roundValue(value, decimals = 4) {
     return value.slice(0, decimal + decimals + 1);
 }
 
-export function hexToNumberString(value) {
-    return web3.utils.hexToNumberString(value);
-}
-
 export function str(value: any): string {
     return value.toString();
 }
 
+export function shortenAddress(address, digits = 4) {
+    if (!isAddress(address)) {
+        throw Error(`Invalid 'address' parameter '${address}'.`)
+    }
+    return `${address.substring(0, digits + 2)}...${address.substring(42 - digits)}`
+}
+
+export function shortenTransactionHash(hash, digits = 4) {
+    return `${hash.substring(0, digits + 2)}...${hash.substring(66 - digits)}`
+}
+
+export function isAddress(value) {
+    try {
+        return ethers.utils.getAddress(value.toLowerCase())
+    } catch {
+        return false
+    }
+}
+
 export function fromFeeToPercentage(value) {
-    const etherValue = new Decimal(web3.utils.fromWei(value));
+    const etherValue = toDecimal(fromWei(value));
     const percentageValue = etherValue.times(100);
     return percentageValue;
+}
+
+
+const ETHERSCAN_PREFIXES = {
+    1: '',
+    3: 'ropsten.',
+    4: 'rinkeby.',
+    5: 'goerli.',
+    42: 'kovan.'
+}
+
+export function getEtherscanLink(networkId, data, type) {
+    const prefix = `https://${ETHERSCAN_PREFIXES[networkId] || ETHERSCAN_PREFIXES[1]}etherscan.io`
+
+    switch (type) {
+        case 'transaction': {
+            return `${prefix}/tx/${data}`
+        }
+        case 'address':
+        default: {
+            return `${prefix}/address/${data}`
+        }
+    }
+}
+
+export function getQueryParam(windowLocation, name) {
+    var q = windowLocation.search.match(new RegExp('[?&]' + name + '=([^&#?]*)'))
+    return q && q[1]
+}
+
+export function checkSupportedTheme(themeName) {
+    if (themeName && themeName.toUpperCase() in SUPPORTED_THEMES) {
+        return themeName.toUpperCase()
+    }
+    return null
 }
 
 export const copyToClipboard = e => {
