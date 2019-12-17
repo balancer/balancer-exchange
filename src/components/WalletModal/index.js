@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { isMobile } from 'react-device-detect';
 import { useWeb3React, UnsupportedChainIdError } from '@web3-react/core';
+import { observer} from "mobx-react";
 
 import Modal from '../Modal';
 import AccountDetails from '../AccountDetails';
@@ -110,10 +111,10 @@ const WALLET_VIEWS = {
     PENDING: 'pending',
 };
 
-export default function WalletModal({
+const WalletModal = observer(({
     pendingTransactions,
-    confirmedTransactions,
-}) {
+    confirmedTransactions
+}) => {
     const {
         root: { providerStore, modalStore, transactionStore },
     } = useStores();
@@ -131,6 +132,10 @@ export default function WalletModal({
     const [pendingError, setPendingError] = useState();
 
     const walletModalOpen = modalStore.walletModalVisible;
+
+    const toggleWalletModal = () => {
+        modalStore.toggleWalletModal();
+    };
 
     // always reset to account view
     useEffect(() => {
@@ -258,7 +263,7 @@ export default function WalletModal({
         if (error) {
             return (
                 <UpperSection>
-                    <CloseIcon onClick={modalStore.toggleWalletModal()}>
+                    <CloseIcon onClick={toggleWalletModal}>
                         <CloseColor alt={'close icon'} />
                     </CloseIcon>
                     <HeaderRow>
@@ -281,7 +286,7 @@ export default function WalletModal({
         if (account && walletView === WALLET_VIEWS.ACCOUNT) {
             return (
                 <AccountDetails
-                    toggleWalletModal={modalStore.toggleWalletModal()}
+                    toggleWalletModal={toggleWalletModal}
                     pendingTransactions={pendingTransactions}
                     confirmedTransactions={confirmedTransactions}
                     openOptions={() => setWalletView(WALLET_VIEWS.OPTIONS)}
@@ -290,7 +295,7 @@ export default function WalletModal({
         }
         return (
             <UpperSection>
-                <CloseIcon onClick={modalStore.toggleWalletModal()}>
+                <CloseIcon onClick={toggleWalletModal}>
                     <CloseColor alt={'close icon'} />
                 </CloseIcon>
                 {walletView !== WALLET_VIEWS.ACCOUNT ? (
@@ -338,11 +343,13 @@ export default function WalletModal({
         <Modal
             style={{ userSelect: 'none' }}
             isOpen={walletModalOpen}
-            onDismiss={modalStore.toggleWalletModal()}
+            onDismiss={toggleWalletModal}
             minHeight={null}
             maxHeight={90}
         >
             <Wrapper>{getModalContent()}</Wrapper>
         </Modal>
     );
-}
+});
+
+export default WalletModal;

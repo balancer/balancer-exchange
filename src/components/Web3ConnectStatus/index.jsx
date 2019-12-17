@@ -144,7 +144,9 @@ const Web3ConnectStatus = observer(() => {
     const confirmed = transactionStore.getConfirmedTransactions(chainId);
     const hasPendingTransactions = !!pending.size;
 
-    const toggleWalletModal = modalStore.walletModalVisible;
+    const toggleWalletModal = () => {
+        modalStore.toggleWalletModal();
+    };
 
     // handle the logo we want to show with the account
     function getStatusIcon() {
