@@ -79,13 +79,13 @@ const Header = () => {
           <HeaderElement>
               <Title>
                   <Nod>
-                      <Link id="link" href="https://uniswap.io">
+                      <Link id="link" href="/">
               <span role="img" aria-label="unicorn">
                 ⚖️{'  '}
               </span>
                       </Link>
                   </Nod>
-                  <Link id="link" href="https://uniswap.io" to="/list">
+                  <Link id="link" href="/" to="/list">
                       <h1 id="title"> {appConfig.name}</h1>
                   </Link>
               </Title>
