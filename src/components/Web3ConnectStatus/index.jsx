@@ -133,6 +133,14 @@ const Web3ConnectStatus = observer(() => {
         error,
     } = providerStore.getActiveWeb3React();
 
+    console.table({
+        chainId,
+        active,
+        account,
+        connector,
+        error,
+    });
+
     const contextNetwork = providerStore.getWeb3React(web3ContextNames.backup);
 
     if (!chainId) {
