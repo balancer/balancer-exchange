@@ -1,5 +1,6 @@
 import { action, observable } from 'mobx';
 import RootStore from 'stores/Root';
+import { ethers, utils } from 'ethers';
 import * as helpers from 'utils/helpers';
 import { ContractTypes } from 'stores/Provider';
 
@@ -51,15 +52,15 @@ export default class PoolStore {
 
     @action approveMax = async (tokenAddress, spender) => {
         const { providerStore } = this.rootStore;
+        const account = await providerStore.getActiveAccount();
         const token = providerStore.getContract(
             ContractTypes.TestToken,
-            tokenAddress
+            tokenAddress,
+            account
         );
 
-        const account = await providerStore.getActiveAccount();
-
         try {
-            await token.methods.approve(spender, helpers.MAX_UINT).send();
+            await token.approve(spender, helpers.MAX_UINT);
             await this.fetchAllowance(tokenAddress, account, spender);
         } catch (e) {
             console.log(e);
@@ -68,15 +69,15 @@ export default class PoolStore {
 
     @action revokeApproval = async (tokenAddress, spender) => {
         const { providerStore } = this.rootStore;
+        const account = await providerStore.getActiveAccount();
         const token = providerStore.getContract(
-            ContractTypes.TestToken,
-            tokenAddress
+          ContractTypes.TestToken,
+          tokenAddress,
+          account
         );
 
-        const account = await providerStore.getActiveAccount();
-
         try {
-            await token.methods.approve(spender, 0).send();
+            await token.approve(spender, 0);
             await this.fetchAllowance(tokenAddress, account, spender);
         } catch (e) {
             console.log(e);
@@ -89,7 +90,7 @@ export default class PoolStore {
             ContractTypes.TestToken,
             tokenAddress
         );
-        this.symbols[tokenAddress] = await token.methods.symbol().call();
+        this.symbols[tokenAddress] = await token.symbol().call();
     };
 
     @action fetchEtherBalance = async (tokenAddress, account) => {};
@@ -101,8 +102,20 @@ export default class PoolStore {
             tokenAddress
         );
 
-        const balance = await token.methods.balanceOf(account).call();
+        const balance = await token.balanceOf(account).call();
         this.setBalanceProperty(tokenAddress, account, balance);
+    };
+
+    @action mint = async (tokenAddress: string, amount: string) => {
+        const { providerStore } = this.rootStore;
+        const account = await providerStore.getActiveAccount();
+        const token = providerStore.getContract(
+          ContractTypes.TestToken,
+          tokenAddress,
+          account
+        );
+
+        await token.mint(utils.bigNumberify(amount));
     };
 
     @action fetchAllowance = async (tokenAddress, account, spender) => {
@@ -112,9 +125,7 @@ export default class PoolStore {
             tokenAddress
         );
 
-        const allowance = await token.methods
-            .allowance(account, spender)
-            .call();
+        const allowance = await token.allowance(account, spender);
 
         this.setAllowanceProperty(tokenAddress, account, spender, allowance);
 

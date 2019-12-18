@@ -4,7 +4,7 @@ import * as helpers from 'utils/helpers';
 import { str } from 'utils/helpers';
 import RootStore from 'stores/Root';
 import sor from 'balancer-sor';
-import { Decimal } from 'decimal.js';
+import { Decimal } from 'utils/decimal';
 import * as log from 'loglevel';
 import { ContractTypes } from './Provider';
 
@@ -33,6 +33,12 @@ export interface Pool {
     weightIn: string;
     weightOut: string;
     swapFee: string;
+}
+
+export interface SorSwaps {
+    inputAmounts: Decimal[],
+    selectedBalancers: string[],
+    totalOutput: Decimal
 }
 
 class CostCalculator {
@@ -144,7 +150,7 @@ export default class ProxyStore {
         const poolData = await this.getPoolsWithToken(tokenIn, tokenOut);
         const costOutputToken = this.costCalculator.getCostOutputToken();
 
-        let sorSwaps = sor.linearizedSolution(
+        let sorSwaps: SorSwaps = sor.linearizedSolution(
             poolData,
             'swapExactIn',
             tokenAmountIn,
@@ -189,7 +195,7 @@ export default class ProxyStore {
         const poolData = await this.getPoolsWithToken(tokenIn, tokenOut);
         const costOutputToken = this.costCalculator.getCostOutputToken();
 
-        let sorSwaps = sor.linearizedSolution(
+        let sorSwaps: SorSwaps = sor.linearizedSolution(
             poolData,
             'swapExactOut',
             tokenAmountOut,
@@ -254,13 +260,15 @@ export default class ProxyStore {
             let maxPrice = helpers.setPropertyToMaxUintIfEmpty();
             let minAmountOut = helpers.setPropertyToZeroIfEmpty();
 
-            let sorSwaps = sor.linearizedSolution(
+            let sorSwaps: SorSwaps = sor.linearizedSolution(
                 poolData,
                 'swapExactIn',
                 tokenAmountIn,
                 20,
                 costOutputToken
             );
+
+            console.log(sorSwaps);
 
             let swaps: any[] = [];
             for (let i = 0; i < sorSwaps.inputAmounts.length; i++) {
@@ -336,7 +344,7 @@ export default class ProxyStore {
             let maxPrice = helpers.setPropertyToMaxUintIfEmpty();
             let maxAmountIn = helpers.setPropertyToMaxUintIfEmpty();
 
-            let sorSwaps = sor.linearizedSolution(
+            let sorSwaps: SorSwaps = sor.linearizedSolution(
                 poolData,
                 'swapExactOut',
                 tokenAmountOut,

@@ -2,14 +2,13 @@
 import React from 'react';
 import jazzicon from 'jazzicon';
 import { ethers, utils } from 'ethers';
-import { Decimal } from 'decimal.js';
+import { Decimal } from 'utils/decimal';
 import { SUPPORTED_THEMES } from '../theme';
 
 // Utils
-export const MAX_GAS = toDecimal(utils.bigNumberify('0xffffffff'));
-export const MAX_UINT = toDecimal(
-    utils.bigNumberify(ethers.constants.MaxUint256)
-);
+export const MAX_GAS = utils.bigNumberify('0xffffffff');
+export const MAX_UINT =
+    utils.bigNumberify(ethers.constants.MaxUint256);
 
 export function toChecksum(address) {
     return utils.getAddress(address);
