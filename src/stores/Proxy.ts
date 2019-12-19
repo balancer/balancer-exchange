@@ -4,7 +4,7 @@ import * as helpers from 'utils/helpers';
 import { str } from 'utils/helpers';
 import RootStore from 'stores/Root';
 import sor from 'balancer-sor';
-import { Decimal } from 'utils/decimal';
+import { BigNumber } from 'utils/bignumber';
 import * as log from 'loglevel';
 import { ContractTypes } from './Provider';
 
@@ -36,22 +36,22 @@ export interface Pool {
 }
 
 export interface SorSwaps {
-    inputAmounts: Decimal[],
+    inputAmounts: BigNumber[],
     selectedBalancers: string[],
-    totalOutput: Decimal
+    totalOutput: BigNumber
 }
 
 class CostCalculator {
-    gasPrice: Decimal;
-    gasPerTrade: Decimal;
-    outTokenEthPrice: Decimal;
-    costPerTrade: Decimal;
-    costOutputToken: Decimal;
+    gasPrice: BigNumber;
+    gasPerTrade: BigNumber;
+    outTokenEthPrice: BigNumber;
+    costPerTrade: BigNumber;
+    costOutputToken: BigNumber;
 
     constructor(params: {
-        gasPrice: Decimal;
-        gasPerTrade: Decimal;
-        outTokenEthPrice: Decimal;
+        gasPrice: BigNumber;
+        gasPerTrade: BigNumber;
+        outTokenEthPrice: BigNumber;
     }) {
         const { gasPrice, gasPerTrade, outTokenEthPrice } = params;
         this.gasPrice = gasPrice;
@@ -84,9 +84,9 @@ export default class ProxyStore {
         this.rootStore = rootStore;
         this.previewPending = false;
         this.costCalculator = new CostCalculator({
-            gasPrice: new Decimal(0.00000001),
-            gasPerTrade: new Decimal(210000),
-            outTokenEthPrice: new Decimal(100),
+            gasPrice: new BigNumber(0.00000001),
+            gasPerTrade: new BigNumber(210000),
+            outTokenEthPrice: new BigNumber(100),
         });
     }
 
@@ -117,15 +117,15 @@ export default class ProxyStore {
             );
             let obj: Pool = {
                 id: helpers.toChecksum(p.id),
-                balanceIn: str(new Decimal(tI.balance)),
-                balanceOut: str(new Decimal(tO.balance)),
+                balanceIn: str(new BigNumber(tI.balance)),
+                balanceOut: str(new BigNumber(tO.balance)),
                 weightIn: str(
-                    new Decimal(tI.denormWeight).div(new Decimal(p.totalWeight))
+                    new BigNumber(tI.denormWeight).div(new BigNumber(p.totalWeight))
                 ),
                 weightOut: str(
-                    new Decimal(tO.denormWeight).div(new Decimal(p.totalWeight))
+                    new BigNumber(tO.denormWeight).div(new BigNumber(p.totalWeight))
                 ),
-                swapFee: str(new Decimal(p.swapFee)),
+                swapFee: str(new BigNumber(p.swapFee)),
             };
             poolData.push(obj);
         });
@@ -226,8 +226,8 @@ export default class ProxyStore {
     };
 
     calcEffectivePrice(tokenAmountIn, tokenAmountOut) {
-        const amountIn = new Decimal(tokenAmountIn);
-        const amountOut = new Decimal(tokenAmountOut);
+        const amountIn = new BigNumber(tokenAmountIn);
+        const amountOut = new BigNumber(tokenAmountOut);
         return amountIn.div(amountOut).toString();
     }
 

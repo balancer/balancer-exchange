@@ -31,6 +31,7 @@
     "babel-preset-react-app": "^9.0.2",
     "balancer-sor": "file:./lib/balancer-sor",
     "big.js": "^5.2.2",
+    "bignumber.js": "^9.0.0",
     "camelcase": "^5.2.0",
     "case-sensitive-paths-webpack-plugin": "2.2.0",
     "copy-to-clipboard": "^3.2.0",

@@ -1,6 +1,7 @@
 import { action, observable, ObservableMap } from 'mobx';
 import { providers } from 'ethers';
 import RootStore from 'stores/Root';
+import { TransactionResponse } from "ethers/providers";
 
 export interface TransactionRecord {
     response: providers.TransactionResponse;
@@ -66,12 +67,12 @@ export default class TransactionStore {
         const { providerStore } = this.rootStore;
 
         const currentBlock = await providerStore.getCurrentBlockNumber();
-        const lib = providerStore.getActiveLibrary();
+        const {library} = providerStore.getActiveWeb3React();
         const txRecordHashMap = this.safeGetTxRecordHashMap(networkId);
 
         txRecordHashMap.forEach((value, key) => {
             if (this.isTxPending(value) && this.isStale(value, currentBlock)) {
-                lib.getTransactionReceipt(key)
+                library.getTransactionReceipt(key)
                     .then(receipt => {
                         this.setTxRecordBlockChecked(
                             networkId,
@@ -96,14 +97,19 @@ export default class TransactionStore {
     // @dev Add transaction record. It's in a pending state until mined.
     @action addTransactionRecord(
         networkId: number,
-        txHash: string,
-        txResponse: providers.TransactionResponse
+        txResponse: TransactionResponse
     ) {
         const txRecord: TransactionRecord = {
             response: txResponse,
             blockNumberChecked: 0,
             receipt: undefined,
         };
+
+        const txHash = txResponse.hash;
+
+        if (!txHash) {
+            throw new Error('Attempting to add transaction record without hash')
+        }
 
         const txRecordHashMap = this.safeGetTxRecordHashMap(networkId);
 

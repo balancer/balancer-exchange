@@ -1,10 +1,9 @@
 import { action, observable } from 'mobx';
 import RootStore from 'stores/Root';
-import { ethers, utils } from 'ethers';
-import * as helpers from 'utils/helpers';
 import { ContractTypes } from 'stores/Provider';
+import * as helpers from 'utils/helpers'
 
-export default class PoolStore {
+export default class TokenStore {
     @observable symbols = {};
     @observable balances = {};
     @observable allowances = {};
@@ -52,36 +51,22 @@ export default class PoolStore {
 
     @action approveMax = async (tokenAddress, spender) => {
         const { providerStore } = this.rootStore;
-        const account = await providerStore.getActiveAccount();
-        const token = providerStore.getContract(
-            ContractTypes.TestToken,
-            tokenAddress,
-            account
+        await providerStore.sendTransaction(
+          ContractTypes.TestToken,
+          tokenAddress,
+          'approve',
+          [spender, helpers.MAX_UINT]
         );
-
-        try {
-            await token.approve(spender, helpers.MAX_UINT);
-            await this.fetchAllowance(tokenAddress, account, spender);
-        } catch (e) {
-            console.log(e);
-        }
     };
 
     @action revokeApproval = async (tokenAddress, spender) => {
         const { providerStore } = this.rootStore;
-        const account = await providerStore.getActiveAccount();
-        const token = providerStore.getContract(
+        await providerStore.sendTransaction(
           ContractTypes.TestToken,
           tokenAddress,
-          account
+          'mint',
+          [spender, 0]
         );
-
-        try {
-            await token.approve(spender, 0);
-            await this.fetchAllowance(tokenAddress, account, spender);
-        } catch (e) {
-            console.log(e);
-        }
     };
 
     @action fetchSymbol = async tokenAddress => {
@@ -102,20 +87,18 @@ export default class PoolStore {
             tokenAddress
         );
 
-        const balance = await token.balanceOf(account).call();
+        const balance = await token.balanceOf(account);
         this.setBalanceProperty(tokenAddress, account, balance);
     };
 
     @action mint = async (tokenAddress: string, amount: string) => {
         const { providerStore } = this.rootStore;
-        const account = await providerStore.getActiveAccount();
-        const token = providerStore.getContract(
-          ContractTypes.TestToken,
-          tokenAddress,
-          account
+        await providerStore.sendTransaction(
+            ContractTypes.TestToken,
+            tokenAddress,
+            'mint',
+            [amount]
         );
-
-        await token.mint(utils.bigNumberify(amount));
     };
 
     @action fetchAllowance = async (tokenAddress, account, spender) => {
