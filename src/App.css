@@ -1,4 +1,5 @@
 :root {
+	--background: #21222C;
   --panel-border: #41476B;
   --panel-background: #2e2f29;
   --token-balance-text: #90A4AE;
@@ -7,4 +8,8 @@
 	--link-text: #8C9EFF;
 	
   --roboto: 'Roboto', sans-serif; 
+}
+
+body {
+	background: var(--background);
 }
