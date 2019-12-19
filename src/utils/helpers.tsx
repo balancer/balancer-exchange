@@ -2,14 +2,12 @@
 import React from 'react';
 import jazzicon from 'jazzicon';
 import { ethers, utils } from 'ethers';
-import { Decimal } from 'decimal.js';
+import { BigNumber } from 'utils/bignumber';
 import { SUPPORTED_THEMES } from '../theme';
 
 // Utils
-export const MAX_GAS = toDecimal(utils.bigNumberify('0xffffffff'));
-export const MAX_UINT = toDecimal(
-    utils.bigNumberify(ethers.constants.MaxUint256)
-);
+export const MAX_GAS = utils.bigNumberify('0xffffffff');
+export const MAX_UINT = utils.bigNumberify(ethers.constants.MaxUint256);
 
 export function toChecksum(address) {
     return utils.getAddress(address);
@@ -27,16 +25,16 @@ export const addZero = value => {
 };
 
 export function toDecimal(
-    val: string | number | utils.BigNumber | Decimal
-): Decimal {
-    return new Decimal(val.toString());
+    val: string | number | utils.BigNumber | BigNumber
+): BigNumber {
+    return new BigNumber(val.toString());
 }
 
-export function fromWei(val: string | utils.BigNumber | Decimal): string {
+export function fromWei(val: string | utils.BigNumber | BigNumber): string {
     return utils.formatEther(val.toString());
 }
 
-export function toWei(val: string | utils.BigNumber | Decimal): Decimal {
+export function toWei(val: string | utils.BigNumber | BigNumber): BigNumber {
     return toDecimal(utils.parseEther(val.toString()));
 }
 
@@ -68,12 +66,12 @@ export function toAddressStub(address) {
     return `${start}...${end}`;
 }
 
-export function roundValue(value, decimals = 4) {
-    const decimal = value.indexOf('.');
-    if (decimal === -1) {
+export function roundValue(value, decimals = 4): string {
+    const decimalPoint = value.indexOf('.');
+    if (decimalPoint === -1) {
         return value;
     }
-    return value.slice(0, decimal + decimals + 1);
+    return value.slice(0, decimalPoint + decimals + 1);
 }
 
 export function str(value: any): string {

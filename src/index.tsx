@@ -13,6 +13,9 @@ const Web3ProviderInjected = createWeb3ReactRoot(web3ContextNames.injected);
 const Web3ProviderBackup = createWeb3ReactRoot(web3ContextNames.backup);
 
 function getLibrary(provider) {
+    console.log('[getLibrary]', {
+        provider
+    })
     const library = new ethers.providers.Web3Provider(provider);
     library.pollingInterval = 10000;
     return library;

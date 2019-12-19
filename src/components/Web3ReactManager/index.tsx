@@ -5,6 +5,7 @@ import { backup, injected } from 'provider/connectors';
 import { useEagerConnect, useInactiveListener } from 'provider/index';
 import { web3ContextNames } from 'provider/connectors';
 import { useStores } from 'contexts/storesContext';
+import { observer } from "mobx-react";
 
 const MessageWrapper = styled.div`
     display: flex;
@@ -17,10 +18,11 @@ const Message = styled.h2`
     color: ${({ theme }) => theme.uniswapPink};
 `;
 
-export default function Web3ReactManager({ children }) {
+const Web3ReactManager = observer(({ children }) => {
     const {
         root: { providerStore },
     } = useStores();
+
     const web3ContextInjected = useWeb3React(web3ContextNames.injected);
     const web3ContextBackup = useWeb3React(web3ContextNames.backup);
     const { active: injectedActive } = web3ContextInjected;
@@ -30,20 +32,36 @@ export default function Web3ReactManager({ children }) {
         activate: activateNetwork,
     } = web3ContextBackup;
 
-    console.log('manager-start');
-    console.log(web3ContextBackup);
+    providerStore.setWeb3Context(
+      web3ContextNames.backup,
+      web3ContextBackup
+    );
+
+    providerStore.setWeb3Context(
+      web3ContextNames.injected,
+      web3ContextInjected
+    );
+
+    console.log('[Web3ReactManager] Start of render', {
+        injected: web3ContextInjected,
+        backup: web3ContextBackup,
+    });
+
     // try to eagerly connect to an injected provider, if it exists and has granted access already
     const triedEager = useEagerConnect();
 
     // after eagerly trying injected, if the network connect ever isn't active or in an error state, activate itd
     // TODO think about not doing this at all
     useEffect(() => {
+        console.log('[Web3ReactManager] Consider activating backup', {
+            triedEager,
+            networkActive,
+            networkError,
+            injectedActive,
+        });
         if (triedEager && !networkActive && !networkError && !injectedActive) {
             activateNetwork(backup);
-            console.log({
-                action: 'activateNetwork',
-                provider: backup,
-            });
+            console.log('[Web3ReactManager] Backup activation started');
         }
     }, [
         triedEager,
@@ -56,6 +74,7 @@ export default function Web3ReactManager({ children }) {
     // 'pause' the network connector if we're ever connected to an account and it's active
     useEffect(() => {
         if (injectedActive && networkActive) {
+            console.log('[Web3ReactManager] Pause backup provider');
             backup.pause();
         }
     }, [injectedActive, networkActive]);
@@ -63,6 +82,7 @@ export default function Web3ReactManager({ children }) {
     // 'resume' the network connector if we're ever not connected to an account and it's active
     useEffect(() => {
         if (!injectedActive && networkActive) {
+            console.log('[Web3ReactManager] Resume backup provider');
             backup.resume();
         }
     }, [injectedActive, networkActive]);
@@ -82,22 +102,9 @@ export default function Web3ReactManager({ children }) {
         };
     }, []);
 
-    useEffect(() => {
-        providerStore.setWeb3Context(
-            web3ContextNames.injected,
-            web3ContextInjected
-        );
-        providerStore.setWeb3Context(
-            web3ContextNames.backup,
-            web3ContextBackup
-        );
-    }, [providerStore, web3ContextInjected, web3ContextBackup]);
-
-    console.log('manager-end');
-
     // on page load, do nothing until we've tried to connect to the injected connector
     if (!triedEager) {
-        console.log('render-no-eager');
+        console.log('[Web3ReactManager] Render: Eager load not tried');
         return null;
     }
 
@@ -112,7 +119,9 @@ export default function Web3ReactManager({ children }) {
 
     // if neither context is active, spin
     if (!injectedActive && !networkActive) {
-        console.log('render-no-active-network');
+        console.log(
+            '[Web3ReactManager] Render: No active network, show loading'
+        );
         return showLoader ? (
             <MessageWrapper>
                 <Message>Loading</Message>
@@ -120,6 +129,11 @@ export default function Web3ReactManager({ children }) {
         ) : null;
     }
 
-    console.log('render-active');
+    console.log('[Web3ReactManager] Render: Active network, render children', {
+        injectedActive,
+        networkActive,
+    });
     return children;
-}
+});
+
+export default Web3ReactManager;

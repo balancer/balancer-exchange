@@ -3,6 +3,9 @@ import RootStore from 'stores/Root';
 import { web3ContextNames } from 'provider/connectors';
 import { ethers, utils, providers } from 'ethers';
 import { Web3ReactContextInterface } from '@web3-react/core/dist/types';
+import UncheckedJsonRpcSigner from 'provider/UncheckedJsonRpcSigner';
+import Web3 from 'web3';
+import { sendAction } from './actions/actions';
 
 export enum ContractTypes {
     BPool = 'BPool',
@@ -33,8 +36,8 @@ export default class ProviderStore {
     }
 
     async getCurrentBlockNumber(): Promise<number> {
-        const lib = this.getActiveLibrary();
-        return lib.getBlockNumber();
+        const { library } = this.getActiveWeb3React();
+        return library.getBlockNumber();
     }
 
     getWeb3React(name: string): Web3ReactContextInterface {
@@ -55,6 +58,7 @@ export default class ProviderStore {
 
         const contextInjected = this.contexts[web3ContextNames.injected];
         const contextNetwork = this.contexts[web3ContextNames.backup];
+
         return contextInjected.active ? contextInjected : contextNetwork;
     }
 
@@ -63,8 +67,12 @@ export default class ProviderStore {
             throw new Error('No wallet to provide active account');
         }
 
-        console.log(this.getActiveLibrary());
-        return '0';
+        const { account } = this.getActiveWeb3React();
+
+        if (!account) {
+            throw new Error('No account available on active web3');
+        }
+        return account;
     }
 
     getActiveProviderName(): string {
@@ -82,13 +90,17 @@ export default class ProviderStore {
             : web3ContextNames.backup;
     }
 
-    getLibrary(provider: any): providers.Web3Provider {
-        return new providers.Web3Provider(provider);
-    }
+    // account is optional
+    getProviderOrSigner(library, account) {
+        console.log('[getProviderOrSigner', {
+            library,
+            account,
+            signer: library.getSigner(account),
+        });
 
-    getActiveLibrary(): providers.Web3Provider {
-        const context = this.getActiveWeb3React();
-        return this.getLibrary(context.library);
+        return account
+            ? new UncheckedJsonRpcSigner(library.getSigner(account))
+            : library;
     }
 
     getContract(
@@ -96,28 +108,66 @@ export default class ProviderStore {
         address: string,
         signerAccount?: string
     ): ethers.Contract {
-        console.log(this.getActiveWeb3React());
-
-        const lib = this.getActiveLibrary();
-        console.log(lib);
-
-        const randomWallet = ethers.Wallet.createRandom();
-        const wallet = new ethers.Wallet(randomWallet.privateKey);
-        let provider = ethers.getDefaultProvider('kovan');
+        const { library } = this.getActiveWeb3React();
 
         if (signerAccount) {
             return new ethers.Contract(
                 address,
                 schema[type],
-                provider
-                // lib.getSigner(signerAccount)
+                this.getProviderOrSigner(library, signerAccount)
             );
         }
 
-        return new ethers.Contract(address, schema[type], provider);
+        return new ethers.Contract(address, schema[type], library);
     }
 
     @action setWeb3Context(name, context) {
+        console.log('[setWeb3Context]', name, context);
         this.contexts[name] = context;
+    }
+
+    @action sendTransaction = async (
+      contractType: ContractTypes,
+      contractAddress: string,
+      action: string,
+      params: any[]
+    ): Promise<void> => {
+        const { transactionStore } = this.rootStore;
+        const { chainId, account } = this.getActiveWeb3React();
+
+        if (!account) {
+            throw new Error(
+              '[Error] Attempting to do blockchain transaction with no account'
+            );
+        }
+
+        if (!chainId) {
+            throw new Error(
+              '[Invariant] Attempting to do blockchain transaction with no chainId'
+            );
+        }
+
+        const contract = this.getContract(
+          contractType,
+          contractAddress,
+          account
+        );
+
+        const { txResponse, error } = await sendAction({
+            contract,
+            action,
+            sender: account,
+            data: params,
+        });
+
+        if (error) {
+            // Handle tx error
+        } else if (txResponse) {
+            transactionStore.addTransactionRecord(chainId, txResponse);
+        } else {
+            throw new Error(
+              '[Invariant]: No error or response received from blockchain action'
+            );
+        }
     }
 }

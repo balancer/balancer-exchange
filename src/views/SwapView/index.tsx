@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { Typography, Container, Grid } from '@material-ui/core';
 import { observer, inject } from 'mobx-react';
-import { SwapForm } from 'components';
+import { SwapForm, TestPanel } from 'components';
 
 const PoolSwapView = props => {
     const { tokenIn, tokenOut } = props.match.params;
@@ -20,7 +20,9 @@ const PoolSwapView = props => {
                         <SwapForm tokenIn={tokenIn} tokenOut={tokenOut} />
                     </Grid>
                 </React.Fragment>
+                <TestPanel/>
             </Grid>
+
         </Container>
     );
 };
