@@ -7,6 +7,13 @@
   --body-text: #90A4AE;
 	--link-text: #8C9EFF;
 	
+  --button-text: #FAFAFA;
+  --button-background: #536DFE;
+  --button-border: #3D5AFE;
+
+  --inactive-button-border: rgba(140, 158, 255, 0.2);
+  --inactive-button-text: rgba(255, 255, 255, 0.6);
+
   --roboto: 'Roboto', sans-serif; 
 }
 
