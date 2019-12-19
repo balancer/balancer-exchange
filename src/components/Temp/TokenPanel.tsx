@@ -1,5 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
+import { isAddress } from '../../utils/helpers'
 
 const Panel = styled.div`
   width: 180px;
@@ -34,9 +35,19 @@ const TokenContainer = styled.div`
 `
 
 const IconAndNameContainer = styled.div`
+  display: flex;
+  flex-direction: row;
 `
 
-const TokenIcon = styled.div`
+const TokenIconAddress = address =>
+  `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/${isAddress(
+    address
+  )}/logo.png`
+
+const TokenIcon = styled.img`
+  width: 28px;
+  height: 28px;
+  margin-right: 12px;
 `
 
 const TokenName = styled.div`
@@ -59,6 +70,7 @@ const TokenBalance = styled.div`
   align-items: center;
   text-align: center;
   color: var(--body-text);
+  margin-top: 12px;
 `
 
 const InputWrapper = styled.div`
@@ -102,8 +114,10 @@ const MaxLink = styled.div`
   color: var(--link-text);
 `
 
-const Token = ({headerText, tokenName, tokenBalance}) => {
+const Token = ({headerText, tokenName, tokenBalance, tokenAddress}) => {
 
+
+  console.log("token address: " + tokenAddress)
   const InputContainer = () => {
     // TODO make sure conditional is checking the correct thing
     if(tokenName == "ETH") {
@@ -129,7 +143,7 @@ const Token = ({headerText, tokenName, tokenBalance}) => {
       </PanelHeader>
       <TokenContainer>
         <IconAndNameContainer>
-          <TokenIcon />
+          <TokenIcon src={TokenIconAddress(tokenAddress)} />
           <TokenName>
             {tokenName}
           </TokenName>
