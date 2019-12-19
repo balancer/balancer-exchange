@@ -154,8 +154,8 @@ export default class ProviderStore {
         );
 
         const { txResponse, error } = await sendAction({
-            contract: contract,
-            action: 'mint',
+            contract,
+            action,
             sender: account,
             data: params,
         });

@@ -2,6 +2,7 @@ import { action, observable } from 'mobx';
 import RootStore from 'stores/Root';
 import { ContractTypes } from 'stores/Provider';
 import * as helpers from 'utils/helpers'
+import { formatEther, parseEther } from "ethers/utils";
 
 export default class TokenStore {
     @observable symbols = {};
@@ -55,7 +56,7 @@ export default class TokenStore {
           ContractTypes.TestToken,
           tokenAddress,
           'approve',
-          [spender, helpers.MAX_UINT]
+          [spender, helpers.MAX_UINT.toString()]
         );
     };
 
@@ -64,7 +65,7 @@ export default class TokenStore {
         await providerStore.sendTransaction(
           ContractTypes.TestToken,
           tokenAddress,
-          'mint',
+          'approve',
           [spender, 0]
         );
     };
@@ -97,7 +98,7 @@ export default class TokenStore {
             ContractTypes.TestToken,
             tokenAddress,
             'mint',
-            [amount]
+            [parseEther(amount).toString()]
         );
     };
 
