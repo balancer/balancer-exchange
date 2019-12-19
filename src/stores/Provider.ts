@@ -137,7 +137,7 @@ export default class ProviderStore {
 
         if (!account) {
             throw new Error(
-              '[Invariant] Attempting to do blockchain transaction with no account'
+              '[Error] Attempting to do blockchain transaction with no account'
             );
         }
 

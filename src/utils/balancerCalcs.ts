@@ -1,6 +1,6 @@
 import { BigNumber } from 'utils/bignumber';
 
-const BONE = new BigNumber(10).pow(18);
+export const BONE = new BigNumber(10).pow(18);
 const BPOW_PRECISION = BONE.idiv(10).pow(10);
 
 export function calcOutGivenIn(
