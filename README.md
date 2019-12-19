@@ -11,6 +11,7 @@
 
 -   Environment Config
 
+    -   Copy .env.example -> .env
     -   Configure backup node urls
 
     ```
