@@ -1,45 +1,61 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import {
-    Card,
-    CardContent,
-    Typography,
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableRow,
-} from '@material-ui/core';
-import { observer } from 'mobx-react';
-import { labels } from 'stores/SwapForm';
-import * as helpers from 'utils/helpers';
-import { useStores } from '../../contexts/storesContext';
+import React from "react";
+import { Link } from "react-router-dom";
+import { Card, CardContent, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@material-ui/core";
+import { labels, SwapMethods } from "stores/SwapForm";
+import * as helpers from "utils/helpers";
+import { useStores } from "../../contexts/storesContext";
+import { observer } from "mobx-react";
 
-const SwapResults = props => {
+const SwapResults = observer(props => {
     const {
         root: { proxyStore, swapFormStore },
     } = useStores();
 
     function buildCardContentByMethod() {
-        const { outputs } = swapFormStore;
+        const { inputs, outputs } = swapFormStore;
 
         const validSwap = outputs.validSwap;
         let effectivePrice = helpers.roundValue(outputs.effectivePrice);
+        let outputAmount = helpers.roundValue(outputs.outputAmount);
+        let inputAmount = helpers.roundValue(outputs.inputAmount);
+
+        console.log({validSwap});
 
         if (!validSwap) {
             effectivePrice = '--';
+            outputAmount = '--';
+            inputAmount = '--';
         }
 
-        return (
-            <React.Fragment>
-                <Typography variant="body1">{`${labels.outputs.EFFECTIVE_PRICE}: ${effectivePrice}`}</Typography>
-            </React.Fragment>
-        );
+        if (inputs.type === SwapMethods.EXACT_IN) {
+            return (
+              <React.Fragment>
+                  <Typography variant="body1">{`${labels.outputs.EFFECTIVE_PRICE}: ${effectivePrice}`}</Typography>
+                  <Typography variant="body1">{`${labels.outputs.OUTPUT_AMOUNT}: ${outputAmount}`}</Typography>
+              </React.Fragment>
+            );
+        }
+
+        if (inputs.type === SwapMethods.EXACT_OUT) {
+            return (
+              <React.Fragment>
+                  <Typography variant="body1">{`${labels.outputs.EFFECTIVE_PRICE}: ${effectivePrice}`}</Typography>
+                  <Typography variant="body1">{`${labels.outputs.INPUT_AMOUNT}: ${inputAmount}`}</Typography>
+              </React.Fragment>
+            );
+        }
+
     }
 
     function buildTable() {
         const { outputs } = swapFormStore;
         const validSwap = outputs.validSwap;
+
+        console.log({
+          method: 'buildTable()',
+          validSwap,
+          outputSwaps: outputs.swaps
+        });
 
         if (validSwap) {
             return (
@@ -63,7 +79,7 @@ const SwapResults = props => {
                                         </Link>
                                     </TableCell>
                                     <TableCell>
-                                        {swapFormStore.inputs.type === 'exactIn'
+                                        {swapFormStore.inputs.type === SwapMethods.EXACT_IN
                                             ? helpers.fromWei(row[1])
                                             : helpers.fromWei(row[2])}
                                     </TableCell>
@@ -101,6 +117,6 @@ const SwapResults = props => {
             </CardContent>
         </Card>
     );
-};
+});
 
 export default SwapResults;

@@ -1,13 +1,13 @@
 // @ts-nocheck
-import React, { useRef } from 'react';
-import { Grid, TextField, Button } from '@material-ui/core';
-import { observer } from 'mobx-react';
-import { ValidatorForm, TextValidator } from 'react-material-ui-form-validator';
-import * as helpers from 'utils/helpers';
-import { labels, formNames } from 'stores/SwapForm';
-import SwapResults from './SwapResults';
-import { validators } from '../validators';
-import { useStores } from '../../contexts/storesContext';
+import React, { useRef } from "react";
+import { Button, Grid, TextField } from "@material-ui/core";
+import { observer } from "mobx-react";
+import { TextValidator, ValidatorForm } from "react-material-ui-form-validator";
+import * as helpers from "utils/helpers";
+import { formNames, labels, SwapMethods } from "stores/SwapForm";
+import SwapResults from "./SwapResults";
+import { validators } from "../validators";
+import { useStores } from "../../contexts/storesContext";
 
 const SwapForm = observer(props => {
     const {
@@ -31,14 +31,14 @@ const SwapForm = observer(props => {
             event.target.name === 'inputAmount' &&
             !helpers.checkIsPropertyEmpty(inputAmount)
         ) {
-            updateProperty(form, 'type', 'exactIn');
+            updateProperty(form, 'type', SwapMethods.EXACT_IN);
             const output = await previewSwapExactAmountInHandler();
             swapFormStore.updateOutputsFromObject(output);
         } else if (
             event.target.name === 'outputAmount' &&
             !helpers.checkIsPropertyEmpty(outputAmount)
         ) {
-            updateProperty(form, 'type', 'exactOut');
+            updateProperty(form, 'type', SwapMethods.EXACT_OUT);
             const output = await previewSwapExactAmountOutHandler();
             swapFormStore.updateOutputsFromObject(output);
         }
@@ -47,7 +47,7 @@ const SwapForm = observer(props => {
     const swapHandler = async () => {
         const inputs = swapFormStore.inputs;
 
-        if (inputs.type === 'exactIn') {
+        if (inputs.type === SwapMethods.EXACT_IN) {
             const {
                 inputAmount,
                 inputToken,
@@ -62,7 +62,7 @@ const SwapForm = observer(props => {
                 helpers.toWei(outputLimit),
                 helpers.toWei(limitPrice)
             );
-        } else if (inputs.type === 'exactOut') {
+        } else if (inputs.type === SwapMethods.EXACT_OUT) {
             const {
                 inputLimit,
                 inputToken,
@@ -144,6 +144,8 @@ const SwapForm = observer(props => {
     if (helpers.checkIsPropertyEmpty(swapFormStore.inputs.outputToken)) {
         swapFormStore.inputs.outputToken = tokenList[1].address;
     }
+
+    console.log('[SwapForm] Render');
 
     return (
         <div>
