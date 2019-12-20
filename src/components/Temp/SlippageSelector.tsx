@@ -18,6 +18,7 @@ const SlippageInfo = styled.div`
 	line-height: 16px;
 	display: flex;
 	align-items: center;
+	margin-bottom: 28px;
 `
 
 const SlippageInlineDisplay = styled.div`
@@ -50,6 +51,52 @@ const SelectorDropDown = styled.div`
 	display: flex;
 	flex-direction: row;
 	justify-content: center;
+	width: 500px;
+	height: 38px;
+	background: var(--selector-background);
+	border-radius: 6px;
+	position: relative;
+`
+
+const SelectorDropDownCell = styled.div`
+	font-family: var(--roboto);
+	font-size: 14px;
+	line-height: 16px;
+	width: 125px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--selector-text);
+	border: 1px solid var(--selector-border);
+	border-left: none;
+	:nth-child(1) {
+		border-left: 1px solid var(--selector-border);
+		border-radius: 6px 0px 0px 6px;
+	}
+	:nth-last-child(1) {
+		border-radius: 0px 6px 6px 0px;
+	}
+	z-index: 10;
+`
+
+const ActiveSelectorDropDownCell = styled(SelectorDropDownCell)`
+	color: var(--highlighted-selector-text);
+	border: 1px solid var(--highlighted-selector-border);
+	background: var(--highlighted-selector-background);
+	margin-left: -1px;
+	:nth-child(1) {
+		border-left: 1px solid var(--highlighted-selector-border);
+	}
+`
+
+const Arrow = styled.div`
+	width: 12px;
+	height: 12px;
+	background: #7785D5;
+	transform: rotate(45deg);
+	position: absolute;
+	top: -6px;
+	right: 185px;
 `
 
 const SlippageSelector = ({expectedSlippage}) => {
@@ -63,6 +110,11 @@ const SlippageSelector = ({expectedSlippage}) => {
 				<InfoPopover>i</InfoPopover>
 			</SlippageInfo>
 			<SelectorDropDown>
+				<SelectorDropDownCell>0.1%</SelectorDropDownCell>
+				<SelectorDropDownCell>0.5%</SelectorDropDownCell>
+				<ActiveSelectorDropDownCell>1.0%</ActiveSelectorDropDownCell>
+				<Arrow />
+				<SelectorDropDownCell>Custom %</SelectorDropDownCell>
 			</SelectorDropDown>
 		</Container>
 	)

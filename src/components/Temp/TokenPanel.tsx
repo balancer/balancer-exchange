@@ -21,6 +21,8 @@ const PanelHeader = styled.div`
   font-size: 14px;
   line-height: 16px;
   color: var(--header-text);
+  background-color: var(--panel-header-background);
+  border-radius: 4px;
 `
 
 const TokenContainer = styled.div`
