@@ -4,6 +4,7 @@ import BuyToken from './BuyToken'
 import SellToken from './SellToken'
 import Swap from './Swap'
 import Button from './Button'
+import SlippageSelector from './SlippageSelector'
 
 
 const RowContainer = styled.div`
@@ -34,6 +35,7 @@ const SwapForm = ({tokenIn, tokenOut}) => {
 				<SellToken tokenName="MKR" tokenBalance="1223.12" tokenAddress="0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2" />
 			</RowContainer>
 			<ColumnContainer>
+				<SlippageSelector expectedSlippage="0.38%" />
 				<Button buttonText="Swap" active={true} />
 			</ColumnContainer>
 		</div>
