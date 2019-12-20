@@ -51,6 +51,12 @@ const SwapResults = observer(props => {
         const { outputs } = swapFormStore;
         const validSwap = outputs.validSwap;
 
+        console.log({
+          method: 'buildTable()',
+          validSwap,
+          outputSwaps: outputs.swaps
+        });
+
         if (validSwap) {
             return (
                 <Table>
