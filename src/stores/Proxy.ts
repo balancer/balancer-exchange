@@ -1,7 +1,7 @@
 import { action, observable } from 'mobx';
 import * as deployed from 'deployed.json';
 import * as helpers from 'utils/helpers';
-import { str } from 'utils/helpers';
+import { str, stringifyPoolData, printPoolData, printSorSwaps } from 'utils/helpers';
 import RootStore from 'stores/Root';
 import sor from 'balancer-sor';
 import { BigNumber } from 'utils/bignumber';
@@ -36,7 +36,7 @@ export interface Pool {
     swapFee: BigNumber;
 }
 
-interface StringifiedPool {
+export interface StringifiedPool {
     id: string;
     balanceIn: string;
     balanceOut: string;
@@ -44,22 +44,6 @@ interface StringifiedPool {
     weightOut: string;
     swapFee: string;
 }
-
-// TODO: Issue between new BigNumber() and BigNumber() cast in javascript SOR
-const stringifyPoolData = (pools: Pool[]): StringifiedPool[] => {
-    const result: StringifiedPool[] = [];
-    pools.forEach(pool => {
-        result.push({
-            id: pool.id,
-            balanceIn: str(pool.balanceIn),
-            balanceOut: str(pool.balanceOut),
-            weightIn: str(pool.weightIn),
-            weightOut: str(pool.weightOut),
-            swapFee: str(pool.swapFee),
-        });
-    });
-    return result;
-};
 
 export interface SorSwaps {
     inputAmounts: BigNumber[];
@@ -210,10 +194,9 @@ export default class ProxyStore {
                 swaps,
                 tokenIn,
                 tokenOut,
-                helpers.toWei(tokenAmountIn),
+                tokenAmountIn,
                 minAmountOut
-            )
-            .send();
+            );
     };
 
     @action batchSwapExactOut = async (
@@ -275,11 +258,6 @@ export default class ProxyStore {
         tokenOut,
         tokenAmountIn
     ): Promise<ExactAmountInPreview> => {
-        const proxy = this.rootStore.providerStore.getContract(
-            ContractTypes.ExchangeProxyCallable,
-            deployed['kovan'].proxy
-        );
-
         console.log(
             '[Action] previewBatchSwapExactIn',
             tokenIn,
@@ -295,6 +273,9 @@ export default class ProxyStore {
                 tokenOut,
                 true
             );
+
+            printPoolData(poolData);
+
             const costOutputToken = this.costCalculator.getCostOutputToken();
 
             let maxPrice = helpers.setPropertyToMaxUintIfEmpty();
@@ -309,6 +290,8 @@ export default class ProxyStore {
                 20,
                 costOutputToken
             );
+
+            printSorSwaps(sorSwaps);
 
             console.log(sorSwaps);
 

@@ -4,6 +4,8 @@ import jazzicon from 'jazzicon';
 import { ethers, utils } from 'ethers';
 import { BigNumber } from 'utils/bignumber';
 import { SUPPORTED_THEMES } from '../theme';
+import { Pool, SorSwaps, StringifiedPool } from "../stores/Proxy";
+import sor from "../../lib/balancer-sor/src";
 
 // Utils
 export const MAX_GAS = utils.bigNumberify('0xffffffff');
@@ -219,4 +221,46 @@ export const getGasPriceFromETHGasStation = () => {
             }
         );
     });
+};
+
+// TODO: Issue between new BigNumber() and BigNumber() cast in javascript SOR
+export const stringifyPoolData = (pools: Pool[]): StringifiedPool[] => {
+    const result: StringifiedPool[] = [];
+    pools.forEach(pool => {
+        result.push({
+            id: pool.id,
+            balanceIn: str(pool.balanceIn),
+            balanceOut: str(pool.balanceOut),
+            weightIn: str(pool.weightIn),
+            weightOut: str(pool.weightOut),
+            swapFee: str(pool.swapFee),
+        });
+    });
+    return result;
+};
+
+export const printPoolData = (poolData: Pool[]) => {
+    const formatted = stringifyPoolData(poolData);
+    console.log('---Pool Data---');
+    console.table(formatted);
+};
+
+export const printSorSwaps = (sorSwaps: SorSwaps) => {
+    const formatted = {
+        totalOutput: "",
+        swaps: [] as any[]
+    };
+    formatted.totalOutput = sorSwaps.totalOutput.toString();
+    sorSwaps.inputAmounts.forEach((value, index) => {
+        formatted.swaps.push(
+          {
+              amount: value.toString(),
+              balancer: sorSwaps.selectedBalancers[index]
+          }
+        )
+    });
+
+    console.log('---Swaps---');
+    console.table(formatted.swaps);
+    console.log(`TotalOutput: ${formatted.totalOutput}`)
 };

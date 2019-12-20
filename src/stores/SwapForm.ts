@@ -21,13 +21,18 @@ export const labels = {
     },
 };
 
+export enum SwapMethods {
+    EXACT_IN = 'exactIn',
+    EXACT_OUT = 'exactOut'
+}
+
 export default class SwapFormStore {
     @observable inputs = {
         inputToken: '',
         outputToken: '',
         inputAmount: '',
         outputAmount: '',
-        type: 'exactIn',
+        type: SwapMethods.EXACT_IN,
         outputLimit: '0',
         inputLimit: '0',
         limitPrice: '0',
