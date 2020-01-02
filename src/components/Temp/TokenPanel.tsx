@@ -41,7 +41,7 @@ const IconAndNameContainer = styled.div`
   flex-direction: row;
 `
 
-const TokenIconAddress = address =>
+export const TokenIconAddress = address =>
   `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/${isAddress(
     address
   )}/logo.png`
@@ -118,8 +118,6 @@ const MaxLink = styled.div`
 
 const Token = ({headerText, tokenName, tokenBalance, tokenAddress}) => {
 
-
-  console.log("token address: " + tokenAddress)
   const InputContainer = () => {
     // TODO make sure conditional is checking the correct thing
     if(tokenName == "ETH") {

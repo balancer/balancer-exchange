@@ -76,7 +76,7 @@ const SelectorDropDownCell = styled.div`
 	:nth-last-child(1) {
 		border-radius: 0px 6px 6px 0px;
 	}
-	z-index: 10;
+	z-index: 1;
 `
 
 const ActiveSelectorDropDownCell = styled(SelectorDropDownCell)`

@@ -6,7 +6,7 @@ import Swap from './Swap'
 import Button from './Button'
 import SlippageSelector from './SlippageSelector'
 import TradeComposition from './TradeComposition'
-
+import AssetSelector from './AssetSelector'
 
 const RowContainer = styled.div`
 	font-family: var(--roboto);
@@ -29,6 +29,7 @@ const SwapForm = ({tokenIn, tokenOut}) => {
 	// TODO pass tokenIn and tokenOut
 	return(
 		<div>
+			<AssetSelector />
 			<RowContainer>
 				<BuyToken tokenName="ETH" tokenBalance="2354.52313" tokenAddress="0x009e864923b49263c7F10D19B7f8Ab7a9A5AAd33" />
 				<Swap />
