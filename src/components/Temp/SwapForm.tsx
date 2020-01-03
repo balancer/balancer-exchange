@@ -27,6 +27,7 @@ const ColumnContainer = styled.div`
 const SwapForm = ({tokenIn, tokenOut}) => {
 
 	const [modelOpen, setModalOpen] = React.useState(false)
+	const [tradeCompositionOpen, setTradeCompositionOpen] = React.useState(false)
 
 	// TODO pass tokenIn and tokenOut
 	return(
@@ -38,7 +39,7 @@ const SwapForm = ({tokenIn, tokenOut}) => {
 				<SellToken setModalOpen={setModalOpen} tokenName="MKR" tokenBalance="1223.12" tokenAddress="0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2" />
 			</RowContainer>
 			<ColumnContainer>
-				<TradeComposition />
+				<TradeComposition tradeCompositionOpen={tradeCompositionOpen} setTradeCompositionOpen={setTradeCompositionOpen} />
 				<SlippageSelector expectedSlippage="0.38%" />
 				<Button buttonText="Swap" active={true} />
 			</ColumnContainer>

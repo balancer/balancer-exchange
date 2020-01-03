@@ -31,9 +31,14 @@ const DropDownArrow = styled.div`
 	border-radius: 12px;
 	color: var(--link-text);
 	margin-left: 12px;
+	cursor: pointer;
 `
 
 const UpCarretIcon = styled.img`
+	height: 8px;
+`
+
+const DownCarretIcon = styled.img`
 	height: 8px;
 `
 
@@ -101,7 +106,7 @@ const PieChart = styled.div`
 	border-radius: 50px;
 `
 
-const TradeComposition = ({}) => {
+const TradeComposition = ({setTradeCompositionOpen, tradeCompositionOpen}) => {
 
   const options = {
     maintainAspectRatio: false,
@@ -131,15 +136,24 @@ const TradeComposition = ({}) => {
     }]
   }
 
+  const toggleDropDown = () => {
+  	if(tradeCompositionOpen) {
+  		return setTradeCompositionOpen(false);
+  	} else {
+  		return setTradeCompositionOpen(true);
+  	}
+  }
+
 	return(
 		<Container>
 			<Info>
 				<div>1 ETH = 150.00000 DAI</div>
-				<DropDownArrow>
-					<UpCarretIcon src="UpCarret.svg"/>
+				<DropDownArrow onClick={() => {toggleDropDown()}}>
+					<UpCarretIcon src="UpCarret.svg"  style={{display: tradeCompositionOpen ? 'block' : 'none' }} />
+					<DownCarretIcon src="DownCarret.svg"  style={{display: tradeCompositionOpen ? 'none' : 'block' }} />
 				</DropDownArrow>
 			</Info>
-			<CompositionDropDown>
+			<CompositionDropDown style={{display: tradeCompositionOpen ? 'flex' : 'none' }}>
 				<PoolLineContainer>
 					<PoolLine>
 						<AddressAndBullet>
