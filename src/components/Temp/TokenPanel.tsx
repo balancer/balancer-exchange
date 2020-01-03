@@ -34,6 +34,7 @@ const TokenContainer = styled.div`
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
 `
 
 const IconAndNameContainer = styled.div`
@@ -116,7 +117,7 @@ const MaxLink = styled.div`
   color: var(--link-text);
 `
 
-const Token = ({headerText, tokenName, tokenBalance, tokenAddress}) => {
+const Token = ({headerText, tokenName, tokenBalance, tokenAddress, setModalOpen}) => {
 
   const InputContainer = () => {
     // TODO make sure conditional is checking the correct thing
@@ -141,7 +142,7 @@ const Token = ({headerText, tokenName, tokenBalance, tokenAddress}) => {
       <PanelHeader>
         {headerText}
       </PanelHeader>
-      <TokenContainer>
+      <TokenContainer onClick={() => {setModalOpen(true)}}>
         <IconAndNameContainer>
           <TokenIcon src={TokenIconAddress(tokenAddress)} />
           <TokenName>

@@ -46,6 +46,7 @@ const ExitComponent = styled.div`
 	color: var(--exit-modal-color);	
 	transform: rotate(135deg);
 	font-size: 22px;
+	cursor: pointer;
 `
 
 const InputContainer = styled.div`
@@ -136,18 +137,20 @@ const TokenBalance = styled.div`
   margin-top: 12px;
 `
 
-const AssetSelector = ({}) => {
+const AssetSelector = ({modelOpen, setModalOpen}) => {
+
+	// const [modelOpen, setModalOpen] = React.useState(true)
 
 	// TODO do math and pass props into AssetPanel css to make border-bottom none for bottom row of assets
 	// TODO Import list of token addresses for asset selector
 	const tokenAddress = "0x009e864923b49263c7F10D19B7f8Ab7a9A5AAd33"
 
 	return(
-		<Container>
+		<Container style={{display: modelOpen ? 'block' : 'none' }}>
 			<ModalContent>
 				<AssetSelectorHeader>
 					<HeaderContent>Select Token to Sell</HeaderContent>
-					<ExitComponent>+</ExitComponent>
+					<ExitComponent onClick={() => {setModalOpen(false)}}>+</ExitComponent>
 				</AssetSelectorHeader>
 				<InputContainer>
 					<input placeholder="Search Token Name, Symbol, or Address" />
