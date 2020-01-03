@@ -28,6 +28,7 @@ const SwapForm = ({tokenIn, tokenOut}) => {
 
 	const [modelOpen, setModalOpen] = React.useState(false)
 	const [tradeCompositionOpen, setTradeCompositionOpen] = React.useState(false)
+	const [slippageSelectorOpen, setSlippageSelectorOpen] = React.useState(false)
 
 	// TODO pass tokenIn and tokenOut
 	return(
@@ -40,7 +41,7 @@ const SwapForm = ({tokenIn, tokenOut}) => {
 			</RowContainer>
 			<ColumnContainer>
 				<TradeComposition tradeCompositionOpen={tradeCompositionOpen} setTradeCompositionOpen={setTradeCompositionOpen} />
-				<SlippageSelector expectedSlippage="0.38%" />
+				<SlippageSelector expectedSlippage="0.38%" slippageSelectorOpen={slippageSelectorOpen} setSlippageSelectorOpen={setSlippageSelectorOpen} />
 				<Button buttonText="Swap" active={true} />
 			</ColumnContainer>
 		</div>

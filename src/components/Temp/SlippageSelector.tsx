@@ -33,6 +33,7 @@ const SlippageInlineDisplay = styled.div`
 	margin-left: 10px;
 	margin-right: 10px;
 	color: var(--link-text);
+	cursor: pointer;
 `
 
 const InfoPopover = styled.div`
@@ -99,17 +100,17 @@ const Arrow = styled.div`
 	right: 185px;
 `
 
-const SlippageSelector = ({expectedSlippage}) => {
+const SlippageSelector = ({expectedSlippage, slippageSelectorOpen, setSlippageSelectorOpen}) => {
 
 	return(
 		<Container>
 			<SlippageInfo>
 				<div>Expected price slippage of {expectedSlippage} with</div>
-				<SlippageInlineDisplay>0.5%</SlippageInlineDisplay>
+				<SlippageInlineDisplay  onClick={() => {setSlippageSelectorOpen(true)}}>0.5%</SlippageInlineDisplay>
 				<div>additional limit</div>
 				<InfoPopover>i</InfoPopover>
 			</SlippageInfo>
-			<SelectorDropDown>
+			<SelectorDropDown style={{display: slippageSelectorOpen ? 'flex' : 'none'}}>
 				<SelectorDropDownCell>0.1%</SelectorDropDownCell>
 				<SelectorDropDownCell>0.5%</SelectorDropDownCell>
 				<ActiveSelectorDropDownCell>1.0%</ActiveSelectorDropDownCell>
