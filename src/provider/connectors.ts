@@ -1,7 +1,12 @@
 import { InjectedConnector } from '@web3-react/injected-connector';
 import { NetworkConnector } from 'provider/NetworkConnector';
 
-export const supportedNetworks = [1, 42];
+export const supportedNetworks = [42];
+
+export const chainNameById = {
+    '1': 'mainnet',
+    '42': 'kovan'
+};
 
 const POLLING_INTERVAL = 10000;
 const RPC_URLS: { [chainId: number]: string } = {

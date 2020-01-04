@@ -17,7 +17,11 @@ const TestPanel = observer(() => {
         root: { proxyStore, providerStore, swapFormStore, tokenStore },
     } = useStores();
 
-  const { account } = providerStore.getActiveWeb3React();
+  const { account,chainId } = providerStore.getActiveWeb3React();
+
+  if (!chainId) {
+    throw new Error('ChainId not loaded in TestPanel');
+  }
 
   const [approvalToken, setApprovalToken] = useState("");
   const [mintToken, setMintToken] = useState("");
@@ -30,7 +34,7 @@ const TestPanel = observer(() => {
       tokenStore.mint(mintToken, mintAmount);
     };
 
-    const tokenList = swapFormStore.getTokenList();
+    const tokenList = tokenStore.getWhitelistedTokenMetadata(chainId);
 
     if (helpers.checkIsPropertyEmpty(mintToken)) {
         setMintToken(tokenList[0].address);

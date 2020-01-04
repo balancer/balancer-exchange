@@ -5,37 +5,45 @@
         "tokens": [
             {
                 "symbol": "WETH",
-                "address": "0xe78A0F7E598Cc8b0Bb87894B0F60dD2a88d6a8Ab"
+                "address": "0xe78A0F7E598Cc8b0Bb87894B0F60dD2a88d6a8Ab",
+                "decimals": 18
             },
             {
                 "symbol": "MKR",
-                "address": "0x5b1869D9A4C187F2EAa108f3062412ecf0526b24"
+                "address": "0x5b1869D9A4C187F2EAa108f3062412ecf0526b24",
+                "decimals": 18
             },
             {
                 "symbol": "DAI",
-                "address": "0xCfEB869F69431e42cdB54A4F4f105C19C080A601"
+                "address": "0xCfEB869F69431e42cdB54A4F4f105C19C080A601",
+                "decimals": 18
             }
         ]
     },
     "kovan": {
+        "chainId": 42,
         "bFactory": "0x9c84391b443ea3a48788079a5f98e2ead55c9309",
         "proxy": "0xA454fB515171C586f3322191a6aADcC3D0fA7257",
         "tokens": [
             {
                 "symbol": "MKR",
-                "address": "0x8fD2D32dCde13F41BC7e6D966Edde0DfF1f92E2E"
+                "address": "0x8fD2D32dCde13F41BC7e6D966Edde0DfF1f92E2E",
+                "decimals": 18
             },
             {
                 "symbol": "DAI",
-                "address": "0xbaB6D2bf6C4cae495a958507AAf0804feCa2b000"
+                "address": "0xbaB6D2bf6C4cae495a958507AAf0804feCa2b000",
+                "decimals": 18
             },
             {
                 "symbol": "SNX",
-                "address": "0x16f23e3d18d498131bAb2D8843f5c2855448121d"
+                "address": "0x16f23e3d18d498131bAb2D8843f5c2855448121d",
+                "decimals": 18
             },
             {
                 "symbol": "BAT",
-                "address": "0xf5A64B7c340F4346Bf3158D1DAd89d7872213b03"
+                "address": "0xf5A64B7c340F4346Bf3158D1DAd89d7872213b03",
+                "decimals": 18
             }
         ]
     }

@@ -5,7 +5,7 @@ import { backup, injected } from 'provider/connectors';
 import { useEagerConnect, useInactiveListener } from 'provider/index';
 import { web3ContextNames } from 'provider/connectors';
 import { useStores } from 'contexts/storesContext';
-import { observer } from "mobx-react";
+import { observer } from 'mobx-react';
 
 const MessageWrapper = styled.div`
     display: flex;
@@ -32,15 +32,21 @@ const Web3ReactManager = observer(({ children }) => {
         activate: activateNetwork,
     } = web3ContextBackup;
 
-    providerStore.setWeb3Context(
-      web3ContextNames.backup,
-      web3ContextBackup
-    );
+    providerStore.setWeb3Context(web3ContextNames.backup, web3ContextBackup);
 
     providerStore.setWeb3Context(
-      web3ContextNames.injected,
-      web3ContextInjected
+        web3ContextNames.injected,
+        web3ContextInjected
     );
+
+    let chainId: number | undefined = undefined;
+    let library: any = undefined;
+
+    if (injectedActive || networkActive) {
+        const activeWeb3React = providerStore.getActiveWeb3React();
+        library = activeWeb3React.library;
+        chainId = activeWeb3React.chainId;
+    }
 
     console.log('[Web3ReactManager] Start of render', {
         injected: web3ContextInjected,
@@ -101,6 +107,55 @@ const Web3ReactManager = observer(({ children }) => {
             clearTimeout(timeout);
         };
     }, []);
+
+    useEffect(() => {
+
+        if (!chainId) {
+            console.log('[Web3ReactManager] No provider loaded for update callback');
+            return;
+        }
+
+        if (library && chainId) {
+            console.log('[Web3ReactManager] Blockchain update callback start',
+              {
+                  library,
+                  chainId
+              });
+
+            let stale = false;
+
+            const networkId = Number(chainId);
+
+            const update = () => {
+                library
+                    .getBlockNumber()
+                    .then(blockNumber => {
+                        const lastChecked = providerStore.getCurrentBlockNumber(networkId);
+                        if (blockNumber != lastChecked || !stale) {
+                            providerStore.setCurrentBlockNumber(
+                                chainId,
+                                blockNumber
+                            );
+                            providerStore.fetchUserBlockchainData(networkId);
+                        }
+                    })
+                    .catch(() => {
+                        if (!stale) {
+                            providerStore.setCurrentBlockNumber(networkId, undefined);
+                        }
+                    });
+            };
+
+            update();
+            library.on('block', update);
+
+            return () => {
+                stale = true;
+                library.removeListener('block', update);
+            };
+        }
+
+    }, [chainId, library, providerStore]);
 
     // on page load, do nothing until we've tried to connect to the injected connector
     if (!triedEager) {

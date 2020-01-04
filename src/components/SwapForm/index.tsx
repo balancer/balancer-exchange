@@ -1,18 +1,24 @@
 // @ts-nocheck
-import React, { useRef } from "react";
-import { Button, Grid, TextField } from "@material-ui/core";
-import { observer } from "mobx-react";
-import { TextValidator, ValidatorForm } from "react-material-ui-form-validator";
-import * as helpers from "utils/helpers";
-import { formNames, labels, SwapMethods } from "stores/SwapForm";
-import SwapResults from "./SwapResults";
-import { validators } from "../validators";
-import { useStores } from "../../contexts/storesContext";
+import React, { useRef } from 'react';
+import { Button, Grid, TextField } from '@material-ui/core';
+import { observer } from 'mobx-react';
+import { TextValidator, ValidatorForm } from 'react-material-ui-form-validator';
+import * as helpers from 'utils/helpers';
+import { formNames, labels, SwapMethods } from 'stores/SwapForm';
+import SwapResults from './SwapResults';
+import { validators } from '../validators';
+import { useStores } from '../../contexts/storesContext';
 
 const SwapForm = observer(props => {
     const {
-        root: { proxyStore, swapFormStore },
+        root: { proxyStore, swapFormStore, providerStore, tokenStore },
     } = useStores();
+
+    const { chainId } = providerStore.getActiveWeb3React();
+
+    if (!chainId) {
+        throw new Error('ChainId not loaded in TestPanel');
+    }
 
     const updateProperty = (form, key, value) => {
         swapFormStore[form][key] = value;
@@ -27,17 +33,11 @@ const SwapForm = observer(props => {
         const { inputAmount, outputAmount } = swapFormStore.inputs;
 
         // Get preview if all necessary fields are filled out
-        if (
-            event.target.name === 'inputAmount' &&
-            !helpers.checkIsPropertyEmpty(inputAmount)
-        ) {
+        if (event.target.name === 'inputAmount') {
             updateProperty(form, 'type', SwapMethods.EXACT_IN);
             const output = await previewSwapExactAmountInHandler();
             swapFormStore.updateOutputsFromObject(output);
-        } else if (
-            event.target.name === 'outputAmount' &&
-            !helpers.checkIsPropertyEmpty(outputAmount)
-        ) {
+        } else if (event.target.name === 'outputAmount') {
             updateProperty(form, 'type', SwapMethods.EXACT_OUT);
             const output = await previewSwapExactAmountOutHandler();
             swapFormStore.updateOutputsFromObject(output);
@@ -84,6 +84,12 @@ const SwapForm = observer(props => {
         const inputs = swapFormStore.inputs;
         const { inputToken, outputToken, inputAmount } = inputs;
 
+        if (!inputAmount || inputAmount === '') {
+            return {
+                validSwap: false,
+            };
+        }
+
         const {
             preview: { outputAmount, effectivePrice, swaps },
             validSwap,
@@ -111,6 +117,12 @@ const SwapForm = observer(props => {
         const inputs = swapFormStore.inputs;
         const { inputToken, outputToken, outputAmount } = inputs;
 
+        if (!outputAmount || outputAmount === '') {
+            return {
+                validSwap: false,
+            };
+        }
+
         const {
             preview: { inputAmount, effectivePrice, swaps },
             validSwap,
@@ -135,7 +147,7 @@ const SwapForm = observer(props => {
     };
 
     const { inputs } = swapFormStore;
-    const tokenList = swapFormStore.getTokenList();
+    const tokenList = tokenStore.getWhitelistedTokenMetadata(chainId);
 
     if (helpers.checkIsPropertyEmpty(swapFormStore.inputs.inputToken)) {
         swapFormStore.inputs.inputToken = tokenList[0].address;

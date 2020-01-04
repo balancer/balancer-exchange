@@ -1,4 +1,4 @@
-import { observable, action } from 'mobx';
+import { observable, action, ObservableMap } from "mobx";
 import RootStore from 'stores/Root';
 import { web3ContextNames } from 'provider/connectors';
 import { ethers, utils, providers } from 'ethers';
@@ -6,6 +6,7 @@ import { Web3ReactContextInterface } from '@web3-react/core/dist/types';
 import UncheckedJsonRpcSigner from 'provider/UncheckedJsonRpcSigner';
 import Web3 from 'web3';
 import { sendAction } from './actions/actions';
+import { TransactionRecord } from "./Transaction";
 
 export enum ContractTypes {
     BPool = 'BPool',
@@ -23,21 +24,69 @@ export const schema = {
     ExchangeProxyCallable: require('../abi/ExchangeProxyCallable').abi,
 };
 
+export interface ChainData {
+    currentBlockNumber: number
+}
+
+type ChainDataMap = ObservableMap<number, ChainData>;
+
 export default class ProviderStore {
     @observable provider: any;
     @observable accounts: string[];
     @observable defaultAccount: string | null;
     @observable contexts: object;
+    @observable blockNumber: number;
+    @observable supportedNetworks: number[];
+    @observable chainData: ChainDataMap;
     rootStore: RootStore;
 
-    constructor(rootStore) {
+    constructor(rootStore, networkIds: number[]) {
         this.rootStore = rootStore;
         this.contexts = {};
+        this.supportedNetworks = networkIds;
+        this.chainData = new ObservableMap<number, ChainData>();
+
+        networkIds.forEach(networkId => {
+            this.chainData.set(networkId, {
+                currentBlockNumber: -1
+            });
+        });
     }
 
-    async getCurrentBlockNumber(): Promise<number> {
-        const { library } = this.getActiveWeb3React();
-        return library.getBlockNumber();
+    private safeGetChainData(chainId): ChainData {
+        const chainData = this.chainData.get(chainId);
+        if (!chainData) {
+            throw new Error('Attempting to access chain data for non-existent chainId')
+        }
+        return chainData;
+    }
+
+    getCurrentBlockNumber(chainId): number {
+        const chainData = this.safeGetChainData(chainId);
+        return chainData.currentBlockNumber;
+    }
+
+    @action setCurrentBlockNumber(chainId, blockNumber): void {
+        const chainData = this.safeGetChainData(chainId);
+        chainData.currentBlockNumber = blockNumber;
+    }
+
+
+    @action fetchUserBlockchainData(networkId: number) {
+        const {transactionStore, tokenStore} = this.rootStore;
+        const {chainId, account} = this.getActiveWeb3React();
+
+        if (networkId !== chainId) {
+            throw new Error('Attempting to fetch data for inactive chainId');
+        }
+
+        if (account) {
+            transactionStore.checkPendingTransactions(networkId).then(result => {
+                console.log('[Fetch] Pending TX')
+            });
+            tokenStore.fetchBalancerTokenData(account, networkId);
+
+        }
     }
 
     getWeb3React(name: string): Web3ReactContextInterface {
@@ -127,30 +176,30 @@ export default class ProviderStore {
     }
 
     @action sendTransaction = async (
-      contractType: ContractTypes,
-      contractAddress: string,
-      action: string,
-      params: any[]
+        contractType: ContractTypes,
+        contractAddress: string,
+        action: string,
+        params: any[]
     ): Promise<void> => {
         const { transactionStore } = this.rootStore;
         const { chainId, account } = this.getActiveWeb3React();
 
         if (!account) {
             throw new Error(
-              '[Error] Attempting to do blockchain transaction with no account'
+                '[Error] Attempting to do blockchain transaction with no account'
             );
         }
 
         if (!chainId) {
             throw new Error(
-              '[Invariant] Attempting to do blockchain transaction with no chainId'
+                '[Invariant] Attempting to do blockchain transaction with no chainId'
             );
         }
 
         const contract = this.getContract(
-          contractType,
-          contractAddress,
-          account
+            contractType,
+            contractAddress,
+            account
         );
 
         const { txResponse, error } = await sendAction({
@@ -166,8 +215,8 @@ export default class ProviderStore {
             transactionStore.addTransactionRecord(chainId, txResponse);
         } else {
             throw new Error(
-              '[Invariant]: No error or response received from blockchain action'
+                '[Invariant]: No error or response received from blockchain action'
             );
         }
-    }
+    };
 }

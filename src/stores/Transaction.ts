@@ -15,6 +15,12 @@ const ERRORS = {
     txHashAlreadyExists: 'Transaction hash already exists for network',
 };
 
+export enum FetchCode {
+    SUCCESS,
+    FAILURE,
+    STALE
+}
+
 type TransactionHashMap = ObservableMap<string, TransactionRecord>;
 type NetworkIdsMap = ObservableMap<number, TransactionHashMap>;
 
@@ -63,10 +69,11 @@ export default class TransactionStore {
         return confirmed;
     }
 
-    @action async checkPendingTransactions(networkId: number) {
+    @action async checkPendingTransactions(networkId: number): Promise<FetchCode> {
         const { providerStore } = this.rootStore;
 
-        const currentBlock = await providerStore.getCurrentBlockNumber();
+        const currentBlock = providerStore.getCurrentBlockNumber(networkId);
+
         const {library} = providerStore.getActiveWeb3React();
         const txRecordHashMap = this.safeGetTxRecordHashMap(networkId);
 
@@ -92,6 +99,8 @@ export default class TransactionStore {
                     });
             }
         });
+
+        return FetchCode.SUCCESS;
     }
 
     // @dev Add transaction record. It's in a pending state until mined.

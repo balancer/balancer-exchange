@@ -139,10 +139,17 @@ const Web3ConnectStatus = observer(() => {
         throw new Error('No chain ID specified');
     }
 
-    const allTransactions = transactionStore.allTxRecords.get(chainId);
+
+    const allTransactions = transactionStore.allTxRecords;
     const pending = transactionStore.getPendingTransactions(chainId);
     const confirmed = transactionStore.getConfirmedTransactions(chainId);
     const hasPendingTransactions = !!pending.size;
+
+    console.log({
+        message: 'Web3ConnectStatus Pending Tx',
+        pending,
+        hasPendingTransactions
+    })
 
     const toggleWalletModal = () => {
         modalStore.toggleWalletModal();
