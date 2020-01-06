@@ -11,6 +11,6 @@
     "resolveJsonModule": true,
     "allowJs": true,
     "experimentalDecorators": true,
-    "strictNullChecks": true
+    "strictNullChecks": false
   }
 }
