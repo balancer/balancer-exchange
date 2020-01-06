@@ -1,48 +1,17 @@
 import React, { Component } from 'react';
 import { HashRouter, Route, Redirect, Switch } from 'react-router-dom';
 import { MuiThemeProvider } from '@material-ui/core/styles';
-import { observer, inject } from 'mobx-react';
-
 import { theme } from 'configs';
-import { Notification } from './components';
-import Header from 'components/Header';
+import { Header, Web3ReactManager } from 'components';
 import SwapView from 'views/SwapView';
-import ErrorHandler, { Error } from 'provider';
 import './styles.scss'; // global styles
 import { Container } from '@material-ui/core';
+import { useWeb3React } from '@web3-react/core';
 
-@inject('root')
-@observer
-class App extends Component<any, any> {
-    // componentDidUpdate = prevProps => {
-    //   if (this.props.location.pathname !== prevProps.location.pathname) {
-    //     window.scrollTo(0, 0);
-    //   }
-    // }
+const App = () => {
+    console.log(process.env.REACT_APP_NETWORK_PROVIDER_URL);
 
-    async componentDidMount() {
-        const { providerStore } = this.props.root;
-        if (!providerStore.provider) {
-            await providerStore.setWeb3WebClient();
-        }
-    }
-
-    NotificationComponent = () => {
-        return (
-            <Error.Consumer>
-                {({ error, setError }) => {
-                    return (
-                        <Notification
-                            errorMessage={error}
-                            setError={setError}
-                        />
-                    );
-                }}
-            </Error.Consumer>
-        );
-    };
-
-    renderViews() {
+    const renderViews = () => {
         return (
             <Container>
                 <div className="app-shell">
@@ -56,31 +25,18 @@ class App extends Component<any, any> {
                 </div>
             </Container>
         );
-    }
+    };
 
-    render() {
-        const { providerStore } = this.props.root;
-        let providerLoaded = false;
-        if (!providerStore.defaultAccount) {
-            providerLoaded = false;
-        } else {
-            providerLoaded = true;
-        }
-
-        return (
-            <ErrorHandler>
-                <MuiThemeProvider theme={theme}>
-                    <HashRouter>
-                        <div>
-                            <Header />
-                            <Route component={this.NotificationComponent} />
-                            {providerLoaded ? this.renderViews() : <div></div>}
-                        </div>
-                    </HashRouter>
-                </MuiThemeProvider>
-            </ErrorHandler>
-        );
-    }
-}
+    return (
+        <Web3ReactManager>
+            <MuiThemeProvider theme={theme}>
+                <HashRouter>
+                    <Header />
+                    {renderViews()}
+                </HashRouter>
+            </MuiThemeProvider>
+        </Web3ReactManager>
+    );
+};
 
 export default App;

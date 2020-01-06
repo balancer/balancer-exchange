@@ -1,55 +1,67 @@
-import React from 'react';
-import { Grid, TextField, Button } from '@material-ui/core';
-import { observer, inject } from 'mobx-react';
-import { ValidatorForm, TextValidator } from 'react-material-ui-form-validator';
+// @ts-nocheck
+import React, { useRef } from 'react';
+import { Button, Grid, TextField } from '@material-ui/core';
+import { observer } from 'mobx-react';
+import { TextValidator, ValidatorForm } from 'react-material-ui-form-validator';
 import * as helpers from 'utils/helpers';
-import { labels, formNames } from 'stores/SwapForm';
+import { formNames, labels, SwapMethods } from 'stores/SwapForm';
 import SwapResults from './SwapResults';
 import { validators } from '../validators';
-import { withStyles } from '@material-ui/core/styles';
+import { useStores } from '../../contexts/storesContext';
+import { ErrorCodes, ErrorIds } from '../../stores/Error';
+import { bigNumberify } from 'ethers/utils';
+import { ContractMetadata } from "../../stores/Token";
 
-const styles = theme => ({
-    formControl: {
-        margin: theme.spacing(1),
-    },
-});
+const SwapForm = observer(props => {
+    const {
+        root: {
+            proxyStore,
+            swapFormStore,
+            providerStore,
+            tokenStore,
+            errorStore,
+        },
+    } = useStores();
 
-@inject('root')
-@observer
-class SwapForm extends React.Component<any, any> {
-    updateProperty(form, key, value) {
-        this.props.root.swapFormStore[form][key] = value;
+    const { chainId, account } = providerStore.getActiveWeb3React();
+    const proxyAddress = tokenStore.getProxyAddress(chainId);
+
+    if (!chainId) {
+        throw new Error('ChainId not loaded in TestPanel');
     }
 
-    onChange = async (event, form) => {
-        const { swapFormStore } = this.props.root;
-        this.updateProperty(form, event.target.name, event.target.value);
-        const { inputAmount, outputAmount } = swapFormStore.inputs;
+    const updateProperty = (form, key, value) => {
+        swapFormStore[form][key] = value;
+    };
+
+    const onChange = async (event, form) => {
+        console.log({
+            name: event.target.name,
+            value: event.target.value,
+        });
+        updateProperty(form, event.target.name, event.target.value);
+        const { inputAmount, inputToken } = swapFormStore.inputs;
 
         // Get preview if all necessary fields are filled out
-        if (
-            event.target.name === 'inputAmount' &&
-            !helpers.checkIsPropertyEmpty(inputAmount)
-        ) {
-            this.updateProperty(form, 'type', 'exactIn');
-            const output = await this.previewSwapExactAmountInHandler();
+        if (event.target.name === 'inputAmount') {
+            updateProperty(form, 'type', SwapMethods.EXACT_IN);
+            const output = await previewSwapExactAmountInHandler();
             swapFormStore.updateOutputsFromObject(output);
-        } else if (
-            event.target.name === 'outputAmount' &&
-            !helpers.checkIsPropertyEmpty(outputAmount)
-        ) {
-            this.updateProperty(form, 'type', 'exactOut');
-            const output = await this.previewSwapExactAmountOutHandler();
+        } else if (event.target.name === 'outputAmount') {
+            updateProperty(form, 'type', SwapMethods.EXACT_OUT);
+            const output = await previewSwapExactAmountOutHandler();
             swapFormStore.updateOutputsFromObject(output);
         }
     };
 
-    swapHandler = async () => {
-        const { proxyStore, swapFormStore } = this.props.root;
+    const swapHandler = async () => {
+        const { inputs, outputs } = swapFormStore;
 
-        const inputs = swapFormStore.inputs;
+        if (!outputs.validSwap) {
+            return;
+        }
 
-        if (inputs.type === 'exactIn') {
+        if (inputs.type === SwapMethods.EXACT_IN) {
             const {
                 inputAmount,
                 inputToken,
@@ -64,7 +76,7 @@ class SwapForm extends React.Component<any, any> {
                 helpers.toWei(outputLimit),
                 helpers.toWei(limitPrice)
             );
-        } else if (inputs.type === 'exactOut') {
+        } else if (inputs.type === SwapMethods.EXACT_OUT) {
             const {
                 inputLimit,
                 inputToken,
@@ -82,219 +94,269 @@ class SwapForm extends React.Component<any, any> {
         }
     };
 
-    previewSwapExactAmountInHandler = async () => {
-        const { proxyStore, swapFormStore } = this.props.root;
-
+    const previewSwapExactAmountInHandler = async () => {
         const inputs = swapFormStore.inputs;
         const { inputToken, outputToken, inputAmount } = inputs;
 
-        const call = await proxyStore.previewBatchSwapExactIn(
+        if (!inputAmount || inputAmount === '') {
+            return {
+                validSwap: false,
+            };
+        }
+
+        const {
+            preview: { outputAmount, effectivePrice, swaps },
+            validSwap,
+        } = await proxyStore.previewBatchSwapExactIn(
             inputToken,
             outputToken,
             inputAmount
         );
 
-        if (call.validSwap) {
+        if (validSwap) {
             return {
-                outputAmount: helpers.fromWei(call.outputAmount),
-                effectivePrice: call.effectivePrice,
-                swaps: call.swaps,
-                validSwap: call.validSwap,
+                outputAmount: helpers.fromWei(outputAmount),
+                effectivePrice,
+                swaps,
+                validSwap,
             };
         } else {
             return {
-                validSwap: call.validSwap,
+                validSwap,
             };
         }
     };
 
-    previewSwapExactAmountOutHandler = async () => {
-        const { proxyStore, swapFormStore } = this.props.root;
-
+    const previewSwapExactAmountOutHandler = async () => {
         const inputs = swapFormStore.inputs;
         const { inputToken, outputToken, outputAmount } = inputs;
 
-        const call = await proxyStore.previewBatchSwapExactOut(
+        if (!outputAmount || outputAmount === '') {
+            return {
+                validSwap: false,
+            };
+        }
+
+        const {
+            preview: { inputAmount, effectivePrice, swaps },
+            validSwap,
+        } = await proxyStore.previewBatchSwapExactOut(
             inputToken,
             outputToken,
             outputAmount
         );
 
-        if (call.validSwap) {
+        if (validSwap) {
             return {
-                inputAmount: helpers.fromWei(call.inputAmount),
-                effectivePrice: call.effectivePrice,
-                swaps: call.swaps,
-                validSwap: call.validSwap,
+                inputAmount: helpers.fromWei(inputAmount),
+                effectivePrice,
+                swaps,
+                validSwap,
             };
         } else {
             return {
-                validSwap: call.validSwap,
+                validSwap,
             };
         }
     };
 
-    render() {
-        const { swapFormStore } = this.props.root;
-        const { inputs } = swapFormStore;
+    const { inputs, outputs } = swapFormStore;
+    const { inputAmount, inputToken } = inputs;
+    const tokenList = tokenStore.getWhitelistedTokenMetadata(chainId);
+    // const userBalances = tokenList.map(value => {
+    //     const balance = tokenStore.getBalance(chainId, value.address, account);
+    //     if (balance) {
+    //         return balance.toString();
+    //     } else {
+    //         return undefined;
+    //     }
+    // });
 
-        const tokenList = swapFormStore.getTokenList();
 
-        if (helpers.checkIsPropertyEmpty(swapFormStore.inputs.inputToken)) {
-            swapFormStore.inputs.inputToken = tokenList[0].address;
-        }
+    if (helpers.checkIsPropertyEmpty(swapFormStore.inputs.inputToken)) {
+        swapFormStore.inputs.inputToken = tokenList[0].address;
+    }
 
-        if (helpers.checkIsPropertyEmpty(swapFormStore.inputs.outputToken)) {
-            swapFormStore.inputs.outputToken = tokenList[1].address;
-        }
+    if (helpers.checkIsPropertyEmpty(swapFormStore.inputs.outputToken)) {
+        swapFormStore.inputs.outputToken = tokenList[1].address;
+    }
 
-        return (
-            <div>
-                <Grid container spacing={1}>
-                    <Grid item xs={12} sm={12}>
-                        <ValidatorForm
-                            ref="form"
-                            onSubmit={() => {
-                                this.swapHandler();
-                            }}
-                            onError={errors => console.log(errors)}
-                        >
-                            <Grid container spacing={1}>
-                                <Grid item xs={12} sm={6}>
-                                    <TextField
-                                        id="token-in"
-                                        name="inputToken"
-                                        select
-                                        label={labels.inputs.INPUT_TOKEN}
-                                        value={inputs.inputToken}
-                                        onChange={e =>
-                                            this.onChange(
-                                                e,
-                                                formNames.INPUT_FORM
-                                            )
-                                        }
-                                        SelectProps={{
-                                            native: true,
-                                        }}
-                                        margin="normal"
-                                        variant="outlined"
-                                        fullWidth
-                                    >
-                                        {tokenList.map(option => (
-                                            <option
-                                                key={option.address}
-                                                value={option.address}
-                                            >
-                                                {option.symbol}
-                                            </option>
-                                        ))}
-                                    </TextField>
-                                </Grid>
-                                <Grid item xs={12} sm={6}>
-                                    <TextValidator
-                                        id="amount-in"
-                                        name="inputAmount"
-                                        label={labels.inputs.INPUT_AMOUNT}
-                                        value={inputs.inputAmount}
-                                        onChange={e =>
-                                            this.onChange(
-                                                e,
-                                                formNames.INPUT_FORM
-                                            )
-                                        }
-                                        type="number"
-                                        InputLabelProps={{
-                                            shrink: true,
-                                        }}
-                                        margin="normal"
-                                        variant="outlined"
-                                        fullWidth
-                                        validators={
-                                            validators.optionalTokenValueValidators
-                                        }
-                                        errorMessages={
-                                            validators.optionalTokenValueValidatorErrors
-                                        }
-                                    />
-                                </Grid>
-                                <Grid item xs={12} sm={6}>
-                                    <TextField
-                                        id="token-out"
-                                        name="outputToken"
-                                        select
-                                        fullWidth
-                                        label={labels.inputs.OUTPUT_TOKEN}
-                                        value={inputs.outputToken}
-                                        onChange={e =>
-                                            this.onChange(
-                                                e,
-                                                formNames.INPUT_FORM
-                                            )
-                                        }
-                                        SelectProps={{
-                                            native: true,
-                                        }}
-                                        margin="normal"
-                                        variant="outlined"
-                                    >
-                                        {tokenList.map(option => (
-                                            <option
-                                                key={option.address}
-                                                value={option.address}
-                                            >
-                                                {option.symbol}
-                                            </option>
-                                        ))}
-                                    </TextField>
-                                </Grid>
-                                <Grid item xs={12} sm={6}>
-                                    <TextValidator
-                                        id="amount-out"
-                                        name="outputAmount"
-                                        label={labels.inputs.OUTPUT_AMOUNT}
-                                        value={inputs.outputAmount}
-                                        onChange={e =>
-                                            this.onChange(
-                                                e,
-                                                formNames.INPUT_FORM
-                                            )
-                                        }
-                                        type="number"
-                                        InputLabelProps={{
-                                            shrink: true,
-                                        }}
-                                        margin="normal"
-                                        variant="outlined"
-                                        fullWidth
-                                        validators={
-                                            validators.optionalTokenValueValidators
-                                        }
-                                        errorMessages={
-                                            validators.optionalTokenValueValidatorErrors
-                                        }
-                                    />
-                                </Grid>
-                                <Grid item xs={12} sm={6}>
-                                    <Button
-                                        type="submit"
-                                        variant="contained"
-                                        style={{ marginTop: 25 }}
-                                    >
-                                        Submit
-                                    </Button>
-                                </Grid>
-                            </Grid>
-                        </ValidatorForm>
-                    </Grid>
-                </Grid>
-                <Grid container>
-                    <Grid item>
-                        <SwapResults />
-                    </Grid>
-                </Grid>
-            </div>
+    const buttonText = account ? 'Submit' : 'Connect to a wallet';
+
+    let userBalance;
+    let userAllowance;
+
+    if (account) {
+        userBalance = tokenStore.getBalance(chainId, inputToken, account);
+        userAllowance = tokenStore.getAllowance(
+            chainId,
+            inputToken,
+            account,
+            proxyAddress
         );
     }
-}
 
-export default withStyles(styles)(SwapForm);
+    // if (userAllowance && userAllowance.lt(bigNumberify(inputAmount))) {
+    //     errorStore.setActiveError(
+    //         ErrorIds.SWAP_FORM_STORE,
+    //         ErrorCodes.INSUFFICIENT_APPROVAL_FOR_SWAP
+    //     );
+    // } else if (userBalance && userBalance.lt(bigNumberify(inputAmount))) {
+    //     errorStore.setActiveError(
+    //         ErrorIds.SWAP_FORM_STORE,
+    //         ErrorCodes.INSUFFICIENT_BALANCE_FOR_SWAP
+    //     );
+    // }
+
+    const error = errorStore.getActiveError(ErrorIds.SWAP_FORM_STORE);
+    let errorMessage;
+
+    if (error) {
+        console.log('error', error);
+        errorMessage = (
+            <Grid item xs={12} sm={6}>
+                <div>{error.message}</div>
+            </Grid>
+        );
+    }
+
+    console.log('[SwapForm] Render');
+
+    return (
+        <div>
+            <Grid container spacing={1}>
+                <Grid item xs={12} sm={12}>
+                    <ValidatorForm
+                        ref={useRef('form')}
+                        onSubmit={() => {
+                            swapHandler();
+                        }}
+                        onError={errors => console.log(errors)}
+                    >
+                        <Grid container spacing={1}>
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    id="token-in"
+                                    name="inputToken"
+                                    select
+                                    label={labels.inputs.INPUT_TOKEN}
+                                    value={inputs.inputToken}
+                                    onChange={e =>
+                                        onChange(e, formNames.INPUT_FORM)
+                                    }
+                                    SelectProps={{
+                                        native: true,
+                                    }}
+                                    margin="normal"
+                                    variant="outlined"
+                                    fullWidth
+                                >
+                                    {tokenList.map(option => (
+                                        <option
+                                            key={option.address}
+                                            value={option.address}
+                                        >
+                                            {option.symbol}
+                                        </option>
+                                    ))}
+                                </TextField>
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextValidator
+                                    id="amount-in"
+                                    name="inputAmount"
+                                    label={labels.inputs.INPUT_AMOUNT}
+                                    value={inputs.inputAmount}
+                                    onChange={e =>
+                                        onChange(e, formNames.INPUT_FORM)
+                                    }
+                                    type="number"
+                                    InputLabelProps={{
+                                        shrink: true,
+                                    }}
+                                    margin="normal"
+                                    variant="outlined"
+                                    fullWidth
+                                    validators={
+                                        validators.optionalTokenValueValidators
+                                    }
+                                    errorMessages={
+                                        validators.optionalTokenValueValidatorErrors
+                                    }
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    id="token-out"
+                                    name="outputToken"
+                                    select
+                                    fullWidth
+                                    label={labels.inputs.OUTPUT_TOKEN}
+                                    value={inputs.outputToken}
+                                    onChange={e =>
+                                        onChange(e, formNames.INPUT_FORM)
+                                    }
+                                    SelectProps={{
+                                        native: true,
+                                    }}
+                                    margin="normal"
+                                    variant="outlined"
+                                >
+                                    {tokenList.map(option => (
+                                        <option
+                                            key={option.address}
+                                            value={option.address}
+                                        >
+                                            {option.symbol}
+                                        </option>
+                                    ))}
+                                </TextField>
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextValidator
+                                    id="amount-out"
+                                    name="outputAmount"
+                                    label={labels.inputs.OUTPUT_AMOUNT}
+                                    value={inputs.outputAmount}
+                                    onChange={e =>
+                                        onChange(e, formNames.INPUT_FORM)
+                                    }
+                                    type="number"
+                                    InputLabelProps={{
+                                        shrink: true,
+                                    }}
+                                    margin="normal"
+                                    variant="outlined"
+                                    fullWidth
+                                    validators={
+                                        validators.optionalTokenValueValidators
+                                    }
+                                    errorMessages={
+                                        validators.optionalTokenValueValidatorErrors
+                                    }
+                                />
+                            </Grid>
+                            {errorMessage}
+                            <Grid item xs={12} sm={6}>
+                                <Button
+                                    type="submit"
+                                    variant="contained"
+                                    style={{ marginTop: 25 }}
+                                >
+                                    {buttonText}
+                                </Button>
+                            </Grid>
+                        </Grid>
+                    </ValidatorForm>
+                </Grid>
+            </Grid>
+            <Grid container>
+                <Grid item>
+                    <SwapResults />
+                </Grid>
+            </Grid>
+        </div>
+    );
+});
+
+export default SwapForm;

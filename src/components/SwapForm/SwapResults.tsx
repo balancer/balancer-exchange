@@ -1,57 +1,61 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import {
-    Card,
-    CardContent,
-    Typography,
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableRow,
-} from '@material-ui/core';
-import { observer, inject } from 'mobx-react';
-import { labels } from 'stores/SwapForm';
-import * as helpers from 'utils/helpers';
-import { withStyles } from '@material-ui/core/styles';
+import React from "react";
+import { Link } from "react-router-dom";
+import { Card, CardContent, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@material-ui/core";
+import { labels, SwapMethods } from "stores/SwapForm";
+import * as helpers from "utils/helpers";
+import { useStores } from "../../contexts/storesContext";
+import { observer } from "mobx-react";
 
-const styles = theme => ({
-    button: {
-        display: 'block',
-        marginTop: theme.spacing(2),
-    },
-    formControl: {
-        margin: theme.spacing(1),
-        paddingLeft: theme.spacing(1),
-        minWidth: 120,
-    },
-});
+const SwapResults = observer(props => {
+    const {
+        root: { proxyStore, swapFormStore },
+    } = useStores();
 
-@inject('root')
-@observer
-class SwapResults extends React.Component<any, any> {
-    buildCardContentByMethod() {
-        const { swapFormStore } = this.props.root;
-        const { outputs } = swapFormStore;
+    function buildCardContentByMethod() {
+        const { inputs, outputs } = swapFormStore;
 
         const validSwap = outputs.validSwap;
         let effectivePrice = helpers.roundValue(outputs.effectivePrice);
+        let outputAmount = helpers.roundValue(outputs.outputAmount);
+        let inputAmount = helpers.roundValue(outputs.inputAmount);
+
+        console.log({validSwap});
 
         if (!validSwap) {
             effectivePrice = '--';
+            outputAmount = '--';
+            inputAmount = '--';
         }
 
-        return (
-            <React.Fragment>
-                <Typography variant="body1">{`${labels.outputs.EFFECTIVE_PRICE}: ${effectivePrice}`}</Typography>
-            </React.Fragment>
-        );
+        if (inputs.type === SwapMethods.EXACT_IN) {
+            return (
+              <React.Fragment>
+                  <Typography variant="body1">{`${labels.outputs.EFFECTIVE_PRICE}: ${effectivePrice}`}</Typography>
+                  <Typography variant="body1">{`${labels.outputs.OUTPUT_AMOUNT}: ${outputAmount}`}</Typography>
+              </React.Fragment>
+            );
+        }
+
+        if (inputs.type === SwapMethods.EXACT_OUT) {
+            return (
+              <React.Fragment>
+                  <Typography variant="body1">{`${labels.outputs.EFFECTIVE_PRICE}: ${effectivePrice}`}</Typography>
+                  <Typography variant="body1">{`${labels.outputs.INPUT_AMOUNT}: ${inputAmount}`}</Typography>
+              </React.Fragment>
+            );
+        }
+
     }
 
-    buildTable() {
-        const { swapFormStore } = this.props.root;
+    function buildTable() {
         const { outputs } = swapFormStore;
         const validSwap = outputs.validSwap;
+
+        console.log({
+          method: 'buildTable()',
+          validSwap,
+          outputSwaps: outputs.swaps
+        });
 
         if (validSwap) {
             return (
@@ -75,7 +79,7 @@ class SwapResults extends React.Component<any, any> {
                                         </Link>
                                     </TableCell>
                                     <TableCell>
-                                        {swapFormStore.inputs.type === 'exactIn'
+                                        {swapFormStore.inputs.type === SwapMethods.EXACT_IN
                                             ? helpers.fromWei(row[1])
                                             : helpers.fromWei(row[2])}
                                     </TableCell>
@@ -88,34 +92,31 @@ class SwapResults extends React.Component<any, any> {
         }
     }
 
-    render() {
-        const { swapFormStore } = this.props.root;
-        const { outputs } = swapFormStore;
+    const { outputs } = swapFormStore;
+    const validSwap = outputs.validSwap;
 
-        const validSwap = outputs.validSwap;
-        return (
-            <Card>
-                <CardContent>
-                    <Typography variant="h5">Result Preview</Typography>
-                    {this.buildCardContentByMethod()}
-                    {validSwap ? (
-                        <React.Fragment>
-                            <br />
-                            <br />
-                        </React.Fragment>
-                    ) : (
-                        <React.Fragment>
-                            <br />
-                            <Typography color="textSecondary" variant="body1">
-                                (Invalid Swap Parameters)
-                            </Typography>
-                        </React.Fragment>
-                    )}
-                    {this.buildTable()}
-                </CardContent>
-            </Card>
-        );
-    }
-}
+    return (
+        <Card>
+            <CardContent>
+                <Typography variant="h5">Result Preview</Typography>
+                {buildCardContentByMethod()}
+                {validSwap ? (
+                    <React.Fragment>
+                        <br />
+                        <br />
+                    </React.Fragment>
+                ) : (
+                    <React.Fragment>
+                        <br />
+                        <Typography color="textSecondary" variant="body1">
+                            (Invalid Swap Parameters)
+                        </Typography>
+                    </React.Fragment>
+                )}
+                {buildTable()}
+            </CardContent>
+        </Card>
+    );
+});
 
-export default withStyles(styles)(SwapResults);
+export default SwapResults;

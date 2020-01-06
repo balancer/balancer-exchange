@@ -1,15 +1,37 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import { createWeb3ReactRoot } from '@web3-react/core';
+import { ethers } from 'ethers';
 import 'index.css';
 import App from 'views/App';
 import * as serviceWorker from './serviceWorker';
 import { Provider } from 'mobx-react';
-import RootStore from 'stores/Root';
+import { web3ContextNames } from 'provider/connectors';
+import ThemeProvider, { GlobalStyle } from './theme';
+
+const Web3ProviderInjected = createWeb3ReactRoot(web3ContextNames.injected);
+const Web3ProviderBackup = createWeb3ReactRoot(web3ContextNames.backup);
+
+function getLibrary(provider) {
+    console.log('[getLibrary]', {
+        provider
+    })
+    const library = new ethers.providers.Web3Provider(provider);
+    library.pollingInterval = 10000;
+    return library;
+}
 
 const Root = (
-    <Provider root={RootStore}>
-        <App />
-    </Provider>
+    <Web3ProviderInjected getLibrary={getLibrary}>
+        <Web3ProviderBackup getLibrary={getLibrary}>
+            <ThemeProvider>
+                <>
+                    <GlobalStyle />
+                    <App />
+                </>
+            </ThemeProvider>
+        </Web3ProviderBackup>
+    </Web3ProviderInjected>
 );
 ReactDOM.render(Root, document.getElementById('root'));
 

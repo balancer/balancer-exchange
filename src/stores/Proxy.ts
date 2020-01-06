@@ -1,11 +1,89 @@
-import { observable, action } from 'mobx';
+import { action, observable } from 'mobx';
 import * as deployed from 'deployed.json';
-import * as blockchain from 'utils/blockchain';
 import * as helpers from 'utils/helpers';
-import { RootStore } from 'stores/Root';
+import {
+    str,
+    stringifyPoolData,
+    printPoolData,
+    printSorSwaps,
+} from 'utils/helpers';
+import RootStore from 'stores/Root';
 import sor from 'balancer-sor';
-import { Decimal } from 'decimal.js';
+import { BigNumber } from 'utils/bignumber';
 import * as log from 'loglevel';
+import { ContractTypes } from './Provider';
+import { calcOutGivenIn, calcInGivenOut, BONE } from 'utils/balancerCalcs';
+
+export interface ExactAmountOutPreview {
+    preview: {
+        inputAmount: any;
+        effectivePrice: any;
+        swaps: any;
+    };
+    validSwap: boolean;
+}
+
+export interface ExactAmountInPreview {
+    preview: {
+        outputAmount: any;
+        effectivePrice: any;
+        swaps: any;
+    };
+    validSwap: boolean;
+}
+
+export interface Pool {
+    id: string;
+    balanceIn: BigNumber;
+    balanceOut: BigNumber;
+    weightIn: BigNumber;
+    weightOut: BigNumber;
+    swapFee: BigNumber;
+}
+
+export interface StringifiedPool {
+    id: string;
+    balanceIn: string;
+    balanceOut: string;
+    weightIn: string;
+    weightOut: string;
+    swapFee: string;
+}
+
+export interface SorSwaps {
+    inputAmounts: BigNumber[];
+    selectedBalancers: string[];
+    totalOutput: BigNumber;
+}
+
+type Swaps = any[];
+
+class CostCalculator {
+    gasPrice: BigNumber;
+    gasPerTrade: BigNumber;
+    outTokenEthPrice: BigNumber;
+    costPerTrade: BigNumber;
+    costOutputToken: BigNumber;
+
+    constructor(params: {
+        gasPrice: BigNumber;
+        gasPerTrade: BigNumber;
+        outTokenEthPrice: BigNumber;
+    }) {
+        const { gasPrice, gasPerTrade, outTokenEthPrice } = params;
+        this.gasPrice = gasPrice;
+        this.gasPerTrade = gasPerTrade;
+        this.outTokenEthPrice = outTokenEthPrice;
+        this.costPerTrade = gasPrice.times(gasPerTrade);
+        this.costOutputToken = this.costPerTrade.times(outTokenEthPrice);
+    }
+
+    getCostOutputToken(): string {
+        return str(this.costOutputToken);
+    }
+}
+
+export interface Swap {}
 
 export const statusCodes = {
     NOT_LOADED: 0,
@@ -16,11 +94,17 @@ export const statusCodes = {
 
 export default class ProxyStore {
     @observable previewPending: boolean;
+    costCalculator: CostCalculator;
     rootStore: RootStore;
 
     constructor(rootStore) {
         this.rootStore = rootStore;
         this.previewPending = false;
+        this.costCalculator = new CostCalculator({
+            gasPrice: new BigNumber(0.00000001),
+            gasPerTrade: new BigNumber(210000),
+            outTokenEthPrice: new BigNumber(100),
+        });
     }
 
     isPreviewPending() {
@@ -29,6 +113,50 @@ export default class ProxyStore {
 
     setPreviewPending(value) {
         this.previewPending = value;
+    }
+
+    async getPoolsWithToken(
+        tokenIn: string,
+        tokenOut: string,
+        formatEther: boolean = false
+    ): Promise<Pool[]> {
+        let pools = await sor.getPoolsWithTokens(tokenIn, tokenOut);
+
+        if (pools.pools.length === 0)
+            throw Error('There are no pools with selected tokens');
+
+        let poolData: Pool[] = [];
+        pools.pools.forEach(p => {
+            let tI: any = p.tokens.find(
+                t => helpers.toChecksum(t.address) === tokenIn
+            );
+            let tO: any = p.tokens.find(
+                t => helpers.toChecksum(t.address) === tokenOut
+            );
+            let obj: Pool = {
+                id: helpers.toChecksum(p.id),
+                balanceIn: new BigNumber(tI.balance),
+                balanceOut: new BigNumber(tO.balance),
+                weightIn: new BigNumber(tI.denormWeight).div(
+                    new BigNumber(p.totalWeight)
+                ),
+                weightOut: new BigNumber(tO.denormWeight).div(
+                    new BigNumber(p.totalWeight)
+                ),
+                swapFee: new BigNumber(p.swapFee),
+            };
+
+            if (formatEther) {
+                obj.balanceIn = obj.balanceIn.times(BONE);
+                obj.balanceOut = obj.balanceOut.times(BONE);
+                obj.weightIn = obj.weightIn.times(BONE);
+                obj.weightOut = obj.weightOut.times(BONE);
+                obj.swapFee = obj.swapFee.times(BONE);
+            }
+
+            poolData.push(obj);
+        });
+        return poolData;
     }
 
     /*
@@ -41,42 +169,15 @@ export default class ProxyStore {
         minAmountOut,
         maxPrice
     ) => {
-        const proxy = blockchain.loadObject(
-            'ExchangeProxy',
-            deployed['kovan'].proxy,
-            'ExchangeProxy'
+        const proxy = this.rootStore.providerStore.getContract(
+            ContractTypes.ExchangeProxy,
+            deployed['kovan'].proxy
         );
-        let pools = await sor.getPoolsWithTokens(tokenIn, tokenOut);
 
-        let poolData = [];
+        const poolData = await this.getPoolsWithToken(tokenIn, tokenOut);
+        const costOutputToken = this.costCalculator.getCostOutputToken();
 
-        pools.pools.forEach(p => {
-            let tI: any = p.tokens.find(
-                t => helpers.toChecksum(t.address) === tokenIn
-            );
-            let tO: any = p.tokens.find(
-                t => helpers.toChecksum(t.address) === tokenOut
-            );
-            let obj: any = {};
-            obj.id = helpers.toChecksum(p.id);
-            obj.balanceIn = new Decimal(tI.balance);
-            obj.balanceOut = new Decimal(tO.balance);
-            obj.weightIn = new Decimal(tI.denormWeight).div(new Decimal(p.totalWeight));
-            obj.weightOut = new Decimal(tO.denormWeight).div(
-                new Decimal(p.totalWeight)
-            );
-            obj.swapFee = new Decimal(p.swapFee);
-            poolData.push(obj);
-        });
-
-        let gasPrice = 0.00000001; // 1 Gwei
-        let gasPerTrade = 210000; // eg. 210k gas
-        let outTokenEthPrice = 100;
-
-        let costPerTrade = gasPrice * gasPerTrade; // eg. 210k gas @ 10 Gwei
-        let costOutputToken = costPerTrade * outTokenEthPrice;
-
-        let sorSwaps = sor.linearizedSolution(
+        let sorSwaps: SorSwaps = sor.linearizedSolution(
             poolData,
             'swapExactIn',
             tokenAmountIn,
@@ -84,7 +185,7 @@ export default class ProxyStore {
             costOutputToken
         );
 
-        let swaps = [];
+        let swaps: any[] = [];
         for (let i = 0; i < sorSwaps.inputAmounts.length; i++) {
             let swapAmount = sorSwaps.inputAmounts[i].toString();
             let swap = [
@@ -95,15 +196,13 @@ export default class ProxyStore {
             ];
             swaps.push(swap);
         }
-        await proxy.methods
-            .batchSwapExactIn(
-                swaps,
-                tokenIn,
-                tokenOut,
-                helpers.toWei(tokenAmountIn),
-                minAmountOut
-            )
-            .send();
+        await proxy.batchSwapExactIn(
+            swaps,
+            tokenIn,
+            tokenOut,
+            tokenAmountIn,
+            minAmountOut
+        );
     };
 
     @action batchSwapExactOut = async (
@@ -113,42 +212,15 @@ export default class ProxyStore {
         tokenAmountOut,
         maxPrice
     ) => {
-        const proxy = blockchain.loadObject(
-            'ExchangeProxy',
-            deployed['kovan'].proxy,
-            'ExchangeProxy'
+        const proxy = this.rootStore.providerStore.getContract(
+            ContractTypes.ExchangeProxy,
+            deployed['kovan'].proxy
         );
-        let pools = await sor.getPoolsWithTokens(tokenIn, tokenOut);
 
-        let poolData = [];
+        const poolData = await this.getPoolsWithToken(tokenIn, tokenOut);
+        const costOutputToken = this.costCalculator.getCostOutputToken();
 
-        pools.pools.forEach(p => {
-            let tI: any = p.tokens.find(
-                t => helpers.toChecksum(t.address) === tokenIn
-            );
-            let tO: any = p.tokens.find(
-                t => helpers.toChecksum(t.address) === tokenOut
-            );
-            let obj: any = {};
-            obj.id = helpers.toChecksum(p.id);
-            obj.balanceIn = new Decimal(tI.balance);
-            obj.balanceOut = new Decimal(tO.balance);
-            obj.weightIn = new Decimal(tI.denormWeight).div(new Decimal(p.totalWeight));
-            obj.weightOut = new Decimal(tO.denormWeight).div(
-                new Decimal(p.totalWeight)
-            );
-            obj.swapFee = new Decimal(p.swapFee);
-            poolData.push(obj);
-        });
-
-        let gasPrice = 0.00000001; // 1 Gwei
-        let gasPerTrade = 210000; // eg. 210k gas
-        let outTokenEthPrice = 100;
-
-        let costPerTrade = gasPrice * gasPerTrade; // eg. 210k gas @ 10 Gwei
-        let costOutputToken = costPerTrade * outTokenEthPrice;
-
-        let sorSwaps = sor.linearizedSolution(
+        let sorSwaps: SorSwaps = sor.linearizedSolution(
             poolData,
             'swapExactOut',
             tokenAmountOut,
@@ -156,7 +228,7 @@ export default class ProxyStore {
             costOutputToken
         );
 
-        let swaps = [];
+        let swaps: any[] = [];
         for (let i = 0; i < sorSwaps.inputAmounts.length; i++) {
             let swapAmount = sorSwaps.inputAmounts[i].toString();
             let swap = [
@@ -167,7 +239,7 @@ export default class ProxyStore {
             ];
             swaps.push(swap);
         }
-        await proxy.methods
+        await proxy
             .batchSwapExactOut(
                 swaps,
                 tokenIn,
@@ -179,22 +251,130 @@ export default class ProxyStore {
     };
 
     calcEffectivePrice(tokenAmountIn, tokenAmountOut) {
-        const amountIn = new Decimal(tokenAmountIn);
-        const amountOut = new Decimal(tokenAmountOut);
-        const effectivePrice = amountIn.div(amountOut).toString();
-
-        return effectivePrice;
+        const amountIn = new BigNumber(tokenAmountIn);
+        const amountOut = new BigNumber(tokenAmountOut);
+        return amountIn.div(amountOut).toString();
     }
+
+    simulatedBatchSwapExactOut = (
+        sorSwaps: SorSwaps,
+        poolData: Pool[],
+        maxPrice: string,
+        maxAmountIn: string
+    ): {
+        inputAmount: BigNumber;
+        swaps: Swaps;
+    } => {
+            let totalAmountIn = new BigNumber(0);
+            let swaps: any[] = [];
+            for (let i = 0; i < sorSwaps.inputAmounts.length; i++) {
+                let swapAmount = sorSwaps.inputAmounts[i].times(BONE);
+                if (swapAmount.isNaN()) {
+                    throw new Error('NaN swap amount');
+                }
+                let swap = [
+                    sorSwaps.selectedBalancers[i],
+                    maxAmountIn,
+                    swapAmount.toString(),
+                    maxPrice,
+                ];
+                swaps.push(swap);
+                const pool = poolData.find(
+                  p => p.id == sorSwaps.selectedBalancers[i]
+                );
+                if (!pool) {
+                    throw new Error(
+                      '[Invariant] No pool found for selected balancer index'
+                    );
+                }
+
+                const preview = calcInGivenOut(
+                  pool.balanceIn,
+                  pool.weightIn,
+                  pool.balanceOut,
+                  pool.weightOut,
+                  swapAmount,
+                  pool.swapFee
+                );
+
+                console.log({
+                    preview
+                })
+
+                totalAmountIn = totalAmountIn.plus(preview);
+            }
+
+            printSorSwaps(sorSwaps);
+            printPoolData(poolData);
+
+            console.log({
+                inputAmount: totalAmountIn
+            })
+            return {
+                inputAmount: totalAmountIn,
+                swaps,
+            };
+    };
+
+    simulatedBatchSwapExactIn = (
+        sorSwaps: SorSwaps,
+        poolData: Pool[],
+        maxPrice: string,
+        minAmountOut: string
+    ): {
+        outputAmount: BigNumber;
+        swaps: Swaps;
+    } => {
+        try {
+        let totalAmountOut = new BigNumber(0);
+        const swaps: any[] = [];
+        for (let i = 0; i < sorSwaps.inputAmounts.length; i++) {
+            let swapAmount = sorSwaps.inputAmounts[i].times(BONE);
+            let swap = [
+                sorSwaps.selectedBalancers[i],
+                swapAmount.toString(),
+                minAmountOut,
+                maxPrice,
+            ];
+            swaps.push(swap);
+
+            const pool = poolData.find(
+                p => p.id == sorSwaps.selectedBalancers[i]
+            );
+            if (!pool) {
+                throw new Error(
+                    '[Invariant] No pool found for selected balancer index'
+                );
+            }
+
+            const preview = calcOutGivenIn(
+                pool.balanceIn,
+                pool.weightIn,
+                pool.balanceOut,
+                pool.weightOut,
+                swapAmount,
+                pool.swapFee
+            );
+
+            totalAmountOut = totalAmountOut.plus(preview);
+        }
+        return {
+            outputAmount: totalAmountOut,
+            swaps,
+        };
+        } catch (e) {
+            throw new Error(e);
+        }
+    };
 
     /*
         Swap Methods - Preview
     */
-    previewBatchSwapExactIn = async (tokenIn, tokenOut, tokenAmountIn) => {
-        const proxy = blockchain.loadObject(
-            'ExchangeProxy',
-            deployed['kovan'].proxy,
-            'ExchangeProxy'
-        );
+    previewBatchSwapExactIn = async (
+        tokenIn,
+        tokenOut,
+        tokenAmountIn
+    ): Promise<ExactAmountInPreview> => {
         console.log(
             '[Action] previewBatchSwapExactIn',
             tokenIn,
@@ -204,101 +384,76 @@ export default class ProxyStore {
 
         try {
             this.setPreviewPending(true);
-            let pools = await sor.getPoolsWithTokens(tokenIn, tokenOut);
 
-            if (pools.pools.length === 0)
-                throw Error('There are no pools with selected tokens');
+            const poolData = await this.getPoolsWithToken(
+                tokenIn,
+                tokenOut,
+                true
+            );
 
-            let poolData = [];
-            pools.pools.forEach(p => {
-                let tI: any = p.tokens.find(
-                    t => helpers.toChecksum(t.address) === tokenIn
-                );
-                let tO: any = p.tokens.find(
-                    t => helpers.toChecksum(t.address) === tokenOut
-                );
-                let obj: any = {};
-                obj.id = helpers.toChecksum(p.id);
-                obj.balanceIn = new Decimal(tI.balance);
-                obj.balanceOut = new Decimal(tO.balance);
-                obj.weightIn = new Decimal(tI.denormWeight).div(
-                    new Decimal(p.totalWeight)
-                );
-                obj.weightOut = new Decimal(tO.denormWeight).div(
-                    new Decimal(p.totalWeight)
-                );
-                obj.swapFee = new Decimal(p.swapFee);
-                poolData.push(obj);
-            });
+            printPoolData(poolData);
+
+            const costOutputToken = this.costCalculator.getCostOutputToken();
 
             let maxPrice = helpers.setPropertyToMaxUintIfEmpty();
             let minAmountOut = helpers.setPropertyToZeroIfEmpty();
 
-            let gasPrice = 0.00000001; // 1 Gwei
-            let gasPerTrade = 210000; // eg. 210k gas
-            let outTokenEthPrice = 100;
+            const formattedPoolData = stringifyPoolData(poolData);
 
-            let costPerTrade = gasPrice * gasPerTrade; // eg. 210k gas @ 10 Gwei
-            let costOutputToken = costPerTrade * outTokenEthPrice;
-
-            let sorSwaps = sor.linearizedSolution(
-                poolData,
+            let sorSwaps: SorSwaps = sor.linearizedSolution(
+                formattedPoolData,
                 'swapExactIn',
                 tokenAmountIn,
                 20,
                 costOutputToken
             );
 
-            let swaps = [];
-            for (let i = 0; i < sorSwaps.inputAmounts.length; i++) {
-                let swapAmount = sorSwaps.inputAmounts[i].toString();
-                let swap = [
-                    sorSwaps.selectedBalancers[i],
-                    helpers.toWei(swapAmount),
-                    helpers.toWei('0'),
-                    maxPrice,
-                ];
-                swaps.push(swap);
-            }
+            printSorSwaps(sorSwaps);
 
-            const preview = await proxy.methods
-                .batchSwapExactIn(
-                    swaps,
-                    tokenIn,
-                    tokenOut,
-                    helpers.toWei(tokenAmountIn),
-                    minAmountOut
-                )
-                .call();
+            const { outputAmount, swaps } = this.simulatedBatchSwapExactIn(
+                sorSwaps,
+                poolData,
+                maxPrice,
+                minAmountOut
+            );
+
+            console.log({
+                totalAmountOut: outputAmount.toString(),
+            });
 
             const effectivePrice = this.calcEffectivePrice(
                 tokenAmountIn,
-                helpers.fromWei(preview)
+                helpers.fromWei(outputAmount.toString())
             );
 
-            const data = {
-                outputAmount: preview,
-                effectivePrice,
-                swaps,
+            this.setPreviewPending(false);
+            return {
+                preview: {
+                    outputAmount: outputAmount.toString(),
+                    effectivePrice,
+                    swaps,
+                },
                 validSwap: true,
             };
-            this.setPreviewPending(false);
-            return data;
         } catch (e) {
             log.error('[Error] previewSwapExactAmountIn', e);
             this.setPreviewPending(false);
             return {
+                preview: {
+                    outputAmount: null,
+                    effectivePrice: null,
+                    swaps: null,
+                },
                 validSwap: false,
             };
         }
     };
 
-    previewBatchSwapExactOut = async (tokenIn, tokenOut, tokenAmountOut) => {
-        const proxy = blockchain.loadObject(
-            'ExchangeProxy',
-            deployed['kovan'].proxy,
-            'ExchangeProxy'
-        );
+    previewBatchSwapExactOut = async (
+        tokenIn: string,
+        tokenOut: string,
+        tokenAmountOut: string
+    ): Promise<ExactAmountOutPreview> => {
         console.log(
             '[Action] previewBatchSwapExactOut',
             tokenIn,
@@ -308,91 +463,63 @@ export default class ProxyStore {
 
         try {
             this.setPreviewPending(true);
-            let pools = await sor.getPoolsWithTokens(tokenIn, tokenOut);
 
-            if (pools.pools.length === 0)
-                throw Error('There are no pools with selected tokens');
-
-            let poolData = [];
-            pools.pools.forEach(p => {
-                let tI: any = p.tokens.find(
-                    t => helpers.toChecksum(t.address) === tokenIn
-                );
-                let tO: any = p.tokens.find(
-                    t => helpers.toChecksum(t.address) === tokenOut
-                );
-                let obj: any = {};
-                obj.id = helpers.toChecksum(p.id);
-                obj.balanceIn = new Decimal(tI.balance);
-                obj.balanceOut = new Decimal(tO.balance);
-                obj.weightIn = new Decimal(tI.denormWeight).div(
-                    new Decimal(p.totalWeight)
-                );
-                obj.weightOut = new Decimal(tO.denormWeight).div(
-                    new Decimal(p.totalWeight)
-                );
-                obj.swapFee = new Decimal(p.swapFee);
-                poolData.push(obj);
-            });
+            const poolData = await this.getPoolsWithToken(
+                tokenIn,
+                tokenOut,
+                true
+            );
+            const costOutputToken = this.costCalculator.getCostOutputToken();
 
             let maxPrice = helpers.setPropertyToMaxUintIfEmpty();
             let maxAmountIn = helpers.setPropertyToMaxUintIfEmpty();
 
-            let gasPrice = 0.00000001; // 1 Gwei
-            let gasPerTrade = 210000; // eg. 210k gas
-            let outTokenEthPrice = 100;
+            const formattedPoolData = stringifyPoolData(poolData);
 
-            let costPerTrade = gasPrice * gasPerTrade; // eg. 210k gas @ 10 Gwei
-            let costOutputToken = costPerTrade * outTokenEthPrice;
-
-            let sorSwaps = sor.linearizedSolution(
-                poolData,
+            let sorSwaps: SorSwaps = sor.linearizedSolution(
+                formattedPoolData,
                 'swapExactOut',
                 tokenAmountOut,
                 20,
                 costOutputToken
             );
 
-            let swaps = [];
-            for (let i = 0; i < sorSwaps.inputAmounts.length; i++) {
-                let swapAmount = sorSwaps.inputAmounts[i].toString();
-                let swap = [
-                    sorSwaps.selectedBalancers[i],
-                    maxAmountIn,
-                    helpers.toWei(swapAmount),
-                    maxPrice,
-                ];
-                swaps.push(swap);
-            }
+            const { inputAmount, swaps } = this.simulatedBatchSwapExactOut(
+              sorSwaps,
+              poolData,
+              maxPrice,
+              maxAmountIn
+            );
 
-            const preview = await proxy.methods
-                .batchSwapExactOut(
-                    swaps,
-                    tokenIn,
-                    tokenOut,
-                    helpers.toWei(tokenAmountOut),
-                    maxAmountIn
-                )
-                .call();
+            console.log(swaps);
 
             const effectivePrice = this.calcEffectivePrice(
                 tokenAmountOut,
-                helpers.fromWei(preview)
+                helpers.fromWei(inputAmount.toString())
             );
 
-            const data = {
-                inputAmount: preview,
-                effectivePrice,
-                swaps,
-                validSwap: true,
-            };
+            if (inputAmount.isNaN()) {
+                throw new Error('NaN total calculated input');
+            }
 
             this.setPreviewPending(false);
-            return data;
+            return {
+                preview: {
+                    inputAmount,
+                    effectivePrice,
+                    swaps,
+                },
+                validSwap: true,
+            };
         } catch (e) {
             log.error('[Error] previewSwapExactAmountOut', e);
             this.setPreviewPending(false);
             return {
+                preview: {
+                    inputAmount: null,
+                    effectivePrice: null,
+                    swaps: null,
+                },
                 validSwap: false,
             };
         }
