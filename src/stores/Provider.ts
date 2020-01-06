@@ -72,21 +72,26 @@ export default class ProviderStore {
     }
 
 
-    @action fetchUserBlockchainData(networkId: number) {
+    @action fetchUserBlockchainData = async (networkId: number) => {
         const {transactionStore, tokenStore} = this.rootStore;
         const {chainId, account} = this.getActiveWeb3React();
+
+        console.log('[Fetch Start - User Blockchain Data]', {
+            chainId, account
+        });
 
         if (networkId !== chainId) {
             throw new Error('Attempting to fetch data for inactive chainId');
         }
 
         if (account) {
-            transactionStore.checkPendingTransactions(networkId).then(result => {
-                console.log('[Fetch] Pending TX')
-            });
-            tokenStore.fetchBalancerTokenData(account, networkId);
-
+            await transactionStore.checkPendingTransactions(networkId);
+            await tokenStore.fetchBalancerTokenData(account, networkId);
         }
+
+        console.log('[Fetch End - User Blockchain Data]', {
+            chainId, account
+        });
     }
 
     getWeb3React(name: string): Web3ReactContextInterface {

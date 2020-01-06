@@ -4,6 +4,7 @@ import ProviderStore from 'stores/Provider';
 import SwapFormStore from 'stores/SwapForm';
 import TokenStore from 'stores/Token';
 import ModalStore from './Modal';
+import ErrorStore from './Error';
 import TransactionStore from './Transaction';
 import { supportedNetworks } from 'provider/connectors';
 import AppSettingsStore from './AppSettings';
@@ -17,6 +18,7 @@ export default class RootStore {
     modalStore: ModalStore;
     transactionStore: TransactionStore;
     appSettingsStore: AppSettingsStore;
+    errorStore: ErrorStore;
 
     constructor() {
         this.proxyStore = new ProxyStore(this);
@@ -26,5 +28,6 @@ export default class RootStore {
         this.modalStore = new ModalStore(this);
         this.transactionStore = new TransactionStore(this, supportedNetworks);
         this.appSettingsStore = new AppSettingsStore(this);
+        this.errorStore = new ErrorStore(this);
     }
 }

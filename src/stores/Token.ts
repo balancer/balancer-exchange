@@ -14,6 +14,10 @@ export interface ContractMetadata {
     tokens: TokenMetadata[];
 }
 
+export interface ContractMetadataMap {
+    [index: number]: ContractMetadata;
+}
+
 interface TokenBalanceMap {
     [index: string]: UserBalanceMap;
 }
@@ -40,14 +44,14 @@ export default class TokenStore {
     @observable symbols = {};
     @observable balances: ObservableMap<number, TokenBalanceMap>;
     @observable allowances: ObservableMap<number, UserAllowanceMap>;
-    @observable contractMetadata: ObservableMap<number, ContractMetadata>;
+    @observable contractMetadata: ContractMetadataMap;
     rootStore: RootStore;
 
     constructor(rootStore, networkIds) {
         this.rootStore = rootStore;
         this.balances = new ObservableMap<number, TokenBalanceMap>();
         this.allowances = new ObservableMap<number, UserAllowanceMap>();
-        this.contractMetadata = new ObservableMap<number, ContractMetadata>();
+        this.contractMetadata = {};
 
         networkIds.forEach(networkId => {
             this.balances.set(networkId, {});
@@ -81,11 +85,21 @@ export default class TokenStore {
             });
         });
 
-        this.contractMetadata.set(chainId, contractMetadata);
+        this.contractMetadata[chainId] = contractMetadata;
+    }
+
+    getProxyAddress(chainId): string {
+        const proxyAddress = this.contractMetadata[chainId].proxy;
+        if (!proxyAddress) {
+            throw new Error(
+                '[Invariant] Trying to get non-loaded static address'
+            );
+        }
+        return proxyAddress;
     }
 
     getWhitelistedTokenMetadata(chainId): TokenMetadata[] {
-        const contractMetadata = this.contractMetadata.get(chainId);
+        const contractMetadata = this.contractMetadata[chainId];
 
         if (!contractMetadata) {
             throw new Error(
@@ -96,16 +110,30 @@ export default class TokenStore {
         return contractMetadata.tokens;
     }
 
-    setAllowanceProperty(tokenAddress, owner, spender, amount): void {
-        if (!this.allowances[tokenAddress]) {
-            this.allowances[tokenAddress] = {};
+    setAllowanceProperty(
+        chainId: number,
+        tokenAddress: string,
+        owner: string,
+        spender: string,
+        approval: BigNumber
+    ): void {
+        const chainApprovals = this.allowances.get(chainId);
+        if (!chainApprovals) {
+            throw new Error(
+              'Attempt to set balance property for untracked chainId'
+            );
         }
 
-        if (!this.allowances[tokenAddress][owner]) {
-            this.allowances[tokenAddress][owner] = {};
+        if (!chainApprovals[tokenAddress]) {
+            chainApprovals[tokenAddress] = {};
         }
 
-        this.allowances[tokenAddress][owner][spender] = amount;
+        if (!chainApprovals[tokenAddress][owner]) {
+            chainApprovals[tokenAddress][owner] = {};
+        }
+
+        chainApprovals[tokenAddress][owner][spender] = approval;
+        this.allowances.set(chainId, chainApprovals);
     }
 
     setBalanceProperty(
@@ -114,24 +142,33 @@ export default class TokenStore {
         account: string,
         balance: BigNumber
     ): void {
-        if (!this.balances[tokenAddress]) {
-            this.balances[tokenAddress] = {};
+        const chainBalances = this.balances.get(chainId);
+        if (!chainBalances) {
+            throw new Error(
+                'Attempt to set balance property for untracked chainId'
+            );
         }
 
-        if (!this.balances[tokenAddress][account]) {
-            this.balances[tokenAddress][account] = {};
+        if (!chainBalances[tokenAddress]) {
+            chainBalances[tokenAddress] = {};
         }
 
-        this.balances[tokenAddress][account] = balance;
+        chainBalances[tokenAddress][account] = balance;
+        this.balances.set(chainId, chainBalances);
     }
 
     getBalance(chainId, tokenAddress, account): BigNumber | undefined {
-        //@ts-ignore
-        const balance = this.balances[tokenAddress][account];
-        if (!balance) {
-            return undefined;
+        const chainBalances = this.balances.get(chainId);
+        if (chainBalances) {
+            const tokenBalances = chainBalances[tokenAddress];
+            if (tokenBalances) {
+                const balance = tokenBalances[account];
+                if (balance) {
+                    return balance;
+                }
+            }
         }
-        return balance;
+        return undefined;
     }
 
     @action approveMax = async (tokenAddress, spender) => {
@@ -169,7 +206,7 @@ export default class TokenStore {
                     chainId,
                     value.address,
                     account,
-                    deployed[chainId].proxy
+                    this.contractMetadata[chainId].proxy
                 )
             );
         });
@@ -215,7 +252,12 @@ export default class TokenStore {
         );
     };
 
-    @action fetchAllowance = async (chain, tokenAddress, account, spender) => {
+    @action fetchAllowance = async (
+        chainId,
+        tokenAddress,
+        account,
+        spender
+    ) => {
         const { providerStore } = this.rootStore;
         const token = providerStore.getContract(
             ContractTypes.TestToken,
@@ -224,15 +266,20 @@ export default class TokenStore {
 
         const allowance = await token.allowance(account, spender);
 
-        this.setAllowanceProperty(tokenAddress, account, spender, allowance);
-
-        console.log(
-            'Allowance Property Set',
+        this.setAllowanceProperty(
+            chainId,
             tokenAddress,
             account,
             spender,
             allowance
         );
+
+        console.log('Allowance Property Set', {
+            tokenAddress,
+            account,
+            spender,
+            allowance,
+        });
     };
 
     getAllowance = (
@@ -241,14 +288,16 @@ export default class TokenStore {
         account,
         spender
     ): BigNumber | undefined => {
-        if (!this.allowances[tokenAddress]) {
-            return undefined;
+        const chainApprovals = this.allowances.get(chainId);
+        if (chainApprovals) {
+            const tokenApprovals = chainApprovals[tokenAddress];
+            if (tokenApprovals) {
+                const userApprovals = tokenApprovals[account];
+                if (userApprovals) {
+                    return userApprovals[spender];
+                }
+            }
         }
-
-        if (!this.allowances[tokenAddress][account]) {
-            return undefined;
-        }
-
-        return this.allowances[tokenAddress][account][spender];
+        return undefined;
     };
 }

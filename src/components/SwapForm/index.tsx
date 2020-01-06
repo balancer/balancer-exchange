@@ -8,13 +8,23 @@ import { formNames, labels, SwapMethods } from 'stores/SwapForm';
 import SwapResults from './SwapResults';
 import { validators } from '../validators';
 import { useStores } from '../../contexts/storesContext';
+import { ErrorCodes, ErrorIds } from '../../stores/Error';
+import { bigNumberify } from 'ethers/utils';
+import { ContractMetadata } from "../../stores/Token";
 
 const SwapForm = observer(props => {
     const {
-        root: { proxyStore, swapFormStore, providerStore, tokenStore },
+        root: {
+            proxyStore,
+            swapFormStore,
+            providerStore,
+            tokenStore,
+            errorStore,
+        },
     } = useStores();
 
-    const { chainId } = providerStore.getActiveWeb3React();
+    const { chainId, account } = providerStore.getActiveWeb3React();
+    const proxyAddress = tokenStore.getProxyAddress(chainId);
 
     if (!chainId) {
         throw new Error('ChainId not loaded in TestPanel');
@@ -30,7 +40,7 @@ const SwapForm = observer(props => {
             value: event.target.value,
         });
         updateProperty(form, event.target.name, event.target.value);
-        const { inputAmount, outputAmount } = swapFormStore.inputs;
+        const { inputAmount, inputToken } = swapFormStore.inputs;
 
         // Get preview if all necessary fields are filled out
         if (event.target.name === 'inputAmount') {
@@ -45,7 +55,11 @@ const SwapForm = observer(props => {
     };
 
     const swapHandler = async () => {
-        const inputs = swapFormStore.inputs;
+        const { inputs, outputs } = swapFormStore;
+
+        if (!outputs.validSwap) {
+            return;
+        }
 
         if (inputs.type === SwapMethods.EXACT_IN) {
             const {
@@ -146,8 +160,18 @@ const SwapForm = observer(props => {
         }
     };
 
-    const { inputs } = swapFormStore;
+    const { inputs, outputs } = swapFormStore;
+    const { inputAmount, inputToken } = inputs;
     const tokenList = tokenStore.getWhitelistedTokenMetadata(chainId);
+    // const userBalances = tokenList.map(value => {
+    //     const balance = tokenStore.getBalance(chainId, value.address, account);
+    //     if (balance) {
+    //         return balance.toString();
+    //     } else {
+    //         return undefined;
+    //     }
+    // });
+
 
     if (helpers.checkIsPropertyEmpty(swapFormStore.inputs.inputToken)) {
         swapFormStore.inputs.inputToken = tokenList[0].address;
@@ -155,6 +179,45 @@ const SwapForm = observer(props => {
 
     if (helpers.checkIsPropertyEmpty(swapFormStore.inputs.outputToken)) {
         swapFormStore.inputs.outputToken = tokenList[1].address;
+    }
+
+    const buttonText = account ? 'Submit' : 'Connect to a wallet';
+
+    let userBalance;
+    let userAllowance;
+
+    if (account) {
+        userBalance = tokenStore.getBalance(chainId, inputToken, account);
+        userAllowance = tokenStore.getAllowance(
+            chainId,
+            inputToken,
+            account,
+            proxyAddress
+        );
+    }
+
+    // if (userAllowance && userAllowance.lt(bigNumberify(inputAmount))) {
+    //     errorStore.setActiveError(
+    //         ErrorIds.SWAP_FORM_STORE,
+    //         ErrorCodes.INSUFFICIENT_APPROVAL_FOR_SWAP
+    //     );
+    // } else if (userBalance && userBalance.lt(bigNumberify(inputAmount))) {
+    //     errorStore.setActiveError(
+    //         ErrorIds.SWAP_FORM_STORE,
+    //         ErrorCodes.INSUFFICIENT_BALANCE_FOR_SWAP
+    //     );
+    // }
+
+    const error = errorStore.getActiveError(ErrorIds.SWAP_FORM_STORE);
+    let errorMessage;
+
+    if (error) {
+        console.log('error', error);
+        errorMessage = (
+            <Grid item xs={12} sm={6}>
+                <div>{error.message}</div>
+            </Grid>
+        );
     }
 
     console.log('[SwapForm] Render');
@@ -273,13 +336,14 @@ const SwapForm = observer(props => {
                                     }
                                 />
                             </Grid>
+                            {errorMessage}
                             <Grid item xs={12} sm={6}>
                                 <Button
                                     type="submit"
                                     variant="contained"
                                     style={{ marginTop: 25 }}
                                 >
-                                    Submit
+                                    {buttonText}
                                 </Button>
                             </Grid>
                         </Grid>

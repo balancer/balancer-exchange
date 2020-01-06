@@ -80,6 +80,8 @@ export default function PendingView({
 }) {
     const isMetamask = window.ethereum && window.ethereum.isMetaMask;
 
+    console.log('[Pending View] Error', error);
+
     return (
         <PendingSection>
             <LoadingMessage error={error}>
