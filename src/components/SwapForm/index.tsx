@@ -71,7 +71,7 @@ const SwapForm = observer(props => {
             } = inputs;
             await proxyStore.batchSwapExactIn(
                 inputToken,
-                bnum(inputAmount),
+                toWei(inputAmount),
                 outputToken,
                 toWei(outputLimit),
                 toWei(limitPrice)
@@ -88,7 +88,7 @@ const SwapForm = observer(props => {
                 inputToken,
                 toWei(inputLimit),
                 outputToken,
-                bnum(outputAmount),
+                toWei(outputAmount),
                 toWei(limitPrice)
             );
         }
