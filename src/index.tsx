@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import { createWeb3ReactRoot } from '@web3-react/core';
 import { ethers } from 'ethers';
 import 'index.css';
-import App from 'App';
+import App from 'views/App';
 import * as serviceWorker from './serviceWorker';
 import { Provider } from 'mobx-react';
 import { web3ContextNames } from 'provider/connectors';

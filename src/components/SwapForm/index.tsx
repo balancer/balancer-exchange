@@ -3,7 +3,7 @@ import React, { useRef } from 'react';
 import { Button, Grid, TextField } from '@material-ui/core';
 import { observer } from 'mobx-react';
 import { TextValidator, ValidatorForm } from 'react-material-ui-form-validator';
-import * as helpers from 'utils/helpers';
+import {bnum, toWei, fromWei, checkIsPropertyEmpty} from 'utils/helpers';
 import { formNames, labels, SwapMethods } from 'stores/SwapForm';
 import SwapResults from './SwapResults';
 import { validators } from '../validators';
@@ -71,10 +71,10 @@ const SwapForm = observer(props => {
             } = inputs;
             await proxyStore.batchSwapExactIn(
                 inputToken,
-                inputAmount,
+                bnum(inputAmount),
                 outputToken,
-                helpers.toWei(outputLimit),
-                helpers.toWei(limitPrice)
+                toWei(outputLimit),
+                toWei(limitPrice)
             );
         } else if (inputs.type === SwapMethods.EXACT_OUT) {
             const {
@@ -86,10 +86,10 @@ const SwapForm = observer(props => {
             } = inputs;
             await proxyStore.batchSwapExactOut(
                 inputToken,
-                helpers.toWei(inputLimit),
+                toWei(inputLimit),
                 outputToken,
-                outputAmount,
-                helpers.toWei(limitPrice)
+                bnum(outputAmount),
+                toWei(limitPrice)
             );
         }
     };
@@ -115,7 +115,7 @@ const SwapForm = observer(props => {
 
         if (validSwap) {
             return {
-                outputAmount: helpers.fromWei(outputAmount),
+                outputAmount: fromWei(outputAmount),
                 effectivePrice,
                 swaps,
                 validSwap,
@@ -148,7 +148,7 @@ const SwapForm = observer(props => {
 
         if (validSwap) {
             return {
-                inputAmount: helpers.fromWei(inputAmount),
+                inputAmount: fromWei(inputAmount),
                 effectivePrice,
                 swaps,
                 validSwap,
@@ -172,12 +172,11 @@ const SwapForm = observer(props => {
     //     }
     // });
 
-
-    if (helpers.checkIsPropertyEmpty(swapFormStore.inputs.inputToken)) {
+    if (checkIsPropertyEmpty(swapFormStore.inputs.inputToken)) {
         swapFormStore.inputs.inputToken = tokenList[0].address;
     }
 
-    if (helpers.checkIsPropertyEmpty(swapFormStore.inputs.outputToken)) {
+    if (checkIsPropertyEmpty(swapFormStore.inputs.outputToken)) {
         swapFormStore.inputs.outputToken = tokenList[1].address;
     }
 

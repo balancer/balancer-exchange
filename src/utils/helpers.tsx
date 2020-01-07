@@ -26,7 +26,7 @@ export const addZero = value => {
     return value > 9 ? value : `0${value}`;
 };
 
-export function toDecimal(
+export function bnum(
     val: string | number | utils.BigNumber | BigNumber
 ): BigNumber {
     return new BigNumber(val.toString());
@@ -37,7 +37,7 @@ export function fromWei(val: string | utils.BigNumber | BigNumber): string {
 }
 
 export function toWei(val: string | utils.BigNumber | BigNumber): BigNumber {
-    return toDecimal(utils.parseEther(val.toString()));
+    return bnum(utils.parseEther(val.toString()));
 }
 
 export function setPropertyToMaxUintIfEmpty(value?): string {
@@ -102,7 +102,7 @@ export function isAddress(value) {
 }
 
 export function fromFeeToPercentage(value) {
-    const etherValue = toDecimal(fromWei(value));
+    const etherValue = bnum(fromWei(value));
     const percentageValue = etherValue.times(100);
     return percentageValue;
 }
