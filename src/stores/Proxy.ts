@@ -58,6 +58,11 @@ export interface SorSwaps {
     totalOutput: BigNumber;
 }
 
+enum SwapMethod {
+    ExactIn = "swapExactIn",
+    ExactOut = "swapExactOut"
+}
+
 type Swap = [string, string, string, string];
 
 type Swaps = any[];
@@ -82,8 +87,8 @@ class CostCalculator {
         this.costOutputToken = this.costPerTrade.times(outTokenEthPrice);
     }
 
-    getCostOutputToken(): string {
-        return str(this.costOutputToken);
+    getCostOutputToken(): BigNumber {
+        return this.costOutputToken;
     }
 }
 
@@ -117,10 +122,10 @@ export default class ProxyStore {
         this.previewPending = value;
     }
 
-    async getPoolsWithToken(
+    async findPoolsWithTokens(
         tokenIn: string,
         tokenOut: string,
-        formatEther: boolean = false
+        fromWei: boolean = false
     ): Promise<Pool[]> {
         let pools = await sor.getPoolsWithTokens(tokenIn, tokenOut);
 
@@ -148,7 +153,7 @@ export default class ProxyStore {
                 swapFee: new BigNumber(p.swapFee),
             };
 
-            if (formatEther) {
+            if (fromWei) {
                 obj.balanceIn = obj.balanceIn.times(BONE);
                 obj.balanceOut = obj.balanceOut.times(BONE);
                 obj.weightIn = obj.weightIn.times(BONE);
@@ -161,12 +166,17 @@ export default class ProxyStore {
         return poolData;
     }
 
+    findBestSwaps = (balancers: Pool[], swapType: SwapMethod, inputAmount: BigNumber, maxBalancers: number, costOutputToken: BigNumber): SorSwaps => {
+        const sorSwaps = sor.linearizedSolution(stringifyPoolData(balancers), swapType, inputAmount.toString(), maxBalancers, costOutputToken.toString());
+        return sorSwaps;
+    };
+
     /*
         Swap Methods - Action
     */
     @action batchSwapExactIn = async (
         tokenIn: string,
-        tokenAmountIn: BigNumber,
+        inputAmount: BigNumber,
         tokenOut: string,
         minAmountOut: BigNumber,
         maxPrice: BigNumber
@@ -174,17 +184,10 @@ export default class ProxyStore {
         const { tokenStore, providerStore } = this.rootStore;
         const { chainId } = providerStore.getActiveWeb3React();
 
-        const poolData = await this.getPoolsWithToken(tokenIn, tokenOut, true);
+        const poolData = await this.findPoolsWithTokens(tokenIn, tokenOut, true);
         const costOutputToken = this.costCalculator.getCostOutputToken();
-        const formattedPoolData = stringifyPoolData(poolData);
 
-        let sorSwaps: SorSwaps = sor.linearizedSolution(
-            formattedPoolData,
-            'swapExactIn',
-            tokenAmountIn,
-            20,
-            costOutputToken
-        );
+        const sorSwaps = this.findBestSwaps(poolData, SwapMethod.ExactIn, inputAmount, 20, costOutputToken);
 
         let swaps: Swap[] = [];
         for (let i = 0; i < sorSwaps.inputAmounts.length; i++) {
@@ -202,7 +205,7 @@ export default class ProxyStore {
             swaps,
             tokenIn,
             tokenOut,
-            tokenAmountIn: tokenAmountIn.toString(),
+            tokenAmountIn: inputAmount.toString(),
             minAmountOut: minAmountOut.toString(),
         });
 
@@ -216,7 +219,7 @@ export default class ProxyStore {
                 swaps,
                 tokenIn,
                 tokenOut,
-                tokenAmountIn.toString(),
+                inputAmount.toString(),
                 minAmountOut.toString(),
             ]
         );
@@ -232,7 +235,7 @@ export default class ProxyStore {
         const { tokenStore, providerStore } = this.rootStore;
         const { chainId } = providerStore.getActiveWeb3React();
 
-        const poolData = await this.getPoolsWithToken(tokenIn, tokenOut);
+        const poolData = await this.findPoolsWithTokens(tokenIn, tokenOut);
         const costOutputToken = this.costCalculator.getCostOutputToken();
 
         let sorSwaps: SorSwaps = sor.linearizedSolution(
@@ -337,7 +340,7 @@ export default class ProxyStore {
         };
     };
 
-    generateSwaps = (
+    sorSwapsToSwaps = (
         sorSwaps: SorSwaps,
         poolData: Pool[],
         maxPrice: BigNumber,
@@ -401,13 +404,13 @@ export default class ProxyStore {
     previewBatchSwapExactIn = async (
         tokenIn,
         tokenOut,
-        tokenAmountIn
+        inputAmount
     ): Promise<ExactAmountInPreview> => {
         console.log(
             '[Action] previewBatchSwapExactIn',
             tokenIn,
             tokenOut,
-            tokenAmountIn
+            inputAmount
         );
 
         try {
@@ -416,23 +419,15 @@ export default class ProxyStore {
             let maxPrice = helpers.setPropertyToMaxUintIfEmpty();
             let minAmountOut = helpers.setPropertyToZeroIfEmpty();
 
-            const poolData = await this.getPoolsWithToken(
+            const poolData = await this.findPoolsWithTokens(
                 tokenIn,
                 tokenOut,
                 true
             );
             const costOutputToken = this.costCalculator.getCostOutputToken();
-            const formattedPoolData = stringifyPoolData(poolData);
+            const sorSwaps = this.findBestSwaps(poolData, SwapMethod.ExactIn, inputAmount, 20, costOutputToken);
 
-            let sorSwaps: SorSwaps = sor.linearizedSolution(
-                formattedPoolData,
-                'swapExactIn',
-                tokenAmountIn,
-                20,
-                costOutputToken
-            );
-
-            const swaps = this.generateSwaps(
+            const swaps = this.sorSwapsToSwaps(
                 sorSwaps,
                 poolData,
                 bnum(maxPrice),
@@ -452,7 +447,7 @@ export default class ProxyStore {
             });
 
             const effectivePrice = this.calcEffectivePrice(
-                tokenAmountIn,
+                inputAmount,
                 helpers.fromWei(outputAmount.toString())
             );
 
@@ -494,7 +489,7 @@ export default class ProxyStore {
         try {
             this.setPreviewPending(true);
 
-            const poolData = await this.getPoolsWithToken(
+            const poolData = await this.findPoolsWithTokens(
                 tokenIn,
                 tokenOut,
                 true
