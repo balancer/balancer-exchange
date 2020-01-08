@@ -106,6 +106,26 @@ export default class TokenStore {
         return proxyAddress;
     }
 
+    getTokenMetadata(chainId: number, address: string): TokenMetadata {
+        const contractMetadata = this.contractMetadata[chainId];
+
+        if (!contractMetadata) {
+            throw new Error(
+              'Attempting to get whitelisted tokens for untracked chainId'
+            );
+        }
+
+        const tokenMetadata = contractMetadata.tokens.find(element => element.address === address);
+
+        if (!tokenMetadata) {
+            throw new Error(
+              'Attempting to get metadata for untracked token address'
+            );
+        }
+
+        return tokenMetadata;
+    }
+
     getWhitelistedTokenMetadata(chainId): TokenMetadata[] {
         const contractMetadata = this.contractMetadata[chainId];
 
