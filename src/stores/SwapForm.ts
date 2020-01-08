@@ -32,6 +32,8 @@ export default class SwapFormStore {
         outputToken: '',
         inputAmount: '',
         outputAmount: '',
+        inputIconAddress: '',
+        outputIconAddress: '',
         type: SwapMethods.EXACT_IN,
         outputLimit: '0',
         inputLimit: '0',

@@ -28,22 +28,26 @@
             {
                 "symbol": "MKR",
                 "address": "0x8fD2D32dCde13F41BC7e6D966Edde0DfF1f92E2E",
-                "decimals": 18
+                "decimals": 18,
+                "iconAddress": "0x9f8f72aa9304c8b593d555f12ef6589cc3a579a2"
             },
             {
                 "symbol": "DAI",
                 "address": "0xbaB6D2bf6C4cae495a958507AAf0804feCa2b000",
-                "decimals": 18
+                "decimals": 18,
+                "iconAddress": "0x6b175474e89094c44da98b954eedeac495271d0f"
             },
             {
                 "symbol": "SNX",
                 "address": "0x16f23e3d18d498131bAb2D8843f5c2855448121d",
-                "decimals": 18
+                "decimals": 18,
+                "iconAddress": "0xc011a72400e58ecd99ee497cf89e3775d4bd732f"
             },
             {
                 "symbol": "BAT",
                 "address": "0xf5A64B7c340F4346Bf3158D1DAd89d7872213b03",
-                "decimals": 18
+                "decimals": 18,
+                "iconAddress": "0x0d8775f648430679a709e98d2b0cb6250d2887ef"
             }
         ]
     }
