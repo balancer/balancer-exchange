@@ -32,12 +32,18 @@ export default class SwapFormStore {
         outputToken: '',
         inputAmount: '',
         outputAmount: '',
+        inputTicker: '',
+        outputTicker: '',
         inputIconAddress: '',
         outputIconAddress: '',
         type: SwapMethods.EXACT_IN,
         outputLimit: '0',
         inputLimit: '0',
         limitPrice: '0',
+        setBuyFocus: false,
+        setSellFocus: false,
+        effectivePrice: '',
+        swaps: [],
     };
     @observable outputs = {
         inputAmount: '',
@@ -51,6 +57,13 @@ export default class SwapFormStore {
     @action updateOutputsFromObject(output) {
         this.outputs = {
             ...this.outputs,
+            ...output,
+        };
+    }
+
+    @action updateInputsFromObject(output) {
+        this.inputs = {
+            ...this.inputs,
             ...output,
         };
     }

@@ -2,6 +2,8 @@ import React from 'react'
 import styled from 'styled-components'
 import { isAddress } from '../../utils/helpers'
 
+import { useEffect, useRef } from 'react'
+
 const Panel = styled.div`
   width: 180px;
   height: 203px;
@@ -117,7 +119,16 @@ const MaxLink = styled.div`
   color: var(--link-text);
 `
 
-const Token = ({headerText, tokenName, tokenBalance, tokenAddress, setModalOpen}) => {
+const Token = ({defaultValue, onChange, inputID, inputName, headerText, tokenName, tokenBalance, tokenAddress, setModalOpen, setFocus}) => {
+
+  const textInput = useRef(null);
+
+  useEffect(() => {
+    if (setFocus) {
+      textInput.current.focus();
+    }
+  });
+
 
   const InputContainer = () => {
     // TODO make sure conditional is checking the correct thing
@@ -130,7 +141,7 @@ const Token = ({headerText, tokenName, tokenBalance, tokenAddress, setModalOpen}
     } else {
       return(
         <InputWrapper>
-          <input placeholder="0" />
+          <input id={inputID} name={inputName} defaultValue={defaultValue} onChange={onChange} ref={textInput} placeholder="0" />
           <MaxLink>Max</MaxLink>
         </InputWrapper>
       )
