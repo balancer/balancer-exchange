@@ -1,16 +1,14 @@
 // @ts-nocheck
-import React, { useRef } from 'react';
-import { Button, Grid, TextField } from '@material-ui/core';
-import { observer } from 'mobx-react';
-import { TextValidator, ValidatorForm } from 'react-material-ui-form-validator';
-import {bnum, toWei, fromWei, checkIsPropertyEmpty} from 'utils/helpers';
-import { formNames, labels, SwapMethods } from 'stores/SwapForm';
-import SwapResults from './SwapResults';
-import { validators } from '../validators';
-import { useStores } from '../../contexts/storesContext';
-import { ErrorCodes, ErrorIds } from '../../stores/Error';
-import { bigNumberify } from 'ethers/utils';
-import { ContractMetadata } from "../../stores/Token";
+import React, { useRef } from "react";
+import { Button, Grid, TextField } from "@material-ui/core";
+import { observer } from "mobx-react";
+import { TextValidator, ValidatorForm } from "react-material-ui-form-validator";
+import { checkIsPropertyEmpty, fromWei, toWei } from "utils/helpers";
+import { formNames, labels, SwapMethods } from "stores/SwapForm";
+import SwapResults from "./SwapResults";
+import { validators } from "../validators";
+import { useStores } from "../../contexts/storesContext";
+import { ErrorIds } from "../../stores/Error";
 
 const SwapForm = observer(props => {
     const {
@@ -35,22 +33,47 @@ const SwapForm = observer(props => {
     };
 
     const onChange = async (event, form) => {
-        console.log({
-            name: event.target.name,
-            value: event.target.value,
-        });
-        updateProperty(form, event.target.name, event.target.value);
-        const { inputAmount, inputToken } = swapFormStore.inputs;
+        const { name, value } = event.target;
+        const { inputAmount, outputAmount } = swapFormStore.inputs;
 
-        // Get preview if all necessary fields are filled out
-        if (event.target.name === 'inputAmount') {
-            updateProperty(form, 'type', SwapMethods.EXACT_IN);
-            const output = await previewSwapExactAmountInHandler();
-            swapFormStore.updateOutputsFromObject(output);
-        } else if (event.target.name === 'outputAmount') {
+        // Swap methods IFF the input is blank and the other field is filled out
+        if (name === 'inputAmount' && value === '' && outputAmount !== '') {
             updateProperty(form, 'type', SwapMethods.EXACT_OUT);
-            const output = await previewSwapExactAmountOutHandler();
+        } else if (
+            name === 'outputAmount' &&
+            value === '' &&
+            inputAmount !== ''
+        ) {
+            updateProperty(form, 'type', SwapMethods.EXACT_IN);
+        }
+
+        // Else set current method based on input
+        else if (name === 'inputAmount') {
+            updateProperty(form, 'type', SwapMethods.EXACT_IN);
+        } else if (name === 'outputAmount') {
+            updateProperty(form, 'type', SwapMethods.EXACT_OUT);
+        }
+
+        const method = swapFormStore.inputs.type;
+
+        console.log('[Swap Form]', {
+            name,
+            value,
+            inputAmount,
+            outputAmount,
+            method: swapFormStore.inputs.type
+        });
+
+        updateProperty(form, name, value);
+
+        if (method === SwapMethods.EXACT_IN) {
+            const output = await previewSwapExactAmountInHandler(); // Get preview if all necessary fields are filled out
             swapFormStore.updateOutputsFromObject(output);
+        } else if (method === SwapMethods.EXACT_OUT) {
+            const output = await previewSwapExactAmountOutHandler(); // Get preview if all necessary fields are filled out
+            swapFormStore.updateOutputsFromObject(output);
+        } else {
+            throw new Error ('[Invariant] Invalid swap method')
         }
     };
 
@@ -129,7 +152,7 @@ const SwapForm = observer(props => {
 
     const previewSwapExactAmountOutHandler = async () => {
         const inputs = swapFormStore.inputs;
-        const { inputToken, outputToken, outputAmount } = inputs;
+        const { inputToken, outputToken, outputAmount, type } = inputs;
 
         if (!outputAmount || outputAmount === '') {
             return {
