@@ -7,6 +7,7 @@ import * as deployed from 'deployed.json';
 import { FetchCode } from './Transaction';
 import { BigNumber } from 'ethers/utils';
 import { chainNameById } from '../provider/connectors';
+import { bnum } from "utils/helpers";
 
 export interface ContractMetadata {
     bFactory: string;
@@ -26,6 +27,10 @@ interface UserBalanceMap {
     [index: string]: BigNumber;
 }
 
+interface EtherBalanceMap {
+    [index: string]: BigNumber;
+}
+
 export interface TokenMetadata {
     address: string;
     symbol: string;
@@ -42,6 +47,7 @@ interface UserAllowanceMap {
 
 export default class TokenStore {
     @observable symbols = {};
+    @observable etherBalances: ObservableMap<number, EtherBalanceMap>;
     @observable balances: ObservableMap<number, TokenBalanceMap>;
     @observable allowances: ObservableMap<number, UserAllowanceMap>;
     @observable contractMetadata: ContractMetadataMap;
@@ -49,11 +55,13 @@ export default class TokenStore {
 
     constructor(rootStore, networkIds) {
         this.rootStore = rootStore;
+        this.etherBalances = new ObservableMap<number, EtherBalanceMap>();
         this.balances = new ObservableMap<number, TokenBalanceMap>();
         this.allowances = new ObservableMap<number, UserAllowanceMap>();
         this.contractMetadata = {};
 
         networkIds.forEach(networkId => {
+            this.etherBalances.set(networkId, {});
             this.balances.set(networkId, {});
             this.allowances.set(networkId, {});
             this.loadWhitelistedTokenMetadata(networkId);
@@ -120,7 +128,7 @@ export default class TokenStore {
         const chainApprovals = this.allowances.get(chainId);
         if (!chainApprovals) {
             throw new Error(
-              'Attempt to set balance property for untracked chainId'
+                'Attempt to set balance property for untracked chainId'
             );
         }
 
@@ -155,6 +163,34 @@ export default class TokenStore {
 
         chainBalances[tokenAddress][account] = balance;
         this.balances.set(chainId, chainBalances);
+    }
+
+    setEtherBalance(
+        chainId: number,
+        account: string,
+        balance: BigNumber
+    ): void {
+        const balances = this.etherBalances.get(chainId);
+
+        if (!balances) {
+            throw new Error(
+                'Attempt to set balance property for untracked chainId'
+            );
+        }
+
+        balances[account] = balance;
+        this.etherBalances.set(chainId, balances);
+    }
+
+    getEtherBalance(chainId, account): BigNumber | undefined {
+        const balances = this.etherBalances.get(chainId);
+
+        if (balances) {
+            if (balances[account]) {
+                return balances[account];
+            }
+        }
+        return undefined;
     }
 
     getBalance(chainId, tokenAddress, account): BigNumber | undefined {
@@ -211,6 +247,8 @@ export default class TokenStore {
             );
         });
 
+        promises.push(this.fetchEtherBalance(chainId, account));
+
         try {
             await Promise.all(promises);
         } catch (e) {
@@ -229,7 +267,24 @@ export default class TokenStore {
         this.symbols[tokenAddress] = await token.symbol().call();
     };
 
-    @action fetchEtherBalance = async (tokenAddress, account) => {};
+    @action fetchEtherBalance = async (chainId, account) => {
+        const { providerStore } = this.rootStore;
+        const provider = providerStore.getActiveWeb3React();
+
+        if (provider.chainId !== chainId) {
+            return;
+        }
+        const { library } = provider;
+
+        const balance = new BigNumber(await library.getBalance(account));
+
+        console.log('[Ether Balance Fetch]', {
+            chainId,
+            account,
+        });
+
+        this.setEtherBalance(chainId, account, balance);
+    };
 
     @action fetchBalanceOf = async (chainId, tokenAddress, account) => {
         const { providerStore } = this.rootStore;
@@ -274,7 +329,7 @@ export default class TokenStore {
             allowance
         );
 
-        console.log('Allowance Property Set', {
+        console.log('[Allowance Fetch]', {
             tokenAddress,
             account,
             spender,
