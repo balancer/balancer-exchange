@@ -1,13 +1,10 @@
-import React from 'react'
-import styled from 'styled-components'
-import TokenPanel from './TokenPanel'
-
-import { useEffect, useRef } from 'react'
-import { observer } from 'mobx-react';
-import { useStores } from '../../contexts/storesContext';
-import { formNames, labels, SwapMethods } from 'stores/SwapForm';
-import { checkIsPropertyEmpty, fromWei, toWei } from "utils/helpers";
-import { ErrorCodes, ErrorIds } from '../../stores/Error';
+import React from "react";
+import TokenPanel from "./TokenPanel";
+import { observer } from "mobx-react";
+import { useStores } from "../../contexts/storesContext";
+import { formNames, InputValidationStatus, SwapMethods } from "stores/SwapForm";
+import { fromWei } from "utils/helpers";
+import { Simulate } from "react-dom/test-utils";
 
 const BuyToken = observer( ({inputID, inputName, tokenName, tokenBalance, tokenAddress, setModalOpen}) => {
 
@@ -34,8 +31,6 @@ const BuyToken = observer( ({inputID, inputName, tokenName, tokenBalance, tokenA
 
 			updateProperty(form, 'type', SwapMethods.EXACT_IN);
 
-      const method = swapFormStore.inputs.type;
-
       console.log('[Swap Form]', {
           name,
           value,
@@ -46,9 +41,39 @@ const BuyToken = observer( ({inputID, inputName, tokenName, tokenBalance, tokenA
 
       updateProperty(form, name, value);
 
-      const output = await previewSwapExactAmountInHandler(); // Get preview if all necessary fields are filled out
-      // swapFormStore.updateOutputsFromObject(output);
-      swapFormStore.updateInputsFromObject(output);
+      const inputStatus = swapFormStore.getSwapFormInputValidationStatus(value);
+      let validInput = false;
+
+      if (inputStatus === InputValidationStatus.NEGATIVE) {
+          console.log('[Buy Token]', 'Input must be positive');
+      }
+
+      if (inputStatus === InputValidationStatus.NOT_FLOAT) {
+          console.log('[Buy Token]', 'Input must be number');
+      }
+
+      if (inputStatus === InputValidationStatus.ZERO) {
+          console.log('[Buy Token]', 'Input must be non-zero');
+      }
+
+      if (inputStatus === InputValidationStatus.EMPTY) {
+          console.log('[Buy Token]', 'Empty input, valid but clear opposite input');
+      }
+
+      if (inputStatus === InputValidationStatus.VALID) {
+          validInput = true;
+      }
+
+      if (validInput) {
+          const output = await previewSwapExactAmountInHandler(); // Get preview if all necessary fields are filled out
+          // swapFormStore.updateOutputsFromObject(output);
+          swapFormStore.updateInputsFromObject(output);
+      } else {
+          swapFormStore.updateInputsFromObject({
+              outputAmount: ''
+              // clear preview
+          })
+      }
   };
 
   const previewSwapExactAmountInHandler = async () => {

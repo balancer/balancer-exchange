@@ -1,6 +1,6 @@
 import { observable, action } from 'mobx';
 import RootStore from 'stores/Root';
-import * as deployed from 'deployed.json';
+import {ValidationRules} from 'react-form-validator-core';
 
 export const formNames = {
     INPUT_FORM: 'inputs',
@@ -24,6 +24,14 @@ export const labels = {
 export enum SwapMethods {
     EXACT_IN = 'exactIn',
     EXACT_OUT = 'exactOut'
+}
+
+export enum InputValidationStatus {
+    VALID,
+    EMPTY,
+    ZERO,
+    NOT_FLOAT,
+    NEGATIVE
 }
 
 export default class SwapFormStore {
@@ -66,6 +74,28 @@ export default class SwapFormStore {
             ...this.inputs,
             ...output,
         };
+    }
+
+    getSwapFormInputValidationStatus(value: string): InputValidationStatus {
+        console.log(ValidationRules);
+
+        if (ValidationRules.isEmpty(value)) {
+            return InputValidationStatus.EMPTY;
+        }
+
+        if (!ValidationRules.isFloat(value)) {
+            return InputValidationStatus.NOT_FLOAT;
+        }
+
+        if (value === '0') {
+            return InputValidationStatus.ZERO;
+        }
+
+        if (!ValidationRules.isPositive(value)) {
+            return InputValidationStatus.NEGATIVE;
+        }
+
+        return InputValidationStatus.VALID;
     }
 
     resetInputs() {
