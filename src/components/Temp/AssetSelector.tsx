@@ -1,6 +1,8 @@
 import React from 'react'
 import styled from 'styled-components'
 import { TokenIconAddress } from './TokenPanel'
+import { useStores } from "../../contexts/storesContext";
+import { BigNumber } from 'ethers/utils';
 
 const Container = styled.div`
   display: block;
@@ -137,13 +139,52 @@ const TokenBalance = styled.div`
   margin-top: 12px;
 `
 
+interface AssetData {
+	address: string;
+	symbol: string;
+	userBalance: BigNumber | undefined;
+}
+
 const AssetSelector = ({modelOpen, setModalOpen}) => {
 
 	// const [modelOpen, setModalOpen] = React.useState(true)
 
+
+
 	// TODO do math and pass props into AssetPanel css to make border-bottom none for bottom row of assets
 	// TODO Import list of token addresses for asset selector
 	const tokenAddress = "0x009e864923b49263c7F10D19B7f8Ab7a9A5AAd33"
+
+	const {
+		root: {
+			proxyStore,
+			swapFormStore,
+			providerStore,
+			tokenStore,
+			errorStore,
+		},
+	} = useStores();
+
+	const { chainId, account } = providerStore.getActiveWeb3React();
+
+	const whitelistedTokens = tokenStore.getFilteredTokenMetadata(chainId, 'DA');
+
+	let userBalances;
+	let assetSelectorData: AssetData[] = [];
+
+	if (account) {
+		userBalances = tokenStore.getAccountBalances(chainId, whitelistedTokens, account);
+	}
+
+	assetSelectorData = whitelistedTokens.map(value => {
+		return {
+			address: value.address,
+			symbol: value.symbol,
+			userBalance: userBalances ? userBalances[value.address] : 'N/A'
+		}
+	});
+
+	console.log('[Filtered asset data]', assetSelectorData);
 
 	return(
 		<Container style={{display: modelOpen ? 'block' : 'none' }}>

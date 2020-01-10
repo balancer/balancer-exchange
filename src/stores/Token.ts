@@ -23,7 +23,7 @@ interface TokenBalanceMap {
     [index: string]: UserBalanceMap;
 }
 
-interface UserBalanceMap {
+export interface UserBalanceMap {
     [index: string]: BigNumber;
 }
 
@@ -126,6 +126,45 @@ export default class TokenStore {
         }
 
         return tokenMetadata;
+    }
+
+    getFilteredTokenMetadata(chainId: number, filter: string): TokenMetadata[] {
+        const tokens = this.contractMetadata[chainId].tokens || undefined;
+
+        if (!tokens) {
+            throw new Error('Attempting to get user balances for untracked chainId')
+        }
+
+        let filteredMetadata: TokenMetadata[] = [];
+
+        if (filter.indexOf('0x') === 0) {
+            //Search by address
+            filteredMetadata = tokens.filter(value => {
+                return value.address === filter;
+            })
+
+        } else {
+            //Search by symbol
+            filteredMetadata = tokens.filter(value => {
+                return value.symbol.includes(filter);
+            })
+        }
+
+        return filteredMetadata;
+    };
+
+    getAccountBalances(chainId: number, tokens: TokenMetadata[], account: string): UserBalanceMap {
+        const userBalances = this.balances.get(chainId);
+        if (!userBalances) {
+            throw new Error ('Attempting to get user balances for untracked chainId')
+        }
+
+        const result: UserBalanceMap = {};
+        tokens.forEach(value => {
+            result[value.address] = userBalances[value.address][account];
+        });
+
+        return result;
     }
 
     getWhitelistedTokenMetadata(chainId): TokenMetadata[] {
