@@ -139,7 +139,7 @@ const TokenBalance = styled.div`
   margin-top: 12px;
 `
 
-interface AssetData {
+interface AssetSelectorData {
 	address: string;
 	symbol: string;
 	userBalance: BigNumber | undefined;
@@ -170,7 +170,7 @@ const AssetSelector = ({modelOpen, setModalOpen}) => {
 	const whitelistedTokens = tokenStore.getFilteredTokenMetadata(chainId, 'DA');
 
 	let userBalances;
-	let assetSelectorData: AssetData[] = [];
+	let assetSelectorData: AssetSelectorData[] = [];
 
 	if (account) {
 		userBalances = tokenStore.getAccountBalances(chainId, whitelistedTokens, account);
