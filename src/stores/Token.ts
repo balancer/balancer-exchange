@@ -161,7 +161,9 @@ export default class TokenStore {
 
         const result: UserBalanceMap = {};
         tokens.forEach(value => {
-            result[value.address] = userBalances[value.address][account];
+            if(userBalances[value.address]) {
+                result[value.address] = userBalances[value.address][account];
+            }
         });
 
         return result;

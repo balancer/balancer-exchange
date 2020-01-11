@@ -1,8 +1,10 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import styled from 'styled-components'
 import { TokenIconAddress } from './TokenPanel'
 import { useStores } from "../../contexts/storesContext";
 import { BigNumber } from 'ethers/utils';
+import { fromWei, toWei } from "utils/helpers";
+import AssetOptions from './AssetOptions'
 
 const Container = styled.div`
   display: block;
@@ -82,108 +84,14 @@ const InputContainer = styled.div`
   }
 `
 
-const AssetPanelContainer = styled.div`
-	display: flex;
-	flex-direction: row;
-	flex-wrap: wrap;
-	justify-content: flex-start;
-	max-height: 329px;
-	overflow: auto; /* Enable scroll if needed */
-`
+const AssetSelector = ({modelOpen, setModalOpen}) => {
 
-const AssetPanel = styled.div`
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	flex-direction: column;
-	width: 184px;
-	height: 98px;
-	border-right: 1px solid var(--panel-border);
-	border-bottom: 1px solid var(--panel-border);
-	:nth-child(3n+3) {
-		border-right: none;
-	}
-	:nth-child(10) {
-		border-bottom: none;
-	}
-`
+	const [filter, setFilter] = useState('');
 
-const AssetWrapper = styled.div`
-  display: flex;
-  flex-direction: row;
-  font-family: Roboto;
-  font-style: normal;
-  font-weight: normal;
-`
-
-const TokenIcon = styled.img`
-  width: 28px;
-  height: 28px;
-  margin-right: 12px;
-`
-
-const TokenName = styled.div`
-  font-size: 16px;
-  line-height: 19px;
-  display: flex;
-  align-items: center;
-`
-
-const TokenBalance = styled.div`
-  font-size: 14px;
-  line-height: 16px;
-  display: flex;
-  align-items: center;
-  text-align: center;
-  color: var(--body-text);
-  margin-top: 12px;
-`
-
-interface AssetSelectorData {
-	address: string;
-	symbol: string;
-	userBalance: BigNumber | undefined;
-}
-
-const AssetSelector = ({modelOpen, setModalOpen, tokenList}) => {
-
-	// const [modelOpen, setModalOpen] = React.useState(true)
-
-
-
-	// TODO do math and pass props into AssetPanel css to make border-bottom none for bottom row of assets
-	const tokenAddress = "0x009e864923b49263c7F10D19B7f8Ab7a9A5AAd33"
-
-	const {
-		root: {
-			proxyStore,
-			swapFormStore,
-			providerStore,
-			tokenStore,
-			errorStore,
-		},
-	} = useStores();
-
-	const { chainId, account } = providerStore.getActiveWeb3React();
-
-	const whitelistedTokens = tokenStore.getFilteredTokenMetadata(chainId, 'DA');
-
-	let userBalances;
-	let assetSelectorData: AssetSelectorData[] = [];
-
-	if (account) {
-		userBalances = tokenStore.getAccountBalances(chainId, whitelistedTokens, account);
-	}
-
-	assetSelectorData = whitelistedTokens.map(value => {
-		return {
-			address: value.address,
-			symbol: value.symbol,
-			userBalance: userBalances ? userBalances[value.address] : 'N/A'
-		}
-	});
-
-	console.log('[Filtered asset data]', assetSelectorData);
+  	const onChange = async (event) => {
+      	const { name, value } = event.target;
+      	setFilter(value);
+    }
 
 	return(
 		<Container style={{display: modelOpen ? 'block' : 'none' }}>
@@ -193,19 +101,9 @@ const AssetSelector = ({modelOpen, setModalOpen, tokenList}) => {
 					<ExitComponent onClick={() => {setModalOpen(false)}}>+</ExitComponent>
 				</AssetSelectorHeader>
 				<InputContainer>
-					<input placeholder="Search Token Name, Symbol, or Address" />
+					<input onChange={e => onChange(e)} placeholder="Search Token Name, Symbol, or Address" />
 				</InputContainer>
-				<AssetPanelContainer>
-					{tokenList.map(token => (
-						<AssetPanel>
-							<AssetWrapper>
-								<TokenIcon src={TokenIconAddress(token.iconAddress)} />
-								<TokenName>{token.symbol}</TokenName>
-							</AssetWrapper>
-							<TokenBalance>{token.balance + " " + token.symbol}</TokenBalance>
-						</AssetPanel>						
-					))}
-				</AssetPanelContainer>
+				<AssetOptions filter={filter} />
 			</ModalContent>
 		</Container>
 	)
