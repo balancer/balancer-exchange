@@ -145,14 +145,13 @@ interface AssetSelectorData {
 	userBalance: BigNumber | undefined;
 }
 
-const AssetSelector = ({modelOpen, setModalOpen}) => {
+const AssetSelector = ({modelOpen, setModalOpen, tokenList}) => {
 
 	// const [modelOpen, setModalOpen] = React.useState(true)
 
 
 
 	// TODO do math and pass props into AssetPanel css to make border-bottom none for bottom row of assets
-	// TODO Import list of token addresses for asset selector
 	const tokenAddress = "0x009e864923b49263c7F10D19B7f8Ab7a9A5AAd33"
 
 	const {
@@ -197,76 +196,15 @@ const AssetSelector = ({modelOpen, setModalOpen}) => {
 					<input placeholder="Search Token Name, Symbol, or Address" />
 				</InputContainer>
 				<AssetPanelContainer>
-					<AssetPanel>
-						<AssetWrapper>
-							<TokenIcon src={TokenIconAddress(tokenAddress)} />
-							<TokenName>ETH</TokenName>
-						</AssetWrapper>
-						<TokenBalance>12,254.523 ETH</TokenBalance>
-					</AssetPanel>
-					<AssetPanel>
-						<AssetWrapper>
-							<TokenIcon src={TokenIconAddress(tokenAddress)} />
-							<TokenName>ETH</TokenName>
-						</AssetWrapper>
-						<TokenBalance>12,254.523 ETH</TokenBalance>
-					</AssetPanel>
-					<AssetPanel>
-						<AssetWrapper>
-							<TokenIcon src={TokenIconAddress(tokenAddress)} />
-							<TokenName>ETH</TokenName>
-						</AssetWrapper>
-						<TokenBalance>12,254.523 ETH</TokenBalance>
-					</AssetPanel>
-					<AssetPanel>
-						<AssetWrapper>
-							<TokenIcon src={TokenIconAddress(tokenAddress)} />
-							<TokenName>ETH</TokenName>
-						</AssetWrapper>
-						<TokenBalance>12,254.523 ETH</TokenBalance>
-					</AssetPanel>
-					<AssetPanel>
-						<AssetWrapper>
-							<TokenIcon src={TokenIconAddress(tokenAddress)} />
-							<TokenName>ETH</TokenName>
-						</AssetWrapper>
-						<TokenBalance>12,254.523 ETH</TokenBalance>
-					</AssetPanel>
-					<AssetPanel>
-						<AssetWrapper>
-							<TokenIcon src={TokenIconAddress(tokenAddress)} />
-							<TokenName>ETH</TokenName>
-						</AssetWrapper>
-						<TokenBalance>12,254.523 ETH</TokenBalance>
-					</AssetPanel>
-					<AssetPanel>
-						<AssetWrapper>
-							<TokenIcon src={TokenIconAddress(tokenAddress)} />
-							<TokenName>ETH</TokenName>
-						</AssetWrapper>
-						<TokenBalance>12,254.523 ETH</TokenBalance>
-					</AssetPanel>
-					<AssetPanel>
-						<AssetWrapper>
-							<TokenIcon src={TokenIconAddress(tokenAddress)} />
-							<TokenName>ETH</TokenName>
-						</AssetWrapper>
-						<TokenBalance>12,254.523 ETH</TokenBalance>
-					</AssetPanel>
-					<AssetPanel>
-						<AssetWrapper>
-							<TokenIcon src={TokenIconAddress(tokenAddress)} />
-							<TokenName>ETH</TokenName>
-						</AssetWrapper>
-						<TokenBalance>12,254.523 ETH</TokenBalance>
-					</AssetPanel>
-					<AssetPanel>
-						<AssetWrapper>
-							<TokenIcon src={TokenIconAddress(tokenAddress)} />
-							<TokenName>ETH</TokenName>
-						</AssetWrapper>
-						<TokenBalance>12,254.523 ETH</TokenBalance>
-					</AssetPanel>
+					{tokenList.map(token => (
+						<AssetPanel>
+							<AssetWrapper>
+								<TokenIcon src={TokenIconAddress(token.iconAddress)} />
+								<TokenName>{token.symbol}</TokenName>
+							</AssetWrapper>
+							<TokenBalance>{token.balance + " " + token.symbol}</TokenBalance>
+						</AssetPanel>						
+					))}
 				</AssetPanelContainer>
 			</ModalContent>
 		</Container>
