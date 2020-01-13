@@ -8,9 +8,6 @@ import SlippageSelector from './SlippageSelector'
 import TradeComposition from './TradeComposition'
 import AssetSelector from './AssetSelector'
 
-
-
-
 import { observer } from 'mobx-react';
 import * as helpers from 'utils/helpers';
 import { formNames, labels, SwapMethods } from 'stores/SwapForm';
@@ -20,9 +17,6 @@ import { ErrorCodes, ErrorIds } from '../../stores/Error';
 import { bigNumberify } from 'ethers/utils';
 import { ContractMetadata } from "../../stores/Token";
 import { checkIsPropertyEmpty, fromWei, toWei } from "utils/helpers";
-
-
-
 
 const RowContainer = styled.div`
 	font-family: var(--roboto);
@@ -64,7 +58,7 @@ const SwapForm = observer( ({tokenIn, tokenOut}) => {
       throw new Error('ChainId not loaded in TestPanel');
   }
 
-  const { inputs } = swapFormStore;
+  const { inputs, outputs } = swapFormStore;
   const { inputToken, inputTicker, inputIconAddress, outputToken, outputTicker, outputIconAddress } = inputs;
   const tokenList = tokenStore.getWhitelistedTokenMetadata(chainId);
 
@@ -81,6 +75,52 @@ const SwapForm = observer( ({tokenIn, tokenOut}) => {
       swapFormStore.inputs.outputIconAddress = tokenList[1].iconAddress;
   }
 
+  console.log("testing testing testing")
+
+  const swapHandler = async () => {
+      if (!outputs.validSwap) {
+          console.log("swap not valid!" + swapFormStore.outputs.validSwap)
+          console.log(inputs.inputAmount)
+          console.log(inputs.outputAmount)
+          console.log(inputs.type)
+          console.log(inputs.swaps)
+          return;
+      }
+      console.log("swap handler executed");
+
+      if (inputs.type === SwapMethods.EXACT_IN) {
+          const {
+              inputAmount,
+              inputToken,
+              outputToken,
+              outputLimit,
+              limitPrice,
+          } = inputs;
+          await proxyStore.batchSwapExactIn(
+              inputToken,
+              toWei(inputAmount),
+              outputToken,
+              toWei(outputLimit),
+              toWei(limitPrice)
+          );
+      } else if (inputs.type === SwapMethods.EXACT_OUT) {
+          const {
+              inputLimit,
+              inputToken,
+              outputToken,
+              outputAmount,
+              limitPrice,
+          } = inputs;
+          await proxyStore.batchSwapExactOut(
+              inputToken,
+              toWei(inputLimit),
+              outputToken,
+              toWei(outputAmount),
+              toWei(limitPrice)
+          );
+      }
+  };
+
   const buttonText = account ? 'Swap' : 'Connect to a wallet';
 
   let inputUserBalanceBN;
@@ -88,7 +128,6 @@ const SwapForm = observer( ({tokenIn, tokenOut}) => {
   let outputUserBalanceBN;
   let outputUserBalance;
   let userAllowance;
-  // TODO set and display user output Balance?
 
   if (account) {
     inputUserBalanceBN = tokenStore.getBalance(chainId, inputToken, account)
@@ -123,7 +162,7 @@ const SwapForm = observer( ({tokenIn, tokenOut}) => {
 			<ColumnContainer>
 				<TradeComposition tradeCompositionOpen={tradeCompositionOpen} setTradeCompositionOpen={setTradeCompositionOpen} />
 				<SlippageSelector expectedSlippage="0.38%" slippageSelectorOpen={slippageSelectorOpen} setSlippageSelectorOpen={setSlippageSelectorOpen} />
-				<Button buttonText={buttonText} active={true} />
+				<Button buttonText={buttonText} active={true} onClick={() => {swapHandler()}} />
 			</ColumnContainer>
 		</div>
 	)

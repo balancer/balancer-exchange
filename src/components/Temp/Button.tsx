@@ -38,12 +38,12 @@ const InactiveButton = styled(ButtonBase)`
 	color: var(--inactive-button-text);
 `
 
-const Button = ({buttonText, active}) => {
+const Button = ({buttonText, active, onClick}) => {
 
 	const ButtonDisplay = ({activeButton, children}) => {
 		if (activeButton) {
 			return(
-				<ActiveButton>{children}</ActiveButton>
+				<ActiveButton onClick={onClick} >{children}</ActiveButton>
 			)
 		} else {
 			return (

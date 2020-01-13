@@ -69,8 +69,8 @@ const SellToken = observer( ({inputID, inputName, tokenName, tokenBalance, token
 
     if (validInput) {
       const output = await previewSwapExactAmountOutHandler(); // Get preview if all necessary fields are filled out
-      swapFormStore.updateOutputsFromObject(output);
       swapFormStore.updateInputsFromObject(output);
+      swapFormStore.updateOutputsFromObject(output);
     } else {
       swapFormStore.updateInputsFromObject({
         inputAmount: ''

@@ -68,6 +68,7 @@ const BuyToken = observer( ({inputID, inputName, tokenName, tokenBalance, tokenA
           const output = await previewSwapExactAmountInHandler(); // Get preview if all necessary fields are filled out
           // swapFormStore.updateOutputsFromObject(output);
           swapFormStore.updateInputsFromObject(output);
+          swapFormStore.updateOutputsFromObject(output);
       } else {
           swapFormStore.updateInputsFromObject({
               outputAmount: ''
@@ -94,6 +95,8 @@ const BuyToken = observer( ({inputID, inputName, tokenName, tokenBalance, tokenA
           outputToken,
           bnum(inputAmount)
       );
+
+      console.log("in preview validswap: " + validSwap);
 
       if (validSwap) {
           return {
