@@ -42,7 +42,7 @@ const ColumnContainer = styled.div`
 
 const SwapForm = observer( ({tokenIn, tokenOut}) => {
 
-	const [modelOpen, setModalOpen] = React.useState(false)
+	const [modelOpen, setModalOpen] = React.useState({ state: false, input: "inputAmount"})
 	const [tradeCompositionOpen, setTradeCompositionOpen] = React.useState(false)
 	const [slippageSelectorOpen, setSlippageSelectorOpen] = React.useState(false)
 

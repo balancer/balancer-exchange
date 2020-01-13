@@ -21,6 +21,7 @@ const AssetPanel = styled.div`
 	flex-direction: column;
 	width: 184px;
 	height: 98px;
+	cursor: pointer;
 	border-right: 1px solid var(--panel-border);
 	border-bottom: 1px solid var(--panel-border);
 	:nth-child(3n+3) {
@@ -69,7 +70,7 @@ interface AssetSelectorData {
 	userBalance: string;
 }
 
-const AssetOptions = ({ filter }) => {
+const AssetOptions = ({ filter, modelOpen, setModalOpen }) => {
 
 	// TODO do math and pass props into AssetPanel css to make border-bottom none for bottom row of assets
 
@@ -113,10 +114,26 @@ const AssetOptions = ({ filter }) => {
 
 	console.log('[Filtered asset data body]', assetSelectorData.length);
 
+
+
+	const selectAsset = (token) => {
+		if(modelOpen.input === "inputAmount") {
+	    swapFormStore.inputs.inputToken = token.address;
+	    swapFormStore.inputs.inputTicker = token.symbol;
+	    swapFormStore.inputs.inputIconAddress = token.iconAddress;
+		} else {
+	    swapFormStore.inputs.outputToken = token.address;
+	    swapFormStore.inputs.outputTicker = token.symbol;
+	    swapFormStore.inputs.outputIconAddress = token.iconAddress;
+		}
+
+    setModalOpen(false);
+	}
+
 	return(
 		<AssetPanelContainer>
 			{assetSelectorData.map(token => (
-				<AssetPanel>
+				<AssetPanel onClick={() => {selectAsset(token)}}>
 					<AssetWrapper>
 						<TokenIcon src={TokenIconAddress(token.iconAddress)} />
 						<TokenName>{token.symbol}</TokenName>

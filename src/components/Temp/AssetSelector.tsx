@@ -94,16 +94,16 @@ const AssetSelector = ({modelOpen, setModalOpen}) => {
     }
 
 	return(
-		<Container style={{display: modelOpen ? 'block' : 'none' }}>
+		<Container style={{display: modelOpen.state ? 'block' : 'none' }}>
 			<ModalContent>
 				<AssetSelectorHeader>
 					<HeaderContent>Select Token to Sell</HeaderContent>
-					<ExitComponent onClick={() => {setModalOpen(false)}}>+</ExitComponent>
+					<ExitComponent onClick={() => {setModalOpen({state: false})}}>+</ExitComponent>
 				</AssetSelectorHeader>
 				<InputContainer>
 					<input onChange={e => onChange(e)} placeholder="Search Token Name, Symbol, or Address" />
 				</InputContainer>
-				<AssetOptions filter={filter} />
+				<AssetOptions filter={filter} modelOpen={modelOpen} setModalOpen={setModalOpen} />
 			</ModalContent>
 		</Container>
 	)

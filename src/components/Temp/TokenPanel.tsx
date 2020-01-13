@@ -153,7 +153,7 @@ const Token = ({defaultValue, onChange, inputID, inputName, headerText, tokenNam
       <PanelHeader>
         {headerText}
       </PanelHeader>
-      <TokenContainer onClick={() => {setModalOpen(true)}}>
+      <TokenContainer onClick={ () => { setModalOpen({state: true, input: inputName}) } }>
         <IconAndNameContainer>
           <TokenIcon src={TokenIconAddress(tokenAddress)} />
           <TokenName>
