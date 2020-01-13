@@ -22,8 +22,8 @@ export const labels = {
 };
 
 export enum SwapMethods {
-    EXACT_IN = 'exactIn',
-    EXACT_OUT = 'exactOut'
+    EXACT_IN = 'swapExactIn',
+    EXACT_OUT = 'swapExactOut'
 }
 
 export enum InputValidationStatus {

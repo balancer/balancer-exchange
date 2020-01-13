@@ -5,7 +5,7 @@ import * as helpers from 'utils/helpers';
 import { parseEther } from 'ethers/utils';
 import * as deployed from 'deployed.json';
 import { FetchCode } from './Transaction';
-import { BigNumber } from 'ethers/utils';
+import { BigNumber } from 'utils/bignumber';
 import { chainNameById } from '../provider/connectors';
 import { bnum } from "utils/helpers";
 

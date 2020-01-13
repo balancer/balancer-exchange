@@ -7,7 +7,6 @@ import {
     printSorSwaps,
     printSwapInput,
     Scale,
-    stringifyPoolData,
 } from 'utils/helpers';
 import RootStore from 'stores/Root';
 import sor from 'balancer-sor';
@@ -16,12 +15,14 @@ import * as log from 'loglevel';
 import { ContractTypes } from './Provider';
 import { BONE, calcInGivenOut, calcOutGivenIn } from 'utils/balancerCalcs';
 import { SwapMethods } from './SwapForm';
+import CostCalculator from '../utils/CostCalculator';
+import { findBestSwaps, findPoolsWithTokens, formatSwapsExactAmountIn, formatSwapsExactAmountOut } from "../utils/sorWrapper";
 
 export interface ExactAmountOutPreview {
     preview: {
-        inputAmount: any;
-        effectivePrice: any;
-        swaps: any;
+        inputAmount: BigNumber | null;
+        effectivePrice: BigNumber | null;
+        swaps: Swap[];
     };
     validSwap: boolean;
 }
@@ -70,46 +71,7 @@ export interface SorSwaps {
     totalOutput: BigNumber;
 }
 
-enum SwapMethod {
-    ExactIn = 'swapExactIn',
-    ExactOut = 'swapExactOut',
-}
-
-type Swap = [string, string, string, string];
-
-type Swaps = any[];
-
-class CostCalculator {
-    gasPrice: BigNumber;
-    gasPerTrade: BigNumber;
-    outTokenEthPrice: BigNumber;
-    costPerTrade: BigNumber;
-    costOutputToken: BigNumber;
-
-    constructor(params: {
-        gasPrice: BigNumber;
-        gasPerTrade: BigNumber;
-        outTokenEthPrice: BigNumber;
-    }) {
-        const { gasPrice, gasPerTrade, outTokenEthPrice } = params;
-        this.gasPrice = gasPrice;
-        this.gasPerTrade = gasPerTrade;
-        this.outTokenEthPrice = outTokenEthPrice;
-        this.costPerTrade = gasPrice.times(gasPerTrade);
-        this.costOutputToken = this.costPerTrade.times(outTokenEthPrice);
-    }
-
-    getCostOutputToken(): BigNumber {
-        return this.costOutputToken;
-    }
-}
-
-export const statusCodes = {
-    NOT_LOADED: 0,
-    PENDING: 1,
-    ERROR: 2,
-    SUCCESS: 3,
-};
+export type Swap = [string, string, string, string];
 
 function printDebugInfo(
     input: SwapInput,
@@ -137,9 +99,9 @@ export default class ProxyStore {
         this.rootStore = rootStore;
         this.previewPending = false;
         this.costCalculator = new CostCalculator({
-            gasPrice: new BigNumber(0.00000001),
-            gasPerTrade: new BigNumber(210000),
-            outTokenEthPrice: new BigNumber(100),
+            gasPrice: bnum(0.00000001),
+            gasPerTrade: bnum(210000),
+            outTokenEthPrice: bnum(100),
         });
     }
 
@@ -150,67 +112,6 @@ export default class ProxyStore {
     setPreviewPending(value) {
         this.previewPending = value;
     }
-
-    async findPoolsWithTokens(
-        tokenIn: string,
-        tokenOut: string,
-        fromWei: boolean = false
-    ): Promise<Pool[]> {
-        let pools = await sor.getPoolsWithTokens(tokenIn, tokenOut);
-
-        if (pools.pools.length === 0)
-            throw Error('There are no pools with selected tokens');
-
-        let poolData: Pool[] = [];
-        pools.pools.forEach(p => {
-            let tI: any = p.tokens.find(
-                t => helpers.toChecksum(t.address) === tokenIn
-            );
-            let tO: any = p.tokens.find(
-                t => helpers.toChecksum(t.address) === tokenOut
-            );
-            let obj: Pool = {
-                id: helpers.toChecksum(p.id),
-                balanceIn: new BigNumber(tI.balance),
-                balanceOut: new BigNumber(tO.balance),
-                weightIn: new BigNumber(tI.denormWeight).div(
-                    new BigNumber(p.totalWeight)
-                ),
-                weightOut: new BigNumber(tO.denormWeight).div(
-                    new BigNumber(p.totalWeight)
-                ),
-                swapFee: new BigNumber(p.swapFee),
-            };
-
-            if (fromWei) {
-                obj.balanceIn = obj.balanceIn.times(BONE);
-                obj.balanceOut = obj.balanceOut.times(BONE);
-                obj.weightIn = obj.weightIn.times(BONE);
-                obj.weightOut = obj.weightOut.times(BONE);
-                obj.swapFee = obj.swapFee.times(BONE);
-            }
-
-            poolData.push(obj);
-        });
-        return poolData;
-    }
-
-    findBestSwaps = (
-        balancers: Pool[],
-        swapType: SwapMethod,
-        inputAmount: BigNumber,
-        maxBalancers: number,
-        costOutputToken: BigNumber
-    ): SorSwaps => {
-        const sorSwaps = sor.linearizedSolution(
-            formatPoolData(balancers),
-            swapType,
-            inputAmount.toString(),
-            maxBalancers,
-            costOutputToken.toString()
-        );
-        return sorSwaps;
-    };
 
     /*
         Swap Methods - Action
@@ -225,16 +126,16 @@ export default class ProxyStore {
         const { tokenStore, providerStore } = this.rootStore;
         const { chainId } = providerStore.getActiveWeb3React();
 
-        const poolData = await this.findPoolsWithTokens(
+        const poolData = await findPoolsWithTokens(
             tokenIn,
             tokenOut,
             true
         );
         const costOutputToken = this.costCalculator.getCostOutputToken();
 
-        const sorSwaps = this.findBestSwaps(
+        const sorSwaps = findBestSwaps(
             poolData,
-            SwapMethod.ExactIn,
+            SwapMethods.EXACT_IN,
             inputAmount,
             20,
             costOutputToken
@@ -286,7 +187,7 @@ export default class ProxyStore {
         const { tokenStore, providerStore } = this.rootStore;
         const { chainId } = providerStore.getActiveWeb3React();
 
-        const poolData = await this.findPoolsWithTokens(tokenIn, tokenOut);
+        const poolData = await findPoolsWithTokens(tokenIn, tokenOut);
         const costOutputToken = this.costCalculator.getCostOutputToken();
 
         let sorSwaps: SorSwaps = sor.linearizedSolution(
@@ -323,83 +224,60 @@ export default class ProxyStore {
         return amountIn.div(amountOut);
     }
 
+    /* Go through selected swaps and determine the total input */
     simulatedBatchSwapExactOut = (
+        swaps: Swap[],
         sorSwaps: SorSwaps,
         poolData: Pool[],
         maxPrice: string,
         maxAmountIn: string
-    ): {
-        inputAmount: BigNumber;
-        swaps: Swaps;
-    } => {
-        let totalAmountIn = new BigNumber(0);
-        let swaps: Swap[] = [];
-        for (let i = 0; i < sorSwaps.inputAmounts.length; i++) {
-            let swapAmount = sorSwaps.inputAmounts[i].times(BONE);
-            if (swapAmount.isNaN()) {
-                throw new Error('NaN swap amount');
-            }
-            let swap: Swap = [
-                sorSwaps.selectedBalancers[i],
-                maxAmountIn,
-                swapAmount.toString(),
-                maxPrice,
-            ];
-            swaps.push(swap);
-            const pool = poolData.find(
-                p => p.id == sorSwaps.selectedBalancers[i]
-            );
-            if (!pool) {
-                throw new Error(
-                    '[Invariant] No pool found for selected balancer index'
+    ): BigNumber => {
+        try {
+            let totalAmountIn = bnum(0);
+            for (let i = 0; i < sorSwaps.inputAmounts.length; i++) {
+                let swapAmount = sorSwaps.inputAmounts[i].times(BONE);
+                if (swapAmount.isNaN()) {
+                    throw new Error('NaN swap amount');
+                }
+                let swap: Swap = [
+                    sorSwaps.selectedBalancers[i],
+                    maxAmountIn,
+                    swapAmount.toString(),
+                    maxPrice,
+                ];
+                swaps.push(swap);
+                const pool = poolData.find(
+                    p => p.id == sorSwaps.selectedBalancers[i]
                 );
+                if (!pool) {
+                    throw new Error(
+                        '[Invariant] No pool found for selected balancer index'
+                    );
+                }
+
+                const preview = calcInGivenOut(
+                    pool.balanceIn,
+                    pool.weightIn,
+                    pool.balanceOut,
+                    pool.weightOut,
+                    swapAmount,
+                    pool.swapFee
+                );
+
+                console.log({
+                    preview,
+                });
+
+                totalAmountIn = totalAmountIn.plus(preview);
             }
 
-            const preview = calcInGivenOut(
-                pool.balanceIn,
-                pool.weightIn,
-                pool.balanceOut,
-                pool.weightOut,
-                swapAmount,
-                pool.swapFee
-            );
-
-            console.log({
-                preview,
-            });
-
-            totalAmountIn = totalAmountIn.plus(preview);
+            return totalAmountIn;
+        } catch (e) {
+            throw new Error(e);
         }
-
-        console.log({
-            inputAmount: totalAmountIn,
-        });
-        return {
-            inputAmount: totalAmountIn,
-            swaps,
-        };
     };
 
-    sorSwapsToSwaps = (
-        sorSwaps: SorSwaps,
-        poolData: Pool[],
-        maxPrice: BigNumber,
-        minAmountOut: BigNumber
-    ): Swap[] => {
-        const swaps: Swap[] = [];
-        for (let i = 0; i < sorSwaps.inputAmounts.length; i++) {
-            let swapAmount = sorSwaps.inputAmounts[i].times(BONE);
-            let swap: Swap = [
-                sorSwaps.selectedBalancers[i],
-                swapAmount.toString(),
-                minAmountOut.toString(),
-                maxPrice.toString(),
-            ];
-            swaps.push(swap);
-        }
-        return swaps;
-    };
-
+    /* Go through selected swaps and determine the total output */
     simulatedBatchSwapExactIn = (
         swaps: Swap[],
         sorSwaps: SorSwaps,
@@ -408,7 +286,7 @@ export default class ProxyStore {
         minAmountOut: string
     ): BigNumber => {
         try {
-            let totalAmountOut = new BigNumber(0);
+            let totalAmountOut = bnum(0);
             for (let i = 0; i < sorSwaps.inputAmounts.length; i++) {
                 const swapAmount = swaps[i][1];
 
@@ -446,34 +324,28 @@ export default class ProxyStore {
         tokenOut: string,
         inputAmount: BigNumber
     ): Promise<ExactAmountInPreview> => {
-        console.log(
-            '[Action] previewBatchSwapExactIn',
-            tokenIn,
-            tokenOut,
-            inputAmount
-        );
-
         try {
             this.setPreviewPending(true);
 
             let maxPrice = helpers.setPropertyToMaxUintIfEmpty();
             let minAmountOut = helpers.setPropertyToZeroIfEmpty();
 
-            const poolData = await this.findPoolsWithTokens(
+            const poolData = await findPoolsWithTokens(
                 tokenIn,
                 tokenOut,
                 true
             );
             const costOutputToken = this.costCalculator.getCostOutputToken();
-            const sorSwaps = this.findBestSwaps(
+
+            const sorSwaps = findBestSwaps(
                 poolData,
-                SwapMethod.ExactIn,
+                SwapMethods.EXACT_IN,
                 inputAmount,
                 20,
                 costOutputToken
             );
 
-            const swaps = this.sorSwapsToSwaps(
+            const swaps = formatSwapsExactAmountIn(
                 sorSwaps,
                 poolData,
                 bnum(maxPrice),
@@ -487,10 +359,6 @@ export default class ProxyStore {
                 maxPrice,
                 minAmountOut
             );
-
-            console.log({
-                totalAmountOut: outputAmount.toString(),
-            });
 
             const effectivePrice = this.calcEffectivePrice(
                 inputAmount,
@@ -537,43 +405,61 @@ export default class ProxyStore {
     previewBatchSwapExactOut = async (
         tokenIn: string,
         tokenOut: string,
-        amountOut: string
+        amountOut: BigNumber
     ): Promise<ExactAmountOutPreview> => {
         try {
             this.setPreviewPending(true);
 
-            const poolData = await this.findPoolsWithTokens(
+            let maxPrice = helpers.setPropertyToMaxUintIfEmpty();
+            let maxAmountIn = helpers.setPropertyToMaxUintIfEmpty();
+
+            const poolData = await findPoolsWithTokens(
                 tokenIn,
                 tokenOut,
                 true
             );
             const costOutputToken = this.costCalculator.getCostOutputToken();
 
-            let maxPrice = helpers.setPropertyToMaxUintIfEmpty();
-            let maxAmountIn = helpers.setPropertyToMaxUintIfEmpty();
-
-            const formattedPoolData = stringifyPoolData(poolData);
-
-            let sorSwaps: SorSwaps = sor.linearizedSolution(
-                formattedPoolData,
-                'swapExactOut',
+            let sorSwaps: SorSwaps = findBestSwaps(
+                poolData,
+                SwapMethods.EXACT_OUT,
                 amountOut,
                 20,
                 costOutputToken
             );
 
-            const { inputAmount, swaps } = this.simulatedBatchSwapExactOut(
+            const swaps = formatSwapsExactAmountOut(
+                sorSwaps,
+                poolData,
+                bnum(maxPrice),
+                bnum(maxAmountIn)
+            );
+
+            const inputAmount = this.simulatedBatchSwapExactOut(
+                swaps,
                 sorSwaps,
                 poolData,
                 maxPrice,
                 maxAmountIn
             );
 
-            console.log(swaps);
-
             const effectivePrice = this.calcEffectivePrice(
-                new BigNumber(amountOut),
+                bnum(amountOut),
                 helpers.scale(inputAmount, Scale.fromWei)
+            );
+
+            printDebugInfo(
+              {
+                  method: SwapMethods.EXACT_OUT,
+                  tokenIn,
+                  tokenOut,
+                  outputAmount: amountOut,
+                  maxPrice: bnum(0),
+              },
+              sorSwaps,
+              poolData,
+              inputAmount,
+              effectivePrice
             );
 
             if (inputAmount.isNaN()) {

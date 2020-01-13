@@ -6,7 +6,7 @@ import { useEffect, useRef } from 'react'
 import { observer } from 'mobx-react';
 import { useStores } from '../../contexts/storesContext';
 import { formNames, InputValidationStatus, labels, SwapMethods } from "stores/SwapForm";
-import { checkIsPropertyEmpty, fromWei, toWei } from "utils/helpers";
+import { bnum, checkIsPropertyEmpty, fromWei, toWei } from "utils/helpers";
 import { ErrorCodes, ErrorIds } from '../../stores/Error';
 
 const SellToken = observer( ({inputID, inputName, tokenName, tokenBalance, tokenAddress, setModalOpen}) => {
@@ -97,7 +97,7 @@ const SellToken = observer( ({inputID, inputName, tokenName, tokenBalance, token
     } = await proxyStore.previewBatchSwapExactOut(
         inputToken,
         outputToken,
-        outputAmount
+        bnum(outputAmount)
     );
 
     if (validSwap) {

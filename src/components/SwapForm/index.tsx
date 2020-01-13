@@ -166,7 +166,7 @@ const SwapForm = observer(props => {
         } = await proxyStore.previewBatchSwapExactOut(
             inputToken,
             outputToken,
-            outputAmount
+            bnum(outputAmount)
         );
 
         if (validSwap) {
