@@ -3,7 +3,7 @@ import TokenPanel from "./TokenPanel";
 import { observer } from "mobx-react";
 import { useStores } from "../../contexts/storesContext";
 import { formNames, InputValidationStatus, SwapMethods } from "stores/SwapForm";
-import { fromWei } from "utils/helpers";
+import { bnum, fromWei } from "utils/helpers";
 import { Simulate } from "react-dom/test-utils";
 
 const BuyToken = observer( ({inputID, inputName, tokenName, tokenBalance, tokenAddress, setModalOpen}) => {
@@ -92,7 +92,7 @@ const BuyToken = observer( ({inputID, inputName, tokenName, tokenBalance, tokenA
       } = await proxyStore.previewBatchSwapExactIn(
           inputToken,
           outputToken,
-          inputAmount
+          bnum(inputAmount)
       );
 
       if (validSwap) {

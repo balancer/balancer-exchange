@@ -4,12 +4,18 @@ import jazzicon from 'jazzicon';
 import { ethers, utils } from 'ethers';
 import { BigNumber } from 'utils/bignumber';
 import { SUPPORTED_THEMES } from '../theme';
-import { Pool, SorSwaps, StringifiedPool } from "../stores/Proxy";
-import sor from "../../lib/balancer-sor/src";
+import { Pool, SorSwaps, StringifiedPool, SwapInput } from '../stores/Proxy';
+import sor from '../../lib/balancer-sor/src';
+import { SwapMethods } from '../stores/SwapForm';
 
 // Utils
 export const MAX_GAS = utils.bigNumberify('0xffffffff');
 export const MAX_UINT = utils.bigNumberify(ethers.constants.MaxUint256);
+
+export enum Scale {
+    toWei = '18',
+    fromWei = '-18',
+}
 
 export function toChecksum(address) {
     return utils.getAddress(address);
@@ -30,6 +36,12 @@ export function bnum(
     val: string | number | utils.BigNumber | BigNumber
 ): BigNumber {
     return new BigNumber(val.toString());
+}
+
+export function scale(input: BigNumber, decimalPlaces: string): BigNumber {
+    const scalePow = new BigNumber(decimalPlaces);
+    const scaleMul = new BigNumber(10).pow(scalePow);
+    return input.times(scaleMul);
 }
 
 export function fromWei(val: string | utils.BigNumber | BigNumber): string {
@@ -239,28 +251,50 @@ export const stringifyPoolData = (pools: Pool[]): StringifiedPool[] => {
     return result;
 };
 
+// TODO: Issue between new BigNumber() and BigNumber() cast in javascript SOR
+export const formatPoolData = (pools: Pool[]): StringifiedPool[] => {
+    const result: StringifiedPool[] = [];
+    pools.forEach(pool => {
+        result.push({
+            id: pool.id,
+            balanceIn: str(fromWei(pool.balanceIn)),
+            balanceOut: str(fromWei(pool.balanceOut)),
+            weightIn: str(fromWei(pool.weightIn)),
+            weightOut: str(fromWei(pool.weightOut)),
+            swapFee: str(fromWei(pool.swapFee)),
+        });
+    });
+    return result;
+};
+
+export const printSwapInput = (input: SwapInput) => {
+    if (input.method === SwapMethods.EXACT_IN) {
+        console.log('exactAmountIn', input);
+    } else if (input.method === SwapMethods.EXACT_OUT) {
+        console.log('exactAmountOut', input);
+    }
+};
+
 export const printPoolData = (poolData: Pool[]) => {
-    const formatted = stringifyPoolData(poolData);
+    const formatted = formatPoolData(poolData);
     console.log('---Pool Data---');
     console.table(formatted);
 };
 
 export const printSorSwaps = (sorSwaps: SorSwaps) => {
     const formatted = {
-        totalOutput: "",
-        swaps: [] as any[]
+        totalOutput: '',
+        swaps: [] as any[],
     };
     formatted.totalOutput = sorSwaps.totalOutput.toString();
     sorSwaps.inputAmounts.forEach((value, index) => {
-        formatted.swaps.push(
-          {
-              amount: value.toString(),
-              balancer: sorSwaps.selectedBalancers[index]
-          }
-        )
+        formatted.swaps.push({
+            amount: value.toString(),
+            balancer: sorSwaps.selectedBalancers[index],
+        });
     });
 
     console.log('---Swaps---');
     console.table(formatted.swaps);
-    console.log(`TotalOutput: ${formatted.totalOutput}`)
+    console.log(`TotalOutput: ${formatted.totalOutput}`);
 };

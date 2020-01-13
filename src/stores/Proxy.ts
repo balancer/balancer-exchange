@@ -1,20 +1,21 @@
 import { action, observable } from 'mobx';
-import * as deployed from 'deployed.json';
 import * as helpers from 'utils/helpers';
-import { bnum } from 'utils/helpers';
 import {
-    str,
-    stringifyPoolData,
+    bnum,
+    formatPoolData,
     printPoolData,
     printSorSwaps,
+    printSwapInput,
+    Scale,
+    stringifyPoolData,
 } from 'utils/helpers';
 import RootStore from 'stores/Root';
 import sor from 'balancer-sor';
 import { BigNumber } from 'utils/bignumber';
 import * as log from 'loglevel';
 import { ContractTypes } from './Provider';
-import { calcOutGivenIn, calcInGivenOut, BONE } from 'utils/balancerCalcs';
-import { parseEther } from 'ethers/utils';
+import { BONE, calcInGivenOut, calcOutGivenIn } from 'utils/balancerCalcs';
+import { SwapMethods } from './SwapForm';
 
 export interface ExactAmountOutPreview {
     preview: {
@@ -32,6 +33,17 @@ export interface ExactAmountInPreview {
         swaps: any;
     };
     validSwap: boolean;
+}
+
+export interface SwapInput {
+    method: SwapMethods;
+    tokenIn: string;
+    tokenOut: string;
+    inputAmount?: BigNumber;
+    outputAmount?: BigNumber;
+    minAmountOut?: BigNumber;
+    maxAmountIn?: BigNumber;
+    maxPrice: BigNumber;
 }
 
 export interface Pool {
@@ -59,8 +71,8 @@ export interface SorSwaps {
 }
 
 enum SwapMethod {
-    ExactIn = "swapExactIn",
-    ExactOut = "swapExactOut"
+    ExactIn = 'swapExactIn',
+    ExactOut = 'swapExactOut',
 }
 
 type Swap = [string, string, string, string];
@@ -98,6 +110,23 @@ export const statusCodes = {
     ERROR: 2,
     SUCCESS: 3,
 };
+
+function printDebugInfo(
+    input: SwapInput,
+    sorSwaps: SorSwaps,
+    poolData: Pool[],
+    result: BigNumber,
+    effectivePrice: BigNumber
+) {
+    console.log('[Swap Preview]');
+    printSwapInput(input);
+    printPoolData(poolData);
+    printSorSwaps(sorSwaps);
+    console.log('[Result]', {
+        result: result.toString(),
+        effectivePrice: effectivePrice.toString(),
+    });
+}
 
 export default class ProxyStore {
     @observable previewPending: boolean;
@@ -166,8 +195,20 @@ export default class ProxyStore {
         return poolData;
     }
 
-    findBestSwaps = (balancers: Pool[], swapType: SwapMethod, inputAmount: BigNumber, maxBalancers: number, costOutputToken: BigNumber): SorSwaps => {
-        const sorSwaps = sor.linearizedSolution(stringifyPoolData(balancers), swapType, inputAmount.toString(), maxBalancers, costOutputToken.toString());
+    findBestSwaps = (
+        balancers: Pool[],
+        swapType: SwapMethod,
+        inputAmount: BigNumber,
+        maxBalancers: number,
+        costOutputToken: BigNumber
+    ): SorSwaps => {
+        const sorSwaps = sor.linearizedSolution(
+            formatPoolData(balancers),
+            swapType,
+            inputAmount.toString(),
+            maxBalancers,
+            costOutputToken.toString()
+        );
         return sorSwaps;
     };
 
@@ -184,10 +225,20 @@ export default class ProxyStore {
         const { tokenStore, providerStore } = this.rootStore;
         const { chainId } = providerStore.getActiveWeb3React();
 
-        const poolData = await this.findPoolsWithTokens(tokenIn, tokenOut, true);
+        const poolData = await this.findPoolsWithTokens(
+            tokenIn,
+            tokenOut,
+            true
+        );
         const costOutputToken = this.costCalculator.getCostOutputToken();
 
-        const sorSwaps = this.findBestSwaps(poolData, SwapMethod.ExactIn, inputAmount, 20, costOutputToken);
+        const sorSwaps = this.findBestSwaps(
+            poolData,
+            SwapMethod.ExactIn,
+            inputAmount,
+            20,
+            costOutputToken
+        );
 
         let swaps: Swap[] = [];
         for (let i = 0; i < sorSwaps.inputAmounts.length; i++) {
@@ -229,7 +280,7 @@ export default class ProxyStore {
         tokenIn: string,
         maxAmountIn: BigNumber,
         tokenOut: string,
-        tokenAmountOut: BigNumber,
+        amountOut: BigNumber,
         maxPrice: BigNumber
     ) => {
         const { tokenStore, providerStore } = this.rootStore;
@@ -241,7 +292,7 @@ export default class ProxyStore {
         let sorSwaps: SorSwaps = sor.linearizedSolution(
             poolData,
             'swapExactOut',
-            tokenAmountOut,
+            amountOut,
             20,
             costOutputToken
         );
@@ -264,20 +315,12 @@ export default class ProxyStore {
             ContractTypes.ExchangeProxy,
             proxyAddress,
             'batchSwapExactIn',
-            [
-                swaps,
-                tokenIn,
-                tokenOut,
-                maxAmountIn,
-                helpers.toWei(tokenAmountOut),
-            ]
+            [swaps, tokenIn, tokenOut, maxAmountIn, helpers.toWei(amountOut)]
         );
     };
 
-    calcEffectivePrice(tokenAmountIn, tokenAmountOut) {
-        const amountIn = new BigNumber(tokenAmountIn);
-        const amountOut = new BigNumber(tokenAmountOut);
-        return amountIn.div(amountOut).toString();
+    calcEffectivePrice(amountIn: BigNumber, amountOut: BigNumber): BigNumber {
+        return amountIn.div(amountOut);
     }
 
     simulatedBatchSwapExactOut = (
@@ -327,9 +370,6 @@ export default class ProxyStore {
 
             totalAmountIn = totalAmountIn.plus(preview);
         }
-
-        printSorSwaps(sorSwaps);
-        printPoolData(poolData);
 
         console.log({
             inputAmount: totalAmountIn,
@@ -402,9 +442,9 @@ export default class ProxyStore {
         Swap Methods - Preview
     */
     previewBatchSwapExactIn = async (
-        tokenIn,
-        tokenOut,
-        inputAmount
+        tokenIn: string,
+        tokenOut: string,
+        inputAmount: BigNumber
     ): Promise<ExactAmountInPreview> => {
         console.log(
             '[Action] previewBatchSwapExactIn',
@@ -425,7 +465,13 @@ export default class ProxyStore {
                 true
             );
             const costOutputToken = this.costCalculator.getCostOutputToken();
-            const sorSwaps = this.findBestSwaps(poolData, SwapMethod.ExactIn, inputAmount, 20, costOutputToken);
+            const sorSwaps = this.findBestSwaps(
+                poolData,
+                SwapMethod.ExactIn,
+                inputAmount,
+                20,
+                costOutputToken
+            );
 
             const swaps = this.sorSwapsToSwaps(
                 sorSwaps,
@@ -448,7 +494,21 @@ export default class ProxyStore {
 
             const effectivePrice = this.calcEffectivePrice(
                 inputAmount,
-                helpers.fromWei(outputAmount.toString())
+                helpers.scale(outputAmount, Scale.fromWei)
+            );
+
+            printDebugInfo(
+                {
+                    method: SwapMethods.EXACT_IN,
+                    tokenIn,
+                    tokenOut,
+                    inputAmount,
+                    maxPrice: bnum(0),
+                },
+                sorSwaps,
+                poolData,
+                outputAmount,
+                effectivePrice
             );
 
             this.setPreviewPending(false);
@@ -477,15 +537,8 @@ export default class ProxyStore {
     previewBatchSwapExactOut = async (
         tokenIn: string,
         tokenOut: string,
-        tokenAmountOut: string
+        amountOut: string
     ): Promise<ExactAmountOutPreview> => {
-        console.log(
-            '[Action] previewBatchSwapExactOut',
-            tokenIn,
-            tokenOut,
-            tokenAmountOut
-        );
-
         try {
             this.setPreviewPending(true);
 
@@ -504,7 +557,7 @@ export default class ProxyStore {
             let sorSwaps: SorSwaps = sor.linearizedSolution(
                 formattedPoolData,
                 'swapExactOut',
-                tokenAmountOut,
+                amountOut,
                 20,
                 costOutputToken
             );
@@ -519,8 +572,8 @@ export default class ProxyStore {
             console.log(swaps);
 
             const effectivePrice = this.calcEffectivePrice(
-                tokenAmountOut,
-                helpers.fromWei(inputAmount.toString())
+                new BigNumber(amountOut),
+                helpers.scale(inputAmount, Scale.fromWei)
             );
 
             if (inputAmount.isNaN()) {

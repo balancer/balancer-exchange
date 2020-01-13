@@ -3,7 +3,7 @@ import React, { useRef } from "react";
 import { Button, Grid, TextField } from "@material-ui/core";
 import { observer } from "mobx-react";
 import { TextValidator, ValidatorForm } from "react-material-ui-form-validator";
-import { checkIsPropertyEmpty, fromWei, toWei } from "utils/helpers";
+import { bnum, checkIsPropertyEmpty, fromWei, toWei } from "utils/helpers";
 import { formNames, labels, SwapMethods } from "stores/SwapForm";
 import SwapResults from "./SwapResults";
 import { validators } from "../validators";
@@ -133,7 +133,7 @@ const SwapForm = observer(props => {
         } = await proxyStore.previewBatchSwapExactIn(
             inputToken,
             outputToken,
-            inputAmount
+            bnum(inputAmount)
         );
 
         if (validSwap) {
