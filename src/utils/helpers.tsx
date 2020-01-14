@@ -1,12 +1,11 @@
 // Libraries
-import React from 'react';
-import jazzicon from 'jazzicon';
-import { ethers, utils } from 'ethers';
-import { BigNumber } from 'utils/bignumber';
-import { SUPPORTED_THEMES } from '../theme';
-import { Pool, SorSwaps, StringifiedPool, SwapInput } from '../stores/Proxy';
-import sor from '../../lib/balancer-sor/src';
-import { SwapMethods } from '../stores/SwapForm';
+import React from "react";
+import jazzicon from "jazzicon";
+import { ethers, utils } from "ethers";
+import { BigNumber } from "utils/bignumber";
+import { SUPPORTED_THEMES } from "../theme";
+import { Pool, SorSwaps, StringifiedPool, Swap, SwapInput } from "../stores/Proxy";
+import { SwapMethods } from "../stores/SwapForm";
 
 // Utils
 export const MAX_GAS = utils.bigNumberify('0xffffffff');
@@ -281,6 +280,32 @@ export const printPoolData = (poolData: Pool[]) => {
     console.table(formatted);
 };
 
+export const printSwaps = (swapMethod: SwapMethods, swaps: Swap[]) => {
+    const result = [];
+    console.log('---Swaps---');
+     if (swapMethod === SwapMethods.EXACT_IN) {
+         swaps.forEach(swap => {
+             result.push({
+                 balancer: swap[0],
+                 amount: swap[1],
+                 minAmountOut: swap[2],
+                 maxPrice: swap[3]
+             })
+         })
+     } else if (swapMethod === SwapMethods.EXACT_OUT) {
+         swaps.forEach(swap => {
+             result.push({
+                 balancer: swap[0],
+                 amount: swap[2],
+                 maxAmountIn: swap[1],
+                 maxPrice: swap[3]
+             })
+         })
+    }
+
+    console.table(result);
+};
+
 export const printSorSwaps = (sorSwaps: SorSwaps) => {
     const formatted = {
         totalOutput: '',
@@ -294,7 +319,7 @@ export const printSorSwaps = (sorSwaps: SorSwaps) => {
         });
     });
 
-    console.log('---Swaps---');
+    console.log('---SorSwaps---');
     console.table(formatted.swaps);
     console.log(`TotalOutput: ${formatted.totalOutput}`);
 };

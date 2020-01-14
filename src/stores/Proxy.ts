@@ -5,9 +5,9 @@ import {
     formatPoolData,
     printPoolData,
     printSorSwaps,
-    printSwapInput,
-    Scale,
-} from 'utils/helpers';
+    printSwapInput, printSwaps,
+    Scale
+} from "utils/helpers";
 import RootStore from 'stores/Root';
 import sor from 'balancer-sor';
 import { BigNumber } from 'utils/bignumber';
@@ -16,7 +16,14 @@ import { ContractTypes } from './Provider';
 import { BONE, calcInGivenOut, calcOutGivenIn } from 'utils/balancerCalcs';
 import { SwapMethods } from './SwapForm';
 import CostCalculator from '../utils/CostCalculator';
-import { findBestSwaps, findPoolsWithTokens, formatSwapsExactAmountIn, formatSwapsExactAmountOut } from "../utils/sorWrapper";
+import {
+    calcTotalInput,
+    calcTotalOutput,
+    findBestSwaps,
+    findPoolsWithTokens,
+    formatSwapsExactAmountIn,
+    formatSwapsExactAmountOut
+} from "../utils/sorWrapper";
 
 export interface ExactAmountOutPreview {
     preview: {
@@ -75,6 +82,7 @@ export type Swap = [string, string, string, string];
 
 function printDebugInfo(
     input: SwapInput,
+    swaps: Swap[],
     sorSwaps: SorSwaps,
     poolData: Pool[],
     result: BigNumber,
@@ -84,6 +92,7 @@ function printDebugInfo(
     printSwapInput(input);
     printPoolData(poolData);
     printSorSwaps(sorSwaps);
+    printSwaps(input.method, swaps);
     console.log('[Result]', {
         result: result.toString(),
         effectivePrice: effectivePrice.toString(),
@@ -224,98 +233,6 @@ export default class ProxyStore {
         return amountIn.div(amountOut);
     }
 
-    /* Go through selected swaps and determine the total input */
-    simulatedBatchSwapExactOut = (
-        swaps: Swap[],
-        sorSwaps: SorSwaps,
-        poolData: Pool[],
-        maxPrice: string,
-        maxAmountIn: string
-    ): BigNumber => {
-        try {
-            let totalAmountIn = bnum(0);
-            for (let i = 0; i < sorSwaps.inputAmounts.length; i++) {
-                let swapAmount = sorSwaps.inputAmounts[i].times(BONE);
-                if (swapAmount.isNaN()) {
-                    throw new Error('NaN swap amount');
-                }
-                let swap: Swap = [
-                    sorSwaps.selectedBalancers[i],
-                    maxAmountIn,
-                    swapAmount.toString(),
-                    maxPrice,
-                ];
-                swaps.push(swap);
-                const pool = poolData.find(
-                    p => p.id == sorSwaps.selectedBalancers[i]
-                );
-                if (!pool) {
-                    throw new Error(
-                        '[Invariant] No pool found for selected balancer index'
-                    );
-                }
-
-                const preview = calcInGivenOut(
-                    pool.balanceIn,
-                    pool.weightIn,
-                    pool.balanceOut,
-                    pool.weightOut,
-                    swapAmount,
-                    pool.swapFee
-                );
-
-                console.log({
-                    preview,
-                });
-
-                totalAmountIn = totalAmountIn.plus(preview);
-            }
-
-            return totalAmountIn;
-        } catch (e) {
-            throw new Error(e);
-        }
-    };
-
-    /* Go through selected swaps and determine the total output */
-    simulatedBatchSwapExactIn = (
-        swaps: Swap[],
-        sorSwaps: SorSwaps,
-        poolData: Pool[],
-        maxPrice: string,
-        minAmountOut: string
-    ): BigNumber => {
-        try {
-            let totalAmountOut = bnum(0);
-            for (let i = 0; i < sorSwaps.inputAmounts.length; i++) {
-                const swapAmount = swaps[i][1];
-
-                const pool = poolData.find(
-                    p => p.id == sorSwaps.selectedBalancers[i]
-                );
-                if (!pool) {
-                    throw new Error(
-                        '[Invariant] No pool found for selected balancer index'
-                    );
-                }
-
-                const preview = calcOutGivenIn(
-                    pool.balanceIn,
-                    pool.weightIn,
-                    pool.balanceOut,
-                    pool.weightOut,
-                    bnum(swapAmount),
-                    pool.swapFee
-                );
-
-                totalAmountOut = totalAmountOut.plus(preview);
-            }
-            return totalAmountOut;
-        } catch (e) {
-            throw new Error(e);
-        }
-    };
-
     /*
         Swap Methods - Preview
     */
@@ -352,12 +269,10 @@ export default class ProxyStore {
                 bnum(minAmountOut)
             );
 
-            const outputAmount = this.simulatedBatchSwapExactIn(
+            const outputAmount = calcTotalOutput(
                 swaps,
                 sorSwaps,
-                poolData,
-                maxPrice,
-                minAmountOut
+                poolData
             );
 
             const effectivePrice = this.calcEffectivePrice(
@@ -373,6 +288,7 @@ export default class ProxyStore {
                     inputAmount,
                     maxPrice: bnum(0),
                 },
+              swaps,
                 sorSwaps,
                 poolData,
                 outputAmount,
@@ -435,7 +351,7 @@ export default class ProxyStore {
                 bnum(maxAmountIn)
             );
 
-            const inputAmount = this.simulatedBatchSwapExactOut(
+            const inputAmount = calcTotalInput(
                 swaps,
                 sorSwaps,
                 poolData,
@@ -456,6 +372,7 @@ export default class ProxyStore {
                   outputAmount: amountOut,
                   maxPrice: bnum(0),
               },
+              swaps,
               sorSwaps,
               poolData,
               inputAmount,
