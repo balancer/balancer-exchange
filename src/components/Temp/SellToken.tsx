@@ -35,7 +35,7 @@ const SellToken = observer(
             swapFormStore.inputs.setBuyFocus = false;
             swapFormStore.inputs.setSellFocus = true;
 
-            updateProperty(form, 'type', SwapMethods.EXACT_OUT);
+            updateProperty(form, 'type', SwapMethods.EXACT_IN);
 
             console.log('[Swap Form]', {
                 name,
@@ -47,45 +47,43 @@ const SellToken = observer(
 
             updateProperty(form, name, value);
 
-            const inputStatus = swapFormStore.getSwapFormInputValidationStatus(
-                value
-            );
+            const inputStatus = swapFormStore.getSwapFormInputValidationStatus(value);
 
             if (inputStatus === InputValidationStatus.VALID) {
-                const output = await previewSwapExactAmountOutHandler(); // Get preview if all necessary fields are filled out
+                const output = await previewSwapExactAmountInHandler(); // Get preview if all necessary fields are filled out
                 swapFormStore.updateInputsFromObject(output);
                 swapFormStore.updateOutputsFromObject(output);
             } else {
                 console.log('[Invalid Input]', inputStatus, value);
                 swapFormStore.updateInputsFromObject({
-                    inputAmount: '',
+                    outputAmount: '',
                     // clear preview
                 });
             }
         };
 
-        const previewSwapExactAmountOutHandler = async () => {
+        const previewSwapExactAmountInHandler = async () => {
             const inputs = swapFormStore.inputs;
-            const { inputToken, outputToken, outputAmount, type } = inputs;
+            const { inputToken, outputToken, inputAmount } = inputs;
 
-            if (!outputAmount || outputAmount === '') {
+            if (!inputAmount || inputAmount === '') {
                 return {
                     validSwap: false,
                 };
             }
 
             const {
-                preview: { inputAmount, effectivePrice, swaps },
+                preview: { outputAmount, effectivePrice, swaps },
                 validSwap,
-            } = await proxyStore.previewBatchSwapExactOut(
+            } = await proxyStore.previewBatchSwapExactIn(
                 inputToken,
                 outputToken,
-                bnum(outputAmount)
+                bnum(inputAmount)
             );
 
             if (validSwap) {
                 return {
-                    inputAmount: fromWei(inputAmount),
+                    outputAmount: fromWei(outputAmount),
                     effectivePrice,
                     swaps,
                     validSwap,
@@ -98,12 +96,12 @@ const SellToken = observer(
         };
 
         const { inputs, outputs } = swapFormStore;
-        const { outputAmount, setSellFocus } = inputs;
+        const { inputAmount, setSellFocus } = inputs;
 
         return (
             <TokenPanel
                 headerText="Token to Sell"
-                defaultValue={outputAmount}
+                defaultValue={inputAmount}
                 onChange={e => onChange(e, formNames.INPUT_FORM)}
                 inputID={inputID}
                 inputName={inputName}

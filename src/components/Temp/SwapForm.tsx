@@ -240,8 +240,8 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         <div>
             <AssetSelector modelOpen={modelOpen} setModalOpen={setModalOpen} />
             <RowContainer>
-                <BuyToken
-                    key="123"
+                <SellToken
+                    key="122"
                     inputID="amount-in"
                     inputName="inputAmount"
                     setModalOpen={setModalOpen}
@@ -250,8 +250,8 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                     tokenAddress={inputIconAddress}
                 />
                 <Switch />
-                <SellToken
-                    key="122"
+                <BuyToken
+                    key="123"
                     inputID="amount-out"
                     inputName="outputAmount"
                     setModalOpen={setModalOpen}

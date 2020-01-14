@@ -5,98 +5,116 @@ import { useStores } from "../../contexts/storesContext";
 import { formNames, InputValidationStatus, SwapMethods } from "stores/SwapForm";
 import { bnum, fromWei } from "utils/helpers";
 
-const BuyToken = observer( ({inputID, inputName, tokenName, tokenBalance, tokenAddress, setModalOpen}) => {
+const BuyToken = observer(
+  ({
+    inputID,
+    inputName,
+    tokenName,
+    tokenBalance,
+    tokenAddress,
+    setModalOpen
+  }) => {
 
-  const {
-      root: {
-          proxyStore,
-          swapFormStore,
-          providerStore,
-          tokenStore,
-          errorStore,
-      },
-  } = useStores();
+    const {
+        root: {
+            proxyStore,
+            swapFormStore,
+            providerStore,
+            tokenStore,
+            errorStore,
+        },
+    } = useStores();
 
-  const updateProperty = (form, key, value) => {
-      swapFormStore[form][key] = value;
-  };
+    const updateProperty = (form, key, value) => {
+        swapFormStore[form][key] = value;
+    };
 
-  const onChange = async (event, form) => {
-      const { name, value } = event.target;
-      const { inputAmount, outputAmount } = swapFormStore.inputs;
+    const onChange = async (event, form) => {
+        const { name, value } = event.target;
+        const { inputAmount, outputAmount } = swapFormStore.inputs;
 
-      swapFormStore.inputs.setSellFocus = false;
-      swapFormStore.inputs.setBuyFocus = true;
+        swapFormStore.inputs.setSellFocus = false;
+        swapFormStore.inputs.setBuyFocus = true;
 
-			updateProperty(form, 'type', SwapMethods.EXACT_IN);
+  			updateProperty(form, 'type', SwapMethods.EXACT_OUT);
 
-      console.log('[Swap Form]', {
-          name,
-          value,
-          inputAmount,
-          outputAmount,
-          method: swapFormStore.inputs.type
-      });
+        console.log('[Swap Form]', {
+            name,
+            value,
+            inputAmount,
+            outputAmount,
+            method: swapFormStore.inputs.type
+        });
 
-      updateProperty(form, name, value);
+        updateProperty(form, name, value);
 
-      const inputStatus = swapFormStore.getSwapFormInputValidationStatus(value);
+        const inputStatus = swapFormStore.getSwapFormInputValidationStatus(value);
 
-      if (inputStatus === InputValidationStatus.VALID) {
-          const output = await previewSwapExactAmountInHandler(); // Get preview if all necessary fields are filled out
-          // swapFormStore.updateOutputsFromObject(output);
-          swapFormStore.updateInputsFromObject(output);
-          swapFormStore.updateOutputsFromObject(output);
-      } else {
-          console.log('[Invalid Input]', inputStatus, value);
-          swapFormStore.updateInputsFromObject({
-              outputAmount: ''
-              // clear preview
-          })
-      }
-  };
+        if (inputStatus === InputValidationStatus.VALID) {
+            const output = await previewSwapExactAmountOutHandler(); // Get preview if all necessary fields are filled out
+            // swapFormStore.updateOutputsFromObject(output);
+            swapFormStore.updateInputsFromObject(output);
+            swapFormStore.updateOutputsFromObject(output);
+        } else {
+            console.log('[Invalid Input]', inputStatus, value);
+            swapFormStore.updateInputsFromObject({
+                inputAmount: ''
+                // clear preview
+            })
+        }
+    };
 
-  const previewSwapExactAmountInHandler = async () => {
-      const inputs = swapFormStore.inputs;
-      const { inputToken, outputToken, inputAmount } = inputs;
+    const previewSwapExactAmountOutHandler = async () => {
+        const inputs = swapFormStore.inputs;
+        const { inputToken, outputToken, outputAmount } = inputs;
 
-      if (!inputAmount || inputAmount === '') {
-          return {
-              validSwap: false,
-          };
-      }
+        if (!outputAmount || outputAmount === '') {
+            return {
+                validSwap: false,
+            };
+        }
 
-      const {
-          preview: { outputAmount, effectivePrice, swaps },
-          validSwap,
-      } = await proxyStore.previewBatchSwapExactIn(
-          inputToken,
-          outputToken,
-          bnum(inputAmount)
-      );
+        const {
+            preview: { inputAmount, effectivePrice, swaps },
+            validSwap,
+        } = await proxyStore.previewBatchSwapExactOut(
+            inputToken,
+            outputToken,
+            bnum(outputAmount)
+        );
 
-      console.log("in preview validswap: " + validSwap);
+        if (validSwap) {
+            return {
+                inputAmount: fromWei(inputAmount),
+                effectivePrice,
+                swaps,
+                validSwap,
+            };
+        } else {
+            return {
+                validSwap,
+            };
+        }
+    };
 
-      if (validSwap) {
-          return {
-              outputAmount: fromWei(outputAmount),
-              effectivePrice,
-              swaps,
-              validSwap,
-          };
-      } else {
-          return {
-              validSwap,
-          };
-      }
-  };
+    const { inputs, outputs } = swapFormStore;
+    const { outputAmount, setBuyFocus } = inputs;
 
-  const { inputs, outputs } = swapFormStore;
-  const { inputAmount, setBuyFocus } = inputs;
-
-	return(
-		<TokenPanel headerText="Token to Buy" defaultValue={inputAmount} onChange={e => onChange(e, formNames.INPUT_FORM)} inputID={inputID} inputName={inputName} tokenName={tokenName} tokenBalance={tokenBalance} tokenAddress={tokenAddress} setModalOpen={setModalOpen} setFocus={setBuyFocus} />
-	)
-})
+  	return(
+  		<TokenPanel
+        headerText="Token to Buy"
+        defaultValue={outputAmount}
+        onChange={e => onChange(e, formNames.INPUT_FORM)}
+        inputID={inputID} 
+        inputName={inputName}
+        tokenName={tokenName}
+        tokenBalance={tokenBalance}
+        tokenAddress={tokenAddress}
+        setModalOpen={setModalOpen}
+        setFocus={setBuyFocus}
+       />
+  	);
+  }
+);
 
 export default BuyToken
