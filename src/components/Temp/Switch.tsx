@@ -13,7 +13,7 @@ const SwapIcon = styled.img`
 	height: 24px;
 `
 
-const Swap = () => {
+const Switch = () => {
 	return(
 		<Container>
 			<SwapIcon src="/swap.svg" />
@@ -21,4 +21,4 @@ const Swap = () => {
 	)
 }
 
-export default Swap
+export default Switch

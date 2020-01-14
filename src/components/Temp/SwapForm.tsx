@@ -2,7 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import BuyToken from './BuyToken';
 import SellToken from './SellToken';
-import Swap from './Swap';
+import Switch from './Switch';
 import Button from './Button';
 import SlippageSelector from './SlippageSelector';
 import TradeComposition from './TradeComposition';
@@ -249,7 +249,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                     tokenBalance={inputUserBalance}
                     tokenAddress={inputIconAddress}
                 />
-                <Swap />
+                <Switch />
                 <SellToken
                     key="122"
                     inputID="amount-out"
