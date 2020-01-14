@@ -4,7 +4,6 @@ import { observer } from "mobx-react";
 import { useStores } from "../../contexts/storesContext";
 import { formNames, InputValidationStatus, SwapMethods } from "stores/SwapForm";
 import { bnum, fromWei } from "utils/helpers";
-import { Simulate } from "react-dom/test-utils";
 
 const BuyToken = observer( ({inputID, inputName, tokenName, tokenBalance, tokenAddress, setModalOpen}) => {
 
@@ -42,34 +41,14 @@ const BuyToken = observer( ({inputID, inputName, tokenName, tokenBalance, tokenA
       updateProperty(form, name, value);
 
       const inputStatus = swapFormStore.getSwapFormInputValidationStatus(value);
-      let validInput = false;
-
-      if (inputStatus === InputValidationStatus.NEGATIVE) {
-          console.log('[Buy Token]', 'Input must be positive');
-      }
-
-      if (inputStatus === InputValidationStatus.NOT_FLOAT) {
-          console.log('[Buy Token]', 'Input must be number');
-      }
-
-      if (inputStatus === InputValidationStatus.ZERO) {
-          console.log('[Buy Token]', 'Input must be non-zero');
-      }
-
-      if (inputStatus === InputValidationStatus.EMPTY) {
-          console.log('[Buy Token]', 'Empty input, valid but clear opposite input');
-      }
 
       if (inputStatus === InputValidationStatus.VALID) {
-          validInput = true;
-      }
-
-      if (validInput) {
           const output = await previewSwapExactAmountInHandler(); // Get preview if all necessary fields are filled out
           // swapFormStore.updateOutputsFromObject(output);
           swapFormStore.updateInputsFromObject(output);
           swapFormStore.updateOutputsFromObject(output);
       } else {
+          console.log('[Invalid Input]', inputStatus, value);
           swapFormStore.updateInputsFromObject({
               outputAmount: ''
               // clear preview
