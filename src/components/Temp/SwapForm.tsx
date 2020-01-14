@@ -37,11 +37,10 @@ const ColumnContainer = styled.div`
 enum ButtonState {
     NO_WALLET,
     UNLOCK,
-    SWAP,
-    LOADING
+    SWAP
 }
 
-const ButtonText = ['Connect to a wallet', 'Unlock', 'Swap', 'Swap'];
+const ButtonText = ['Connect to a wallet', 'Unlock', 'Swap'];
 
 const SwapForm = observer(({ tokenIn, tokenOut }) => {
     const [modelOpen, setModalOpen] = React.useState({
@@ -181,13 +180,6 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     const getButtonActive = (buttonState: ButtonState, inputBalance: BigNumber | undefined): boolean => {
         const isInputValid = swapFormStore.isValidInput(inputs.inputAmount);
 
-        console.log('activeConditions', {
-            buttonState,
-            inputBalance,
-            inputBalanceStr: inputBalance ? inputBalance.toString() : "undef",
-            isInputValid
-
-        });
         if (buttonState === ButtonState.UNLOCK || buttonState === ButtonState.NO_WALLET) {
             return true;
         }
