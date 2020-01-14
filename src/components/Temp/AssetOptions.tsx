@@ -87,7 +87,7 @@ const AssetOptions = ({ filter, modelOpen, setModalOpen }) => {
 	let assetSelectorData: AssetSelectorData[] = [];
 	const { chainId, account } = providerStore.getActiveWeb3React();
 
-	let userBalances;
+	let userBalances = {};
 	let filteredWhitelistedTokens;
 	const setSelectorDataWrapper = (filter) => {
 		filteredWhitelistedTokens = tokenStore.getFilteredTokenMetadata(chainId, filter);
