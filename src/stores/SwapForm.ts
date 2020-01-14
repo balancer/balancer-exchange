@@ -76,6 +76,10 @@ export default class SwapFormStore {
         };
     }
 
+    isValidInput(value: string): boolean {
+        return this.getSwapFormInputValidationStatus(value) === InputValidationStatus.VALID;
+    }
+
     getSwapFormInputValidationStatus(value: string): InputValidationStatus {
         console.log(ValidationRules);
 

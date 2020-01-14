@@ -15,7 +15,8 @@ import { validators } from '../validators';
 import { useStores } from '../../contexts/storesContext';
 import { ErrorCodes, ErrorIds } from '../../stores/Error';
 import { ContractMetadata } from '../../stores/Token';
-import { checkIsPropertyEmpty, fromWei, toWei } from 'utils/helpers';
+import { bnum, checkIsPropertyEmpty, fromWei, toWei } from "utils/helpers";
+import { BigNumber } from "utils/bignumber";
 
 const RowContainer = styled.div`
     font-family: var(--roboto);
@@ -36,7 +37,7 @@ const ColumnContainer = styled.div`
 enum ButtonState {
     NO_WALLET,
     UNLOCK,
-    SWAP,
+    SWAP
 }
 
 const ButtonText = ['Connect to a wallet', 'Unlock', 'Swap'];
@@ -159,9 +160,12 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         }
     };
 
-    const getButtonState = (account, approval): ButtonState => {
+    const getButtonState = (account, userAllowance: BigNumber | undefined): ButtonState => {
+        const validInput = swapFormStore.isValidInput(inputs.inputAmount);
+        const sufficientAllowance = userAllowance && userAllowance.gt(0);
+
         if (account) {
-            if (!approval) {
+            if (!sufficientAllowance) {
                 return ButtonState.UNLOCK;
             }
             return ButtonState.SWAP;
@@ -171,6 +175,23 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
 
     const getButtonText = (buttonState: ButtonState): string => {
       return ButtonText[buttonState];
+    };
+
+    const getButtonActive = (buttonState: ButtonState, inputBalance: BigNumber | undefined): boolean => {
+        const isInputValid = swapFormStore.isValidInput(inputs.inputAmount);
+
+        if (buttonState === ButtonState.UNLOCK || buttonState === ButtonState.NO_WALLET) {
+            return true;
+        }
+
+        if (buttonState === ButtonState.SWAP) {
+            if (isInputValid) {
+                const inputAmountBN = toWei(inputs.inputAmount);
+                return inputBalance && inputBalance.gte(inputAmountBN);
+            }
+        }
+
+        return false;
     };
 
     let inputUserBalanceBN;
@@ -206,13 +227,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         );
     }
 
-    const buttonState = getButtonState(account, userAllowance && userAllowance.gt(inputs.inputAmount) && userAllowance.gt(0));
-    if (userAllowance) {
-    console.log('User Allowance', {
-        check: userAllowance && userAllowance.gt(inputs.inputAmount) && userAllowance.gt(0),
-        allowance: fromWei(userAllowance)
-    });
-    }
+    const buttonState = getButtonState(account, userAllowance);
 
     const error = errorStore.getActiveError(ErrorIds.SWAP_FORM_STORE);
     let errorMessage;
@@ -257,7 +272,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                 />
                 <Button
                     buttonText={getButtonText(buttonState)}
-                    active={true}
+                    active={getButtonActive(buttonState, inputUserBalanceBN)}
                     onClick={() => {
                       buttonActionHandler(buttonState);
                     }}

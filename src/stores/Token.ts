@@ -356,7 +356,7 @@ export default class TokenStore {
             tokenAddress
         );
 
-        const balance = await token.balanceOf(account);
+        const balance = bnum(await token.balanceOf(account));
         this.setBalanceProperty(chainId, tokenAddress, account, balance);
     };
 
@@ -382,7 +382,7 @@ export default class TokenStore {
             tokenAddress
         );
 
-        const allowance = await token.allowance(account, spender);
+        const allowance = bnum(await token.allowance(account, spender));
 
         this.setAllowanceProperty(
             chainId,
