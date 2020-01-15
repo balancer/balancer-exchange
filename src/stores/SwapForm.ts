@@ -40,6 +40,7 @@ export default class SwapFormStore {
         outputToken: '',
         inputAmount: '',
         outputAmount: '',
+        slippageAmount: '1.0',
         inputTicker: '',
         outputTicker: '',
         inputIconAddress: '',
