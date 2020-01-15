@@ -96,8 +96,6 @@ const AssetOptions = ({ filter, modelOpen, setModalOpen }) => {
 			userBalances = tokenStore.getAccountBalances(chainId, filteredWhitelistedTokens, account);
 		}
 
-		console.log("in setSelectorData with filter: " + filter);
-
 		assetSelectorData = filteredWhitelistedTokens.map(value => {
 			return {
 				address: value.address,
@@ -106,15 +104,15 @@ const AssetOptions = ({ filter, modelOpen, setModalOpen }) => {
 				userBalance: userBalances[value.address] ? fromWei(userBalances[value.address]).toString() : 'N/A'
 			}
 		});
-		console.log('[Filtered asset data setter]', assetSelectorData.length);
 		return assetSelectorData;
 	}
 	setSelectorDataWrapper(filter);
 	const [selectorData, setSelectorData] = useState(assetSelectorData);
 
-	console.log('[Filtered asset data body]', assetSelectorData.length);
-
-
+    const clearInputs = () => {
+    	swapFormStore.inputs.inputAmount = '';
+    	swapFormStore.inputs.outputAmount = '';
+    }
 
 	const selectAsset = (token) => {
 		if(modelOpen.input === "inputAmount") {
@@ -127,7 +125,8 @@ const AssetOptions = ({ filter, modelOpen, setModalOpen }) => {
 	    swapFormStore.inputs.outputIconAddress = token.iconAddress;
 		}
 
-    setModalOpen(false);
+		clearInputs();
+	    setModalOpen(false);
 	}
 
 	return(
