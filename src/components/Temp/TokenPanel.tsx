@@ -31,7 +31,6 @@ const TokenContainer = styled.div`
   height: 94px;
   color: var(--header-text);
   border-top: 1px solid var(--panel-border);
-  border-bottom: 1px solid var(--panel-border);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -79,7 +78,7 @@ const TokenBalance = styled.div`
 `
 
 const InputWrapper = styled.div`
-  height: 61px;
+  height: 60px;
   font-family: Roboto;
   font-style: normal;
   font-weight: 500;
@@ -89,6 +88,8 @@ const InputWrapper = styled.div`
   color: var(--body-text);
   padding-left: 21px;
   padding-right: 21px;
+  border-top: 1px solid var(--panel-border);
+  border-radius: 0px 0px 4px 4px;
   input {
     width: 100px;
     color: var(--body-text);
@@ -108,6 +109,10 @@ const InputWrapper = styled.div`
       outline: none
     }
   }
+`
+
+const InputErrorWrapper = styled(InputWrapper)`
+  border: 1px solid var(--error-color);
 `
 
 const MaxLink = styled.div`

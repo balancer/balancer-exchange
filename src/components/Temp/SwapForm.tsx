@@ -4,6 +4,7 @@ import BuyToken from './BuyToken';
 import SellToken from './SellToken';
 import Switch from './Switch';
 import Button from './Button';
+import ErrorDisplay from './ErrorDisplay';
 import SlippageSelector from './SlippageSelector';
 import TradeComposition from './TradeComposition';
 import AssetSelector from './AssetSelector';
@@ -265,6 +266,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                     tradeCompositionOpen={tradeCompositionOpen}
                     setTradeCompositionOpen={setTradeCompositionOpen}
                 />
+                <ErrorDisplay errorText="Insufficient Balance" />
                 <SlippageSelector
                     expectedSlippage="0.38%"
                     slippageSelectorOpen={slippageSelectorOpen}

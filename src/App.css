@@ -1,33 +1,37 @@
 :root {
+/* General Styles */
 	--background: #21222C;
-  --panel-border: #41476B;
-  --panel-background: #2E2F39;
-  --panel-header-background: #282932;
-  --token-balance-text: #90A4AE;
-  --header-text: #FAFAFA;
-  --exit-modal-color: #DFE3E9;
   --body-text: #90A4AE;
+  --exit-modal-color: #DFE3E9;
+  --error-color: #FF8A80;
+  --header-text: #FAFAFA;
+  --info-border: #FFFFFF;
 	--link-text: #8C9EFF;
-	
+  --pie-chart-color: #B388FF;
+  --token-balance-text: #90A4AE;
+
+/* Button Styles */
   --button-text: #FAFAFA;
   --button-background: #536DFE;
   --button-border: #3D5AFE;
-
-  --selector-background: #2E2F39;
-  --selector-border: #41476B;
-  --selector-text: #FAFAFA;
-  --highlighted-selector-background: #41476B;
-  --highlighted-selector-border: #7785D5;
-  --highlighted-selector-text: #FFFFFF;
-
   --inactive-button-border: rgba(140, 158, 255, 0.2);
   --inactive-button-text: rgba(255, 255, 255, 0.6);
 
-  --info-border: #FFFFFF;
-
-  --pie-chart-color: #B388FF;
-
+/* Fonts */
   --roboto: 'Roboto', sans-serif; 
+
+/* Panel Styles */
+  --panel-border: #41476B;
+  --panel-background: #2E2F39;
+  --panel-header-background: #282932;
+
+/* Selector Styles */
+  --highlighted-selector-background: #41476B;
+  --highlighted-selector-border: #7785D5;
+  --highlighted-selector-text: #FFFFFF;
+  --selector-background: #2E2F39;
+  --selector-border: #41476B;
+  --selector-text: #FAFAFA;
 }
 
 body {
