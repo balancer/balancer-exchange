@@ -12,6 +12,7 @@ import { injected } from 'provider/connectors';
 import { web3ContextNames } from 'provider/connectors';
 import Identicon from '../Identicon';
 import { useStores } from '../../contexts/storesContext';
+import Button from '../Temp/Button'
 
 const Web3StatusGeneric = styled.button`
     ${({ theme }) => theme.flexRowNoWrap}
@@ -37,33 +38,6 @@ const Web3StatusError = styled(Web3StatusGeneric)`
     :focus {
         background-color: ${({ theme }) => darken(0.1, theme.salmonRed)};
     }
-`;
-
-const Web3StatusConnect = styled(Web3StatusGeneric)`
-    background-color: transparent;
-    border: 1px solid ${({ theme }) => theme.royalBlue};
-    color: ${({ theme }) => theme.royalBlue};
-    font-weight: 500;
-
-    :hover,
-    :focus {
-        border: 1px solid ${({ theme }) => darken(0.1, theme.royalBlue)};
-        color: ${({ theme }) => darken(0.1, theme.royalBlue)};
-    }
-
-    ${({ faded }) =>
-        faded &&
-        css`
-            background-color: transparent;
-            border: 1px solid ${({ theme }) => theme.royalBlue};
-            color: ${({ theme }) => theme.royalBlue};
-
-            :hover,
-            :focus {
-                border: 1px solid ${({ theme }) => darken(0.1, theme.royalBlue)};
-                color: ${({ theme }) => darken(0.1, theme.royalBlue)};
-            }
-        `}
 `;
 
 const Web3StatusConnected = styled(Web3StatusGeneric)`
@@ -189,9 +163,7 @@ const Web3ConnectStatus = observer(() => {
             );
         } else {
             return (
-                <Web3StatusConnect onClick={toggleWalletModal} faded={!account}>
-                    <Text>{'Connect to a Wallet'}</Text>
-                </Web3StatusConnect>
+                <Button onClick={toggleWalletModal} buttonText="Connect Wallet" active={true} />
             );
         }
     }
