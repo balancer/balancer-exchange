@@ -5,9 +5,10 @@ import {
     formatPoolData,
     printPoolData,
     printSorSwaps,
-    printSwapInput, printSwaps,
-    Scale
-} from "utils/helpers";
+    printSwapInput,
+    printSwaps,
+    Scale,
+} from 'utils/helpers';
 import RootStore from 'stores/Root';
 import sor from 'balancer-sor';
 import { BigNumber } from 'utils/bignumber';
@@ -22,24 +23,20 @@ import {
     findBestSwaps,
     findPoolsWithTokens,
     formatSwapsExactAmountIn,
-    formatSwapsExactAmountOut
-} from "../utils/sorWrapper";
+    formatSwapsExactAmountOut,
+} from '../utils/sorWrapper';
 
 export interface ExactAmountOutPreview {
-    preview: {
-        inputAmount: BigNumber | null;
-        effectivePrice: BigNumber | null;
-        swaps: Swap[];
-    };
+    totalInput: BigNumber | null;
+    effectivePrice: BigNumber | null;
+    swaps: Swap[];
     validSwap: boolean;
 }
 
 export interface ExactAmountInPreview {
-    preview: {
-        outputAmount: any;
-        effectivePrice: any;
-        swaps: any;
-    };
+    totalOutput: BigNumber | null;
+    effectivePrice: BigNumber | null;
+    swaps: Swap[];
     validSwap: boolean;
 }
 
@@ -135,11 +132,7 @@ export default class ProxyStore {
         const { tokenStore, providerStore } = this.rootStore;
         const { chainId } = providerStore.getActiveWeb3React();
 
-        const poolData = await findPoolsWithTokens(
-            tokenIn,
-            tokenOut,
-            true
-        );
+        const poolData = await findPoolsWithTokens(tokenIn, tokenOut, true);
         const costOutputToken = this.costCalculator.getCostOutputToken();
 
         const sorSwaps = findBestSwaps(
@@ -247,11 +240,7 @@ export default class ProxyStore {
             let maxPrice = helpers.setPropertyToMaxUintIfEmpty();
             let minAmountOut = helpers.setPropertyToZeroIfEmpty();
 
-            const poolData = await findPoolsWithTokens(
-                tokenIn,
-                tokenOut,
-                true
-            );
+            const poolData = await findPoolsWithTokens(tokenIn, tokenOut, true);
             const costOutputToken = this.costCalculator.getCostOutputToken();
 
             const sorSwaps = findBestSwaps(
@@ -269,15 +258,11 @@ export default class ProxyStore {
                 bnum(minAmountOut)
             );
 
-            const outputAmount = calcTotalOutput(
-                swaps,
-                sorSwaps,
-                poolData
-            );
+            const totalOutput = calcTotalOutput(swaps, sorSwaps, poolData);
 
             const effectivePrice = this.calcEffectivePrice(
                 inputAmount,
-                helpers.scale(outputAmount, Scale.fromWei)
+                helpers.scale(totalOutput, Scale.fromWei)
             );
 
             printDebugInfo(
@@ -288,31 +273,27 @@ export default class ProxyStore {
                     inputAmount,
                     maxPrice: bnum(0),
                 },
-              swaps,
+                swaps,
                 sorSwaps,
                 poolData,
-                outputAmount,
+                totalOutput,
                 effectivePrice
             );
 
             this.setPreviewPending(false);
             return {
-                preview: {
-                    outputAmount: outputAmount.toString(),
-                    effectivePrice,
-                    swaps,
-                },
+                totalOutput,
+                effectivePrice,
+                swaps,
                 validSwap: true,
             };
         } catch (e) {
             log.error('[Error] previewSwapExactAmountIn', e);
             this.setPreviewPending(false);
             return {
-                preview: {
-                    outputAmount: null,
-                    effectivePrice: null,
-                    swaps: null,
-                },
+                totalOutput: null,
+                effectivePrice: null,
+                swaps: null,
                 validSwap: false,
             };
         }
@@ -329,11 +310,7 @@ export default class ProxyStore {
             let maxPrice = helpers.setPropertyToMaxUintIfEmpty();
             let maxAmountIn = helpers.setPropertyToMaxUintIfEmpty();
 
-            const poolData = await findPoolsWithTokens(
-                tokenIn,
-                tokenOut,
-                true
-            );
+            const poolData = await findPoolsWithTokens(tokenIn, tokenOut, true);
             const costOutputToken = this.costCalculator.getCostOutputToken();
 
             let sorSwaps: SorSwaps = findBestSwaps(
@@ -351,7 +328,7 @@ export default class ProxyStore {
                 bnum(maxAmountIn)
             );
 
-            const inputAmount = calcTotalInput(
+            const totalInput = calcTotalInput(
                 swaps,
                 sorSwaps,
                 poolData,
@@ -361,46 +338,42 @@ export default class ProxyStore {
 
             const effectivePrice = this.calcEffectivePrice(
                 bnum(amountOut),
-                helpers.scale(inputAmount, Scale.fromWei)
+                helpers.scale(totalInput, Scale.fromWei)
             );
 
             printDebugInfo(
-              {
-                  method: SwapMethods.EXACT_OUT,
-                  tokenIn,
-                  tokenOut,
-                  outputAmount: amountOut,
-                  maxPrice: bnum(0),
-              },
-              swaps,
-              sorSwaps,
-              poolData,
-              inputAmount,
-              effectivePrice
+                {
+                    method: SwapMethods.EXACT_OUT,
+                    tokenIn,
+                    tokenOut,
+                    outputAmount: amountOut,
+                    maxPrice: bnum(0),
+                },
+                swaps,
+                sorSwaps,
+                poolData,
+                totalInput,
+                effectivePrice
             );
 
-            if (inputAmount.isNaN()) {
+            if (totalInput.isNaN()) {
                 throw new Error('NaN total calculated input');
             }
 
             this.setPreviewPending(false);
             return {
-                preview: {
-                    inputAmount,
-                    effectivePrice,
-                    swaps,
-                },
+                totalInput,
+                effectivePrice,
+                swaps,
                 validSwap: true,
             };
         } catch (e) {
             log.error('[Error] previewSwapExactAmountOut', e);
             this.setPreviewPending(false);
             return {
-                preview: {
-                    inputAmount: null,
-                    effectivePrice: null,
-                    swaps: null,
-                },
+                totalInput: null,
+                effectivePrice: null,
+                swaps: null,
                 validSwap: false,
             };
         }

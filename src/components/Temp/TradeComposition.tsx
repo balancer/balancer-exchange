@@ -1,7 +1,10 @@
 import React from 'react'
 import styled from 'styled-components'
-import { toAddressStub } from 'utils/helpers';
+import { str, toAddressStub } from "utils/helpers";
+import { observer } from "mobx-react";
 import { Pie } from 'react-chartjs-2'
+import { ChartData } from "../../stores/SwapForm";
+import { useStores } from "../../contexts/storesContext";
 
 const Container = styled.div`
 	display: flex;
@@ -106,7 +109,18 @@ const PieChart = styled.div`
 	border-radius: 50px;
 `
 
-const TradeComposition = ({setTradeCompositionOpen, tradeCompositionOpen}) => {
+const TradeComposition = observer(({setTradeCompositionOpen, tradeCompositionOpen}) => {
+
+	const {
+		root: {
+			swapFormStore,
+			providerStore,
+			tokenStore,
+		},
+	} = useStores();
+
+	const { chainId, account } = providerStore.getActiveWeb3React();
+	const chartData = swapFormStore.tradeCompositionData;
 
   const options = {
     maintainAspectRatio: false,
@@ -118,23 +132,40 @@ const TradeComposition = ({setTradeCompositionOpen, tradeCompositionOpen}) => {
     }
   }
 
-  const data = {
-    datasets: [{
-    	data: [1],
-    	borderAlign: "center",
-    	borderColor: "#B388FF",
-    	borderWidth: "1",
-    	weight: 1
-    },
-    {
-    	data: [42, 30, 28],
-    	borderAlign: "center",
-    	backgroundColor: ["#A7FFEB", "#FF9E80", "#B388FF"],
-    	borderColor: ["#A7FFEB", "#FF9E80", "#B388FF"],
-    	borderWidth: "0",
-    	weight: 95
-    }]
-  }
+  const formatting = {
+		borderAlign: "center",
+		backgroundColor: ["#A7FFEB", "#FF9E80", "#B388FF"],
+		borderColor: ["#A7FFEB", "#FF9E80", "#B388FF"],
+		borderWidth: "0",
+		weight: 95
+	}
+
+	const formatPieData = (chartData: ChartData) => {
+		const pieData = {
+			datasets: [{
+				data: [1],
+				borderAlign: "center",
+				borderColor: "#B388FF",
+				borderWidth: "1",
+				weight: 1
+			},
+				{
+					data: [],
+					borderAlign: "center",
+					backgroundColor: ["#A7FFEB", "#FF9E80", "#B388FF"],
+					borderColor: ["#A7FFEB", "#FF9E80", "#B388FF"],
+					borderWidth: "0",
+					weight: 95
+				}]
+		}
+
+		if (chartData.validSwap) {
+			chartData.swaps.forEach((swap, index) => {
+				pieData.datasets[1].data.push(swap.percentage);
+			});
+		}
+		return pieData;
+	};
 
   const toggleDropDown = () => {
   	if(tradeCompositionOpen) {
@@ -142,12 +173,61 @@ const TradeComposition = ({setTradeCompositionOpen, tradeCompositionOpen}) => {
   	} else {
   		return setTradeCompositionOpen(true);
   	}
-  }
+  };
+
+  const {inputToken, outputToken} = swapFormStore.inputs;
+
+	const renderChartRows = (chartData: ChartData, formatting) => {
+		if (chartData.validSwap) {
+			return chartData.swaps.map((swap, index) => {
+				return (<PoolLine>
+					<AddressAndBullet>
+						<BulletPoint color={formatting.borderColor[index]}/>
+						<Address>
+							{swap.isOthers ? 'Others' : toAddressStub(swap.poolAddress)}
+						</Address>
+					</AddressAndBullet>
+					<Percentage>{swap.percentage}</Percentage>
+				</PoolLine>)
+			});
+		}
+
+		return (<PoolLine>
+			<AddressAndBullet>
+				<BulletPoint color={formatting.borderColor[0]}/>
+				<Address>
+					Please input a valid preview
+				</Address>
+			</AddressAndBullet>
+		</PoolLine>)
+	};
+
+  const renderExchangeRate = (chartData: ChartData) => {
+  	if (!chainId) {
+  		return <div/>;
+		}
+
+		const inputTokenSymbol = tokenStore.getTokenMetadata(chainId, inputToken).symbol;
+		const outputTokenSymbol = tokenStore.getTokenMetadata(chainId, outputToken).symbol;
+  	if (chartData.validSwap) {
+  		return (
+				<div>{str(chartData.inputPriceValue)} {inputTokenSymbol} = {str(chartData.outputPriceValue)} {outputTokenSymbol}</div>
+			)
+		}
+  	else {
+  		return <div/>
+		}
+	};
+
+  console.log('[Trade Composition] Debug', {
+  	swaps: [...chartData.swaps],
+		validSwap: chartData.validSwap
+	}, formatPieData(chartData));
 
 	return(
 		<Container>
 			<Info>
-				<div>1 ETH = 150.00000 DAI</div>
+				{renderExchangeRate(chartData)}
 				<DropDownArrow onClick={() => {toggleDropDown()}}>
 					<UpCarretIcon src="UpCarret.svg"  style={{display: tradeCompositionOpen ? 'block' : 'none' }} />
 					<DownCarretIcon src="DownCarret.svg"  style={{display: tradeCompositionOpen ? 'none' : 'block' }} />
@@ -155,40 +235,14 @@ const TradeComposition = ({setTradeCompositionOpen, tradeCompositionOpen}) => {
 			</Info>
 			<CompositionDropDown style={{display: tradeCompositionOpen ? 'flex' : 'none' }}>
 				<PoolLineContainer>
-					<PoolLine>
-						<AddressAndBullet>
-							<BulletPoint color="#A7FFEB"/>
-							<Address>
-								{toAddressStub("0x1940Fd4beAF634f8942f54586Fa92a29Fd1D9aFe")}
-							</Address>
-						</AddressAndBullet>
-						<Percentage>42%</Percentage>
-					</PoolLine>
-					<PoolLine>
-						<AddressAndBullet>
-							<BulletPoint color="#FF9E80"/>
-							<Address>
-								{toAddressStub("0xA60fF6A7DDd60eE7BACde3eB749587b6206EdaB0")}
-							</Address>
-						</AddressAndBullet>
-						<Percentage>30%</Percentage>
-					</PoolLine>
-					<PoolLine>
-						<AddressAndBullet>
-							<BulletPoint color="#B388FF"/>
-							<Address>
-								Others
-							</Address>
-						</AddressAndBullet>
-						<Percentage>28%</Percentage>
-					</PoolLine>
+					{renderChartRows(chartData, formatting)}
 				</PoolLineContainer>
 				<PieChartWrapper>
-					<Pie data={data} options={options} />
+					<Pie data={formatPieData(chartData)} options={options} />
 				</PieChartWrapper>
 			</CompositionDropDown>
 		</Container>
 	)
-}
+});
 
 export default TradeComposition
