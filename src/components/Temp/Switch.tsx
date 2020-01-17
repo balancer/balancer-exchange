@@ -49,6 +49,7 @@ const Switch = () => {
         swapFormStore.inputs.outputToken = inputToken;
         swapFormStore.inputs.outputTicker = inputTicker;
         swapFormStore.inputs.outputIconAddress = inputIconAddress;
+        swapFormStore.resetTradeComposition();
         clearInputs();
     }
 

@@ -204,13 +204,17 @@ export default class SwapFormStore {
         };
     }
 
-    constructor(rootStore) {
-        this.rootStore = rootStore;
+    resetTradeComposition() {
         this.tradeCompositionData = {
             validSwap: false,
             inputPriceValue: bnum(0),
             outputPriceValue: bnum(0),
             swaps: []
         }
+    }
+
+    constructor(rootStore) {
+        this.rootStore = rootStore;
+        this.resetTradeComposition();
     }
 }
