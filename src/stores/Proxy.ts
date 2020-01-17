@@ -27,6 +27,7 @@ import {
 } from '../utils/sorWrapper';
 
 export interface ExactAmountOutPreview {
+    outputAmount: BigNumber;
     totalInput: BigNumber | null;
     effectivePrice: BigNumber | null;
     swaps: Swap[];
@@ -34,6 +35,7 @@ export interface ExactAmountOutPreview {
 }
 
 export interface ExactAmountInPreview {
+    inputAmount: BigNumber;
     totalOutput: BigNumber | null;
     effectivePrice: BigNumber | null;
     swaps: Swap[];
@@ -282,6 +284,7 @@ export default class ProxyStore {
 
             this.setPreviewPending(false);
             return {
+                inputAmount,
                 totalOutput,
                 effectivePrice,
                 swaps,
@@ -291,6 +294,7 @@ export default class ProxyStore {
             log.error('[Error] previewSwapExactAmountIn', e);
             this.setPreviewPending(false);
             return {
+                inputAmount,
                 totalOutput: null,
                 effectivePrice: null,
                 swaps: null,
@@ -302,7 +306,7 @@ export default class ProxyStore {
     previewBatchSwapExactOut = async (
         tokenIn: string,
         tokenOut: string,
-        amountOut: BigNumber
+        outputAmount: BigNumber
     ): Promise<ExactAmountOutPreview> => {
         try {
             this.setPreviewPending(true);
@@ -316,7 +320,7 @@ export default class ProxyStore {
             let sorSwaps: SorSwaps = findBestSwaps(
                 poolData,
                 SwapMethods.EXACT_OUT,
-                amountOut,
+                outputAmount,
                 20,
                 costOutputToken
             );
@@ -337,7 +341,7 @@ export default class ProxyStore {
             );
 
             const effectivePrice = this.calcEffectivePrice(
-                bnum(amountOut),
+                bnum(outputAmount),
                 helpers.scale(totalInput, Scale.fromWei)
             );
 
@@ -346,7 +350,7 @@ export default class ProxyStore {
                     method: SwapMethods.EXACT_OUT,
                     tokenIn,
                     tokenOut,
-                    outputAmount: amountOut,
+                    outputAmount,
                     maxPrice: bnum(0),
                 },
                 swaps,
@@ -362,6 +366,7 @@ export default class ProxyStore {
 
             this.setPreviewPending(false);
             return {
+                outputAmount,
                 totalInput,
                 effectivePrice,
                 swaps,
@@ -371,6 +376,7 @@ export default class ProxyStore {
             log.error('[Error] previewSwapExactAmountOut', e);
             this.setPreviewPending(false);
             return {
+                outputAmount,
                 totalInput: null,
                 effectivePrice: null,
                 swaps: null,

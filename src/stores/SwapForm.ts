@@ -3,7 +3,7 @@ import RootStore from 'stores/Root';
 import { ValidationRules } from 'react-form-validator-core';
 import { ExactAmountInPreview, ExactAmountOutPreview, Swap } from "./Proxy";
 import { BigNumber } from "utils/bignumber";
-import { bnum } from "../utils/helpers";
+import { bnum, fromWei, scale } from "../utils/helpers";
 
 export const formNames = {
     INPUT_FORM: 'inputs',
@@ -96,17 +96,17 @@ export default class SwapFormStore {
 
     /* Assume swaps are in order of biggest to smallest value */
     @action setTradeCompositionEAI(preview: ExactAmountInPreview) {
-        const {swaps, totalOutput, effectivePrice, validSwap} = preview;
-        this.setTradeComposition(SwapMethods.EXACT_IN, swaps, totalOutput, effectivePrice, validSwap);
+        const {inputAmount, swaps, totalOutput, effectivePrice, validSwap} = preview;
+        this.setTradeComposition(SwapMethods.EXACT_IN, swaps, inputAmount, totalOutput, effectivePrice, validSwap);
     }
 
     /* Assume swaps are in order of biggest to smallest value */
     @action setTradeCompositionEAO(preview: ExactAmountOutPreview) {
-        const {swaps, totalInput, effectivePrice, validSwap} = preview;
-        this.setTradeComposition(SwapMethods.EXACT_OUT, swaps, totalInput, effectivePrice, validSwap);
+        const {outputAmount, swaps, totalInput, effectivePrice, validSwap} = preview;
+        this.setTradeComposition(SwapMethods.EXACT_OUT, swaps, outputAmount, totalInput, effectivePrice, validSwap);
     }
 
-    @action private setTradeComposition(method: SwapMethods, swaps: Swap[], totalValue: BigNumber, effectivePrice: BigNumber, validSwap: boolean) {
+    @action private setTradeComposition(method: SwapMethods, swaps: Swap[], inputValue: BigNumber, totalValue: BigNumber, effectivePrice: BigNumber, validSwap: boolean) {
         let result: ChartData = {
             validSwap: true,
             inputPriceValue: bnum(0),
@@ -123,7 +123,6 @@ export default class SwapFormStore {
             isOthers: true,
             percentage: 0
         };
-
 
         const tempChartSwaps: ChartSwap[] = [];
         // Convert all Swaps to ChartSwaps
@@ -146,8 +145,17 @@ export default class SwapFormStore {
         });
 
         result.swaps.push(others);
-        result.inputPriceValue = bnum(1);
-        result.outputPriceValue = bnum(effectivePrice);
+
+        if (method === SwapMethods.EXACT_IN) {
+            result.inputPriceValue = inputValue;
+            result.outputPriceValue = bnum(fromWei(totalValue));
+        }
+
+        if (method === SwapMethods.EXACT_OUT) {
+            result.inputPriceValue = bnum(fromWei(totalValue));
+            result.outputPriceValue = inputValue;
+        }
+
         this.tradeCompositionData = result;
     }
 

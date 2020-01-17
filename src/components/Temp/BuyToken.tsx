@@ -83,6 +83,7 @@ const BuyToken = observer(
 
         if (!outputAmount || outputAmount === '') {
             return {
+                outputAmount: bnum(outputAmount),
                 totalInput: null,
                 effectivePrice: null,
                 swaps: null,

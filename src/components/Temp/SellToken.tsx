@@ -73,6 +73,7 @@ const SellToken = observer(
 
             if (!inputAmount || inputAmount === '') {
                 return {
+                    inputAmount: bnum(inputAmount),
                     totalOutput: null,
                     effectivePrice: null,
                     swaps: null,
