@@ -13,6 +13,7 @@ import { web3ContextNames } from 'provider/connectors';
 import Identicon from '../Identicon';
 import { useStores } from '../../contexts/storesContext';
 import Button from '../Temp/Button'
+import Web3PillBox from '../Temp/Web3PillBox'
 
 const Web3StatusGeneric = styled.button`
     ${({ theme }) => theme.flexRowNoWrap}
@@ -37,31 +38,6 @@ const Web3StatusError = styled(Web3StatusGeneric)`
     :hover,
     :focus {
         background-color: ${({ theme }) => darken(0.1, theme.salmonRed)};
-    }
-`;
-
-const Web3StatusConnected = styled(Web3StatusGeneric)`
-    background-color: ${({ pending, theme }) =>
-        pending ? theme.zumthorBlue : theme.inputBackground};
-    border: 1px solid
-        ${({ pending, theme }) =>
-            pending ? theme.royalBlue : theme.mercuryGray};
-    color: ${({ pending, theme }) =>
-        pending ? theme.royalBlue : theme.doveGray};
-    font-weight: 400;
-    :hover {
-        background-color: ${({ pending, theme }) =>
-            pending
-                ? transparentize(0.9, theme.royalBlue)
-                : darken(0.05, theme.inputBackground)};
-
-        :focus {
-            border: 1px solid
-                ${({ pending, theme }) =>
-                    pending
-                        ? darken(0.1, theme.royalBlue)
-                        : darken(0.1, theme.mercuryGray)};
-        }
     }
 `;
 
@@ -139,16 +115,13 @@ const Web3ConnectStatus = observer(() => {
     function getWeb3Status() {
         if (account) {
             return (
-                <Web3StatusConnected
-                    onClick={toggleWalletModal}
-                    pending={hasPendingTransactions}
-                >
+                <Web3PillBox onClick={toggleWalletModal} >
                     {hasPendingTransactions && (
                         <SpinnerWrapper src={Circle} alt="loader" />
                     )}
-                    <Text>{shortenAddress(account)}</Text>
                     {getStatusIcon()}
-                </Web3StatusConnected>
+                    {shortenAddress(account)}
+                </Web3PillBox>
             );
         } else if (error) {
             return (
