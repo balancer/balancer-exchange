@@ -3,7 +3,7 @@ import RootStore from 'stores/Root';
 import { ValidationRules } from 'react-form-validator-core';
 import { ExactAmountInPreview, ExactAmountOutPreview, Swap } from "./Proxy";
 import { BigNumber } from "utils/bignumber";
-import { bnum, fromWei, scale } from "../utils/helpers";
+import { bnum, fromWei, scale, toWei } from "../utils/helpers";
 
 export const formNames = {
     INPUT_FORM: 'inputs',
@@ -132,7 +132,7 @@ export default class SwapFormStore {
             tempChartSwaps.push({
                 isOthers: false,
                 poolAddress: value[0],
-                percentage: bnum(swapValue).div(totalValue).times(100).toNumber()
+                percentage: bnum(swapValue).div(toWei(inputValue)).times(100).toNumber()
             })
         });
 
