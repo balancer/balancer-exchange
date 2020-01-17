@@ -144,7 +144,9 @@ export default class SwapFormStore {
             }
         });
 
-        result.swaps.push(others);
+        if (others.percentage > 0) {
+            result.swaps.push(others);
+        }
 
         if (method === SwapMethods.EXACT_IN) {
             result.inputPriceValue = inputValue;
