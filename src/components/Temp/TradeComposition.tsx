@@ -187,7 +187,7 @@ const TradeComposition = observer(({setTradeCompositionOpen, tradeCompositionOpe
 							{swap.isOthers ? 'Others' : toAddressStub(swap.poolAddress)}
 						</Address>
 					</AddressAndBullet>
-					<Percentage>{swap.percentage}</Percentage>
+					<Percentage>{swap.percentage}%</Percentage>
 				</PoolLine>)
 			});
 		}
