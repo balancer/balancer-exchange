@@ -3,7 +3,8 @@ import TokenPanel from './TokenPanel';
 import { observer } from 'mobx-react';
 import { useStores } from '../../contexts/storesContext';
 import { formNames, InputValidationStatus, SwapMethods } from 'stores/SwapForm';
-import { bnum, fromWei } from 'utils/helpers';
+import { bnum, fromWei, str } from "utils/helpers";
+import { ExactAmountInPreview } from "stores/Proxy";
 
 const SellToken = observer(
     ({
@@ -36,23 +37,27 @@ const SellToken = observer(
             swapFormStore.inputs.setSellFocus = true;
 
             updateProperty(form, 'type', SwapMethods.EXACT_IN);
-
-            console.log('[Swap Form]', {
-                name,
-                value,
-                inputAmount,
-                outputAmount,
-                method: swapFormStore.inputs.type,
-            });
-
             updateProperty(form, name, value);
 
             const inputStatus = swapFormStore.getSwapFormInputValidationStatus(value);
 
             if (inputStatus === InputValidationStatus.VALID) {
-                const output = await previewSwapExactAmountInHandler(); // Get preview if all necessary fields are filled out
+                const preview = await previewSwapExactAmountInHandler();
+
+                let output = {
+                    validSwap: false
+                };
+
+                if (preview.validSwap) {
+                    output['outputAmount'] = fromWei(preview.totalOutput);
+                    output['effectivePrice'] = str(preview.effectivePrice);
+                    output['swaps'] = preview.swaps;
+                    output['validSwap'] = true;
+                }
+
                 swapFormStore.updateInputsFromObject(output);
                 swapFormStore.updateOutputsFromObject(output);
+                swapFormStore.setTradeCompositionEAI(preview);
             } else {
                 console.log('[Invalid Input]', inputStatus, value);
                 swapFormStore.updateInputsFromObject({
@@ -62,37 +67,25 @@ const SellToken = observer(
             }
         };
 
-        const previewSwapExactAmountInHandler = async () => {
+        const previewSwapExactAmountInHandler = async (): Promise<ExactAmountInPreview> => {
             const inputs = swapFormStore.inputs;
             const { inputToken, outputToken, inputAmount } = inputs;
 
             if (!inputAmount || inputAmount === '') {
                 return {
+                    inputAmount: bnum(inputAmount),
+                    totalOutput: null,
+                    effectivePrice: null,
+                    swaps: null,
                     validSwap: false,
                 };
             }
 
-            const {
-                preview: { outputAmount, effectivePrice, swaps },
-                validSwap,
-            } = await proxyStore.previewBatchSwapExactIn(
-                inputToken,
-                outputToken,
-                bnum(inputAmount)
+            return await proxyStore.previewBatchSwapExactIn(
+              inputToken,
+              outputToken,
+              bnum(inputAmount)
             );
-
-            if (validSwap) {
-                return {
-                    outputAmount: fromWei(outputAmount),
-                    effectivePrice,
-                    swaps,
-                    validSwap,
-                };
-            } else {
-                return {
-                    validSwap,
-                };
-            }
         };
 
         const { inputs, outputs } = swapFormStore;
