@@ -109,10 +109,10 @@ const InputWrapper = styled.div`
       outline: none
     }
   }
+  border: ${props => props.errorBorders ? "1px solid var(--error-color)" : ""};
 `
 
 const InputErrorWrapper = styled(InputWrapper)`
-  border: 1px solid var(--error-color);
 `
 
 const MaxLink = styled.div`
@@ -124,7 +124,7 @@ const MaxLink = styled.div`
   color: var(--link-text);
 `
 
-const Token = ({defaultValue, onChange, inputID, inputName, headerText, tokenName, tokenBalance, tokenAddress, setModalOpen, setFocus}) => {
+const Token = ({defaultValue, onChange, inputID, inputName, headerText, tokenName, tokenBalance, tokenAddress, setModalOpen, setFocus, errorMessage}) => {
 
   const textInput = useRef(null);
 
@@ -134,18 +134,18 @@ const Token = ({defaultValue, onChange, inputID, inputName, headerText, tokenNam
     }
   });
 
-
-  const InputContainer = () => {
+  const InputContainer = ({errorMessage}) => {
     // TODO make sure conditional is checking the correct thing
+    const errorBorders = (errorMessage === "") ? false : true;
     if(tokenName == "ETH") {
       return(
-        <InputWrapper>
+        <InputWrapper errorBorders={errorBorders}>
           <input placeholder="0" />
         </InputWrapper>
       )
     } else {
       return(
-        <InputWrapper>
+        <InputWrapper errorBorders={errorBorders}>
           <input id={inputID} name={inputName} defaultValue={defaultValue} onChange={onChange} ref={textInput} placeholder="0" />
           <MaxLink>Max</MaxLink>
         </InputWrapper>
@@ -169,7 +169,7 @@ const Token = ({defaultValue, onChange, inputID, inputName, headerText, tokenNam
           {tokenName} {tokenBalance}
         </TokenBalance>
       </TokenContainer>
-      <InputContainer />
+      <InputContainer errorMessage={errorMessage} />
     </Panel>
   )
 }

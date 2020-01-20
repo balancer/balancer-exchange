@@ -14,6 +14,7 @@ const SellToken = observer(
         tokenBalance,
         tokenAddress,
         setModalOpen,
+        errorMessage
     }) => {
         const {
             root: {
@@ -108,6 +109,7 @@ const SellToken = observer(
                 tokenAddress={tokenAddress}
                 setModalOpen={setModalOpen}
                 setFocus={setSellFocus}
+                errorMessage={errorMessage}
             />
         );
     }

@@ -13,7 +13,8 @@ const BuyToken = observer(
     tokenName,
     tokenBalance,
     tokenAddress,
-    setModalOpen
+    setModalOpen,
+    errorMessage
   }) => {
 
     const {
@@ -120,6 +121,7 @@ const BuyToken = observer(
         tokenAddress={tokenAddress}
         setModalOpen={setModalOpen}
         setFocus={setBuyFocus}
+        errorMessage={errorMessage}
        />
   	);
   }

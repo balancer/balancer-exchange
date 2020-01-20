@@ -265,6 +265,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                     tokenName={inputTicker}
                     tokenBalance={inputUserBalance}
                     tokenAddress={inputIconAddress}
+                    errorMessage={errorMessage}
                 />
                 <Switch />
                 <BuyToken
@@ -275,6 +276,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                     tokenName={outputTicker}
                     tokenBalance={outputUserBalance}
                     tokenAddress={outputIconAddress}
+                    errorMessage={errorMessage}
                 />
             </RowContainer>
             <ColumnContainer>
