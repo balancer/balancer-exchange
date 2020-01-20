@@ -204,8 +204,8 @@ export default class ProxyStore {
         await providerStore.sendTransaction(
             ContractTypes.ExchangeProxy,
             proxyAddress,
-            'batchSwapExactIn',
-            [swaps, tokenIn, tokenOut, maxAmountIn, helpers.toWei(amountOut)]
+            'batchSwapExactOut',
+            [swaps, tokenIn, tokenOut, maxAmountIn.toString(), amountOut.toString()]
         );
     };
 
@@ -245,7 +245,7 @@ export default class ProxyStore {
                 bnum(minAmountOut)
             );
 
-            const totalOutput = calcTotalOutput(swaps, sorSwaps, poolData);
+            const totalOutput = calcTotalOutput(swaps, poolData);
 
             const effectivePrice = this.calcEffectivePrice(
                 inputAmount,
@@ -319,7 +319,6 @@ export default class ProxyStore {
 
             const totalInput = calcTotalInput(
                 swaps,
-                sorSwaps,
                 poolData,
                 maxPrice,
                 maxAmountIn

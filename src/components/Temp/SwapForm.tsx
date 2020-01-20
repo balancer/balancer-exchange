@@ -128,7 +128,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
             console.log(inputs.swaps);
             return;
         }
-        console.log('swap handler executed');
+        console.log('swap handler executed', inputs.type);
 
         if (inputs.type === SwapMethods.EXACT_IN) {
             const {

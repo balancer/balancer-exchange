@@ -35,7 +35,7 @@ export const formatSwapsExactAmountOut = (
 ): Swap[] => {
     const swaps: Swap[] = [];
     for (let i = 0; i < sorSwaps.inputAmounts.length; i++) {
-        let swapAmount = sorSwaps.inputAmounts[i].times(BONE);
+        let swapAmount = sorSwaps.inputAmounts[i];
         let swap: Swap = {
             pool: sorSwaps.selectedBalancers[i],
             tokenInParam: maxAmountIn.toString(),
@@ -106,16 +106,15 @@ export const findBestSwaps = (
 /* Go through selected swaps and determine the total output */
 export const calcTotalOutput = (
   swaps: Swap[],
-  sorSwaps: SorSwaps,
   poolData: Pool[]
 ): BigNumber => {
     try {
         let totalAmountOut = bnum(0);
-        for (let i = 0; i < sorSwaps.inputAmounts.length; i++) {
-            const swapAmount = swaps[i].tokenInParam;
+        swaps.forEach(swap => {
+            const swapAmount = swap.tokenInParam;
 
             const pool = poolData.find(
-              p => p.id == sorSwaps.selectedBalancers[i]
+              p => p.id == swap.pool
             );
             if (!pool) {
                 throw new Error(
@@ -133,7 +132,7 @@ export const calcTotalOutput = (
             );
 
             totalAmountOut = totalAmountOut.plus(preview);
-        }
+        });
         return totalAmountOut;
     } catch (e) {
         throw new Error(e);
@@ -143,17 +142,16 @@ export const calcTotalOutput = (
 /* Go through selected swaps and determine the total input */
 export const calcTotalInput = (
   swaps: Swap[],
-  sorSwaps: SorSwaps,
   poolData: Pool[],
   maxPrice: string,
   maxAmountIn: string
 ): BigNumber => {
     try {
         let totalAmountIn = bnum(0);
-        for (let i = 0; i < sorSwaps.inputAmounts.length; i++) {
-            const swapAmount = swaps[i].tokenOutParam;
+        swaps.forEach(swap =>{
+            const swapAmount = swap.tokenOutParam;
             const pool = poolData.find(
-              p => p.id == sorSwaps.selectedBalancers[i]
+              p => p.id == swap.pool
             );
             if (!pool) {
                 throw new Error(
@@ -171,7 +169,7 @@ export const calcTotalInput = (
             );
 
             totalAmountIn = totalAmountIn.plus(preview);
-        }
+        });
 
         return totalAmountIn;
     } catch (e) {
