@@ -16,8 +16,8 @@ import { validators } from '../validators';
 import { useStores } from '../../contexts/storesContext';
 import { ErrorCodes, ErrorIds } from '../../stores/Error';
 import { ContractMetadata } from '../../stores/Token';
-import { bnum, checkIsPropertyEmpty, fromWei, toWei } from "utils/helpers";
-import { BigNumber } from "utils/bignumber";
+import { bnum, checkIsPropertyEmpty, fromWei, toWei } from 'utils/helpers';
+import { BigNumber } from 'utils/bignumber';
 
 const RowContainer = styled.div`
     font-family: var(--roboto);
@@ -38,7 +38,7 @@ const ColumnContainer = styled.div`
 enum ButtonState {
     NO_WALLET,
     UNLOCK,
-    SWAP
+    SWAP,
 }
 
 const ButtonText = ['Connect to a wallet', 'Unlock', 'Swap'];
@@ -62,6 +62,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
             providerStore,
             tokenStore,
             errorStore,
+            modalStore,
         },
     } = useStores();
 
@@ -98,23 +99,24 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     }
 
     const buttonActionHandler = (buttonState: ButtonState) => {
-      switch (buttonState) {
-        case ButtonState.NO_WALLET:
-          break;
-        case ButtonState.SWAP:
-          swapHandler();
-          break;
-        case ButtonState.UNLOCK:
-          unlockHandler();
-          break;
-        default:
-          throw new Error('Invalid button state');
-      }
+        switch (buttonState) {
+            case ButtonState.NO_WALLET:
+                modalStore.toggleWalletModal();
+                break;
+            case ButtonState.SWAP:
+                swapHandler();
+                break;
+            case ButtonState.UNLOCK:
+                unlockHandler();
+                break;
+            default:
+                throw new Error('Invalid button state');
+        }
     };
 
     const unlockHandler = async () => {
-      const tokenToUnlock = inputs.inputToken;
-      await tokenStore.approveMax(tokenToUnlock, proxyAddress);
+        const tokenToUnlock = inputs.inputToken;
+        await tokenStore.approveMax(tokenToUnlock, proxyAddress);
     };
 
     const swapHandler = async () => {
@@ -161,7 +163,10 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         }
     };
 
-    const getButtonState = (account, userAllowance: BigNumber | undefined): ButtonState => {
+    const getButtonState = (
+        account,
+        userAllowance: BigNumber | undefined
+    ): ButtonState => {
         const validInput = swapFormStore.isValidInput(inputs.inputAmount);
         const sufficientAllowance = userAllowance && userAllowance.gt(0);
 
@@ -175,13 +180,19 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     };
 
     const getButtonText = (buttonState: ButtonState): string => {
-      return ButtonText[buttonState];
+        return ButtonText[buttonState];
     };
 
-    const getButtonActive = (buttonState: ButtonState, inputBalance: BigNumber | undefined): boolean => {
+    const getButtonActive = (
+        buttonState: ButtonState,
+        inputBalance: BigNumber | undefined
+    ): boolean => {
         const isInputValid = swapFormStore.isValidInput(inputs.inputAmount);
 
-        if (buttonState === ButtonState.UNLOCK || buttonState === ButtonState.NO_WALLET) {
+        if (
+            buttonState === ButtonState.UNLOCK ||
+            buttonState === ButtonState.NO_WALLET
+        ) {
             return true;
         }
 
@@ -276,7 +287,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                     buttonText={getButtonText(buttonState)}
                     active={getButtonActive(buttonState, inputUserBalanceBN)}
                     onClick={() => {
-                      buttonActionHandler(buttonState);
+                        buttonActionHandler(buttonState);
                     }}
                 />
             </ColumnContainer>
