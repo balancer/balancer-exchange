@@ -78,10 +78,10 @@ export interface SorSwaps {
 }
 
 export type Swap = {
-    pool: string,
-    tokenInParam: string,
-    tokenOutParam: string,
-    maxPrice: string
+    pool: string;
+    tokenInParam: string;
+    tokenOutParam: string;
+    maxPrice: string;
 };
 
 function printDebugInfo(
@@ -130,6 +130,7 @@ export default class ProxyStore {
         Swap Methods - Action
     */
     @action batchSwapExactIn = async (
+        swaps: Swap[],
         tokenIn: string,
         inputAmount: BigNumber,
         tokenOut: string,
@@ -138,24 +139,6 @@ export default class ProxyStore {
     ) => {
         const { tokenStore, providerStore } = this.rootStore;
         const { chainId } = providerStore.getActiveWeb3React();
-
-        const poolData = await findPoolsWithTokens(tokenIn, tokenOut, true);
-        const costOutputToken = this.costCalculator.getCostOutputToken();
-
-        const sorSwaps = findBestSwaps(
-            poolData,
-            SwapMethods.EXACT_IN,
-            inputAmount,
-            20,
-            costOutputToken
-        );
-
-        const swaps = formatSwapsExactAmountIn(
-          sorSwaps,
-          poolData,
-          bnum(maxPrice),
-          bnum(minAmountOut)
-        );
 
         console.log('[BatchSwapExactIn]', {
             swaps,
@@ -167,32 +150,46 @@ export default class ProxyStore {
 
         const proxyAddress = tokenStore.getProxyAddress(chainId);
 
-        // const contract = new ethers.Contract(proxyAddress, schema.ExchangeProxy, provider);
-        const { account } = providerStore.getActiveWeb3React();
-        const proxy = providerStore.getContract(
+        const fakeSwaps: Swap[] = [
+            {
+                pool: '0xc7FCd1c44e084d1BcfFF7a98f3fAf959D5bAd980',
+                tokenInParam: '52520546061830995',
+                tokenOutParam: helpers.setPropertyToZeroIfEmpty(),
+                maxPrice: helpers.setPropertyToMaxUintIfEmpty(),
+            },
+            {
+                pool: '0x59ADc13dE979Fc182bC99BF747E121fCb8fB6491',
+                tokenInParam: '47479453938169005',
+                tokenOutParam: helpers.setPropertyToZeroIfEmpty(),
+                maxPrice: helpers.setPropertyToMaxUintIfEmpty(),
+            },
+        ];
+
+        console.log({
+            swaps,
+            fakeSwaps,
+            tokenIn,
+            tokenOut,
+            inputAmount: inputAmount.toString(),
+            minAmountOut: minAmountOut.toString(),
+        });
+
+        await providerStore.sendTransaction(
             ContractTypes.ExchangeProxy,
             proxyAddress,
-            account
+            'batchSwapExactIn',
+            [
+                swaps,
+                tokenIn,
+                tokenOut,
+                inputAmount.toString(),
+                minAmountOut.toString(),
+            ]
         );
-
-        const result = await proxy.batchSwapExactIn(swaps, tokenIn, tokenOut, inputAmount.toString(),
-          minAmountOut.toString());
-
-        // await providerStore.sendTransaction(
-        //     ContractTypes.ExchangeProxy,
-        //     proxyAddress,
-        //     'batchSwapExactIn',
-        //     [
-        //         swaps,
-        //         tokenIn,
-        //         tokenOut,
-        //         helpers.toWei('0.1').toString(),
-        //         minAmountOut.toString(),
-        //     ]
-        // );
     };
 
     @action batchSwapExactOut = async (
+        swaps: Swap[],
         tokenIn: string,
         maxAmountIn: BigNumber,
         tokenOut: string,
@@ -202,18 +199,6 @@ export default class ProxyStore {
         const { tokenStore, providerStore } = this.rootStore;
         const { chainId } = providerStore.getActiveWeb3React();
 
-        const poolData = await findPoolsWithTokens(tokenIn, tokenOut);
-        const costOutputToken = this.costCalculator.getCostOutputToken();
-
-        let sorSwaps: SorSwaps = sor.linearizedSolution(
-            poolData,
-            'swapExactOut',
-            amountOut,
-            20,
-            costOutputToken
-        );
-
-        let swaps: Swap[] = [];
         const proxyAddress = tokenStore.getProxyAddress(chainId);
 
         await providerStore.sendTransaction(

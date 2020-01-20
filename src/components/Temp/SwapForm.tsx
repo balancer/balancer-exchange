@@ -137,8 +137,10 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                 outputToken,
                 outputLimit,
                 limitPrice,
+              swaps
             } = inputs;
             await proxyStore.batchSwapExactIn(
+                swaps,
                 inputToken,
                 toWei(inputAmount),
                 outputToken,
@@ -152,8 +154,10 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                 outputToken,
                 outputAmount,
                 limitPrice,
+                swaps,
             } = inputs;
             await proxyStore.batchSwapExactOut(
+                swaps,
                 inputToken,
                 toWei(inputLimit),
                 outputToken,

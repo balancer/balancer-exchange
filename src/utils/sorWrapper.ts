@@ -15,10 +15,10 @@ export const formatSwapsExactAmountIn = (
 ): Swap[] => {
     const swaps: Swap[] = [];
     for (let i = 0; i < sorSwaps.inputAmounts.length; i++) {
-        let swapAmount = sorSwaps.inputAmounts[i].times(BONE);
+        let swapAmount = sorSwaps.inputAmounts[i];
         let swap: Swap = {
             pool: sorSwaps.selectedBalancers[i],
-            tokenInParam: swapAmount.toString(),
+            tokenInParam: swapAmount.times(BONE).integerValue(3).toString(),
             tokenOutParam: minAmountOut.toString(),
             maxPrice: maxPrice.toString(),
         };
@@ -39,7 +39,7 @@ export const formatSwapsExactAmountOut = (
         let swap: Swap = {
             pool: sorSwaps.selectedBalancers[i],
             tokenInParam: maxAmountIn.toString(),
-            tokenOutParam: swapAmount.toString(),
+            tokenOutParam: swapAmount.times(BONE).integerValue(3).toString(),
             maxPrice: maxPrice.toString(),
         };
         swaps.push(swap);
