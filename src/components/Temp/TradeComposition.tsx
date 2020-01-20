@@ -196,7 +196,7 @@ const TradeComposition = observer(({setTradeCompositionOpen, tradeCompositionOpe
 			<AddressAndBullet>
 				<BulletPoint color={formatting.borderColor[0]}/>
 				<Address>
-					Please input a valid preview
+					Please input a valid swap
 				</Address>
 			</AddressAndBullet>
 		</PoolLine>)
@@ -215,7 +215,7 @@ const TradeComposition = observer(({setTradeCompositionOpen, tradeCompositionOpe
 			)
 		}
   	else {
-  		return <div/>
+			return <div>Input swap parameters</div>
 		}
 	};
 
