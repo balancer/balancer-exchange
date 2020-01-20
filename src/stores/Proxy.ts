@@ -2,7 +2,6 @@ import { action, observable } from 'mobx';
 import * as helpers from 'utils/helpers';
 import {
     bnum,
-    formatPoolData,
     printPoolData,
     printSorSwaps,
     printSwapInput,
@@ -13,8 +12,8 @@ import RootStore from 'stores/Root';
 import sor from 'balancer-sor';
 import { BigNumber } from 'utils/bignumber';
 import * as log from 'loglevel';
-import { ContractTypes } from './Provider';
-import { BONE, calcInGivenOut, calcOutGivenIn } from 'utils/balancerCalcs';
+import { ContractTypes, schema } from './Provider';
+import { BONE } from 'utils/balancerCalcs';
 import { SwapMethods } from './SwapForm';
 import CostCalculator from '../utils/CostCalculator';
 import {
@@ -25,6 +24,7 @@ import {
     formatSwapsExactAmountIn,
     formatSwapsExactAmountOut,
 } from '../utils/sorWrapper';
+import { ethers } from 'ethers';
 
 export interface ExactAmountOutPreview {
     outputAmount: BigNumber;
@@ -77,7 +77,12 @@ export interface SorSwaps {
     totalOutput: BigNumber;
 }
 
-export type Swap = [string, string, string, string];
+export type Swap = {
+    pool: string,
+    tokenInParam: string,
+    tokenOutParam: string,
+    maxPrice: string
+};
 
 function printDebugInfo(
     input: SwapInput,
@@ -145,17 +150,12 @@ export default class ProxyStore {
             costOutputToken
         );
 
-        let swaps: Swap[] = [];
-        for (let i = 0; i < sorSwaps.inputAmounts.length; i++) {
-            let swapAmount = sorSwaps.inputAmounts[i].times(BONE);
-            let swap: Swap = [
-                sorSwaps.selectedBalancers[i],
-                swapAmount.toString(),
-                minAmountOut.toString(),
-                maxPrice.toString(),
-            ];
-            swaps.push(swap);
-        }
+        const swaps = formatSwapsExactAmountIn(
+          sorSwaps,
+          poolData,
+          bnum(maxPrice),
+          bnum(minAmountOut)
+        );
 
         console.log('[BatchSwapExactIn]', {
             swaps,
@@ -167,18 +167,29 @@ export default class ProxyStore {
 
         const proxyAddress = tokenStore.getProxyAddress(chainId);
 
-        await providerStore.sendTransaction(
+        // const contract = new ethers.Contract(proxyAddress, schema.ExchangeProxy, provider);
+        const { account } = providerStore.getActiveWeb3React();
+        const proxy = providerStore.getContract(
             ContractTypes.ExchangeProxy,
             proxyAddress,
-            'batchSwapExactIn',
-            [
-                swaps,
-                tokenIn,
-                tokenOut,
-                inputAmount.toString(),
-                minAmountOut.toString(),
-            ]
+            account
         );
+
+        const result = await proxy.batchSwapExactIn(swaps, tokenIn, tokenOut, inputAmount.toString(),
+          minAmountOut.toString());
+
+        // await providerStore.sendTransaction(
+        //     ContractTypes.ExchangeProxy,
+        //     proxyAddress,
+        //     'batchSwapExactIn',
+        //     [
+        //         swaps,
+        //         tokenIn,
+        //         tokenOut,
+        //         helpers.toWei('0.1').toString(),
+        //         minAmountOut.toString(),
+        //     ]
+        // );
     };
 
     @action batchSwapExactOut = async (
@@ -203,17 +214,6 @@ export default class ProxyStore {
         );
 
         let swaps: Swap[] = [];
-        for (let i = 0; i < sorSwaps.inputAmounts.length; i++) {
-            let swapAmount = sorSwaps.inputAmounts[i].toString();
-            let swap: Swap = [
-                sorSwaps.selectedBalancers[i],
-                maxAmountIn.toString(),
-                helpers.toWei(swapAmount).toString(),
-                maxPrice.toString(),
-            ];
-            swaps.push(swap);
-        }
-
         const proxyAddress = tokenStore.getProxyAddress(chainId);
 
         await providerStore.sendTransaction(

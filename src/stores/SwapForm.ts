@@ -128,11 +128,11 @@ export default class SwapFormStore {
         const tempChartSwaps: ChartSwap[] = [];
         // Convert all Swaps to ChartSwaps
         swaps.forEach(value => {
-            const swapValue = method === SwapMethods.EXACT_IN ? value[1] : value[2];
+            const swapValue = method === SwapMethods.EXACT_IN ? value.tokenInParam : value.tokenOutParam;
 
             tempChartSwaps.push({
                 isOthers: false,
-                poolAddress: value[0],
+                poolAddress: value.pool,
                 percentage: bnum(swapValue).div(toWei(inputValue)).times(100).toNumber()
             })
         });

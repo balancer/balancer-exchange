@@ -16,12 +16,12 @@ export const formatSwapsExactAmountIn = (
     const swaps: Swap[] = [];
     for (let i = 0; i < sorSwaps.inputAmounts.length; i++) {
         let swapAmount = sorSwaps.inputAmounts[i].times(BONE);
-        let swap: Swap = [
-            sorSwaps.selectedBalancers[i],
-            swapAmount.toString(),
-            minAmountOut.toString(),
-            maxPrice.toString(),
-        ];
+        let swap: Swap = {
+            pool: sorSwaps.selectedBalancers[i],
+            tokenInParam: swapAmount.toString(),
+            tokenOutParam: minAmountOut.toString(),
+            maxPrice: maxPrice.toString(),
+        };
         swaps.push(swap);
     }
     return swaps;
@@ -36,12 +36,12 @@ export const formatSwapsExactAmountOut = (
     const swaps: Swap[] = [];
     for (let i = 0; i < sorSwaps.inputAmounts.length; i++) {
         let swapAmount = sorSwaps.inputAmounts[i].times(BONE);
-        let swap: Swap = [
-            sorSwaps.selectedBalancers[i],
-            maxAmountIn.toString(),
-            swapAmount.toString(),
-            maxPrice.toString(),
-        ];
+        let swap: Swap = {
+            pool: sorSwaps.selectedBalancers[i],
+            tokenInParam: maxAmountIn.toString(),
+            tokenOutParam: swapAmount.toString(),
+            maxPrice: maxPrice.toString(),
+        };
         swaps.push(swap);
     }
     return swaps;
@@ -112,7 +112,7 @@ export const calcTotalOutput = (
     try {
         let totalAmountOut = bnum(0);
         for (let i = 0; i < sorSwaps.inputAmounts.length; i++) {
-            const swapAmount = swaps[i][1];
+            const swapAmount = swaps[i].tokenInParam;
 
             const pool = poolData.find(
               p => p.id == sorSwaps.selectedBalancers[i]
@@ -151,17 +151,7 @@ export const calcTotalInput = (
     try {
         let totalAmountIn = bnum(0);
         for (let i = 0; i < sorSwaps.inputAmounts.length; i++) {
-            let swapAmount = sorSwaps.inputAmounts[i].times(BONE);
-            if (swapAmount.isNaN()) {
-                throw new Error('NaN swap amount');
-            }
-            let swap: Swap = [
-                sorSwaps.selectedBalancers[i],
-                maxAmountIn,
-                swapAmount.toString(),
-                maxPrice,
-            ];
-            swaps.push(swap);
+            const swapAmount = swaps[i].tokenOutParam;
             const pool = poolData.find(
               p => p.id == sorSwaps.selectedBalancers[i]
             );
@@ -176,7 +166,7 @@ export const calcTotalInput = (
               pool.weightIn,
               pool.balanceOut,
               pool.weightOut,
-              swapAmount,
+              bnum(swapAmount),
               pool.swapFee
             );
 
