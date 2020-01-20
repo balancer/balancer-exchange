@@ -15,13 +15,13 @@ export const formatSwapsExactAmountIn = (
 ): Swap[] => {
     const swaps: Swap[] = [];
     for (let i = 0; i < sorSwaps.inputAmounts.length; i++) {
-        let swapAmount = sorSwaps.inputAmounts[i].times(BONE);
-        let swap: Swap = [
-            sorSwaps.selectedBalancers[i],
-            swapAmount.toString(),
-            minAmountOut.toString(),
-            maxPrice.toString(),
-        ];
+        let swapAmount = sorSwaps.inputAmounts[i];
+        let swap: Swap = {
+            pool: sorSwaps.selectedBalancers[i],
+            tokenInParam: swapAmount.times(BONE).integerValue(3).toString(),
+            tokenOutParam: minAmountOut.toString(),
+            maxPrice: maxPrice.toString(),
+        };
         swaps.push(swap);
     }
     return swaps;
@@ -35,13 +35,13 @@ export const formatSwapsExactAmountOut = (
 ): Swap[] => {
     const swaps: Swap[] = [];
     for (let i = 0; i < sorSwaps.inputAmounts.length; i++) {
-        let swapAmount = sorSwaps.inputAmounts[i].times(BONE);
-        let swap: Swap = [
-            sorSwaps.selectedBalancers[i],
-            maxAmountIn.toString(),
-            swapAmount.toString(),
-            maxPrice.toString(),
-        ];
+        let swapAmount = sorSwaps.inputAmounts[i];
+        let swap: Swap = {
+            pool: sorSwaps.selectedBalancers[i],
+            tokenInParam: maxAmountIn.toString(),
+            tokenOutParam: swapAmount.times(BONE).integerValue(3).toString(),
+            maxPrice: maxPrice.toString(),
+        };
         swaps.push(swap);
     }
     return swaps;
@@ -106,16 +106,15 @@ export const findBestSwaps = (
 /* Go through selected swaps and determine the total output */
 export const calcTotalOutput = (
   swaps: Swap[],
-  sorSwaps: SorSwaps,
   poolData: Pool[]
 ): BigNumber => {
     try {
         let totalAmountOut = bnum(0);
-        for (let i = 0; i < sorSwaps.inputAmounts.length; i++) {
-            const swapAmount = swaps[i][1];
+        swaps.forEach(swap => {
+            const swapAmount = swap.tokenInParam;
 
             const pool = poolData.find(
-              p => p.id == sorSwaps.selectedBalancers[i]
+              p => p.id == swap.pool
             );
             if (!pool) {
                 throw new Error(
@@ -133,7 +132,7 @@ export const calcTotalOutput = (
             );
 
             totalAmountOut = totalAmountOut.plus(preview);
-        }
+        });
         return totalAmountOut;
     } catch (e) {
         throw new Error(e);
@@ -143,27 +142,16 @@ export const calcTotalOutput = (
 /* Go through selected swaps and determine the total input */
 export const calcTotalInput = (
   swaps: Swap[],
-  sorSwaps: SorSwaps,
   poolData: Pool[],
   maxPrice: string,
   maxAmountIn: string
 ): BigNumber => {
     try {
         let totalAmountIn = bnum(0);
-        for (let i = 0; i < sorSwaps.inputAmounts.length; i++) {
-            let swapAmount = sorSwaps.inputAmounts[i].times(BONE);
-            if (swapAmount.isNaN()) {
-                throw new Error('NaN swap amount');
-            }
-            let swap: Swap = [
-                sorSwaps.selectedBalancers[i],
-                maxAmountIn,
-                swapAmount.toString(),
-                maxPrice,
-            ];
-            swaps.push(swap);
+        swaps.forEach(swap =>{
+            const swapAmount = swap.tokenOutParam;
             const pool = poolData.find(
-              p => p.id == sorSwaps.selectedBalancers[i]
+              p => p.id == swap.pool
             );
             if (!pool) {
                 throw new Error(
@@ -176,12 +164,12 @@ export const calcTotalInput = (
               pool.weightIn,
               pool.balanceOut,
               pool.weightOut,
-              swapAmount,
+              bnum(swapAmount),
               pool.swapFee
             );
 
             totalAmountIn = totalAmountIn.plus(preview);
-        }
+        });
 
         return totalAmountIn;
     } catch (e) {

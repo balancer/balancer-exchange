@@ -128,7 +128,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
             console.log(inputs.swaps);
             return;
         }
-        console.log('swap handler executed');
+        console.log('swap handler executed', inputs.type);
 
         if (inputs.type === SwapMethods.EXACT_IN) {
             const {
@@ -137,8 +137,10 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                 outputToken,
                 outputLimit,
                 limitPrice,
+              swaps
             } = inputs;
             await proxyStore.batchSwapExactIn(
+                swaps,
                 inputToken,
                 toWei(inputAmount),
                 outputToken,
@@ -152,8 +154,10 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                 outputToken,
                 outputAmount,
                 limitPrice,
+                swaps,
             } = inputs;
             await proxyStore.batchSwapExactOut(
+                swaps,
                 inputToken,
                 toWei(inputLimit),
                 outputToken,

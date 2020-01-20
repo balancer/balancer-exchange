@@ -285,21 +285,11 @@ export const printSwaps = (swapMethod: SwapMethods, swaps: Swap[]) => {
     console.log('---Swaps---');
      if (swapMethod === SwapMethods.EXACT_IN) {
          swaps.forEach(swap => {
-             result.push({
-                 balancer: swap[0],
-                 amount: swap[1],
-                 minAmountOut: swap[2],
-                 maxPrice: swap[3]
-             })
+             result.push(swap)
          })
      } else if (swapMethod === SwapMethods.EXACT_OUT) {
          swaps.forEach(swap => {
-             result.push({
-                 balancer: swap[0],
-                 amount: swap[2],
-                 maxAmountIn: swap[1],
-                 maxPrice: swap[3]
-             })
+             result.push(swap)
          })
     }
 
