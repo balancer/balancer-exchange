@@ -150,30 +150,6 @@ export default class ProxyStore {
 
         const proxyAddress = tokenStore.getProxyAddress(chainId);
 
-        const fakeSwaps: Swap[] = [
-            {
-                pool: '0xc7FCd1c44e084d1BcfFF7a98f3fAf959D5bAd980',
-                tokenInParam: '52520546061830995',
-                tokenOutParam: helpers.setPropertyToZeroIfEmpty(),
-                maxPrice: helpers.setPropertyToMaxUintIfEmpty(),
-            },
-            {
-                pool: '0x59ADc13dE979Fc182bC99BF747E121fCb8fB6491',
-                tokenInParam: '47479453938169005',
-                tokenOutParam: helpers.setPropertyToZeroIfEmpty(),
-                maxPrice: helpers.setPropertyToMaxUintIfEmpty(),
-            },
-        ];
-
-        console.log({
-            swaps,
-            fakeSwaps,
-            tokenIn,
-            tokenOut,
-            inputAmount: inputAmount.toString(),
-            minAmountOut: minAmountOut.toString(),
-        });
-
         await providerStore.sendTransaction(
             ContractTypes.ExchangeProxy,
             proxyAddress,
