@@ -245,12 +245,13 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
 
     const buttonState = getButtonState(account, userAllowance);
 
+    // TODO Pull validation errors and errors in errorStore together; maybe handle a stack of active errors
     const error = errorStore.getActiveError(ErrorIds.SWAP_FORM_STORE);
-    let errorMessage;
-
     if (error) {
         console.log('error', error);
     }
+    let errorMessage;
+    errorMessage = inputs.activeErrorMessage;
 
     return (
         <div>
@@ -281,7 +282,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                     tradeCompositionOpen={tradeCompositionOpen}
                     setTradeCompositionOpen={setTradeCompositionOpen}
                 />
-                <ErrorDisplay errorText="Insufficient Balance" />
+                <ErrorDisplay errorText={errorMessage} />
                 <SlippageSelector
                     expectedSlippage="0.38%"
                     slippageSelectorOpen={slippageSelectorOpen}

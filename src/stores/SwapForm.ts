@@ -69,6 +69,7 @@ export default class SwapFormStore {
         setSellFocus: false,
         effectivePrice: '',
         swaps: [],
+        activeErrorMessage: '',
     };
     @observable outputs = {
         inputAmount: '',

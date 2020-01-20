@@ -63,6 +63,7 @@ const BuyToken = observer(
                 output['effectivePrice'] = str(preview.effectivePrice);
                 output['swaps'] = preview.swaps;
                 output['validSwap'] = true;
+                output['activeErrorMessage'] = '';
                 swapFormStore.setTradeCompositionEAO(preview);
             } else {
                 swapFormStore.resetTradeComposition();
@@ -74,7 +75,8 @@ const BuyToken = observer(
         } else {
             console.log('[Invalid Input]', inputStatus, value);
             swapFormStore.updateInputsFromObject({
-                inputAmount: ''
+                inputAmount: '',
+                activeErrorMessage: inputStatus,
                 // clear preview
             });
             swapFormStore.resetTradeComposition();
