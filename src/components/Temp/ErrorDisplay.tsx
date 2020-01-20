@@ -15,10 +15,22 @@ const ErrorTextContainer = styled.div`
 
 const ErrorDisplay = ({errorText}) => {
 
+    const ErrorTextElement = ({errorText}) => {
+        if(errorText) {
+            return(
+                <ErrorTextContainer>
+                    {errorText}
+                </ErrorTextContainer>
+            )
+        } else {
+            return(
+                <div></div>
+            )
+        }
+    }
+
 	return(
-		<ErrorTextContainer>
-			{errorText}
-		</ErrorTextContainer>
+        <ErrorTextElement errorText={errorText} />
 	)
 }
 
