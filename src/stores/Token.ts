@@ -22,7 +22,7 @@ export interface ContractMetadataMap {
 interface TokenBalanceMap {
     [index: string]: {
         [index: string]: {
-            data: BigNumber,
+            balance: BigNumber,
             lastFetched: number
         };
     };
@@ -43,7 +43,7 @@ interface UserAllowanceMap {
     [index: string]: {
         [index: string]: {
             [index: string]: {
-                data: BigNumber,
+                allowance: BigNumber,
                 lastFetched: number
             };
         };
@@ -163,7 +163,7 @@ export default class TokenStore {
         const result: BigNumberMap = {};
         tokens.forEach(value => {
             if(userBalances[value.address] && userBalances[value.address][account]) {
-                result[value.address] = userBalances[value.address][account].data;
+                result[value.address] = userBalances[value.address][account].balance;
             }
         });
 
@@ -206,9 +206,10 @@ export default class TokenStore {
         }
 
         chainApprovals[tokenAddress][owner][spender] = {
-            data: approval,
+            allowance: approval,
             lastFetched: blockFetched
-        }
+        };
+
         this.allowances.set(chainId, chainApprovals);
     }
 
@@ -231,11 +232,10 @@ export default class TokenStore {
         }
 
         chainBalances[tokenAddress][account] = {
-            data: balance,
+            balance: balance,
             lastFetched: blockFetched
         };
 
-        if (blockFetched)
         this.balances.set(chainId, chainBalances);
     }
 
@@ -246,8 +246,8 @@ export default class TokenStore {
             if (tokenBalances) {
                 const balance = tokenBalances[account];
                 if (balance) {
-                    if (balance.data) {
-                        return balance.data;
+                    if (balance.balance) {
+                        return balance.balance;
                     }
                 }
             }
@@ -352,7 +352,7 @@ export default class TokenStore {
                 console.log('[Balance Fetch]', {
                     tokenAddress,
                     account,
-                    balance,
+                    balance: balance.toString(),
                     fetchBlock
                 });
             }
@@ -411,7 +411,7 @@ export default class TokenStore {
                     tokenAddress,
                     account,
                     spender,
-                    allowance,
+                    allowance: allowance.toString(),
                     fetchBlock
                 });
             }
@@ -439,7 +439,7 @@ export default class TokenStore {
                 const userApprovals = tokenApprovals[account];
                 if (userApprovals) {
                     if (userApprovals[spender]) {
-                        return userApprovals[spender].data;
+                        return userApprovals[spender].allowance;
                     }
                 }
             }
