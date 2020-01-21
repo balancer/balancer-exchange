@@ -46,6 +46,11 @@ const Web3ReactManager = observer(({ children }) => {
         const activeWeb3React = providerStore.getActiveWeb3React();
         library = activeWeb3React.library;
         chainId = activeWeb3React.chainId;
+
+        if (!providerStore.activeFetchLoop) {
+            console.log('[Web3ReactManager] Start fetch loop');
+            providerStore.startFetchLoop();
+        }
     }
 
     console.log('[Web3ReactManager] Start of render', {
@@ -107,55 +112,6 @@ const Web3ReactManager = observer(({ children }) => {
             clearTimeout(timeout);
         };
     }, []);
-
-    useEffect(() => {
-
-        if (!chainId) {
-            console.log('[Web3ReactManager] No provider loaded for update callback');
-            return;
-        }
-
-        if (library && chainId) {
-            console.log('[Web3ReactManager] Blockchain update callback start',
-              {
-                  library,
-                  chainId
-              });
-
-            let stale = false;
-
-            const networkId = Number(chainId);
-
-            const update = () => {
-                library
-                    .getBlockNumber()
-                    .then(blockNumber => {
-                        const lastChecked = providerStore.getCurrentBlockNumber(networkId);
-                        if (blockNumber != lastChecked || !stale) {
-                            providerStore.setCurrentBlockNumber(
-                                chainId,
-                                blockNumber
-                            );
-                            providerStore.fetchUserBlockchainData(networkId);
-                        }
-                    })
-                    .catch(() => {
-                        if (!stale) {
-                            providerStore.setCurrentBlockNumber(networkId, undefined);
-                        }
-                    });
-            };
-
-            update();
-            library.on('block', update);
-
-            return () => {
-                stale = true;
-                library.removeListener('block', update);
-            };
-        }
-
-    }, [chainId, library, providerStore]);
 
     // on page load, do nothing until we've tried to connect to the injected connector
     if (!triedEager) {

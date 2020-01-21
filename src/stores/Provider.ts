@@ -6,7 +6,6 @@ import { Web3ReactContextInterface } from '@web3-react/core/dist/types';
 import UncheckedJsonRpcSigner from 'provider/UncheckedJsonRpcSigner';
 import Web3 from 'web3';
 import { sendAction } from './actions/actions';
-import { TransactionRecord } from "./Transaction";
 
 export enum ContractTypes {
     BPool = 'BPool',
@@ -38,6 +37,8 @@ export default class ProviderStore {
     @observable blockNumber: number;
     @observable supportedNetworks: number[];
     @observable chainData: ChainDataMap;
+    @observable activeChainId: number;
+    @observable activeFetchLoop: any;
     rootStore: RootStore;
 
     constructor(rootStore, networkIds: number[]) {
@@ -61,6 +62,49 @@ export default class ProviderStore {
         return chainData;
     }
 
+    async fetchLoop(this) {
+        const {library, chainId, account} = this.getActiveWeb3React();
+        library
+          .getBlockNumber()
+          .then(blockNumber => {
+              const lastChecked = this.getCurrentBlockNumber(chainId);
+              if (blockNumber != lastChecked) {
+                  console.log('[Data Fetcher] New Block Found', {
+                      blockNumber, chainId
+                  });
+                  // Set block number
+                  this.setCurrentBlockNumber(
+                    chainId,
+                    blockNumber
+                  );
+
+                  // Get global blockchain data
+                  // None
+
+                  // Get user-specific blockchain data
+                  if (account) {
+                      console.log('[Data Fetcher] - Fetch for account', account);
+                      this.fetchUserBlockchainData(chainId, account);
+                  }
+              }
+          })
+          .catch(() => {
+              this.setCurrentBlockNumber(chainId, undefined);
+          });
+    }
+
+    startFetchLoop() {
+        this.fetchLoop();
+        this.activeFetchLoop = setInterval(this.fetchLoop.bind(this), 1000);
+    }
+
+    stopFetchLoop() {
+        if (!this.activeFetchLoop) {
+            throw new Error ('No active fetch loop to stop');
+        }
+        clearInterval(this.activeFetchLoop);
+    }
+
     getCurrentBlockNumber(chainId): number {
         const chainData = this.safeGetChainData(chainId);
         return chainData.currentBlockNumber;
@@ -71,28 +115,21 @@ export default class ProviderStore {
         chainData.currentBlockNumber = blockNumber;
     }
 
-
-    @action fetchUserBlockchainData = async (networkId: number) => {
+    @action fetchUserBlockchainData = async (chainId: number, account: string) => {
         const {transactionStore, tokenStore} = this.rootStore;
-        const {chainId, account} = this.getActiveWeb3React();
 
         console.log('[Fetch Start - User Blockchain Data]', {
             chainId, account
         });
 
-        if (networkId !== chainId) {
-            throw new Error('Attempting to fetch data for inactive chainId');
-        }
-
-        if (account) {
-            await transactionStore.checkPendingTransactions(networkId);
-            await tokenStore.fetchBalancerTokenData(account, networkId);
-        }
-
-        console.log('[Fetch End - User Blockchain Data]', {
-            chainId, account
-        });
-    }
+        transactionStore.checkPendingTransactions(chainId);
+        tokenStore.fetchBalancerTokenData(account, chainId).then(result => {
+              console.log('[Fetch End - User Blockchain Data]', {
+                  chainId, account
+              });
+          }
+        );
+    };
 
     getWeb3React(name: string): Web3ReactContextInterface {
         if (!this.contexts[name]) {
