@@ -11,27 +11,18 @@ const ErrorTextContainer = styled.div`
     color: var(--error-color);
     margin-top: 6px;
     margin-bottom: 36px;
-`
+`;
 
-const ErrorDisplay = ({errorText}) => {
-
-    const ErrorTextElement = ({errorText}) => {
-        if(errorText) {
-            return(
-                <ErrorTextContainer>
-                    {errorText}
-                </ErrorTextContainer>
-            )
+const ErrorDisplay = ({ errorText }) => {
+    const ErrorTextElement = ({ errorText }) => {
+        if (errorText) {
+            return <ErrorTextContainer>{errorText}</ErrorTextContainer>;
         } else {
-            return(
-                <div></div>
-            )
+            return <div></div>;
         }
-    }
+    };
 
-	return(
-        <ErrorTextElement errorText={errorText} />
-	)
-}
+    return <ErrorTextElement errorText={errorText} />;
+};
 
-export default ErrorDisplay
+export default ErrorDisplay;

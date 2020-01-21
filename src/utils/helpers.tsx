@@ -1,11 +1,17 @@
 // Libraries
-import React from "react";
-import jazzicon from "jazzicon";
-import { ethers, utils } from "ethers";
-import { BigNumber } from "utils/bignumber";
-import { SUPPORTED_THEMES } from "../theme";
-import { Pool, SorSwaps, StringifiedPool, Swap, SwapInput } from "../stores/Proxy";
-import { SwapMethods } from "../stores/SwapForm";
+import React from 'react';
+import jazzicon from 'jazzicon';
+import { ethers, utils } from 'ethers';
+import { BigNumber } from 'utils/bignumber';
+import { SUPPORTED_THEMES } from '../theme';
+import {
+    Pool,
+    SorSwaps,
+    StringifiedPool,
+    Swap,
+    SwapInput,
+} from '../stores/Proxy';
+import { SwapMethods } from '../stores/SwapForm';
 
 // Utils
 export const MAX_GAS = utils.bigNumberify('0xffffffff');
@@ -283,14 +289,14 @@ export const printPoolData = (poolData: Pool[]) => {
 export const printSwaps = (swapMethod: SwapMethods, swaps: Swap[]) => {
     const result = [];
     console.log('---Swaps---');
-     if (swapMethod === SwapMethods.EXACT_IN) {
-         swaps.forEach(swap => {
-             result.push(swap)
-         })
-     } else if (swapMethod === SwapMethods.EXACT_OUT) {
-         swaps.forEach(swap => {
-             result.push(swap)
-         })
+    if (swapMethod === SwapMethods.EXACT_IN) {
+        swaps.forEach(swap => {
+            result.push(swap);
+        });
+    } else if (swapMethod === SwapMethods.EXACT_OUT) {
+        swaps.forEach(swap => {
+            result.push(swap);
+        });
     }
 
     console.table(result);

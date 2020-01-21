@@ -1,7 +1,7 @@
 import { action, observable, ObservableMap } from 'mobx';
 import { providers } from 'ethers';
 import RootStore from 'stores/Root';
-import { TransactionResponse } from "ethers/providers";
+import { TransactionResponse } from 'ethers/providers';
 
 export interface TransactionRecord {
     response: providers.TransactionResponse;
@@ -18,7 +18,7 @@ const ERRORS = {
 export enum FetchCode {
     SUCCESS,
     FAILURE,
-    STALE
+    STALE,
 }
 
 type TransactionHashMap = ObservableMap<string, TransactionRecord>;
@@ -69,17 +69,20 @@ export default class TransactionStore {
         return confirmed;
     }
 
-    @action async checkPendingTransactions(networkId: number): Promise<FetchCode> {
+    @action async checkPendingTransactions(
+        networkId: number
+    ): Promise<FetchCode> {
         const { providerStore } = this.rootStore;
 
         const currentBlock = providerStore.getCurrentBlockNumber(networkId);
 
-        const {library} = providerStore.getActiveWeb3React();
+        const { library } = providerStore.getActiveWeb3React();
         const txRecordHashMap = this.safeGetTxRecordHashMap(networkId);
 
         txRecordHashMap.forEach((value, key) => {
             if (this.isTxPending(value) && this.isStale(value, currentBlock)) {
-                library.getTransactionReceipt(key)
+                library
+                    .getTransactionReceipt(key)
                     .then(receipt => {
                         this.setTxRecordBlockChecked(
                             networkId,
@@ -117,7 +120,9 @@ export default class TransactionStore {
         const txHash = txResponse.hash;
 
         if (!txHash) {
-            throw new Error('Attempting to add transaction record without hash')
+            throw new Error(
+                'Attempting to add transaction record without hash'
+            );
         }
 
         const txRecordHashMap = this.safeGetTxRecordHashMap(networkId);

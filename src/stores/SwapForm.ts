@@ -1,9 +1,9 @@
 import { observable, action } from 'mobx';
 import RootStore from 'stores/Root';
 import { ValidationRules } from 'react-form-validator-core';
-import { ExactAmountInPreview, ExactAmountOutPreview, Swap } from "./Proxy";
-import { BigNumber } from "utils/bignumber";
-import { bnum, fromWei, scale, toWei } from "../utils/helpers";
+import { ExactAmountInPreview, ExactAmountOutPreview, Swap } from './Proxy';
+import { BigNumber } from 'utils/bignumber';
+import { bnum, fromWei, scale, toWei } from '../utils/helpers';
 
 export const formNames = {
     INPUT_FORM: 'inputs',
@@ -38,10 +38,10 @@ export enum InputValidationStatus {
 }
 
 export interface ChartData {
-    validSwap: boolean,
-    swaps: ChartSwap[],
-    inputPriceValue: BigNumber,
-    outputPriceValue: BigNumber
+    validSwap: boolean;
+    swaps: ChartSwap[];
+    inputPriceValue: BigNumber;
+    outputPriceValue: BigNumber;
 }
 
 export interface ChartSwap {
@@ -98,22 +98,55 @@ export default class SwapFormStore {
 
     /* Assume swaps are in order of biggest to smallest value */
     @action setTradeCompositionEAI(preview: ExactAmountInPreview) {
-        const {inputAmount, swaps, totalOutput, effectivePrice, validSwap} = preview;
-        this.setTradeComposition(SwapMethods.EXACT_IN, swaps, inputAmount, totalOutput, effectivePrice, validSwap);
+        const {
+            inputAmount,
+            swaps,
+            totalOutput,
+            effectivePrice,
+            validSwap,
+        } = preview;
+        this.setTradeComposition(
+            SwapMethods.EXACT_IN,
+            swaps,
+            inputAmount,
+            totalOutput,
+            effectivePrice,
+            validSwap
+        );
     }
 
     /* Assume swaps are in order of biggest to smallest value */
     @action setTradeCompositionEAO(preview: ExactAmountOutPreview) {
-        const {outputAmount, swaps, totalInput, effectivePrice, validSwap} = preview;
-        this.setTradeComposition(SwapMethods.EXACT_OUT, swaps, outputAmount, totalInput, effectivePrice, validSwap);
+        const {
+            outputAmount,
+            swaps,
+            totalInput,
+            effectivePrice,
+            validSwap,
+        } = preview;
+        this.setTradeComposition(
+            SwapMethods.EXACT_OUT,
+            swaps,
+            outputAmount,
+            totalInput,
+            effectivePrice,
+            validSwap
+        );
     }
 
-    @action private setTradeComposition(method: SwapMethods, swaps: Swap[], inputValue: BigNumber, totalValue: BigNumber, effectivePrice: BigNumber, validSwap: boolean) {
+    @action private setTradeComposition(
+        method: SwapMethods,
+        swaps: Swap[],
+        inputValue: BigNumber,
+        totalValue: BigNumber,
+        effectivePrice: BigNumber,
+        validSwap: boolean
+    ) {
         let result: ChartData = {
             validSwap: true,
             inputPriceValue: bnum(0),
             outputPriceValue: bnum(0),
-            swaps: []
+            swaps: [],
         };
 
         if (!validSwap) {
@@ -123,19 +156,25 @@ export default class SwapFormStore {
 
         const others: ChartSwap = {
             isOthers: true,
-            percentage: 0
+            percentage: 0,
         };
 
         const tempChartSwaps: ChartSwap[] = [];
         // Convert all Swaps to ChartSwaps
         swaps.forEach(value => {
-            const swapValue = method === SwapMethods.EXACT_IN ? value.tokenInParam : value.tokenOutParam;
+            const swapValue =
+                method === SwapMethods.EXACT_IN
+                    ? value.tokenInParam
+                    : value.tokenOutParam;
 
             tempChartSwaps.push({
                 isOthers: false,
                 poolAddress: value.pool,
-                percentage: bnum(swapValue).div(toWei(inputValue)).times(100).toNumber()
-            })
+                percentage: bnum(swapValue)
+                    .div(toWei(inputValue))
+                    .times(100)
+                    .toNumber(),
+            });
         });
 
         tempChartSwaps.forEach((value, index) => {
@@ -164,7 +203,10 @@ export default class SwapFormStore {
     }
 
     isValidInput(value: string): boolean {
-        return this.getSwapFormInputValidationStatus(value) === InputValidationStatus.VALID;
+        return (
+            this.getSwapFormInputValidationStatus(value) ===
+            InputValidationStatus.VALID
+        );
     }
 
     getSwapFormInputValidationStatus(value: string): InputValidationStatus {
@@ -210,8 +252,8 @@ export default class SwapFormStore {
             validSwap: false,
             inputPriceValue: bnum(0),
             outputPriceValue: bnum(0),
-            swaps: []
-        }
+            swaps: [],
+        };
     }
 
     constructor(rootStore) {

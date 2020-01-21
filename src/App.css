@@ -1,39 +1,39 @@
 :root {
-/* General Styles */
-	--background: #21222C;
-  --body-text: #90A4AE;
-  --exit-modal-color: #DFE3E9;
-  --error-color: #FF8A80;
-  --header-text: #FAFAFA;
-  --info-border: #FFFFFF;
-	--link-text: #8C9EFF;
-  --pie-chart-color: #B388FF;
-  --token-balance-text: #90A4AE;
+    /* General Styles */
+    --background: #21222c;
+    --body-text: #90a4ae;
+    --exit-modal-color: #dfe3e9;
+    --error-color: #ff8a80;
+    --header-text: #fafafa;
+    --info-border: #ffffff;
+    --link-text: #8c9eff;
+    --pie-chart-color: #b388ff;
+    --token-balance-text: #90a4ae;
 
-/* Button Styles */
-  --button-text: #FAFAFA;
-  --button-background: #536DFE;
-  --button-border: #3D5AFE;
-  --inactive-button-border: rgba(140, 158, 255, 0.2);
-  --inactive-button-text: rgba(255, 255, 255, 0.6);
+    /* Button Styles */
+    --button-text: #fafafa;
+    --button-background: #536dfe;
+    --button-border: #3d5afe;
+    --inactive-button-border: rgba(140, 158, 255, 0.2);
+    --inactive-button-text: rgba(255, 255, 255, 0.6);
 
-/* Fonts */
-  --roboto: 'Roboto', sans-serif; 
+    /* Fonts */
+    --roboto: 'Roboto', sans-serif;
 
-/* Panel Styles */
-  --panel-border: #41476B;
-  --panel-background: #2E2F39;
-  --panel-header-background: #282932;
+    /* Panel Styles */
+    --panel-border: #41476b;
+    --panel-background: #2e2f39;
+    --panel-header-background: #282932;
 
-/* Selector Styles */
-  --highlighted-selector-background: #41476B;
-  --highlighted-selector-border: #7785D5;
-  --highlighted-selector-text: #FFFFFF;
-  --selector-background: #2E2F39;
-  --selector-border: #41476B;
-  --selector-text: #FAFAFA;
+    /* Selector Styles */
+    --highlighted-selector-background: #41476b;
+    --highlighted-selector-border: #7785d5;
+    --highlighted-selector-text: #ffffff;
+    --selector-background: #2e2f39;
+    --selector-border: #41476b;
+    --selector-text: #fafafa;
 }
 
 body {
-	background: var(--background);
+    background: var(--background);
 }

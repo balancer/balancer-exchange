@@ -17,21 +17,21 @@ const TestPanel = observer(() => {
         root: { proxyStore, providerStore, swapFormStore, tokenStore },
     } = useStores();
 
-  const { account,chainId } = providerStore.getActiveWeb3React();
+    const { account, chainId } = providerStore.getActiveWeb3React();
 
-  if (!chainId) {
-    throw new Error('ChainId not loaded in TestPanel');
-  }
+    if (!chainId) {
+        throw new Error('ChainId not loaded in TestPanel');
+    }
 
-  const [approvalToken, setApprovalToken] = useState("");
-  const [mintToken, setMintToken] = useState("");
-  const [mintAmount, setMintAmount] = useState("");
+    const [approvalToken, setApprovalToken] = useState('');
+    const [mintToken, setMintToken] = useState('');
+    const [mintAmount, setMintAmount] = useState('');
 
     const maxApproval = () => {
-      tokenStore.approveMax(approvalToken, account);
+        tokenStore.approveMax(approvalToken, account);
     };
     const mint = () => {
-      tokenStore.mint(mintToken, mintAmount);
+        tokenStore.mint(mintToken, mintAmount);
     };
 
     const tokenList = tokenStore.getWhitelistedTokenMetadata(chainId);
@@ -60,9 +60,7 @@ const TestPanel = observer(() => {
                                 select
                                 label="Mint Token"
                                 value={mintToken}
-                                onChange={e =>
-                                    setMintToken(e.target.value)
-                                }
+                                onChange={e => setMintToken(e.target.value)}
                                 SelectProps={{
                                     native: true,
                                 }}
@@ -86,9 +84,7 @@ const TestPanel = observer(() => {
                                 name="mintAmount"
                                 label="Mint Amount"
                                 value={mintAmount}
-                                onChange={e =>
-                                  setMintAmount(e.target.value)
-                                }
+                                onChange={e => setMintAmount(e.target.value)}
                                 type="number"
                                 InputLabelProps={{
                                     shrink: true,
@@ -115,50 +111,48 @@ const TestPanel = observer(() => {
                         </Grid>
                     </Grid>
                 </ValidatorForm>
-              <ValidatorForm
-                ref={useRef('form')}
-                onSubmit={maxApproval}
-                onError={errors => console.log(errors)}
-              >
-                <Grid container spacing={1}>
-                  <Grid item xs={12} sm={4}>
-                    <TextField
-                      id="approval-token"
-                      name="approvalToken"
-                      select
-                      label="Approval Token"
-                      value={approvalToken}
-                      onChange={e =>
-                        setApprovalToken(e.target.value)
-                      }
-                      SelectProps={{
-                        native: true,
-                      }}
-                      margin="normal"
-                      variant="outlined"
-                      fullWidth
-                    >
-                      {tokenList.map(option => (
-                        <option
-                          key={option.address}
-                          value={option.address}
-                        >
-                          {option.symbol}
-                        </option>
-                      ))}
-                    </TextField>
-                  </Grid>
-                  <Grid item xs={12} sm={4}>
-                    <Button
-                      type="submit"
-                      variant="contained"
-                      style={{ marginTop: 25 }}
-                    >
-                      Submit
-                    </Button>
-                  </Grid>
-                </Grid>
-              </ValidatorForm>
+                <ValidatorForm
+                    ref={useRef('form')}
+                    onSubmit={maxApproval}
+                    onError={errors => console.log(errors)}
+                >
+                    <Grid container spacing={1}>
+                        <Grid item xs={12} sm={4}>
+                            <TextField
+                                id="approval-token"
+                                name="approvalToken"
+                                select
+                                label="Approval Token"
+                                value={approvalToken}
+                                onChange={e => setApprovalToken(e.target.value)}
+                                SelectProps={{
+                                    native: true,
+                                }}
+                                margin="normal"
+                                variant="outlined"
+                                fullWidth
+                            >
+                                {tokenList.map(option => (
+                                    <option
+                                        key={option.address}
+                                        value={option.address}
+                                    >
+                                        {option.symbol}
+                                    </option>
+                                ))}
+                            </TextField>
+                        </Grid>
+                        <Grid item xs={12} sm={4}>
+                            <Button
+                                type="submit"
+                                variant="contained"
+                                style={{ marginTop: 25 }}
+                            >
+                                Submit
+                            </Button>
+                        </Grid>
+                    </Grid>
+                </ValidatorForm>
             </Grid>
         </Grid>
     );

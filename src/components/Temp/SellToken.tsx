@@ -3,8 +3,8 @@ import TokenPanel from './TokenPanel';
 import { observer } from 'mobx-react';
 import { useStores } from '../../contexts/storesContext';
 import { InputValidationStatus, SwapMethods } from 'stores/SwapForm';
-import { bnum, fromWei, str } from "utils/helpers";
-import { ExactAmountInPreview } from "stores/Proxy";
+import { bnum, fromWei, str } from 'utils/helpers';
+import { ExactAmountInPreview } from 'stores/Proxy';
 
 const SellToken = observer(
     ({
@@ -14,7 +14,7 @@ const SellToken = observer(
         tokenBalance,
         tokenAddress,
         setModalOpen,
-        errorMessage
+        errorMessage,
     }) => {
         const {
             root: {
@@ -26,24 +26,26 @@ const SellToken = observer(
             },
         } = useStores();
 
-        const onChange = async (event) => {
+        const onChange = async event => {
             const { value } = event.target;
             updateSwapFormData(value);
         };
 
-        const updateSwapFormData = async(value) => {
+        const updateSwapFormData = async value => {
             swapFormStore.inputs.setBuyFocus = false;
             swapFormStore.inputs.setSellFocus = true;
             swapFormStore.inputs.type = SwapMethods.EXACT_IN;
             swapFormStore.inputs.inputAmount = value;
 
-            const inputStatus = swapFormStore.getSwapFormInputValidationStatus(value);
+            const inputStatus = swapFormStore.getSwapFormInputValidationStatus(
+                value
+            );
 
             if (inputStatus === InputValidationStatus.VALID) {
                 const preview = await previewSwapExactAmountInHandler();
 
                 let output = {
-                    validSwap: false
+                    validSwap: false,
                 };
 
                 if (preview.validSwap) {
@@ -85,9 +87,9 @@ const SellToken = observer(
             }
 
             return await proxyStore.previewBatchSwapExactIn(
-              inputToken,
-              outputToken,
-              bnum(inputAmount)
+                inputToken,
+                outputToken,
+                bnum(inputAmount)
             );
         };
 

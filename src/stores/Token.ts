@@ -7,7 +7,7 @@ import * as deployed from 'deployed.json';
 import { FetchCode } from './Transaction';
 import { BigNumber } from 'utils/bignumber';
 import { chainNameById } from '../provider/connectors';
-import { bnum } from "utils/helpers";
+import { bnum } from 'utils/helpers';
 
 export interface ContractMetadata {
     bFactory: string;
@@ -22,14 +22,14 @@ export interface ContractMetadataMap {
 interface TokenBalanceMap {
     [index: string]: {
         [index: string]: {
-            balance: BigNumber,
-            lastFetched: number
+            balance: BigNumber;
+            lastFetched: number;
         };
     };
 }
 
 export interface BigNumberMap {
-    [index: string]: BigNumber
+    [index: string]: BigNumber;
 }
 
 export interface TokenMetadata {
@@ -43,8 +43,8 @@ interface UserAllowanceMap {
     [index: string]: {
         [index: string]: {
             [index: string]: {
-                allowance: BigNumber,
-                lastFetched: number
+                allowance: BigNumber;
+                lastFetched: number;
             };
         };
     };
@@ -114,15 +114,17 @@ export default class TokenStore {
 
         if (!contractMetadata) {
             throw new Error(
-              'Attempting to get whitelisted tokens for untracked chainId'
+                'Attempting to get whitelisted tokens for untracked chainId'
             );
         }
 
-        const tokenMetadata = contractMetadata.tokens.find(element => element.address === address);
+        const tokenMetadata = contractMetadata.tokens.find(
+            element => element.address === address
+        );
 
         if (!tokenMetadata) {
             throw new Error(
-              'Attempting to get metadata for untracked token address'
+                'Attempting to get metadata for untracked token address'
             );
         }
 
@@ -133,7 +135,9 @@ export default class TokenStore {
         const tokens = this.contractMetadata[chainId].tokens || undefined;
 
         if (!tokens) {
-            throw new Error('Attempting to get user balances for untracked chainId')
+            throw new Error(
+                'Attempting to get user balances for untracked chainId'
+            );
         }
 
         let filteredMetadata: TokenMetadata[] = [];
@@ -142,30 +146,39 @@ export default class TokenStore {
             //Search by address
             filteredMetadata = tokens.filter(value => {
                 return value.address === filter;
-            })
-
+            });
         } else {
             //Search by symbol
             filteredMetadata = tokens.filter(value => {
                 const valueString = value.symbol.toLowerCase();
                 filter = filter.toLowerCase();
                 return valueString.includes(filter);
-            })
+            });
         }
 
         return filteredMetadata;
-    };
+    }
 
-    getAccountBalances(chainId: number, tokens: TokenMetadata[], account: string): BigNumberMap {
+    getAccountBalances(
+        chainId: number,
+        tokens: TokenMetadata[],
+        account: string
+    ): BigNumberMap {
         const userBalances = this.balances.get(chainId);
         if (!userBalances) {
-            throw new Error ('Attempting to get user balances for untracked chainId')
+            throw new Error(
+                'Attempting to get user balances for untracked chainId'
+            );
         }
 
         const result: BigNumberMap = {};
         tokens.forEach(value => {
-            if(userBalances[value.address] && userBalances[value.address][account]) {
-                result[value.address] = userBalances[value.address][account].balance;
+            if (
+                userBalances[value.address] &&
+                userBalances[value.address][account]
+            ) {
+                result[value.address] =
+                    userBalances[value.address][account].balance;
             }
         });
 
@@ -209,7 +222,7 @@ export default class TokenStore {
 
         chainApprovals[tokenAddress][owner][spender] = {
             allowance: approval,
-            lastFetched: blockFetched
+            lastFetched: blockFetched,
         };
 
         this.allowances.set(chainId, chainApprovals);
@@ -235,7 +248,7 @@ export default class TokenStore {
 
         chainBalances[tokenAddress][account] = {
             balance: balance,
-            lastFetched: blockFetched
+            lastFetched: blockFetched,
         };
 
         this.balances.set(chainId, chainBalances);
@@ -257,7 +270,11 @@ export default class TokenStore {
         return undefined;
     }
 
-    private getBalanceLastFetched(chainId, tokenAddress, account): number | undefined {
+    private getBalanceLastFetched(
+        chainId,
+        tokenAddress,
+        account
+    ): number | undefined {
         const chainBalances = this.balances.get(chainId);
         if (chainBalances) {
             const tokenBalances = chainBalances[tokenAddress];
@@ -297,14 +314,21 @@ export default class TokenStore {
         account,
         chainId
     ): Promise<FetchCode> => {
-        const {providerStore} = this.rootStore;
+        const { providerStore } = this.rootStore;
         const tokensToTrack = this.getWhitelistedTokenMetadata(chainId);
 
         const promises: Promise<any>[] = [];
         const currentBlock = providerStore.getCurrentBlockNumber(chainId);
         //TODO: Promise.all
         tokensToTrack.forEach((value, index) => {
-            promises.push(this.fetchBalanceOf(chainId, value.address, account, currentBlock));
+            promises.push(
+                this.fetchBalanceOf(
+                    chainId,
+                    value.address,
+                    account,
+                    currentBlock
+                )
+            );
             promises.push(
                 this.fetchAllowance(
                     chainId,
@@ -334,7 +358,12 @@ export default class TokenStore {
         this.symbols[tokenAddress] = await token.symbol().call();
     };
 
-    @action fetchBalanceOf = async (chainId: number, tokenAddress: string, account: string, fetchBlock: number) => {
+    @action fetchBalanceOf = async (
+        chainId: number,
+        tokenAddress: string,
+        account: string,
+        fetchBlock: number
+    ) => {
         const { providerStore } = this.rootStore;
         const token = providerStore.getContract(
             ContractTypes.TestToken,
@@ -345,28 +374,36 @@ export default class TokenStore {
             If the fetch is stale, don't do network call
             If the fetch is stale after network call, don't set DB variable
         */
-        const stale = fetchBlock <= this.getBalanceLastFetched(chainId, tokenAddress, account);
+        const stale =
+            fetchBlock <=
+            this.getBalanceLastFetched(chainId, tokenAddress, account);
         if (!stale) {
             const balance = bnum(await token.balanceOf(account));
-            const stale = fetchBlock <= this.getBalanceLastFetched(chainId, tokenAddress, account);
+            const stale =
+                fetchBlock <=
+                this.getBalanceLastFetched(chainId, tokenAddress, account);
             if (!stale) {
-                this.setBalanceProperty(chainId, tokenAddress, account, balance, fetchBlock);
+                this.setBalanceProperty(
+                    chainId,
+                    tokenAddress,
+                    account,
+                    balance,
+                    fetchBlock
+                );
                 console.log('[Balance Fetch]', {
                     tokenAddress,
                     account,
                     balance: balance.toString(),
-                    fetchBlock
+                    fetchBlock,
                 });
             }
         } else {
             console.log('[Balance Fetch] - Stale', {
                 tokenAddress,
                 account,
-                fetchBlock
+                fetchBlock,
             });
         }
-
-
     };
 
     @action mint = async (tokenAddress: string, amount: string) => {
@@ -396,34 +433,37 @@ export default class TokenStore {
             If the fetch is stale, don't do network call
             If the fetch is stale after network call, don't set DB variable
         */
-        const stale = fetchBlock <= this.getBalanceLastFetched(chainId, tokenAddress, account);
+        const stale =
+            fetchBlock <=
+            this.getBalanceLastFetched(chainId, tokenAddress, account);
         if (!stale) {
             const allowance = bnum(await token.allowance(account, spender));
-            const stale = fetchBlock <= this.getBalanceLastFetched(chainId, tokenAddress, account);
+            const stale =
+                fetchBlock <=
+                this.getBalanceLastFetched(chainId, tokenAddress, account);
             if (!stale) {
                 this.setAllowanceProperty(
-                  chainId,
-                  tokenAddress,
-                  account,
-                  spender,
-                  allowance,
-                  fetchBlock
+                    chainId,
+                    tokenAddress,
+                    account,
+                    spender,
+                    allowance,
+                    fetchBlock
                 );
                 console.log('[Allowance Fetch]', {
                     tokenAddress,
                     account,
                     spender,
                     allowance: allowance.toString(),
-                    fetchBlock
+                    fetchBlock,
                 });
             }
-
         } else {
             console.log('[Allowance Fetch] - Stale', {
                 tokenAddress,
                 account,
                 spender,
-                fetchBlock
+                fetchBlock,
             });
         }
     };
@@ -450,10 +490,10 @@ export default class TokenStore {
     };
 
     getAllowanceLastFetched = (
-      chainId,
-      tokenAddress,
-      account,
-      spender
+        chainId,
+        tokenAddress,
+        account,
+        spender
     ): number | undefined => {
         const chainApprovals = this.allowances.get(chainId);
         if (chainApprovals) {

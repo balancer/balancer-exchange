@@ -1,4 +1,4 @@
-import { observable, action, ObservableMap } from "mobx";
+import { observable, action, ObservableMap } from 'mobx';
 import RootStore from 'stores/Root';
 import { web3ContextNames } from 'provider/connectors';
 import { ethers, utils, providers } from 'ethers';
@@ -23,7 +23,7 @@ export const schema = {
 };
 
 export interface ChainData {
-    currentBlockNumber: number
+    currentBlockNumber: number;
 }
 
 type ChainDataMap = ObservableMap<number, ChainData>;
@@ -48,7 +48,7 @@ export default class ProviderStore {
 
         networkIds.forEach(networkId => {
             this.chainData.set(networkId, {
-                currentBlockNumber: -1
+                currentBlockNumber: -1,
             });
         });
     }
@@ -56,40 +56,43 @@ export default class ProviderStore {
     private safeGetChainData(chainId): ChainData {
         const chainData = this.chainData.get(chainId);
         if (!chainData) {
-            throw new Error('Attempting to access chain data for non-existent chainId')
+            throw new Error(
+                'Attempting to access chain data for non-existent chainId'
+            );
         }
         return chainData;
     }
 
     async fetchLoop(this) {
-        const {library, chainId, account} = this.getActiveWeb3React();
+        const { library, chainId, account } = this.getActiveWeb3React();
         library
-          .getBlockNumber()
-          .then(blockNumber => {
-              const lastChecked = this.getCurrentBlockNumber(chainId);
-              if (blockNumber != lastChecked) {
-                  console.log('[Data Fetcher] New Block Found', {
-                      blockNumber, chainId
-                  });
-                  // Set block number
-                  this.setCurrentBlockNumber(
-                    chainId,
-                    blockNumber
-                  );
+            .getBlockNumber()
+            .then(blockNumber => {
+                const lastChecked = this.getCurrentBlockNumber(chainId);
+                if (blockNumber != lastChecked) {
+                    console.log('[Data Fetcher] New Block Found', {
+                        blockNumber,
+                        chainId,
+                    });
+                    // Set block number
+                    this.setCurrentBlockNumber(chainId, blockNumber);
 
-                  // Get global blockchain data
-                  // None
+                    // Get global blockchain data
+                    // None
 
-                  // Get user-specific blockchain data
-                  if (account) {
-                      console.log('[Data Fetcher] - Fetch for account', account);
-                      this.fetchUserBlockchainData(chainId, account);
-                  }
-              }
-          })
-          .catch(() => {
-              this.setCurrentBlockNumber(chainId, undefined);
-          });
+                    // Get user-specific blockchain data
+                    if (account) {
+                        console.log(
+                            '[Data Fetcher] - Fetch for account',
+                            account
+                        );
+                        this.fetchUserBlockchainData(chainId, account);
+                    }
+                }
+            })
+            .catch(() => {
+                this.setCurrentBlockNumber(chainId, undefined);
+            });
     }
 
     startFetchLoop() {
@@ -99,7 +102,7 @@ export default class ProviderStore {
 
     stopFetchLoop() {
         if (!this.activeFetchLoop) {
-            throw new Error ('No active fetch loop to stop');
+            throw new Error('No active fetch loop to stop');
         }
         clearInterval(this.activeFetchLoop);
     }
@@ -114,20 +117,24 @@ export default class ProviderStore {
         chainData.currentBlockNumber = blockNumber;
     }
 
-    @action fetchUserBlockchainData = async (chainId: number, account: string) => {
-        const {transactionStore, tokenStore} = this.rootStore;
+    @action fetchUserBlockchainData = async (
+        chainId: number,
+        account: string
+    ) => {
+        const { transactionStore, tokenStore } = this.rootStore;
 
         console.log('[Fetch Start - User Blockchain Data]', {
-            chainId, account
+            chainId,
+            account,
         });
 
         transactionStore.checkPendingTransactions(chainId);
         tokenStore.fetchBalancerTokenData(account, chainId).then(result => {
-              console.log('[Fetch End - User Blockchain Data]', {
-                  chainId, account
-              });
-          }
-        );
+            console.log('[Fetch End - User Blockchain Data]', {
+                chainId,
+                account,
+            });
+        });
     };
 
     getWeb3React(name: string): Web3ReactContextInterface {

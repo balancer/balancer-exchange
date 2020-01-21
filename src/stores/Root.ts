@@ -8,7 +8,7 @@ import ErrorStore from './Error';
 import TransactionStore from './Transaction';
 import { supportedNetworks } from 'provider/connectors';
 import AppSettingsStore from './AppSettings';
-import { action } from "mobx";
+import { action } from 'mobx';
 
 export default class RootStore {
     proxyStore: ProxyStore;

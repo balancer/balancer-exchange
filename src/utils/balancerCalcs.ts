@@ -60,7 +60,10 @@ function bfloor(a: BigNumber): BigNumber {
     return btoi(a).times(BONE);
 }
 
-function bsubSign(a: BigNumber, b: BigNumber): {res: BigNumber, bool: boolean} {
+function bsubSign(
+    a: BigNumber,
+    b: BigNumber
+): { res: BigNumber; bool: boolean } {
     if (a.gte(b)) {
         let res = a.minus(b);
         let bool = false;

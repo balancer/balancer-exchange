@@ -1,5 +1,5 @@
-import React from 'react'
-import styled from 'styled-components'
+import React from 'react';
+import styled from 'styled-components';
 import { useStores } from '../../contexts/storesContext';
 
 const Container = styled.div`
@@ -7,16 +7,15 @@ const Container = styled.div`
 	justify-content: center;
 	align-items: center
 	width: 148px;
-`
+`;
 
 const SwapIcon = styled.img`
-	width: 24px;
-	height: 24px;
-	cursor: pointer;
-`
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+`;
 
 const Switch = () => {
-
     const {
         root: {
             proxyStore,
@@ -38,9 +37,9 @@ const Switch = () => {
     } = inputs;
 
     const clearInputs = () => {
-    	swapFormStore.inputs.inputAmount = '';
-    	swapFormStore.inputs.outputAmount = '';
-    }
+        swapFormStore.inputs.inputAmount = '';
+        swapFormStore.inputs.outputAmount = '';
+    };
 
     const switchAssets = () => {
         swapFormStore.inputs.inputToken = outputToken;
@@ -51,13 +50,13 @@ const Switch = () => {
         swapFormStore.inputs.outputIconAddress = inputIconAddress;
         swapFormStore.resetTradeComposition();
         clearInputs();
-    }
+    };
 
-	return(
-		<Container>
-			<SwapIcon src="/swap.svg" onClick={ () => switchAssets() } />
-		</Container>
-	)
-}
+    return (
+        <Container>
+            <SwapIcon src="/swap.svg" onClick={() => switchAssets()} />
+        </Container>
+    );
+};
 
-export default Switch
+export default Switch;

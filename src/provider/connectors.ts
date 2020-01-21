@@ -5,7 +5,7 @@ export const supportedNetworks = [42];
 
 export const chainNameById = {
     '1': 'mainnet',
-    '42': 'kovan'
+    '42': 'kovan',
 };
 
 const POLLING_INTERVAL = 1000;

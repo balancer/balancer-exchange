@@ -3,8 +3,8 @@ import { HashRouter, Route, Redirect, Switch } from 'react-router-dom';
 import { theme } from 'configs';
 import { Header, Web3ReactManager } from 'components';
 import { observer, inject } from 'mobx-react';
-import SwapForm from "components/Temp/SwapForm"
-import './App.css'
+import SwapForm from 'components/Temp/SwapForm';
+import './App.css';
 
 const App = () => {
     console.log(process.env.REACT_APP_NETWORK_PROVIDER_URL);
@@ -12,9 +12,7 @@ const App = () => {
     const PoolSwapView = props => {
         const { tokenIn, tokenOut } = props.match.params;
 
-        return (
-            <SwapForm tokenIn={tokenIn} tokenOut={tokenOut} />
-        );
+        return <SwapForm tokenIn={tokenIn} tokenOut={tokenOut} />;
     };
 
     const renderViews = () => {

@@ -12,8 +12,8 @@ import { injected } from 'provider/connectors';
 import { web3ContextNames } from 'provider/connectors';
 import Identicon from '../Identicon';
 import { useStores } from '../../contexts/storesContext';
-import Button from '../Temp/Button'
-import Web3PillBox from '../Temp/Web3PillBox'
+import Button from '../Temp/Button';
+import Web3PillBox from '../Temp/Web3PillBox';
 
 const Web3StatusGeneric = styled.button`
     ${({ theme }) => theme.flexRowNoWrap}
@@ -89,7 +89,6 @@ const Web3ConnectStatus = observer(() => {
         throw new Error('No chain ID specified');
     }
 
-
     const allTransactions = transactionStore.allTxRecords;
     const pending = transactionStore.getPendingTransactions(chainId);
     const confirmed = transactionStore.getConfirmedTransactions(chainId);
@@ -98,8 +97,8 @@ const Web3ConnectStatus = observer(() => {
     console.log({
         message: 'Web3ConnectStatus Pending Tx',
         pending,
-        hasPendingTransactions
-    })
+        hasPendingTransactions,
+    });
 
     const toggleWalletModal = () => {
         modalStore.toggleWalletModal();
@@ -115,7 +114,7 @@ const Web3ConnectStatus = observer(() => {
     function getWeb3Status() {
         if (account) {
             return (
-                <Web3PillBox onClick={toggleWalletModal} >
+                <Web3PillBox onClick={toggleWalletModal}>
                     {hasPendingTransactions && (
                         <SpinnerWrapper src={Circle} alt="loader" />
                     )}
@@ -136,7 +135,11 @@ const Web3ConnectStatus = observer(() => {
             );
         } else {
             return (
-                <Button onClick={toggleWalletModal} buttonText="Connect Wallet" active={true} />
+                <Button
+                    onClick={toggleWalletModal}
+                    buttonText="Connect Wallet"
+                    active={true}
+                />
             );
         }
     }
