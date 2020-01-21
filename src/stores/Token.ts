@@ -12,6 +12,7 @@ import { bnum } from 'utils/helpers';
 export interface ContractMetadata {
     bFactory: string;
     proxy: string;
+    weth: string;
     tokens: TokenMetadata[];
 }
 
@@ -50,6 +51,8 @@ interface UserAllowanceMap {
     };
 }
 
+export const EtherKey = 'ether';
+
 export default class TokenStore {
     @observable symbols = {};
     @observable balances: ObservableMap<number, TokenBalanceMap>;
@@ -83,6 +86,7 @@ export default class TokenStore {
         const contractMetadata = {
             bFactory: deployed['kovan'].bFactory,
             proxy: deployed['kovan'].proxy,
+            weth: deployed['kovan'].weth,
             tokens: [] as TokenMetadata[],
         };
 
@@ -107,6 +111,16 @@ export default class TokenStore {
             );
         }
         return proxyAddress;
+    }
+
+    getWethAddress(chainId): string {
+        const address = this.contractMetadata[chainId].weth;
+        if (!address) {
+            throw new Error(
+                '[Invariant] Trying to get non-loaded static address'
+            );
+        }
+        return address;
     }
 
     getTokenMetadata(chainId: number, address: string): TokenMetadata {
@@ -378,7 +392,16 @@ export default class TokenStore {
             fetchBlock <=
             this.getBalanceLastFetched(chainId, tokenAddress, account);
         if (!stale) {
-            const balance = bnum(await token.balanceOf(account));
+            let balance;
+
+            if (tokenAddress === EtherKey) {
+                const provider = providerStore.getActiveWeb3React();
+                const { library } = provider;
+                balance = bnum(await library.getBalance(account));
+            } else {
+                balance = bnum(await token.balanceOf(account));
+            }
+
             const stale =
                 fetchBlock <=
                 this.getBalanceLastFetched(chainId, tokenAddress, account);
@@ -429,6 +452,11 @@ export default class TokenStore {
             tokenAddress
         );
 
+        // No allowance for ether
+        if (tokenAddress === EtherKey) {
+            return;
+        }
+
         /* Before and after the network operation, check for staleness
             If the fetch is stale, don't do network call
             If the fetch is stale after network call, don't set DB variable
@@ -474,6 +502,11 @@ export default class TokenStore {
         account,
         spender
     ): BigNumber | undefined => {
+        // Return infinite allowance for ether (allow ether to be handled identically to ERC20 tokens)
+        if (tokenAddress === EtherKey) {
+            return bnum(helpers.setPropertyToMaxUintIfEmpty());
+        }
+
         const chainApprovals = this.allowances.get(chainId);
         if (chainApprovals) {
             const tokenApprovals = chainApprovals[tokenAddress];

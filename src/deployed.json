@@ -2,6 +2,7 @@
     "ganache": {
         "bFactory": "0xD86C8F0327494034F60e25074420BcCF560D5610",
         "proxy": "0x4bf749ec68270027C5910220CEAB30Cc284c7BA2",
+        "weth": "0xd0a1e359811322d97991e03f863a0c30c2cf029c",
         "tokens": [
             {
                 "symbol": "WETH",
@@ -24,7 +25,14 @@
         "chainId": 42,
         "bFactory": "0x9c84391b443ea3a48788079a5f98e2ead55c9309",
         "proxy": "0x4149AfB519203b58d72a2A82FCDe0e20B96F53C9",
+        "weth": "0xd0a1e359811322d97991e03f863a0c30c2cf029c",
         "tokens": [
+            {
+                "symbol": "ETH",
+                "address": "ether",
+                "decimals": 18,
+                "iconAddress": "ether"
+            },
             {
                 "symbol": "MKR",
                 "address": "0x8fD2D32dCde13F41BC7e6D966Edde0DfF1f92E2E",
