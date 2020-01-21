@@ -25,6 +25,7 @@ import {
     formatSwapsExactAmountOut,
 } from '../utils/sorWrapper';
 import { ethers } from 'ethers';
+import { EtherKey } from './Token';
 
 export interface ExactAmountOutPreview {
     outputAmount: BigNumber;
@@ -32,6 +33,7 @@ export interface ExactAmountOutPreview {
     effectivePrice: BigNumber | null;
     swaps: Swap[];
     validSwap: boolean;
+    error?: string;
 }
 
 export interface ExactAmountInPreview {
@@ -40,6 +42,7 @@ export interface ExactAmountInPreview {
     effectivePrice: BigNumber | null;
     swaps: Swap[];
     validSwap: boolean;
+    error?: string;
 }
 
 export interface SwapInput {
@@ -205,11 +208,27 @@ export default class ProxyStore {
     ): Promise<ExactAmountInPreview> => {
         try {
             this.setPreviewPending(true);
+            const { tokenStore, providerStore } = this.rootStore;
+            const { chainId } = providerStore.getActiveWeb3React();
 
             let maxPrice = helpers.setPropertyToMaxUintIfEmpty();
             let minAmountOut = helpers.setPropertyToZeroIfEmpty();
 
-            const poolData = await findPoolsWithTokens(tokenIn, tokenOut, true);
+            // Use WETH address for Ether
+            const tokenInToFind =
+                tokenIn === EtherKey
+                    ? tokenStore.getWethAddress(chainId)
+                    : tokenIn;
+            const tokenOutToFind =
+                tokenOut === EtherKey
+                    ? tokenStore.getWethAddress(chainId)
+                    : tokenOut;
+
+            const poolData = await findPoolsWithTokens(
+                tokenInToFind,
+                tokenOutToFind,
+                true
+            );
             const costOutputToken = this.costCalculator.getCostOutputToken();
 
             const sorSwaps = findBestSwaps(
@@ -266,6 +285,7 @@ export default class ProxyStore {
                 effectivePrice: null,
                 swaps: null,
                 validSwap: false,
+                error: e.message,
             };
         }
     };
@@ -277,11 +297,27 @@ export default class ProxyStore {
     ): Promise<ExactAmountOutPreview> => {
         try {
             this.setPreviewPending(true);
+            const { tokenStore, providerStore } = this.rootStore;
+            const { chainId } = providerStore.getActiveWeb3React();
 
             let maxPrice = helpers.setPropertyToMaxUintIfEmpty();
             let maxAmountIn = helpers.setPropertyToMaxUintIfEmpty();
 
-            const poolData = await findPoolsWithTokens(tokenIn, tokenOut, true);
+            // Use WETH address for Ether
+            const tokenInToFind =
+                tokenIn === EtherKey
+                    ? tokenStore.getWethAddress(chainId)
+                    : tokenIn;
+            const tokenOutToFind =
+                tokenOut === EtherKey
+                    ? tokenStore.getWethAddress(chainId)
+                    : tokenOut;
+
+            const poolData = await findPoolsWithTokens(
+                tokenInToFind,
+                tokenOutToFind,
+                true
+            );
             const costOutputToken = this.costCalculator.getCostOutputToken();
 
             let sorSwaps: SorSwaps = findBestSwaps(
@@ -347,6 +383,7 @@ export default class ProxyStore {
                 effectivePrice: null,
                 swaps: null,
                 validSwap: false,
+                error: e.message,
             };
         }
     };
