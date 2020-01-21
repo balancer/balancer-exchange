@@ -4,7 +4,6 @@ import { web3ContextNames } from 'provider/connectors';
 import { ethers, utils, providers } from 'ethers';
 import { Web3ReactContextInterface } from '@web3-react/core/dist/types';
 import UncheckedJsonRpcSigner from 'provider/UncheckedJsonRpcSigner';
-import Web3 from 'web3';
 import { sendAction } from './actions/actions';
 
 export enum ContractTypes {
