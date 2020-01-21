@@ -43,10 +43,17 @@ const SellToken = observer(
 
             if (inputStatus === InputValidationStatus.VALID) {
                 const preview = await previewSwapExactAmountInHandler();
+                console.log(preview);
 
                 let output = {
                     validSwap: false,
                 };
+
+                if (preview.error) {
+                    swapFormStore.updateInputsFromObject({
+                        activeErrorMessage: preview.error,
+                    });
+                }
 
                 if (preview.validSwap) {
                     output['outputAmount'] = fromWei(preview.totalOutput);
