@@ -147,7 +147,9 @@ export default class TokenStore {
         } else {
             //Search by symbol
             filteredMetadata = tokens.filter(value => {
-                return value.symbol.includes(filter);
+                const valueString = value.symbol.toLowerCase();
+                filter = filter.toLowerCase();
+                return valueString.includes(filter);
             })
         }
 
