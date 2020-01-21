@@ -122,9 +122,10 @@ const MaxLink = styled.div`
   display: flex;
   text-decoration-line: underline;
   color: var(--link-text);
+  cursor: pointer;
 `
 
-const Token = ({defaultValue, onChange, inputID, inputName, headerText, tokenName, tokenBalance, tokenAddress, setModalOpen, setFocus, errorMessage}) => {
+const Token = ({defaultValue, onChange, updateSwapFormData, inputID, inputName, headerText, tokenName, tokenBalance, tokenAddress, setModalOpen, setFocus, errorMessage}) => {
 
   const textInput = useRef(null);
 
@@ -147,7 +148,7 @@ const Token = ({defaultValue, onChange, inputID, inputName, headerText, tokenNam
       return(
         <InputWrapper errorBorders={errorBorders}>
           <input id={inputID} name={inputName} defaultValue={defaultValue} onChange={onChange} ref={textInput} placeholder="0" />
-          <MaxLink>Max</MaxLink>
+          <MaxLink onClick={() => updateSwapFormData(tokenBalance)}>Max</MaxLink>
         </InputWrapper>
       )
     }

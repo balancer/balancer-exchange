@@ -2,7 +2,7 @@ import React from "react";
 import TokenPanel from "./TokenPanel";
 import { observer } from "mobx-react";
 import { useStores } from "../../contexts/storesContext";
-import { formNames, InputValidationStatus, SwapMethods } from "stores/SwapForm";
+import { InputValidationStatus, SwapMethods } from "stores/SwapForm";
 import { bnum, fromWei, str } from "utils/helpers";
 import { ExactAmountOutPreview } from "../../stores/Proxy";
 
@@ -27,28 +27,16 @@ const BuyToken = observer(
         },
     } = useStores();
 
-    const updateProperty = (form, key, value) => {
-        swapFormStore[form][key] = value;
+    const onChange = async (event) => {
+        const { value } = event.target;
+        updateSwapFormData(value);
     };
 
-    const onChange = async (event, form) => {
-        const { name, value } = event.target;
-        const { inputAmount, outputAmount } = swapFormStore.inputs;
-
+    const updateSwapFormData = async (value) => {
         swapFormStore.inputs.setSellFocus = false;
         swapFormStore.inputs.setBuyFocus = true;
-
-  			updateProperty(form, 'type', SwapMethods.EXACT_OUT);
-
-        console.log('[Swap Form]', {
-            name,
-            value,
-            inputAmount,
-            outputAmount,
-            method: swapFormStore.inputs.type
-        });
-
-        updateProperty(form, name, value);
+        swapFormStore.inputs.type = SwapMethods.EXACT_OUT
+        swapFormStore.inputs.outputAmount = value;
 
         const inputStatus = swapFormStore.getSwapFormInputValidationStatus(value);
 
@@ -81,7 +69,7 @@ const BuyToken = observer(
                 // clear preview
             });
             swapFormStore.resetTradeComposition();
-        }
+        } 
     };
 
     const previewSwapExactAmountOutHandler = async (): Promise<ExactAmountOutPreview> => {
@@ -113,7 +101,8 @@ const BuyToken = observer(
   		<TokenPanel
         headerText="Token to Buy"
         defaultValue={outputAmount}
-        onChange={e => onChange(e, formNames.INPUT_FORM)}
+        onChange={e => onChange(e)}
+        updateSwapFormData={updateSwapFormData}
         inputID={inputID} 
         inputName={inputName}
         tokenName={tokenName}

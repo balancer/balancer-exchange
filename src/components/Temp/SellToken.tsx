@@ -2,7 +2,7 @@ import React from 'react';
 import TokenPanel from './TokenPanel';
 import { observer } from 'mobx-react';
 import { useStores } from '../../contexts/storesContext';
-import { formNames, InputValidationStatus, SwapMethods } from 'stores/SwapForm';
+import { InputValidationStatus, SwapMethods } from 'stores/SwapForm';
 import { bnum, fromWei, str } from "utils/helpers";
 import { ExactAmountInPreview } from "stores/Proxy";
 
@@ -26,19 +26,16 @@ const SellToken = observer(
             },
         } = useStores();
 
-        const updateProperty = (form, key, value) => {
-            swapFormStore[form][key] = value;
+        const onChange = async (event) => {
+            const { value } = event.target;
+            updateSwapFormData(value);
         };
 
-        const onChange = async (event, form) => {
-            const { name, value } = event.target;
-            const { inputAmount, outputAmount } = swapFormStore.inputs;
-
+        const updateSwapFormData = async(value) => {
             swapFormStore.inputs.setBuyFocus = false;
             swapFormStore.inputs.setSellFocus = true;
-
-            updateProperty(form, 'type', SwapMethods.EXACT_IN);
-            updateProperty(form, name, value);
+            swapFormStore.inputs.type = SwapMethods.EXACT_IN;
+            swapFormStore.inputs.inputAmount = value;
 
             const inputStatus = swapFormStore.getSwapFormInputValidationStatus(value);
 
@@ -101,7 +98,8 @@ const SellToken = observer(
             <TokenPanel
                 headerText="Token to Sell"
                 defaultValue={inputAmount}
-                onChange={e => onChange(e, formNames.INPUT_FORM)}
+                onChange={e => onChange(e)}
+                updateSwapFormData={updateSwapFormData}
                 inputID={inputID}
                 inputName={inputName}
                 tokenName={tokenName}
