@@ -20,15 +20,16 @@ export interface ContractMetadataMap {
 }
 
 interface TokenBalanceMap {
-    [index: string]: UserBalanceMap;
+    [index: string]: {
+        [index: string]: {
+            data: BigNumber,
+            lastFetched: number
+        };
+    };
 }
 
-export interface UserBalanceMap {
-    [index: string]: BigNumber;
-}
-
-interface EtherBalanceMap {
-    [index: string]: BigNumber;
+export interface BigNumberMap {
+    [index: string]: BigNumber
 }
 
 export interface TokenMetadata {
@@ -41,14 +42,16 @@ export interface TokenMetadata {
 interface UserAllowanceMap {
     [index: string]: {
         [index: string]: {
-            [index: string]: BigNumber;
+            [index: string]: {
+                data: BigNumber,
+                lastFetched: number
+            };
         };
     };
 }
 
 export default class TokenStore {
     @observable symbols = {};
-    @observable etherBalances: ObservableMap<number, EtherBalanceMap>;
     @observable balances: ObservableMap<number, TokenBalanceMap>;
     @observable allowances: ObservableMap<number, UserAllowanceMap>;
     @observable contractMetadata: ContractMetadataMap;
@@ -56,13 +59,11 @@ export default class TokenStore {
 
     constructor(rootStore, networkIds) {
         this.rootStore = rootStore;
-        this.etherBalances = new ObservableMap<number, EtherBalanceMap>();
         this.balances = new ObservableMap<number, TokenBalanceMap>();
         this.allowances = new ObservableMap<number, UserAllowanceMap>();
         this.contractMetadata = {};
 
         networkIds.forEach(networkId => {
-            this.etherBalances.set(networkId, {});
             this.balances.set(networkId, {});
             this.allowances.set(networkId, {});
             this.loadWhitelistedTokenMetadata(networkId);
@@ -153,16 +154,16 @@ export default class TokenStore {
         return filteredMetadata;
     };
 
-    getAccountBalances(chainId: number, tokens: TokenMetadata[], account: string): UserBalanceMap {
+    getAccountBalances(chainId: number, tokens: TokenMetadata[], account: string): BigNumberMap {
         const userBalances = this.balances.get(chainId);
         if (!userBalances) {
             throw new Error ('Attempting to get user balances for untracked chainId')
         }
 
-        const result: UserBalanceMap = {};
+        const result: BigNumberMap = {};
         tokens.forEach(value => {
-            if(userBalances[value.address]) {
-                result[value.address] = userBalances[value.address][account];
+            if(userBalances[value.address] && userBalances[value.address][account]) {
+                result[value.address] = userBalances[value.address][account].data;
             }
         });
 
@@ -186,7 +187,8 @@ export default class TokenStore {
         tokenAddress: string,
         owner: string,
         spender: string,
-        approval: BigNumber
+        approval: BigNumber,
+        blockFetched: number
     ): void {
         const chainApprovals = this.allowances.get(chainId);
         if (!chainApprovals) {
@@ -203,7 +205,10 @@ export default class TokenStore {
             chainApprovals[tokenAddress][owner] = {};
         }
 
-        chainApprovals[tokenAddress][owner][spender] = approval;
+        chainApprovals[tokenAddress][owner][spender] = {
+            data: approval,
+            lastFetched: blockFetched
+        }
         this.allowances.set(chainId, chainApprovals);
     }
 
@@ -211,7 +216,8 @@ export default class TokenStore {
         chainId: number,
         tokenAddress: string,
         account: string,
-        balance: BigNumber
+        balance: BigNumber,
+        blockFetched: number
     ): void {
         const chainBalances = this.balances.get(chainId);
         if (!chainBalances) {
@@ -224,36 +230,13 @@ export default class TokenStore {
             chainBalances[tokenAddress] = {};
         }
 
-        chainBalances[tokenAddress][account] = balance;
+        chainBalances[tokenAddress][account] = {
+            data: balance,
+            lastFetched: blockFetched
+        };
+
+        if (blockFetched)
         this.balances.set(chainId, chainBalances);
-    }
-
-    setEtherBalance(
-        chainId: number,
-        account: string,
-        balance: BigNumber
-    ): void {
-        const balances = this.etherBalances.get(chainId);
-
-        if (!balances) {
-            throw new Error(
-                'Attempt to set balance property for untracked chainId'
-            );
-        }
-
-        balances[account] = balance;
-        this.etherBalances.set(chainId, balances);
-    }
-
-    getEtherBalance(chainId, account): BigNumber | undefined {
-        const balances = this.etherBalances.get(chainId);
-
-        if (balances) {
-            if (balances[account]) {
-                return balances[account];
-            }
-        }
-        return undefined;
     }
 
     getBalance(chainId, tokenAddress, account): BigNumber | undefined {
@@ -263,7 +246,25 @@ export default class TokenStore {
             if (tokenBalances) {
                 const balance = tokenBalances[account];
                 if (balance) {
-                    return balance;
+                    if (balance.data) {
+                        return balance.data;
+                    }
+                }
+            }
+        }
+        return undefined;
+    }
+
+    private getBalanceLastFetched(chainId, tokenAddress, account): number | undefined {
+        const chainBalances = this.balances.get(chainId);
+        if (chainBalances) {
+            const tokenBalances = chainBalances[tokenAddress];
+            if (tokenBalances) {
+                const balance = tokenBalances[account];
+                if (balance) {
+                    if (balance.lastFetched) {
+                        return balance.lastFetched;
+                    }
                 }
             }
         }
@@ -294,23 +295,24 @@ export default class TokenStore {
         account,
         chainId
     ): Promise<FetchCode> => {
+        const {providerStore} = this.rootStore;
         const tokensToTrack = this.getWhitelistedTokenMetadata(chainId);
 
         const promises: Promise<any>[] = [];
+        const currentBlock = providerStore.getCurrentBlockNumber(chainId);
         //TODO: Promise.all
         tokensToTrack.forEach((value, index) => {
-            promises.push(this.fetchBalanceOf(chainId, value.address, account));
+            promises.push(this.fetchBalanceOf(chainId, value.address, account, currentBlock));
             promises.push(
                 this.fetchAllowance(
                     chainId,
                     value.address,
                     account,
-                    this.contractMetadata[chainId].proxy
+                    this.contractMetadata[chainId].proxy,
+                    currentBlock
                 )
             );
         });
-
-        promises.push(this.fetchEtherBalance(chainId, account));
 
         try {
             await Promise.all(promises);
@@ -330,34 +332,39 @@ export default class TokenStore {
         this.symbols[tokenAddress] = await token.symbol().call();
     };
 
-    @action fetchEtherBalance = async (chainId, account) => {
-        const { providerStore } = this.rootStore;
-        const provider = providerStore.getActiveWeb3React();
-
-        if (provider.chainId !== chainId) {
-            return;
-        }
-        const { library } = provider;
-
-        const balance = new BigNumber(await library.getBalance(account));
-
-        console.log('[Ether Balance Fetch]', {
-            chainId,
-            account,
-        });
-
-        this.setEtherBalance(chainId, account, balance);
-    };
-
-    @action fetchBalanceOf = async (chainId, tokenAddress, account) => {
+    @action fetchBalanceOf = async (chainId: number, tokenAddress: string, account: string, fetchBlock: number) => {
         const { providerStore } = this.rootStore;
         const token = providerStore.getContract(
             ContractTypes.TestToken,
             tokenAddress
         );
 
-        const balance = bnum(await token.balanceOf(account));
-        this.setBalanceProperty(chainId, tokenAddress, account, balance);
+        /* Before and after the network operation, check for staleness
+            If the fetch is stale, don't do network call
+            If the fetch is stale after network call, don't set DB variable
+        */
+        const stale = fetchBlock <= this.getBalanceLastFetched(chainId, tokenAddress, account);
+        if (!stale) {
+            const balance = bnum(await token.balanceOf(account));
+            const stale = fetchBlock <= this.getBalanceLastFetched(chainId, tokenAddress, account);
+            if (!stale) {
+                this.setBalanceProperty(chainId, tokenAddress, account, balance, fetchBlock);
+                console.log('[Balance Fetch]', {
+                    tokenAddress,
+                    account,
+                    balance,
+                    fetchBlock
+                });
+            }
+        } else {
+            console.log('[Balance Fetch] - Stale', {
+                tokenAddress,
+                account,
+                fetchBlock
+            });
+        }
+
+
     };
 
     @action mint = async (tokenAddress: string, amount: string) => {
@@ -374,7 +381,8 @@ export default class TokenStore {
         chainId,
         tokenAddress,
         account,
-        spender
+        spender,
+        fetchBlock
     ) => {
         const { providerStore } = this.rootStore;
         const token = providerStore.getContract(
@@ -382,22 +390,40 @@ export default class TokenStore {
             tokenAddress
         );
 
-        const allowance = bnum(await token.allowance(account, spender));
+        /* Before and after the network operation, check for staleness
+            If the fetch is stale, don't do network call
+            If the fetch is stale after network call, don't set DB variable
+        */
+        const stale = fetchBlock <= this.getBalanceLastFetched(chainId, tokenAddress, account);
+        if (!stale) {
+            const allowance = bnum(await token.allowance(account, spender));
+            const stale = fetchBlock <= this.getBalanceLastFetched(chainId, tokenAddress, account);
+            if (!stale) {
+                this.setAllowanceProperty(
+                  chainId,
+                  tokenAddress,
+                  account,
+                  spender,
+                  allowance,
+                  fetchBlock
+                );
+                console.log('[Allowance Fetch]', {
+                    tokenAddress,
+                    account,
+                    spender,
+                    allowance,
+                    fetchBlock
+                });
+            }
 
-        this.setAllowanceProperty(
-            chainId,
-            tokenAddress,
-            account,
-            spender,
-            allowance
-        );
-
-        console.log('[Allowance Fetch]', {
-            tokenAddress,
-            account,
-            spender,
-            allowance,
-        });
+        } else {
+            console.log('[Allowance Fetch] - Stale', {
+                tokenAddress,
+                account,
+                spender,
+                fetchBlock
+            });
+        }
     };
 
     getAllowance = (
@@ -412,7 +438,30 @@ export default class TokenStore {
             if (tokenApprovals) {
                 const userApprovals = tokenApprovals[account];
                 if (userApprovals) {
-                    return userApprovals[spender];
+                    if (userApprovals[spender]) {
+                        return userApprovals[spender].data;
+                    }
+                }
+            }
+        }
+        return undefined;
+    };
+
+    getAllowanceLastFetched = (
+      chainId,
+      tokenAddress,
+      account,
+      spender
+    ): number | undefined => {
+        const chainApprovals = this.allowances.get(chainId);
+        if (chainApprovals) {
+            const tokenApprovals = chainApprovals[tokenAddress];
+            if (tokenApprovals) {
+                const userApprovals = tokenApprovals[account];
+                if (userApprovals) {
+                    if (userApprovals[spender]) {
+                        return userApprovals[spender].lastFetched;
+                    }
                 }
             }
         }
