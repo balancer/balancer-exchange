@@ -68,10 +68,10 @@ export default class ProviderStore {
           .getBlockNumber()
           .then(blockNumber => {
               const lastChecked = this.getCurrentBlockNumber(chainId);
-              console.log('[Data Fetcher] Block Found', {
-                  blockNumber, chainId
-              });
               if (blockNumber != lastChecked) {
+                  console.log('[Data Fetcher] New Block Found', {
+                      blockNumber, chainId
+                  });
                   // Set block number
                   this.setCurrentBlockNumber(
                     chainId,
@@ -95,7 +95,7 @@ export default class ProviderStore {
 
     startFetchLoop() {
         this.fetchLoop();
-        this.activeFetchLoop = setTimeout(this.fetchLoop.bind(this), 500);
+        this.activeFetchLoop = setInterval(this.fetchLoop.bind(this), 1000);
     }
 
     stopFetchLoop() {
