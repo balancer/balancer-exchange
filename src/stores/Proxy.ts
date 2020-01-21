@@ -153,18 +153,39 @@ export default class ProxyStore {
 
         const proxyAddress = tokenStore.getProxyAddress(chainId);
 
-        await providerStore.sendTransaction(
-            ContractTypes.ExchangeProxy,
-            proxyAddress,
-            'batchSwapExactIn',
-            [
-                swaps,
-                tokenIn,
-                tokenOut,
-                inputAmount.toString(),
-                minAmountOut.toString(),
-            ]
-        );
+        if (tokenIn === EtherKey) {
+            await providerStore.sendTransaction(
+                ContractTypes.ExchangeProxy,
+                proxyAddress,
+                'batchEthInSwapExactIn',
+                [swaps, tokenOut, minAmountOut.toString()]
+            );
+        } else if (tokenOut === EtherKey) {
+            await providerStore.sendTransaction(
+                ContractTypes.ExchangeProxy,
+                proxyAddress,
+                'batchEthOutSwapExactIn',
+                [
+                    swaps,
+                    tokenIn,
+                    inputAmount.toString(),
+                    minAmountOut.toString(),
+                ]
+            );
+        } else {
+            await providerStore.sendTransaction(
+                ContractTypes.ExchangeProxy,
+                proxyAddress,
+                'batchSwapExactIn',
+                [
+                    swaps,
+                    tokenIn,
+                    tokenOut,
+                    inputAmount.toString(),
+                    minAmountOut.toString(),
+                ]
+            );
+        }
     };
 
     @action batchSwapExactOut = async (
@@ -180,18 +201,34 @@ export default class ProxyStore {
 
         const proxyAddress = tokenStore.getProxyAddress(chainId);
 
-        await providerStore.sendTransaction(
-            ContractTypes.ExchangeProxy,
-            proxyAddress,
-            'batchSwapExactOut',
-            [
-                swaps,
-                tokenIn,
-                tokenOut,
-                maxAmountIn.toString(),
-                amountOut.toString(),
-            ]
-        );
+        if (tokenIn === EtherKey) {
+            await providerStore.sendTransaction(
+                ContractTypes.ExchangeProxy,
+                proxyAddress,
+                'batchEthInSwapExactOut',
+                [swaps, tokenOut, amountOut.toString()]
+            );
+        } else if (tokenOut === EtherKey) {
+            await providerStore.sendTransaction(
+                ContractTypes.ExchangeProxy,
+                proxyAddress,
+                'batchEthOutSwapExactOut',
+                [swaps, tokenIn, amountOut.toString(), maxAmountIn.toString()]
+            );
+        } else {
+            await providerStore.sendTransaction(
+                ContractTypes.ExchangeProxy,
+                proxyAddress,
+                'batchSwapExactOut',
+                [
+                    swaps,
+                    tokenIn,
+                    tokenOut,
+                    amountOut.toString(),
+                    maxAmountIn.toString(),
+                ]
+            );
+        }
     };
 
     calcEffectivePrice(amountIn: BigNumber, amountOut: BigNumber): BigNumber {
