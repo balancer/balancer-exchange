@@ -22,7 +22,14 @@
     ```
 
 -   Build & run locally
+
     ```
     yarn build
     yarn start
     ```
+
+-   Test Locally (using Cypress)
+    ```$xslt
+    yarn run cypress open
+    ```
+    Note: You will need to run a browser with a metamask plugin from the browser list.
