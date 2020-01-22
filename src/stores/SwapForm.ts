@@ -218,7 +218,7 @@ export default class SwapFormStore {
             return InputValidationStatus.NOT_FLOAT;
         }
 
-        if (value === '0') {
+        if (parseFloat(value).toString() === '0') {
             return InputValidationStatus.ZERO;
         }
 
