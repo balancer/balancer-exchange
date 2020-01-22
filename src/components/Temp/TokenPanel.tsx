@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { isAddress } from '../../utils/helpers';
 
 import { useEffect, useRef } from 'react';
+import { EtherKey } from '../../stores/Token';
 
 const Panel = styled.div`
     width: 180px;
@@ -165,9 +166,13 @@ const Token = ({
                     ref={textInput}
                     placeholder="0"
                 />
-                <MaxLink onClick={() => updateSwapFormData(tokenBalance)}>
-                    Max
-                </MaxLink>
+                {tokenAddress === EtherKey && inputName === 'inputAmount' ? (
+                    <div />
+                ) : (
+                    <MaxLink onClick={() => updateSwapFormData(tokenBalance)}>
+                        Max
+                    </MaxLink>
+                )}
             </InputWrapper>
         );
     };
