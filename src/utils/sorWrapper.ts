@@ -66,10 +66,10 @@ export const findPoolsWithTokens = async (
     let poolData: Pool[] = [];
     pools.pools.forEach(p => {
         let tI: any = p.tokens.find(
-            t => helpers.toChecksum(t.address) === tokenIn
+            t => helpers.toChecksum(t.address) === helpers.toChecksum(tokenIn)
         );
         let tO: any = p.tokens.find(
-            t => helpers.toChecksum(t.address) === tokenOut
+            t => helpers.toChecksum(t.address) === helpers.toChecksum(tokenOut)
         );
         let obj: Pool = {
             id: helpers.toChecksum(p.id),
