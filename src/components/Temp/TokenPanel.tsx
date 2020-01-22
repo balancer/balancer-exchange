@@ -135,6 +135,7 @@ const Token = ({
     headerText,
     tokenName,
     tokenBalance,
+    truncatedTokenBalance,
     tokenAddress,
     setModalOpen,
     setFocus,
@@ -189,7 +190,7 @@ const Token = ({
                     <TokenName>{tokenName}</TokenName>
                 </IconAndNameContainer>
                 <TokenBalance>
-                    {tokenName} {tokenBalance}
+                    {tokenName} {truncatedTokenBalance}
                 </TokenBalance>
             </TokenContainer>
             <InputContainer errorMessage={errorMessage} />

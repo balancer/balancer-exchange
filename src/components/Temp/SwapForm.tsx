@@ -212,8 +212,10 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
 
     let inputUserBalanceBN;
     let inputUserBalance;
+    let truncatedInputUserBalance;
     let outputUserBalanceBN;
     let outputUserBalance;
+    let truncatedOutputUserBalance;
     let userAllowance;
 
     if (account) {
@@ -222,18 +224,34 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
             inputToken,
             account
         );
-        inputUserBalance = inputUserBalanceBN
-            ? helpers.fromWei(inputUserBalanceBN).toString()
-            : 'N/A';
+
+        if(inputUserBalanceBN) {
+            inputUserBalance = inputUserBalanceBN
+                ? helpers.fromWei(inputUserBalanceBN)
+                : 'N/A';  
+            if(inputUserBalance.length > 20) {
+                truncatedInputUserBalance = inputUserBalance.substring(0, 20) + "..."
+            } else {
+                truncatedInputUserBalance = inputUserBalance
+            }
+        }
 
         outputUserBalanceBN = tokenStore.getBalance(
             chainId,
             outputToken,
             account
         );
-        outputUserBalance = outputUserBalanceBN
-            ? helpers.fromWei(outputUserBalanceBN).toString()
-            : 'N/A';
+
+        if(outputUserBalanceBN) {
+            outputUserBalance = outputUserBalanceBN
+                ? helpers.fromWei(outputUserBalanceBN).toString()
+                : 'N/A';
+            if(outputUserBalance.length > 20) {
+                truncatedOutputUserBalance = outputUserBalance.substring(0,20) + "..."
+            } else {
+                truncatedOutputUserBalance = outputUserBalance
+            }
+        }
 
         userAllowance = tokenStore.getAllowance(
             chainId,
@@ -264,6 +282,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                     setModalOpen={setModalOpen}
                     tokenName={inputTicker}
                     tokenBalance={inputUserBalance}
+                    truncatedTokenBalance={truncatedInputUserBalance}
                     tokenAddress={inputIconAddress}
                     errorMessage={errorMessage}
                 />
@@ -275,6 +294,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                     setModalOpen={setModalOpen}
                     tokenName={outputTicker}
                     tokenBalance={outputUserBalance}
+                    truncatedTokenBalance={truncatedOutputUserBalance}
                     tokenAddress={outputIconAddress}
                     errorMessage={errorMessage}
                 />
