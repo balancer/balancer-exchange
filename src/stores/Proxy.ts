@@ -25,6 +25,7 @@ import {
     formatSwapsExactAmountOut,
 } from '../utils/sorWrapper';
 import { ethers } from 'ethers';
+import { EtherKey } from './Token';
 
 export interface ExactAmountOutPreview {
     outputAmount: BigNumber;
@@ -32,6 +33,7 @@ export interface ExactAmountOutPreview {
     effectivePrice: BigNumber | null;
     swaps: Swap[];
     validSwap: boolean;
+    error?: string;
 }
 
 export interface ExactAmountInPreview {
@@ -40,6 +42,7 @@ export interface ExactAmountInPreview {
     effectivePrice: BigNumber | null;
     swaps: Swap[];
     validSwap: boolean;
+    error?: string;
 }
 
 export interface SwapInput {
@@ -150,18 +153,40 @@ export default class ProxyStore {
 
         const proxyAddress = tokenStore.getProxyAddress(chainId);
 
-        await providerStore.sendTransaction(
-            ContractTypes.ExchangeProxy,
-            proxyAddress,
-            'batchSwapExactIn',
-            [
-                swaps,
-                tokenIn,
-                tokenOut,
-                inputAmount.toString(),
-                minAmountOut.toString(),
-            ]
-        );
+        if (tokenIn === EtherKey) {
+            await providerStore.sendTransaction(
+                ContractTypes.ExchangeProxy,
+                proxyAddress,
+                'batchEthInSwapExactIn',
+                [swaps, tokenOut, minAmountOut.toString()],
+                { value: ethers.utils.bigNumberify(inputAmount.toString()) }
+            );
+        } else if (tokenOut === EtherKey) {
+            await providerStore.sendTransaction(
+                ContractTypes.ExchangeProxy,
+                proxyAddress,
+                'batchEthOutSwapExactIn',
+                [
+                    swaps,
+                    tokenIn,
+                    inputAmount.toString(),
+                    minAmountOut.toString(),
+                ]
+            );
+        } else {
+            await providerStore.sendTransaction(
+                ContractTypes.ExchangeProxy,
+                proxyAddress,
+                'batchSwapExactIn',
+                [
+                    swaps,
+                    tokenIn,
+                    tokenOut,
+                    inputAmount.toString(),
+                    minAmountOut.toString(),
+                ]
+            );
+        }
     };
 
     @action batchSwapExactOut = async (
@@ -177,18 +202,35 @@ export default class ProxyStore {
 
         const proxyAddress = tokenStore.getProxyAddress(chainId);
 
-        await providerStore.sendTransaction(
-            ContractTypes.ExchangeProxy,
-            proxyAddress,
-            'batchSwapExactOut',
-            [
-                swaps,
-                tokenIn,
-                tokenOut,
-                maxAmountIn.toString(),
-                amountOut.toString(),
-            ]
-        );
+        if (tokenIn === EtherKey) {
+            await providerStore.sendTransaction(
+                ContractTypes.ExchangeProxy,
+                proxyAddress,
+                'batchEthInSwapExactOut',
+                [swaps, tokenOut, amountOut.toString()],
+                { value: ethers.utils.bigNumberify(maxAmountIn.toString()) }
+            );
+        } else if (tokenOut === EtherKey) {
+            await providerStore.sendTransaction(
+                ContractTypes.ExchangeProxy,
+                proxyAddress,
+                'batchEthOutSwapExactOut',
+                [swaps, tokenIn, amountOut.toString(), maxAmountIn.toString()]
+            );
+        } else {
+            await providerStore.sendTransaction(
+                ContractTypes.ExchangeProxy,
+                proxyAddress,
+                'batchSwapExactOut',
+                [
+                    swaps,
+                    tokenIn,
+                    tokenOut,
+                    amountOut.toString(),
+                    maxAmountIn.toString(),
+                ]
+            );
+        }
     };
 
     calcEffectivePrice(amountIn: BigNumber, amountOut: BigNumber): BigNumber {
@@ -205,11 +247,27 @@ export default class ProxyStore {
     ): Promise<ExactAmountInPreview> => {
         try {
             this.setPreviewPending(true);
+            const { tokenStore, providerStore } = this.rootStore;
+            const { chainId } = providerStore.getActiveWeb3React();
 
             let maxPrice = helpers.setPropertyToMaxUintIfEmpty();
             let minAmountOut = helpers.setPropertyToZeroIfEmpty();
 
-            const poolData = await findPoolsWithTokens(tokenIn, tokenOut, true);
+            // Use WETH address for Ether
+            const tokenInToFind =
+                tokenIn === EtherKey
+                    ? tokenStore.getWethAddress(chainId)
+                    : tokenIn;
+            const tokenOutToFind =
+                tokenOut === EtherKey
+                    ? tokenStore.getWethAddress(chainId)
+                    : tokenOut;
+
+            const poolData = await findPoolsWithTokens(
+                tokenInToFind,
+                tokenOutToFind,
+                true
+            );
             const costOutputToken = this.costCalculator.getCostOutputToken();
 
             const sorSwaps = findBestSwaps(
@@ -266,6 +324,7 @@ export default class ProxyStore {
                 effectivePrice: null,
                 swaps: null,
                 validSwap: false,
+                error: e.message,
             };
         }
     };
@@ -277,11 +336,27 @@ export default class ProxyStore {
     ): Promise<ExactAmountOutPreview> => {
         try {
             this.setPreviewPending(true);
+            const { tokenStore, providerStore } = this.rootStore;
+            const { chainId } = providerStore.getActiveWeb3React();
 
             let maxPrice = helpers.setPropertyToMaxUintIfEmpty();
             let maxAmountIn = helpers.setPropertyToMaxUintIfEmpty();
 
-            const poolData = await findPoolsWithTokens(tokenIn, tokenOut, true);
+            // Use WETH address for Ether
+            const tokenInToFind =
+                tokenIn === EtherKey
+                    ? tokenStore.getWethAddress(chainId)
+                    : tokenIn;
+            const tokenOutToFind =
+                tokenOut === EtherKey
+                    ? tokenStore.getWethAddress(chainId)
+                    : tokenOut;
+
+            const poolData = await findPoolsWithTokens(
+                tokenInToFind,
+                tokenOutToFind,
+                true
+            );
             const costOutputToken = this.costCalculator.getCostOutputToken();
 
             let sorSwaps: SorSwaps = findBestSwaps(
@@ -347,6 +422,7 @@ export default class ProxyStore {
                 effectivePrice: null,
                 swaps: null,
                 validSwap: false,
+                error: e.message,
             };
         }
     };

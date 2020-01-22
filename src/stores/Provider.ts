@@ -227,10 +227,13 @@ export default class ProviderStore {
         contractType: ContractTypes,
         contractAddress: string,
         action: string,
-        params: any[]
+        params: any[],
+        overrides?: any
     ): Promise<void> => {
         const { transactionStore } = this.rootStore;
         const { chainId, account } = this.getActiveWeb3React();
+
+        overrides = overrides ? overrides : {};
 
         if (!account) {
             throw new Error(
@@ -255,10 +258,11 @@ export default class ProviderStore {
             action,
             sender: account,
             data: params,
+            overrides,
         });
 
         if (error) {
-            // Handle tx error
+            console.log('[Send Transaction Error', error);
         } else if (txResponse) {
             transactionStore.addTransactionRecord(chainId, txResponse);
         } else {

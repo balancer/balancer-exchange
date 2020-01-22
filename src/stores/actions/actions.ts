@@ -6,6 +6,7 @@ interface ActionRequest {
     action: string;
     sender: string;
     data: any[];
+    overrides: any;
 }
 
 interface ActionResponse {
@@ -23,6 +24,7 @@ const preLog = (params: ActionRequest) => {
         action: params.action,
         sender: params.sender,
         data: params.data,
+        overrides: params.overrides,
     });
 };
 
@@ -40,7 +42,7 @@ const postLog = (result: ActionResponse) => {
 export const sendAction = async (
     params: ActionRequest
 ): Promise<ActionResponse> => {
-    const { contract, action, sender, data } = params;
+    const { contract, action, sender, data, overrides } = params;
     preLog(params);
 
     const actionResponse: ActionResponse = {
@@ -53,7 +55,7 @@ export const sendAction = async (
     };
 
     try {
-        actionResponse.txResponse = await contract[action](...data);
+        actionResponse.txResponse = await contract[action](...data, overrides);
     } catch (e) {
         actionResponse.error = e;
     }

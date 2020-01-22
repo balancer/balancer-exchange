@@ -4,6 +4,7 @@ import Popup from 'reactjs-popup'
 import { isAddress } from '../../utils/helpers';
 
 import { useEffect, useRef } from 'react';
+import { EtherKey } from '../../stores/Token';
 
 const Panel = styled.div`
     width: 180px;
@@ -44,11 +45,15 @@ const IconAndNameContainer = styled.div`
     flex-direction: row;
 `;
 
-export const TokenIconAddress = address =>
-    `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/${isAddress(
-        address
-    )}/logo.png`;
-
+export const TokenIconAddress = address => {
+    if (address === 'ether') {
+        return `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/info/logo.png`;
+    } else {
+        return `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/${isAddress(
+            address
+        )}/logo.png`;
+    }
+};
 const TokenIcon = styled.img`
     width: 28px;
     height: 28px;
@@ -158,29 +163,25 @@ const Token = ({
     const InputContainer = ({ errorMessage }) => {
         // TODO make sure conditional is checking the correct thing
         const errorBorders = errorMessage === '' ? false : true;
-        if (tokenName == 'ETH') {
-            return (
-                <InputWrapper errorBorders={errorBorders}>
-                    <input placeholder="0" />
-                </InputWrapper>
-            );
-        } else {
-            return (
-                <InputWrapper errorBorders={errorBorders}>
-                    <input
-                        id={inputID}
-                        name={inputName}
-                        defaultValue={defaultValue}
-                        onChange={onChange}
-                        ref={textInput}
-                        placeholder="0"
-                    />
+        return (
+            <InputWrapper errorBorders={errorBorders}>
+                <input
+                    id={inputID}
+                    name={inputName}
+                    defaultValue={defaultValue}
+                    onChange={onChange}
+                    ref={textInput}
+                    placeholder="0"
+                />
+                {tokenAddress === EtherKey && inputName === 'inputAmount' ? (
+                    <div />
+                ) : (
                     <MaxLink onClick={() => updateSwapFormData(tokenBalance)}>
                         Max
                     </MaxLink>
-                </InputWrapper>
-            );
-        }
+                )}
+            </InputWrapper>
+        );
     };
 
     return (
