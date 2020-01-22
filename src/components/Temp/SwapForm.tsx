@@ -75,14 +75,6 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     }
 
     const { inputs, outputs } = swapFormStore;
-    const {
-        inputToken,
-        inputTicker,
-        inputIconAddress,
-        outputToken,
-        outputTicker,
-        outputIconAddress,
-    } = inputs;
     const tokenList = tokenStore.getWhitelistedTokenMetadata(chainId);
 
     // TODO set default inputToken and outputToken to ETH and DAI (or was it token with highest user balance??)
@@ -97,6 +89,15 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         swapFormStore.inputs.outputTicker = tokenList[1].symbol;
         swapFormStore.inputs.outputIconAddress = tokenList[1].iconAddress;
     }
+
+    const {
+        inputToken,
+        inputTicker,
+        inputIconAddress,
+        outputToken,
+        outputTicker,
+        outputIconAddress,
+    } = inputs;
 
     const buttonActionHandler = (buttonState: ButtonState) => {
         switch (buttonState) {
