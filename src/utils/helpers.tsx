@@ -223,6 +223,20 @@ export const generateIcon = address => {
     return jazzicon(28, address.substr(0, 10));
 };
 
+export const normalizePriceValues = (
+    inputValue: BigNumber,
+    outputValue: BigNumber
+): {
+    normalizedInput: BigNumber;
+    normalizedOutput: BigNumber;
+} => {
+    const multiplier = bnum(1).div(inputValue);
+    return {
+        normalizedInput: inputValue.times(multiplier),
+        normalizedOutput: outputValue.times(multiplier),
+    };
+};
+
 export const getGasPriceFromETHGasStation = () => {
     return new Promise((resolve, reject) => {
         const timeout = setTimeout(() => {

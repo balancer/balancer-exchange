@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import { str, toAddressStub } from 'utils/helpers';
+import { normalizePriceValues, str, toAddressStub } from 'utils/helpers';
 import { observer } from 'mobx-react';
 import { Pie } from 'react-chartjs-2';
 import { ChartData } from '../../stores/SwapForm';
@@ -219,11 +219,17 @@ const TradeComposition = observer(
                 chainId,
                 outputToken
             ).symbol;
+
+            const { normalizedInput, normalizedOutput } = normalizePriceValues(
+                chartData.inputPriceValue,
+                chartData.outputPriceValue
+            );
+
             if (chartData.validSwap) {
                 return (
                     <div>
-                        {str(chartData.inputPriceValue)} {inputTokenSymbol} ={' '}
-                        {str(chartData.outputPriceValue)} {outputTokenSymbol}
+                        {str(normalizedInput)} {inputTokenSymbol} ={' '}
+                        {str(normalizedOutput)} {outputTokenSymbol}
                     </div>
                 );
             } else {
