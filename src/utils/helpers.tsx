@@ -124,6 +124,10 @@ export function fromFeeToPercentage(value) {
     return percentageValue;
 }
 
+export function formatPctString(value: BigNumber): string {
+    return `${value.toString()}%`;
+}
+
 const ETHERSCAN_PREFIXES = {
     1: '',
     3: 'ropsten.',

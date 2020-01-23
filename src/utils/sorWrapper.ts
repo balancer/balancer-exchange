@@ -1,10 +1,14 @@
 import { BigNumber } from './bignumber';
-import { BONE, calcInGivenOut, calcOutGivenIn } from './balancerCalcs';
+import {
+    BONE,
+    calcInGivenOut,
+    calcOutGivenIn,
+    calcSpotPrice,
+} from './balancerCalcs';
 import * as helpers from './helpers';
+import { bnum, formatPoolData } from './helpers';
 import sor from 'balancer-sor';
-import { bnum } from './helpers';
 import { SwapMethods } from '../stores/SwapForm';
-import { formatPoolData } from './helpers';
 import { Pool, SorSwaps, Swap } from '../stores/Proxy';
 
 export const formatSwapsExactAmountIn = (
@@ -138,6 +142,68 @@ export const calcTotalOutput = (swaps: Swap[], poolData: Pool[]): BigNumber => {
     } catch (e) {
         throw new Error(e);
     }
+};
+
+export const calcPrice = (amountIn, amountOut) => {
+    console.log('[calcPrice]', {
+        amountIn: amountIn.toString(),
+        amountOut: amountOut.toString(),
+        price: amountIn.div(amountOut).toString(),
+    });
+    return amountIn.div(amountOut);
+};
+
+export const calcExpectedSlippage = (
+    spotPrice: BigNumber,
+    effectivePrice: BigNumber
+) => {
+    const spotPercentage = spotPrice.div(effectivePrice).times(100);
+    console.log('[calcExpectedSlippage]', {
+        spotPrice: spotPrice.toString(),
+        effectivePrice: effectivePrice.toString(),
+        spotPercentage: spotPercentage.toString(),
+        expectedSlippage: bnum(100)
+            .minus(spotPercentage)
+            .toString(),
+    });
+
+    return bnum(100).minus(spotPercentage);
+};
+
+export const calcTotalSpotValue = (
+    method: SwapMethods,
+    swaps: Swap[],
+    poolData: Pool[]
+) => {
+    let totalValue = bnum(0);
+    swaps.forEach(swap => {
+        const swapAmount =
+            method === SwapMethods.EXACT_IN
+                ? swap.tokenInParam
+                : swap.tokenOutParam;
+        const pool = poolData.find(p => p.id == swap.pool);
+        if (!pool) {
+            throw new Error(
+                '[Invariant] No pool found for selected balancer index'
+            );
+        }
+
+        const spotPrice = calcSpotPrice(
+            pool.balanceIn,
+            pool.weightIn,
+            pool.balanceOut,
+            pool.weightOut,
+            pool.swapFee
+        );
+
+        if (method === SwapMethods.EXACT_IN) {
+            totalValue = totalValue.plus(bnum(swapAmount).div(spotPrice));
+        } else if (method === SwapMethods.EXACT_OUT) {
+            totalValue = totalValue.plus(bnum(swapAmount).times(spotPrice));
+        }
+    });
+
+    return totalValue;
 };
 
 /* Go through selected swaps and determine the total input */

@@ -108,12 +108,12 @@ const SlippageSelector = ({
     const updateSlippage = (cellIndex, slippageValue) => {
         console.log('IN UPDATESLIPPGE . . . WHY THO');
         setCurrentCell(cellIndex);
-        swapFormStore.inputs.slippageAmount = slippageValue;
+        swapFormStore.inputs.extraSlippageAllowance = slippageValue;
     };
 
     const onChange = event => {
         const { value } = event.target;
-        swapFormStore.inputs.slippageAmount = value;
+        swapFormStore.inputs.extraSlippageAllowance = value;
     };
 
     const CellGenerator = ({ children, cellIndex, slippageValue }) => {
@@ -143,7 +143,9 @@ const SlippageSelector = ({
                     <InputWrapper>
                         <input
                             placeholder="0"
-                            defaultValue={swapFormStore.inputs.slippageAmount}
+                            defaultValue={
+                                swapFormStore.inputs.extraSlippageAllowance
+                            }
                             onChange={e => onChange(e)}
                         />
                         %

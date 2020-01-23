@@ -3,8 +3,9 @@ import TokenPanel from './TokenPanel';
 import { observer } from 'mobx-react';
 import { useStores } from '../../contexts/storesContext';
 import { InputValidationStatus, SwapMethods } from 'stores/SwapForm';
-import { bnum, fromWei, str } from 'utils/helpers';
+import { bnum, formatPctString, fromWei, str } from 'utils/helpers';
 import { ExactAmountInPreview } from 'stores/Proxy';
+import { calcExpectedSlippage } from '../../utils/sorWrapper';
 
 const SellToken = observer(
     ({
@@ -60,6 +61,13 @@ const SellToken = observer(
                 if (preview.validSwap) {
                     output['outputAmount'] = fromWei(preview.totalOutput);
                     output['effectivePrice'] = str(preview.effectivePrice);
+                    output['spotPrice'] = str(preview.spotPrice);
+                    output['expectedSlippage'] = formatPctString(
+                        calcExpectedSlippage(
+                            preview.spotPrice,
+                            preview.effectivePrice
+                        )
+                    );
                     output['swaps'] = preview.swaps;
                     output['validSwap'] = true;
                     output['activeErrorMessage'] = '';
@@ -90,6 +98,7 @@ const SellToken = observer(
                     inputAmount: bnum(inputAmount),
                     totalOutput: null,
                     effectivePrice: null,
+                    spotPrice: null,
                     swaps: null,
                     validSwap: false,
                 };

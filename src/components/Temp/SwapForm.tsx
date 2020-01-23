@@ -97,6 +97,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         outputToken,
         outputTicker,
         outputIconAddress,
+        expectedSlippage,
     } = inputs;
 
     const buttonActionHandler = (buttonState: ButtonState) => {
@@ -311,7 +312,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                 />
                 <ErrorDisplay errorText={errorMessage} />
                 <SlippageSelector
-                    expectedSlippage="0.38%"
+                    expectedSlippage={expectedSlippage}
                     slippageSelectorOpen={slippageSelectorOpen}
                     setSlippageSelectorOpen={setSlippageSelectorOpen}
                 />

@@ -38,6 +38,20 @@ export function calcInGivenOut(
     return tokenAmountIn;
 }
 
+export function calcSpotPrice(
+    tokenBalanceIn: BigNumber,
+    tokenWeightIn: BigNumber,
+    tokenBalanceOut: BigNumber,
+    tokenWeightOut: BigNumber,
+    swapFee: BigNumber
+) {
+    const numer = bdiv(tokenBalanceIn, tokenWeightIn);
+    const denom = bdiv(tokenBalanceOut, tokenWeightOut);
+    const ratio = bdiv(numer, denom);
+    const scale = bdiv(BONE, bsubSign(BONE, swapFee).res);
+    return bmul(ratio, scale);
+}
+
 function bmul(a: BigNumber, b: BigNumber): BigNumber {
     let c0 = a.times(b);
     let c1 = c0.plus(BONE.div(2));

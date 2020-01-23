@@ -9,16 +9,16 @@ import {
     Scale,
 } from 'utils/helpers';
 import RootStore from 'stores/Root';
-import sor from 'balancer-sor';
 import { BigNumber } from 'utils/bignumber';
 import * as log from 'loglevel';
-import { ContractTypes, schema } from './Provider';
-import { BONE } from 'utils/balancerCalcs';
+import { ContractTypes } from './Provider';
 import { SwapMethods } from './SwapForm';
 import CostCalculator from '../utils/CostCalculator';
 import {
+    calcPrice,
     calcTotalInput,
     calcTotalOutput,
+    calcTotalSpotValue,
     findBestSwaps,
     findPoolsWithTokens,
     formatSwapsExactAmountIn,
@@ -31,6 +31,7 @@ export interface ExactAmountOutPreview {
     outputAmount: BigNumber;
     totalInput: BigNumber | null;
     effectivePrice: BigNumber | null;
+    spotPrice: BigNumber | null;
     swaps: Swap[];
     validSwap: boolean;
     error?: string;
@@ -40,6 +41,7 @@ export interface ExactAmountInPreview {
     inputAmount: BigNumber;
     totalOutput: BigNumber | null;
     effectivePrice: BigNumber | null;
+    spotPrice: BigNumber | null;
     swaps: Swap[];
     validSwap: boolean;
     error?: string;
@@ -285,6 +287,19 @@ export default class ProxyStore {
                 bnum(minAmountOut)
             );
 
+            const totalOutputSpot = calcTotalSpotValue(
+                SwapMethods.EXACT_IN,
+                swaps,
+                poolData
+            );
+
+            console.log('[Spot Price Calc]', {
+                inputAmount: inputAmount.toString(),
+                totalOutputSpot: totalOutputSpot.toString(),
+            });
+
+            const spotPrice = calcPrice(inputAmount, totalOutputSpot);
+
             const totalOutput = calcTotalOutput(swaps, poolData);
 
             const effectivePrice = this.calcEffectivePrice(
@@ -312,6 +327,7 @@ export default class ProxyStore {
                 inputAmount,
                 totalOutput,
                 effectivePrice,
+                spotPrice,
                 swaps,
                 validSwap: true,
             };
@@ -322,6 +338,7 @@ export default class ProxyStore {
                 inputAmount,
                 totalOutput: null,
                 effectivePrice: null,
+                spotPrice: null,
                 swaps: null,
                 validSwap: false,
                 error: e.message,
@@ -381,6 +398,19 @@ export default class ProxyStore {
                 maxAmountIn
             );
 
+            const totalInputSpot = calcTotalSpotValue(
+                SwapMethods.EXACT_OUT,
+                swaps,
+                poolData
+            );
+
+            const spotPrice = calcPrice(bnum(outputAmount), totalInputSpot);
+
+            console.log('[Spot Price Calc]', {
+                outputAmount: outputAmount.toString(),
+                totalInputSpot: totalInputSpot.toString(),
+            });
+
             const effectivePrice = this.calcEffectivePrice(
                 bnum(outputAmount),
                 helpers.scale(totalInput, Scale.fromWei)
@@ -410,6 +440,7 @@ export default class ProxyStore {
                 outputAmount,
                 totalInput,
                 effectivePrice,
+                spotPrice,
                 swaps,
                 validSwap: true,
             };
@@ -420,6 +451,7 @@ export default class ProxyStore {
                 outputAmount,
                 totalInput: null,
                 effectivePrice: null,
+                spotPrice: null,
                 swaps: null,
                 validSwap: false,
                 error: e.message,

@@ -56,7 +56,8 @@ export default class SwapFormStore {
         outputToken: '',
         inputAmount: '',
         outputAmount: '',
-        slippageAmount: '1.0',
+        extraSlippageAllowance: '1.0',
+        expectedSlippage: '.38',
         inputTicker: '',
         outputTicker: '',
         inputIconAddress: '',
@@ -75,6 +76,7 @@ export default class SwapFormStore {
         inputAmount: '',
         outputAmount: '',
         effectivePrice: '',
+        spotPrice: '',
         swaps: [],
         validSwap: false,
     };
@@ -242,6 +244,7 @@ export default class SwapFormStore {
             inputAmount: '',
             outputAmount: '',
             effectivePrice: '',
+            spotPrice: '',
             swaps: [],
             validSwap: false,
         };

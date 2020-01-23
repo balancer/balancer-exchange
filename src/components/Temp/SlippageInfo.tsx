@@ -1,5 +1,5 @@
 import React from 'react';
-import Popup from 'reactjs-popup'
+import Popup from 'reactjs-popup';
 import styled from 'styled-components';
 import { observer } from 'mobx-react';
 import { useStores } from '../../contexts/storesContext';
@@ -59,18 +59,18 @@ const SlippageInfo = observer(
                         setSlippageSelectorOpen(true);
                     }}
                 >
-                    {swapFormStore.inputs.slippageAmount}%
+                    {swapFormStore.inputs.extraSlippageAllowance}%
                 </SlippageInlineDisplay>
                 <div>additional limit</div>
-			    <Popup
-			      	trigger={<InfoPopover>i</InfoPopover>}
-			      	position="top center"
-			      	on="hover"
-			    >
-			    	<div>
-			        	<div>Expected effective price</div>
-			      	</div>
-			    </Popup>                
+                <Popup
+                    trigger={<InfoPopover>i</InfoPopover>}
+                    position="top center"
+                    on="hover"
+                >
+                    <div>
+                        <div>Expected effective price</div>
+                    </div>
+                </Popup>
             </SlippageInfoContainer>
         );
     }
