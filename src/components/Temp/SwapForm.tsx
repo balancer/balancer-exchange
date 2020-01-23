@@ -226,14 +226,15 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
             account
         );
 
-        if(inputUserBalanceBN) {
+        if (inputUserBalanceBN) {
             inputUserBalance = inputUserBalanceBN
                 ? helpers.fromWei(inputUserBalanceBN)
-                : 'N/A';  
-            if(inputUserBalance.length > 20) {
-                truncatedInputUserBalance = inputUserBalance.substring(0, 20) + "..."
+                : 'N/A';
+            if (inputUserBalance.length > 20) {
+                truncatedInputUserBalance =
+                    inputUserBalance.substring(0, 20) + '...';
             } else {
-                truncatedInputUserBalance = inputUserBalance
+                truncatedInputUserBalance = inputUserBalance;
             }
         }
 
@@ -243,14 +244,15 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
             account
         );
 
-        if(outputUserBalanceBN) {
+        if (outputUserBalanceBN) {
             outputUserBalance = outputUserBalanceBN
                 ? helpers.fromWei(outputUserBalanceBN).toString()
                 : 'N/A';
-            if(outputUserBalance.length > 20) {
-                truncatedOutputUserBalance = outputUserBalance.substring(0,20) + "..."
+            if (outputUserBalance.length > 20) {
+                truncatedOutputUserBalance =
+                    outputUserBalance.substring(0, 20) + '...';
             } else {
-                truncatedOutputUserBalance = outputUserBalance
+                truncatedOutputUserBalance = outputUserBalance;
             }
         }
 
@@ -286,6 +288,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                     truncatedTokenBalance={truncatedInputUserBalance}
                     tokenAddress={inputIconAddress}
                     errorMessage={errorMessage}
+                    showMax={!!account && !!inputUserBalanceBN}
                 />
                 <Switch />
                 <BuyToken
@@ -298,6 +301,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                     truncatedTokenBalance={truncatedOutputUserBalance}
                     tokenAddress={outputIconAddress}
                     errorMessage={errorMessage}
+                    showMax={!!account && !!outputUserBalanceBN}
                 />
             </RowContainer>
             <ColumnContainer>
