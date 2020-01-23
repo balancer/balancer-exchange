@@ -16,6 +16,7 @@ const BuyToken = observer(
         tokenAddress,
         setModalOpen,
         errorMessage,
+        showMax,
     }) => {
         const {
             root: {
@@ -112,6 +113,7 @@ const BuyToken = observer(
                 setModalOpen={setModalOpen}
                 setFocus={setBuyFocus}
                 errorMessage={errorMessage}
+                showMax={showMax}
             />
         );
     }

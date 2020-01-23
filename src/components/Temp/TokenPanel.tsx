@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import Popup from 'reactjs-popup'
+import Popup from 'reactjs-popup';
 import { isAddress } from '../../utils/helpers';
 
 import { useEffect, useRef } from 'react';
@@ -135,7 +135,7 @@ const MaxLink = styled.div`
 const PopupTokenBalance = styled.div`
     width: 200px;
     word-wrap: break-word;
-`
+`;
 
 const Token = ({
     defaultValue,
@@ -151,6 +151,7 @@ const Token = ({
     setModalOpen,
     setFocus,
     errorMessage,
+    showMax,
 }) => {
     const textInput = useRef(null);
 
@@ -173,7 +174,8 @@ const Token = ({
                     ref={textInput}
                     placeholder="0"
                 />
-                {tokenAddress === EtherKey && inputName === 'inputAmount' ? (
+                {(tokenAddress === EtherKey && inputName === 'inputAmount') ||
+                !showMax ? (
                     <div />
                 ) : (
                     <MaxLink onClick={() => updateSwapFormData(tokenBalance)}>
