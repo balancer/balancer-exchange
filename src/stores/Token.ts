@@ -463,12 +463,22 @@ export default class TokenStore {
         */
         const stale =
             fetchBlock <=
-            this.getBalanceLastFetched(chainId, tokenAddress, account);
+            this.getAllowanceLastFetched(
+                chainId,
+                tokenAddress,
+                account,
+                spender
+            );
         if (!stale) {
             const allowance = bnum(await token.allowance(account, spender));
             const stale =
                 fetchBlock <=
-                this.getBalanceLastFetched(chainId, tokenAddress, account);
+                this.getAllowanceLastFetched(
+                    chainId,
+                    tokenAddress,
+                    account,
+                    spender
+                );
             if (!stale) {
                 this.setAllowanceProperty(
                     chainId,
