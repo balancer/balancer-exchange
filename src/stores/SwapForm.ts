@@ -57,7 +57,7 @@ export default class SwapFormStore {
         inputAmount: '',
         outputAmount: '',
         extraSlippageAllowance: '1.0',
-        expectedSlippage: '.38',
+        expectedSlippage: '0',
         inputTicker: '',
         outputTicker: '',
         inputIconAddress: '',
