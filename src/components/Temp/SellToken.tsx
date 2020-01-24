@@ -80,12 +80,21 @@ const SellToken = observer(
                 swapFormStore.updateOutputsFromObject(output);
             } else {
                 console.log('[Invalid Input]', inputStatus, value);
-                swapFormStore.updateInputsFromObject({
-                    outputAmount: '',
-                    activeErrorMessage: inputStatus,
-                    // clear preview
-                });
-                swapFormStore.resetTradeComposition();
+                if (inputStatus === InputValidationStatus.EMPTY) {
+                    swapFormStore.updateInputsFromObject({
+                        outputAmount: '',
+                        activeErrorMessage: '',
+                        // clear preview
+                    });
+                    swapFormStore.resetTradeComposition();                    
+                } else {
+                    swapFormStore.updateInputsFromObject({
+                        outputAmount: '',
+                        activeErrorMessage: inputStatus,
+                        // clear preview
+                    });
+                    swapFormStore.resetTradeComposition();
+                }
             }
         };
 
