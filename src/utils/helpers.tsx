@@ -125,7 +125,10 @@ export function fromFeeToPercentage(value) {
 }
 
 export function formatPctString(value: BigNumber): string {
-    return `${value.toString()}%`;
+    if (value.lte(0.01) && value.gt(0)) {
+        return '<0.01%';
+    }
+    return `${value.toFormat(2, BigNumber.ROUND_HALF_EVEN)}%`;
 }
 
 const ETHERSCAN_PREFIXES = {
