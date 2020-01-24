@@ -38,6 +38,7 @@ export default class ProviderStore {
     @observable chainData: ChainDataMap;
     @observable activeChainId: number;
     @observable activeFetchLoop: any;
+    @observable activeAccount: string;
     rootStore: RootStore;
 
     constructor(rootStore, networkIds: number[]) {
@@ -63,17 +64,22 @@ export default class ProviderStore {
         return chainData;
     }
 
-    async fetchLoop(this) {
+    fetchLoop(this, forceFetch?: boolean) {
         const { library, chainId, account } = this.getActiveWeb3React();
+
         library
             .getBlockNumber()
             .then(blockNumber => {
                 const lastChecked = this.getCurrentBlockNumber(chainId);
-                if (blockNumber != lastChecked) {
-                    console.log('[Data Fetcher] New Block Found', {
+
+                const doFetch = blockNumber != lastChecked || forceFetch;
+                if (doFetch) {
+                    console.log('[Data Fetcher] Fetch Blockchain Data', {
                         blockNumber,
                         chainId,
+                        account,
                     });
+
                     // Set block number
                     this.setCurrentBlockNumber(chainId, blockNumber);
 
@@ -82,10 +88,6 @@ export default class ProviderStore {
 
                     // Get user-specific blockchain data
                     if (account) {
-                        console.log(
-                            '[Data Fetcher] - Fetch for account',
-                            account
-                        );
                         this.fetchUserBlockchainData(chainId, account);
                     }
                 }
@@ -96,8 +98,8 @@ export default class ProviderStore {
     }
 
     startFetchLoop() {
-        this.fetchLoop();
-        this.activeFetchLoop = setInterval(this.fetchLoop.bind(this), 1000);
+        this.fetchLoop(true);
+        this.activeFetchLoop = setInterval(this.fetchLoop.bind(this), 500);
     }
 
     stopFetchLoop() {
@@ -115,6 +117,10 @@ export default class ProviderStore {
     @action setCurrentBlockNumber(chainId, blockNumber): void {
         const chainData = this.safeGetChainData(chainId);
         chainData.currentBlockNumber = blockNumber;
+    }
+
+    @action setActiveAccount(account: string) {
+        this.activeAccount = account;
     }
 
     @action fetchUserBlockchainData = async (

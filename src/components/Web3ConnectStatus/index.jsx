@@ -85,6 +85,19 @@ const Web3ConnectStatus = observer(() => {
 
     const contextNetwork = providerStore.getWeb3React(web3ContextNames.backup);
 
+    // Run extra blockchain fetch if account has changed
+    if (account) {
+        const activeAccount = providerStore.activeAccount;
+        if (activeAccount !== account) {
+            console.log('[Web3ConnectStatus] - Account changed', {
+                oldAccount: activeAccount,
+                newAccount: account,
+            });
+            providerStore.setActiveAccount(account);
+            providerStore.fetchLoop(true);
+        }
+    }
+
     if (!chainId) {
         throw new Error('No chain ID specified');
     }
