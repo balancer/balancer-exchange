@@ -43,6 +43,21 @@
             "type": "function"
         },
         {
+            "constant": false,
+            "inputs": [
+                {
+                    "internalType": "uint256",
+                    "name": "value",
+                    "type": "uint256"
+                }
+            ],
+            "name": "mint",
+            "outputs": [],
+            "payable": false,
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
             "constant": true,
             "inputs": [],
             "name": "totalSupply",
@@ -331,21 +346,14 @@
     "ast": {
         "absolutePath": "/Users/thomas/Code/client/balancer/external-contracts/contracts/TestToken.sol",
         "exportedSymbols": {
-            "TestToken": [
-                88
-            ]
+            "TestToken": [88]
         },
         "id": 89,
         "nodeType": "SourceUnit",
         "nodes": [
             {
                 "id": 58,
-                "literals": [
-                    "solidity",
-                    "^",
-                    "0.5",
-                    ".0"
-                ],
+                "literals": ["solidity", "^", "0.5", ".0"],
                 "nodeType": "PragmaDirective",
                 "src": "0:23:1"
             },
@@ -410,21 +418,12 @@
                         "src": "175:13:1"
                     }
                 ],
-                "contractDependencies": [
-                    618,
-                    676,
-                    745
-                ],
+                "contractDependencies": [618, 676, 745],
                 "contractKind": "contract",
                 "documentation": null,
                 "fullyImplemented": true,
                 "id": 88,
-                "linearizedBaseContracts": [
-                    88,
-                    676,
-                    618,
-                    745
-                ],
+                "linearizedBaseContracts": [88, 676, 618, 745],
                 "name": "TestToken",
                 "nodeType": "ContractDefinition",
                 "nodes": [
@@ -723,21 +722,14 @@
     "legacyAST": {
         "absolutePath": "/Users/thomas/Code/client/balancer/external-contracts/contracts/TestToken.sol",
         "exportedSymbols": {
-            "TestToken": [
-                88
-            ]
+            "TestToken": [88]
         },
         "id": 89,
         "nodeType": "SourceUnit",
         "nodes": [
             {
                 "id": 58,
-                "literals": [
-                    "solidity",
-                    "^",
-                    "0.5",
-                    ".0"
-                ],
+                "literals": ["solidity", "^", "0.5", ".0"],
                 "nodeType": "PragmaDirective",
                 "src": "0:23:1"
             },
@@ -802,21 +794,12 @@
                         "src": "175:13:1"
                     }
                 ],
-                "contractDependencies": [
-                    618,
-                    676,
-                    745
-                ],
+                "contractDependencies": [618, 676, 745],
                 "contractKind": "contract",
                 "documentation": null,
                 "fullyImplemented": true,
                 "id": 88,
-                "linearizedBaseContracts": [
-                    88,
-                    676,
-                    618,
-                    745
-                ],
+                "linearizedBaseContracts": [88, 676, 618, 745],
                 "name": "TestToken",
                 "nodeType": "ContractDefinition",
                 "nodes": [

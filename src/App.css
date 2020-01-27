@@ -1,0 +1,49 @@
+:root {
+    /* General Styles */
+    --background: #21222c;
+    --body-text: #90a4ae;
+    --exit-modal-color: #dfe3e9;
+    --error-color: #ff8a80;
+    --header-text: #fafafa;
+    --info-border: #ffffff;
+    --link-text: #8c9eff;
+    --pie-chart-color: #b388ff;
+    --token-balance-text: #90a4ae;
+
+    /* Button Styles */
+    --button-text: #fafafa;
+    --button-background: #536dfe;
+    --button-border: #3d5afe;
+    --inactive-button-border: rgba(140, 158, 255, 0.2);
+    --inactive-button-text: rgba(255, 255, 255, 0.6);
+
+    /* Fonts */
+    --roboto: 'Roboto', sans-serif;
+
+    /* Panel Styles */
+    --panel-border: #41476b;
+    --panel-background: #2e2f39;
+    --panel-header-background: #282932;
+
+    /* Selector Styles */
+    --highlighted-selector-background: #41476b;
+    --highlighted-selector-border: #7785d5;
+    --highlighted-selector-text: #ffffff;
+    --selector-background: #2e2f39;
+    --selector-border: #41476b;
+    --selector-text: #fafafa;
+}
+
+body {
+    background: var(--background);
+}
+
+.popup-content {
+  color: var(--background);
+  border-radius: 4px;
+  height: 60px;
+  width: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
