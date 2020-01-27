@@ -25,7 +25,7 @@
         "chainId": 42,
         "bFactory": "0x8f7F78080219d4066A8036ccD30D588B416a40DB",
         "proxy": "0x4149AfB519203b58d72a2A82FCDe0e20B96F53C9",
-        "weth": "0xd0a1e359811322d97991e03f863a0c30c2cf029c",
+        "weth": "0xd0A1E359811322d97991E03f863a0C30C2cF029C",
         "tokens": [
             {
                 "symbol": "ETH",
@@ -34,28 +34,58 @@
                 "iconAddress": "ether"
             },
             {
-                "symbol": "MKR",
-                "address": "0x8fD2D32dCde13F41BC7e6D966Edde0DfF1f92E2E",
-                "decimals": 18,
-                "iconAddress": "0x9f8f72aa9304c8b593d555f12ef6589cc3a579a2"
-            },
-            {
                 "symbol": "DAI",
-                "address": "0xbaB6D2bf6C4cae495a958507AAf0804feCa2b000",
+                "address": "0x1528F3FCc26d13F7079325Fb78D9442607781c8C",
                 "decimals": 18,
                 "iconAddress": "0x6b175474e89094c44da98b954eedeac495271d0f"
             },
             {
+                "symbol": "MKR",
+                "address": "0xef13C0c8abcaf5767160018d268f9697aE4f5375",
+                "decimals": 18,
+                "iconAddress": "0x9f8f72aa9304c8b593d555f12ef6589cc3a579a2"
+            },
+            {
+                "symbol": "USDC",
+                "address": "0x2F375e94FC336Cdec2Dc0cCB5277FE59CBf1cAe5",
+                "decimals": 18,
+                "iconAddress": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+            },
+            {
+                "symbol": "REP",
+                "address": "0x8c9e6c40d3402480ACE624730524fACC5482798c",
+                "decimals": 18,
+                "iconAddress": "0x1985365e9f78359a9B6AD760e32412f4a445E862"
+            },
+            {
+                "symbol": "WBTC",
+                "address": "0xe0C9275E44Ea80eF17579d33c55136b7DA269aEb",
+                "decimals": 18,
+                "iconAddress": "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599"
+            },
+            {
+                "symbol": "BAT",
+                "address": "0x1f1f156E0317167c11Aa412E3d1435ea29Dc3cCE",
+                "decimals": 18,
+                "iconAddress": "0x0d8775f648430679a709e98d2b0cb6250d2887ef"
+            },
+            {
                 "symbol": "SNX",
-                "address": "0x16f23e3d18d498131bAb2D8843f5c2855448121d",
+                "address": "0x86436BcE20258a6DcfE48C9512d4d49A30C4d8c4",
                 "decimals": 18,
                 "iconAddress": "0xc011a72400e58ecd99ee497cf89e3775d4bd732f"
             },
             {
-                "symbol": "BAT",
-                "address": "0xf5A64B7c340F4346Bf3158D1DAd89d7872213b03",
+                "symbol": "ANT",
+                "address": "0x37f03a12241E9FD3658ad6777d289c3fb8512Bc9",
                 "decimals": 18,
-                "iconAddress": "0x0d8775f648430679a709e98d2b0cb6250d2887ef"
+                "iconAddress": "0x960b236A07cf122663c4303350609A66A7B288C0"
+            },
+            {
+                "symbol": "ZRX",
+                "address": "0xccb0F4Cf5D3F97f4a55bb5f5cA321C3ED033f244",
+                "decimals": 18,
+                "iconAddress": "0xe41d2489571d322189246dafa5ebde1f4699f498"
             }
         ]
     }
