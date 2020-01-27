@@ -19,48 +19,42 @@ const HeaderElement = styled.div`
     align-items: center;
 `;
 
-const LogoWrapper = styled.span`
-    transform: rotate(0deg);
-    transition: transform 150ms ease-out;
-
-    :hover {
-        transform: rotate(-10deg);
-    }
-`;
-
 const Title = styled.div`
     display: flex;
     align-items: center;
     cursor: pointer;
-
     a {
         display: inline;
         font-size: 1rem;
         font-weight: 500;
-        color: ${({ theme }) => theme.wisteriaPurple};
         text-decoration: none;
-        h1 {
-            font-size: 1rem;
-            font-weight: 500;
+        img {
+            height: 32px;
+            width: 32px;
         }
     }
 `;
+
+const AppName = styled.div`
+    font-family: Roboto;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 15px;
+    line-height: 18px;
+    letter-spacing: 1px;
+    color: var(--header-text);
+    margin-left: 12px;
+`
 
 const Header = () => {
     return (
         <HeaderFrame>
             <HeaderElement>
                 <Title>
-                    <LogoWrapper>
-                        <a id="title" href="/">
-                            <span role="img" aria-label="unicorn">
-                                ⚖️{'  '}
-                            </span>
-                        </a>
-                    </LogoWrapper>
-                    <a id="title" href="/">
-                        <h1 id="title"> {appConfig.name}</h1>
+                    <a href="/">
+                        <img src="pebbles-pad.svg" />
                     </a>
+                    <AppName>{appConfig.name}</AppName>
                 </Title>
             </HeaderElement>
             <HeaderElement>
