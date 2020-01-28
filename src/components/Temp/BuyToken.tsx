@@ -34,15 +34,23 @@ const BuyToken = observer(
             updateSwapFormData(value);
         };
 
+        /* To protect against race conditions in this async method we check
+        for staleness of inputAmount after getting preview and before making updates */
         const updateSwapFormData = async value => {
             swapFormStore.inputs.setSellFocus = false;
             swapFormStore.inputs.setBuyFocus = true;
             swapFormStore.inputs.type = SwapMethods.EXACT_OUT;
             swapFormStore.inputs.outputAmount = value;
 
-            const inputStatus = swapFormStore.getSwapFormInputValidationStatus(
+            let inputStatus = swapFormStore.getSwapFormInputValidationStatus(
                 value
             );
+
+            if(inputStatus === InputValidationStatus.VALID) {
+                if(parseFloat(value) > parseFloat(tokenBalance)) {
+                    inputStatus = InputValidationStatus.INSUFFICIENT_BALANCE;
+                }
+            }            
 
             if (inputStatus === InputValidationStatus.VALID) {
                 const preview = await previewSwapExactAmountOutHandler();
@@ -51,42 +59,46 @@ const BuyToken = observer(
                     validSwap: false,
                 };
 
-                if (preview.validSwap) {
-                    output['inputAmount'] = fromWei(preview.totalInput);
-                    output['effectivePrice'] = str(preview.effectivePrice);
-                    output['spotPrice'] = str(preview.spotPrice);
-                    output['expectedSlippage'] = formatPctString(
-                        calcExpectedSlippage(
-                            preview.spotPrice,
-                            preview.effectivePrice
-                        )
-                    );
-                    output['swaps'] = preview.swaps;
-                    output['validSwap'] = true;
-                    output['activeErrorMessage'] = '';
-                    swapFormStore.setTradeCompositionEAO(preview);
-                } else {
-                    swapFormStore.resetTradeComposition();
-                }
+                if (preview.outputAmount.toString() == swapFormStore.inputs.outputAmount) {
+                    if (preview.validSwap) {
+                        output['inputAmount'] = fromWei(preview.totalInput);
+                        output['effectivePrice'] = str(preview.effectivePrice);
+                        output['spotPrice'] = str(preview.spotPrice);
+                        output['expectedSlippage'] = formatPctString(
+                            calcExpectedSlippage(
+                                preview.spotPrice,
+                                preview.effectivePrice
+                            )
+                        );
+                        output['swaps'] = preview.swaps;
+                        output['validSwap'] = true;
+                        output['activeErrorMessage'] = '';
+                        swapFormStore.setTradeCompositionEAO(preview);
+                    } else {
+                        swapFormStore.resetTradeComposition();
+                    }
 
-                swapFormStore.updateInputsFromObject(output);
-                swapFormStore.updateOutputsFromObject(output);
+                    swapFormStore.updateInputsFromObject(output);
+                    swapFormStore.updateOutputsFromObject(output);
+                }
             } else {
                 console.log('[Invalid Input]', inputStatus, value);
-                if (inputStatus === InputValidationStatus.EMPTY) {
-                    swapFormStore.updateInputsFromObject({
-                        inputAmount: '',
-                        activeErrorMessage: '',
-                        // clear preview
-                    });
-                    swapFormStore.resetTradeComposition();
-                } else {
-                    swapFormStore.updateInputsFromObject({
-                        inputAmount: '',
-                        activeErrorMessage: inputStatus,
-                        // clear preview
-                    });
-                    swapFormStore.resetTradeComposition();
+                if (value == swapFormStore.inputs.outputAmount) {
+                    if (inputStatus === InputValidationStatus.EMPTY) {
+                        swapFormStore.updateInputsFromObject({
+                            inputAmount: '',
+                            activeErrorMessage: '',
+                            // clear preview
+                        });
+                        swapFormStore.resetTradeComposition();
+                    } else {
+                        swapFormStore.updateInputsFromObject({
+                            inputAmount: '',
+                            activeErrorMessage: inputStatus,
+                            // clear preview
+                        });
+                        swapFormStore.resetTradeComposition();
+                    }
                 }
             }
         };

@@ -35,6 +35,7 @@ export enum InputValidationStatus {
     ZERO = 'Zero',
     NOT_FLOAT = 'Not Float',
     NEGATIVE = 'Negative',
+    INSUFFICIENT_BALANCE = 'Insufficient Balance',
 }
 
 export interface ChartData {

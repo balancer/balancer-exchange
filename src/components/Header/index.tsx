@@ -1,19 +1,8 @@
 //@ts-ignore
-import React, { useState } from 'react';
-import { observer } from 'mobx-react';
-import PropTypes from 'prop-types';
-import { withRouter } from 'react-router-dom';
-import { Toolbar, Typography, IconButton } from '@material-ui/core';
-import AccountCircle from '@material-ui/icons/AccountCircle';
-import AppBar from 'components/AppBar';
-// import { styles } from "components/Header/styles.scss";
+import React from 'react';
 import { appConfig } from 'configs';
-import { makeStyles } from '@material-ui/core/styles';
-import { useStores } from '../../contexts/storesContext';
 import styled from 'styled-components';
-import { Link } from '../../theme';
 import Web3ConnectStatus from 'components/Web3ConnectStatus';
-import { darken } from 'polished';
 
 const HeaderFrame = styled.div`
     display: flex;
@@ -30,64 +19,42 @@ const HeaderElement = styled.div`
     align-items: center;
 `;
 
-const Nod = styled.span`
-    transform: rotate(0deg);
-    transition: transform 150ms ease-out;
-
-    :hover {
-        transform: rotate(-10deg);
-    }
-`;
-
 const Title = styled.div`
     display: flex;
     align-items: center;
-
-    :hover {
-        cursor: pointer;
-    }
-
-    #link {
-        text-decoration-color: ${({ theme }) => theme.UniswapPink};
-    }
-
-    #title {
+    cursor: pointer;
+    a {
         display: inline;
         font-size: 1rem;
         font-weight: 500;
-        color: ${({ theme }) => theme.wisteriaPurple};
-        :hover {
-            color: ${({ theme }) => darken(0.1, theme.wisteriaPurple)};
+        text-decoration: none;
+        img {
+            height: 32px;
+            width: 32px;
         }
     }
 `;
 
-const useStyles = makeStyles({
-    styles: {
-        position: 'fixed',
-    },
-});
+const AppName = styled.div`
+    font-family: Roboto;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 15px;
+    line-height: 18px;
+    letter-spacing: 1px;
+    color: var(--header-text);
+    margin-left: 12px;
+`
 
 const Header = () => {
-    const [anchorElement, setAnchorElement] = useState(undefined);
-    const {
-        root: { providerStore },
-    } = useStores();
-
     return (
         <HeaderFrame>
             <HeaderElement>
                 <Title>
-                    <Nod>
-                        <Link id="link" href="/">
-                            <span role="img" aria-label="unicorn">
-                                ⚖️{'  '}
-                            </span>
-                        </Link>
-                    </Nod>
-                    <Link id="link" href="/" to="/list">
-                        <h1 id="title"> {appConfig.name}</h1>
-                    </Link>
+                    <a href="/">
+                        <img src="pebbles-pad.svg" />
+                    </a>
+                    <AppName>{appConfig.name}</AppName>
                 </Title>
             </HeaderElement>
             <HeaderElement>
