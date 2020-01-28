@@ -10,6 +10,13 @@
     --pie-chart-color: #b388ff;
     --token-balance-text: #90a4ae;
 
+    /* Input Fields */
+    --input-text: #FAFAFA;
+    --input-placeholder-text: #575860;
+    --input-hover-background: #31313B;
+    --input-hover-placeholder-text: #818187;
+    --input-hover-border: #4C5480;
+
     /* Button Styles */
     --button-text: #fafafa;
     --button-background: #536dfe;
