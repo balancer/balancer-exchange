@@ -42,9 +42,15 @@ const SellToken = observer(
             swapFormStore.inputs.type = SwapMethods.EXACT_IN;
             swapFormStore.inputs.inputAmount = value;
 
-            const inputStatus = swapFormStore.getSwapFormInputValidationStatus(
+            let inputStatus = swapFormStore.getSwapFormInputValidationStatus(
                 value
             );
+
+            if(inputStatus === InputValidationStatus.VALID) {
+                if(parseFloat(value) > parseFloat(tokenBalance)) {
+                    inputStatus = InputValidationStatus.INSUFFICIENT_BALANCE;
+                }
+            }
 
             if (inputStatus === InputValidationStatus.VALID) {
                 const preview = await previewSwapExactAmountInHandler();
