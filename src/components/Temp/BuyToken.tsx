@@ -40,9 +40,15 @@ const BuyToken = observer(
             swapFormStore.inputs.type = SwapMethods.EXACT_OUT;
             swapFormStore.inputs.outputAmount = value;
 
-            const inputStatus = swapFormStore.getSwapFormInputValidationStatus(
+            let inputStatus = swapFormStore.getSwapFormInputValidationStatus(
                 value
             );
+
+            if(inputStatus === InputValidationStatus.VALID) {
+                if(parseFloat(value) > parseFloat(tokenBalance)) {
+                    inputStatus = InputValidationStatus.INSUFFICIENT_BALANCE;
+                }
+            }            
 
             if (inputStatus === InputValidationStatus.VALID) {
                 const preview = await previewSwapExactAmountOutHandler();
