@@ -91,14 +91,13 @@ const InputWrapper = styled.div`
     display: flex;
     justify-content: space-between;
     align-items: center;
-    color: var(--body-text);
     padding-left: 21px;
     padding-right: 21px;
     border-top: 1px solid var(--panel-border);
     border-radius: 0px 0px 4px 4px;
     input {
         width: 100px;
-        color: var(--body-text);
+        color: var(--input-text);
         font-size: 16px;
         line-height: 19px;
         background-color: var(--panel-background);
@@ -112,12 +111,26 @@ const InputWrapper = styled.div`
         :-internal-autofill-selected {
             -webkit-text-fill-color: var(--body-text);
         }
+        ::placeholder {
+            color: var(--input-placeholder-text);
+        }
         :focus {
             outline: none;
         }
     }
     border: ${props =>
         props.errorBorders ? '1px solid var(--error-color)' : ''};
+    :hover {
+        background-color: var(--input-hover-background);
+        border: 1px solid var(--input-hover-border);
+        input {
+            padding: 0px;
+            ::placeholder {
+                color: var(--input-hvoer-placeholder-text);
+                background-color: var(--input-hover-background);
+            }
+        }
+    }
 `;
 
 const InputErrorWrapper = styled(InputWrapper)``;
