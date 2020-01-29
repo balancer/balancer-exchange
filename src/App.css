@@ -30,6 +30,8 @@
     /* Panel Styles */
     --panel-border: #41476b;
     --panel-background: #2e2f39;
+    --panel-hover-border: #4C5480;
+    --panel-hover-background: #31313B;
     --panel-header-background: #282932;
 
     /* Selector Styles */
