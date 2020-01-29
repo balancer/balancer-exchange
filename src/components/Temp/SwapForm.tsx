@@ -247,7 +247,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         if (inputUserBalanceBN) {
             inputUserBalance = inputUserBalanceBN
                 ? helpers.fromWei(inputUserBalanceBN)
-                : 'N/A';
+                : '0.00';
             let inputBalanceParts = inputUserBalance.split(".");
             inputUserBalance = inputBalanceParts[0] + "." + inputBalanceParts[1].substring(0, inputPrecision);
             if (inputUserBalance.length > 20) {
@@ -267,7 +267,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         if (outputUserBalanceBN) {
             outputUserBalance = outputUserBalanceBN
                 ? helpers.fromWei(outputUserBalanceBN).toString()
-                : 'N/A';
+                : '0.00';
             let outputBalanceParts = outputUserBalance.split(".");
             outputUserBalance = outputBalanceParts[0] + "." + outputBalanceParts[1].substring(0, outputPrecision);
             if (outputUserBalance.length > 20) {
