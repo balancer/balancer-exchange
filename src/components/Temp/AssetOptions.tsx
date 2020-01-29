@@ -104,10 +104,10 @@ const AssetOptions = ({ filter, modelOpen, setModalOpen }) => {
 
         assetSelectorData = filteredWhitelistedTokens.map(value => {
             let userBalance = userBalances[value.address]
-                    ? fromWei(userBalances[value.address]).toString()
-                    : 'N/A';
+                ? fromWei(userBalances[value.address]).toString()
+                : 'N/A';
             if (userBalance.length > 20) {
-                userBalance = userBalance.substring(0,20) + '...';
+                userBalance = userBalance.substring(0, 20) + '...';
             }
             return {
                 address: value.address,

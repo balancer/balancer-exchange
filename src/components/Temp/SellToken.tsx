@@ -46,8 +46,8 @@ const SellToken = observer(
                 value
             );
 
-            if(inputStatus === InputValidationStatus.VALID) {
-                if(parseFloat(value) > parseFloat(tokenBalance)) {
+            if (inputStatus === InputValidationStatus.VALID) {
+                if (parseFloat(value) > parseFloat(tokenBalance)) {
                     inputStatus = InputValidationStatus.INSUFFICIENT_BALANCE;
                 }
             }
@@ -66,7 +66,10 @@ const SellToken = observer(
                     });
                 }
 
-                if (preview.inputAmount.toString() == swapFormStore.inputs.inputAmount) {
+                if (
+                    preview.inputAmount.toString() ==
+                    swapFormStore.inputs.inputAmount
+                ) {
                     if (preview.validSwap) {
                         output['outputAmount'] = fromWei(preview.totalOutput);
                         output['effectivePrice'] = str(preview.effectivePrice);
@@ -97,7 +100,7 @@ const SellToken = observer(
                             activeErrorMessage: '',
                             // clear preview
                         });
-                        swapFormStore.resetTradeComposition();                    
+                        swapFormStore.resetTradeComposition();
                     } else {
                         swapFormStore.updateInputsFromObject({
                             outputAmount: '',
