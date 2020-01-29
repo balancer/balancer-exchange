@@ -50,6 +50,7 @@ export interface TokenMetadata {
     symbol: string;
     decimals: number;
     iconAddress: string;
+    precision: number;
 }
 
 interface UserAllowanceMap {
@@ -97,12 +98,13 @@ export default class TokenStore {
         };
 
         tokenMetadata.forEach(token => {
-            const { address, symbol, decimals, iconAddress } = token;
+            const { address, symbol, decimals, iconAddress, precision } = token;
             contractMetadata.tokens.push({
                 address,
                 symbol,
                 decimals,
                 iconAddress,
+                precision,
             });
         });
 

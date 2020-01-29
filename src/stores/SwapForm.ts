@@ -61,6 +61,8 @@ export default class SwapFormStore {
         expectedSlippage: '0',
         inputTicker: '',
         outputTicker: '',
+        inputPrecision: 2,
+        outputPrecision: 2,
         inputIconAddress: '',
         outputIconAddress: '',
         type: SwapMethods.EXACT_IN,

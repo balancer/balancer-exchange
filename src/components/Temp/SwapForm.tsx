@@ -91,21 +91,25 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         swapFormStore.inputs.inputToken = tokenList[0].address;
         swapFormStore.inputs.inputTicker = tokenList[0].symbol;
         swapFormStore.inputs.inputIconAddress = tokenList[0].iconAddress;
+        swapFormStore.inputs.inputPrecision = tokenList[0].precision;
     }
 
     if (helpers.checkIsPropertyEmpty(swapFormStore.inputs.outputToken)) {
         swapFormStore.inputs.outputToken = tokenList[1].address;
         swapFormStore.inputs.outputTicker = tokenList[1].symbol;
         swapFormStore.inputs.outputIconAddress = tokenList[1].iconAddress;
+        swapFormStore.inputs.outputPrecision = tokenList[1].precision;
     }
 
     const {
         inputToken,
         inputTicker,
         inputIconAddress,
+        inputPrecision,
         outputToken,
         outputTicker,
         outputIconAddress,
+        outputPrecision,
         expectedSlippage,
     } = inputs;
 
@@ -244,6 +248,8 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
             inputUserBalance = inputUserBalanceBN
                 ? helpers.fromWei(inputUserBalanceBN)
                 : 'N/A';
+            let inputBalanceParts = inputUserBalance.split(".");
+            inputUserBalance = inputBalanceParts[0] + "." + inputBalanceParts[1].substring(0, inputPrecision);
             if (inputUserBalance.length > 20) {
                 truncatedInputUserBalance =
                     inputUserBalance.substring(0, 20) + '...';
@@ -262,6 +268,8 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
             outputUserBalance = outputUserBalanceBN
                 ? helpers.fromWei(outputUserBalanceBN).toString()
                 : 'N/A';
+            let outputBalanceParts = outputUserBalance.split(".");
+            outputUserBalance = outputBalanceParts[0] + "." + outputBalanceParts[1].substring(0, outputPrecision);
             if (outputUserBalance.length > 20) {
                 truncatedOutputUserBalance =
                     outputUserBalance.substring(0, 20) + '...';
