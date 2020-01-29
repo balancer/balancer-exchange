@@ -14,6 +14,10 @@ import Identicon from '../Identicon';
 import { useStores } from '../../contexts/storesContext';
 import Button from '../Temp/Button';
 import Web3PillBox from '../Temp/Web3PillBox';
+import {
+    isChainIdSupported,
+    supportedNetworks,
+} from '../../provider/connectors';
 
 const Web3StatusGeneric = styled.button`
     ${({ theme }) => theme.flexRowNoWrap}
@@ -81,12 +85,12 @@ const Web3ConnectStatus = observer(() => {
         account,
         connector,
         error,
-    } = providerStore.getActiveWeb3React();
+    } = providerStore.getActiveWeb3React(true);
 
     const contextNetwork = providerStore.getWeb3React(web3ContextNames.backup);
 
     // Run extra blockchain fetch if account has changed
-    if (account) {
+    if (account && isChainIdSupported(chainId)) {
         const activeAccount = providerStore.activeAccount;
         if (activeAccount !== account) {
             console.log('[Web3ConnectStatus] - Account changed', {
@@ -102,10 +106,15 @@ const Web3ConnectStatus = observer(() => {
         throw new Error('No chain ID specified');
     }
 
-    const allTransactions = transactionStore.allTxRecords;
-    const pending = transactionStore.getPendingTransactions(chainId);
-    const confirmed = transactionStore.getConfirmedTransactions(chainId);
-    const hasPendingTransactions = !!pending.size;
+    let pending = undefined;
+    let confirmed = undefined;
+    let hasPendingTransactions = false;
+
+    if (account && isChainIdSupported(chainId)) {
+        pending = transactionStore.getPendingTransactions(chainId);
+        confirmed = transactionStore.getConfirmedTransactions(chainId);
+        hasPendingTransactions = !!pending.size;
+    }
 
     console.log({
         message: 'Web3ConnectStatus Pending Tx',
@@ -125,7 +134,22 @@ const Web3ConnectStatus = observer(() => {
     }
 
     function getWeb3Status() {
-        if (account) {
+        console.log(['getWeb3Status'], {
+            chainId,
+            active,
+            account,
+            connector,
+            error,
+        });
+        // Wrong network
+        if (account && !isChainIdSupported(chainId)) {
+            return (
+                <Web3StatusError onClick={toggleWalletModal}>
+                    <NetworkIcon />
+                    <Text> 'Wrong Network'</Text>
+                </Web3StatusError>
+            );
+        } else if (account) {
             return (
                 <Web3PillBox onClick={toggleWalletModal}>
                     {hasPendingTransactions && (

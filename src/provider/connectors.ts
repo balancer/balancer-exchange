@@ -8,6 +8,10 @@ export const chainNameById = {
     '42': 'kovan',
 };
 
+export const isChainIdSupported = (chainId: number): boolean => {
+    return !!supportedNetworks.find(id => id === chainId);
+};
+
 const POLLING_INTERVAL = 1000;
 const RPC_URLS: { [chainId: number]: string } = {
     1: process.env.REACT_APP_RPC_URL_1 as string,
@@ -24,12 +28,12 @@ export const backup = new NetworkConnector({
         1: RPC_URLS[1],
         42: RPC_URLS[42],
     },
-    defaultChainId: 42,
+    defaultChainId: supportedNetworks[0],
     pollingInterval: POLLING_INTERVAL,
 });
 
 export const injected = new InjectedConnector({
-    supportedChainIds: supportedNetworks,
+    // supportedChainIds: supportedNetworks,
 });
 
 export default {

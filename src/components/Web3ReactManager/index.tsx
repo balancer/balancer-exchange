@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useWeb3React } from '@web3-react/core';
 import styled from 'styled-components';
-import { backup, injected } from 'provider/connectors';
+import { backup, injected, isChainIdSupported } from 'provider/connectors';
 import { useEagerConnect, useInactiveListener } from 'provider/index';
 import { web3ContextNames } from 'provider/connectors';
 import { useStores } from 'contexts/storesContext';
@@ -25,7 +25,10 @@ const Web3ReactManager = observer(({ children }) => {
 
     const web3ContextInjected = useWeb3React(web3ContextNames.injected);
     const web3ContextBackup = useWeb3React(web3ContextNames.backup);
-    const { active: injectedActive } = web3ContextInjected;
+    const {
+        active: injectedActive,
+        chainId: injectedChainId,
+    } = web3ContextInjected;
     const {
         active: networkActive,
         error: networkError,
@@ -39,24 +42,12 @@ const Web3ReactManager = observer(({ children }) => {
         web3ContextInjected
     );
 
-    let chainId: number | undefined = undefined;
-    let library: any = undefined;
-
-    if (injectedActive || networkActive) {
-        const activeWeb3React = providerStore.getActiveWeb3React();
-        library = activeWeb3React.library;
-        chainId = activeWeb3React.chainId;
-
-        if (!providerStore.activeFetchLoop) {
-            console.log('[Web3ReactManager] Start fetch loop');
-            providerStore.startFetchLoop();
-        }
-    }
-
     console.log('[Web3ReactManager] Start of render', {
         injected: web3ContextInjected,
         backup: web3ContextBackup,
     });
+
+    const favorInjected = injectedActive && isChainIdSupported(injectedChainId);
 
     // try to eagerly connect to an injected provider, if it exists and has granted access already
     const triedEager = useEagerConnect();
@@ -64,13 +55,21 @@ const Web3ReactManager = observer(({ children }) => {
     // after eagerly trying injected, if the network connect ever isn't active or in an error state, activate itd
     // TODO think about not doing this at all
     useEffect(() => {
-        console.log('[Web3ReactManager] Consider activating backup', {
-            triedEager,
-            networkActive,
-            networkError,
-            injectedActive,
-        });
-        if (triedEager && !networkActive && !networkError && !injectedActive) {
+        console.log(
+            '[Web3ReactManager] Activate backup if conditions are met',
+            {
+                triedEager,
+                networkActive,
+                networkError,
+                injectedActive,
+                activate:
+                    triedEager &&
+                    !networkActive &&
+                    !networkError &&
+                    !injectedActive,
+            }
+        );
+        if (!networkActive && !networkError) {
             activateNetwork(backup);
             console.log('[Web3ReactManager] Backup activation started');
         }
@@ -84,6 +83,14 @@ const Web3ReactManager = observer(({ children }) => {
 
     // 'pause' the network connector if we're ever connected to an account and it's active
     useEffect(() => {
+        console.log(
+            '[Web3ReactManager] Pause backup if injected & backup both active',
+            {
+                injectedActive,
+                networkActive,
+                pause: injectedActive && networkActive,
+            }
+        );
         if (injectedActive && networkActive) {
             console.log('[Web3ReactManager] Pause backup provider');
             backup.pause();
@@ -92,6 +99,14 @@ const Web3ReactManager = observer(({ children }) => {
 
     // 'resume' the network connector if we're ever not connected to an account and it's active
     useEffect(() => {
+        console.log(
+            '[Web3ReactManager] Resume backup if injected not active & backup is active',
+            {
+                injectedActive,
+                networkActive,
+                resume: !injectedActive && networkActive,
+            }
+        );
         if (!injectedActive && networkActive) {
             console.log('[Web3ReactManager] Resume backup provider');
             backup.resume();
@@ -100,6 +115,25 @@ const Web3ReactManager = observer(({ children }) => {
 
     // when there's no account connected, react to logins (broadly speaking) on the injected provider, if it exists
     useInactiveListener(!triedEager);
+
+    useEffect(() => {
+        console.log(
+            '[Web3ReactManager] Start fetch loop if not started & we have an active provider',
+            {
+                injectedActive,
+                networkActive,
+                start:
+                    injectedActive ||
+                    (networkActive && !providerStore.activeFetchLoop),
+            }
+        );
+        if (injectedActive || networkActive) {
+            if (!providerStore.activeFetchLoop) {
+                console.log('[Web3ReactManager] Start fetch loop');
+                providerStore.startFetchLoop();
+            }
+        }
+    }, [injectedActive, networkActive]);
 
     // handle delayed loader state
     const [showLoader, setShowLoader] = useState(true);
