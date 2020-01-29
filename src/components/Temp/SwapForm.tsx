@@ -41,7 +41,7 @@ enum ButtonState {
     SWAP,
 }
 
-const ButtonText = ['Connect to a wallet', 'Unlock', 'Swap'];
+const ButtonText = ['Connect Wallet', 'Unlock', 'Swap'];
 
 const SwapForm = observer(({ tokenIn, tokenOut }) => {
     const [modelOpen, setModalOpen] = React.useState({
