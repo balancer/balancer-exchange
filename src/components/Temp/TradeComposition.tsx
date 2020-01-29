@@ -30,19 +30,16 @@ const DropDownArrow = styled.div`
     display: flex;
     justify-content: center;
     align-items: center;
-    border: 1px solid var(--link-text);
-    border-radius: 12px;
-    color: var(--link-text);
     margin-left: 12px;
     cursor: pointer;
 `;
 
 const UpCarretIcon = styled.img`
-    height: 8px;
+    height: 20px;
 `;
 
 const DownCarretIcon = styled.img`
-    height: 8px;
+    height: 20px;
 `;
 
 const CompositionDropDown = styled.div`
@@ -256,7 +253,7 @@ const TradeComposition = observer(
                         }}
                     >
                         <UpCarretIcon
-                            src="UpCarret.svg"
+                            src="arrow-bottom.svg"
                             style={{
                                 display: tradeCompositionOpen
                                     ? 'block'
@@ -264,7 +261,7 @@ const TradeComposition = observer(
                             }}
                         />
                         <DownCarretIcon
-                            src="DownCarret.svg"
+                            src="dropdown.svg"
                             style={{
                                 display: tradeCompositionOpen
                                     ? 'none'

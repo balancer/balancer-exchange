@@ -32,16 +32,13 @@ const SlippageInlineDisplay = styled.div`
     cursor: pointer;
 `;
 
-const InfoPopover = styled.div`
+const InfoPopover = styled.img`
     display: flex;
     align-items: center;
     justify-content: center;
     width: 15px;
     height: 15px;
-    border: 1px solid var(--info-border);
-    border-radius: 8px;
     margin-left: 10px;
-    font-size: 10px;
     cursor: pointer;
 `;
 
@@ -63,7 +60,7 @@ const SlippageInfo = observer(
                 </SlippageInlineDisplay>
                 <div>additional limit</div>
                 <Popup
-                    trigger={<InfoPopover>i</InfoPopover>}
+                    trigger={<InfoPopover src="info.svg" />}
                     position="top center"
                     on="hover"
                 >

@@ -99,6 +99,7 @@ const InputWrapper = styled.div`
         width: 100px;
         color: var(--input-text);
         font-size: 16px;
+        font-weight: 500;
         line-height: 19px;
         background-color: var(--panel-background);
         border: none;
