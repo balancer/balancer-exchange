@@ -219,7 +219,7 @@ const Token = ({
                 <Popup
                     trigger={
                         <TokenBalance>
-                            {tokenName} {truncatedTokenBalance}
+                            {truncatedTokenBalance} {tokenName}
                         </TokenBalance>
                     }
                     position="top center"
