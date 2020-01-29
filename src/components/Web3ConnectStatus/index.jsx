@@ -82,15 +82,18 @@ const Web3ConnectStatus = observer(() => {
     const {
         chainId,
         active,
-        account,
         connector,
         error,
-    } = providerStore.getActiveWeb3React(true);
+    } = providerStore.getActiveWeb3React();
+
+    const { account, chainId: injectedChainId } = providerStore.getWeb3React(
+        web3ContextNames.injected
+    );
 
     const contextNetwork = providerStore.getWeb3React(web3ContextNames.backup);
 
     // Run extra blockchain fetch if account has changed
-    if (account && isChainIdSupported(chainId)) {
+    if (account) {
         const activeAccount = providerStore.activeAccount;
         if (activeAccount !== account) {
             console.log('[Web3ConnectStatus] - Account changed', {
@@ -110,9 +113,9 @@ const Web3ConnectStatus = observer(() => {
     let confirmed = undefined;
     let hasPendingTransactions = false;
 
-    if (account && isChainIdSupported(chainId)) {
-        pending = transactionStore.getPendingTransactions(chainId);
-        confirmed = transactionStore.getConfirmedTransactions(chainId);
+    if (account && isChainIdSupported(injectedChainId)) {
+        pending = transactionStore.getPendingTransactions(injectedChainId);
+        confirmed = transactionStore.getConfirmedTransactions(injectedChainId);
         hasPendingTransactions = !!pending.size;
     }
 
@@ -142,7 +145,7 @@ const Web3ConnectStatus = observer(() => {
             error,
         });
         // Wrong network
-        if (account && !isChainIdSupported(chainId)) {
+        if (account && !isChainIdSupported(injectedChainId)) {
             return (
                 <Web3StatusError onClick={toggleWalletModal}>
                     <NetworkIcon />
