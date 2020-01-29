@@ -78,10 +78,7 @@ export default class TokenStore {
     // network -> contrants -> tokens -> tokens[a] = TokenMetadata
     @action loadWhitelistedTokenMetadata(chainId: number) {
         const chainName = chainNameById[chainId];
-        console.log(chainName === 'kovan');
-        console.log({ chainName, metadata: deployed['kovan'], deployed });
         const tokenMetadata = deployed['kovan'].tokens;
-        console.log(tokenMetadata);
 
         const contractMetadata = {
             bFactory: deployed['kovan'].bFactory,
@@ -413,7 +410,7 @@ export default class TokenStore {
                     balance,
                     fetchBlock
                 );
-                console.log('[Balance Fetch]', {
+                console.debug('[Balance Fetch]', {
                     tokenAddress,
                     account,
                     balance: balance.toString(),
@@ -421,7 +418,7 @@ export default class TokenStore {
                 });
             }
         } else {
-            console.log('[Balance Fetch] - Stale', {
+            console.debug('[Balance Fetch] - Stale', {
                 tokenAddress,
                 account,
                 fetchBlock,
@@ -488,7 +485,7 @@ export default class TokenStore {
                     allowance,
                     fetchBlock
                 );
-                console.log('[Allowance Fetch]', {
+                console.debug('[Allowance Fetch]', {
                     tokenAddress,
                     account,
                     spender,
@@ -497,7 +494,7 @@ export default class TokenStore {
                 });
             }
         } else {
-            console.log('[Allowance Fetch] - Stale', {
+            console.debug('[Allowance Fetch] - Stale', {
                 tokenAddress,
                 account,
                 spender,

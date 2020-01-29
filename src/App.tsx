@@ -7,8 +7,6 @@ import SwapForm from 'components/Temp/SwapForm';
 import './App.css';
 
 const App = () => {
-    console.log(process.env.REACT_APP_NETWORK_PROVIDER_URL);
-
     const PoolSwapView = props => {
         const { tokenIn, tokenOut } = props.match.params;
 
