@@ -38,6 +38,11 @@ const TokenContainer = styled.div`
     align-items: center;
     justify-content: center;
     cursor: pointer;
+    :hover {
+        height: 93px;
+        background-color: var(--panel-hover-background);
+        border: 1px solid var(--panel-hover-border);
+    }
 `;
 
 const IconAndNameContainer = styled.div`
@@ -211,7 +216,6 @@ const Token = ({
                     <TokenIcon src={TokenIconAddress(tokenAddress)} />
                     <TokenName>{tokenName}</TokenName>
                 </IconAndNameContainer>
-
                 <Popup
                     trigger={
                         <TokenBalance>
