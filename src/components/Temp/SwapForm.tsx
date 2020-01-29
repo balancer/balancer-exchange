@@ -18,6 +18,7 @@ import { ErrorCodes, ErrorIds } from '../../stores/Error';
 import { ContractMetadata } from '../../stores/Token';
 import { bnum, checkIsPropertyEmpty, fromWei, toWei } from 'utils/helpers';
 import { BigNumber } from 'utils/bignumber';
+import { web3ContextNames } from '../../provider/connectors';
 
 const RowContainer = styled.div`
     font-family: var(--roboto);
@@ -66,7 +67,8 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         },
     } = useStores();
 
-    const { chainId, account } = providerStore.getActiveWeb3React();
+    const { chainId } = providerStore.getActiveWeb3React();
+    const { account } = providerStore.getWeb3React(web3ContextNames.injected);
     const proxyAddress = tokenStore.getProxyAddress(chainId);
 
     if (!chainId) {

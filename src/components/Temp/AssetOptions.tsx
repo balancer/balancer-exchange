@@ -4,6 +4,7 @@ import { TokenIconAddress } from './TokenPanel';
 import { useStores } from '../../contexts/storesContext';
 import { BigNumber } from 'ethers/utils';
 import { fromWei, toWei } from 'utils/helpers';
+import { web3ContextNames } from '../../provider/connectors';
 
 const AssetPanelContainer = styled.div`
     display: flex;
@@ -74,17 +75,12 @@ const AssetOptions = ({ filter, modelOpen, setModalOpen }) => {
     // TODO do math and pass props into AssetPanel css to make border-bottom none for bottom row of assets
 
     const {
-        root: {
-            proxyStore,
-            swapFormStore,
-            providerStore,
-            tokenStore,
-            errorStore,
-        },
+        root: { swapFormStore, providerStore, tokenStore },
     } = useStores();
 
     let assetSelectorData: AssetSelectorData[] = [];
-    const { chainId, account } = providerStore.getActiveWeb3React();
+    const { chainId } = providerStore.getActiveWeb3React();
+    const { account } = providerStore.getWeb3React(web3ContextNames.injected);
 
     let userBalances = {};
     let filteredWhitelistedTokens;

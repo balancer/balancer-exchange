@@ -65,7 +65,8 @@ export default class ProviderStore {
     }
 
     fetchLoop(this, forceFetch?: boolean) {
-        const { library, chainId, account } = this.getActiveWeb3React();
+        const { library, chainId } = this.getActiveWeb3React();
+        const { account } = this.getWeb3React(web3ContextNames.injected); // Get account from injected even if it's not the active provider due to being on wrong network
 
         library
             .getBlockNumber()
@@ -151,9 +152,7 @@ export default class ProviderStore {
         return this.contexts[name];
     }
 
-    getActiveWeb3React(
-        allowInvalidChainId?: boolean
-    ): Web3ReactContextInterface {
+    getActiveWeb3React(): Web3ReactContextInterface {
         if (
             !this.contexts[web3ContextNames.injected] ||
             !this.contexts[web3ContextNames.backup]
@@ -168,17 +167,12 @@ export default class ProviderStore {
             activeAndValidInjected:
                 contextInjected.active &&
                 isChainIdSupported(contextInjected.chainId),
-            allowInvalidChainId,
             result:
                 contextInjected.active &&
                 isChainIdSupported(contextInjected.chainId)
                     ? 'injected'
                     : 'network',
         });
-
-        if (allowInvalidChainId) {
-            return contextInjected.active ? contextInjected : contextNetwork;
-        }
 
         return contextInjected.active &&
             isChainIdSupported(contextInjected.chainId)
