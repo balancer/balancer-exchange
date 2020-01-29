@@ -1,7 +1,13 @@
 import { InjectedConnector } from '@web3-react/injected-connector';
 import { NetworkConnector } from 'provider/NetworkConnector';
 
-export const supportedNetworks = [42];
+console.log(
+    'process.env.REACT_APP_SUPPORTED_NETWORK_ID',
+    process.env.REACT_APP_SUPPORTED_NETWORK_ID
+);
+export const supportedNetworks = [
+    Number(process.env.REACT_APP_SUPPORTED_NETWORK_ID),
+];
 
 export const chainNameById = {
     '1': 'mainnet',
