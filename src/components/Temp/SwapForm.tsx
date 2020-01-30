@@ -231,10 +231,10 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
 
     let inputUserBalanceBN;
     let inputUserBalance;
-    let truncatedInputUserBalance;
+    let truncatedInputUserBalance = '0.00';
     let outputUserBalanceBN;
     let outputUserBalance;
-    let truncatedOutputUserBalance;
+    let truncatedOutputUserBalance = '0.00';
     let userAllowance;
 
     if (account) {
