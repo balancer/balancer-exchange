@@ -12,6 +12,9 @@ const AssetPanelContainer = styled.div`
     justify-content: flex-start;
     max-height: 329px;
     overflow: auto; /* Enable scroll if needed */
+    ::-webkit-scrollbar {
+        display: none;
+    }
 `;
 
 const AssetPanel = styled.div`

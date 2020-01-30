@@ -45,6 +45,11 @@
 
 body {
     background: var(--background);
+
+}
+
+#root::-webkit-scrollbar {
+    display: none;
 }
 
 .popup-content {
