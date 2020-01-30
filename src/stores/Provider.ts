@@ -1,6 +1,6 @@
 import { observable, action, ObservableMap } from 'mobx';
 import RootStore from 'stores/Root';
-import { web3ContextNames } from 'provider/connectors';
+import { isChainIdSupported, web3ContextNames } from 'provider/connectors';
 import { ethers, utils, providers } from 'ethers';
 import { Web3ReactContextInterface } from '@web3-react/core/dist/types';
 import UncheckedJsonRpcSigner from 'provider/UncheckedJsonRpcSigner';
@@ -65,7 +65,8 @@ export default class ProviderStore {
     }
 
     fetchLoop(this, forceFetch?: boolean) {
-        const { library, chainId, account } = this.getActiveWeb3React();
+        const { library, chainId } = this.getActiveWeb3React();
+        const { account } = this.getWeb3React(web3ContextNames.injected); // Get account from injected even if it's not the active provider due to being on wrong network
 
         library
             .getBlockNumber()
@@ -129,14 +130,14 @@ export default class ProviderStore {
     ) => {
         const { transactionStore, tokenStore } = this.rootStore;
 
-        console.log('[Fetch Start - User Blockchain Data]', {
+        console.debug('[Fetch Start - User Blockchain Data]', {
             chainId,
             account,
         });
 
         transactionStore.checkPendingTransactions(chainId);
         tokenStore.fetchBalancerTokenData(account, chainId).then(result => {
-            console.log('[Fetch End - User Blockchain Data]', {
+            console.debug('[Fetch End - User Blockchain Data]', {
                 chainId,
                 account,
             });
@@ -162,40 +163,15 @@ export default class ProviderStore {
         const contextInjected = this.contexts[web3ContextNames.injected];
         const contextNetwork = this.contexts[web3ContextNames.backup];
 
-        return contextInjected.active ? contextInjected : contextNetwork;
-    }
-
-    getActiveAccount(): string {
-        if (this.getActiveProviderName() === web3ContextNames.backup) {
-            throw new Error('No wallet to provide active account');
-        }
-
-        const { account } = this.getActiveWeb3React();
-
-        if (!account) {
-            throw new Error('No account available on active web3');
-        }
-        return account;
-    }
-
-    getActiveProviderName(): string {
-        if (
-            !this.contexts[web3ContextNames.injected] ||
-            !this.contexts[web3ContextNames.backup]
-        ) {
-            throw new Error('Contexts not loaded to store');
-        }
-
-        const contextInjected = this.contexts[web3ContextNames.injected];
-        const contextNetwork = this.contexts[web3ContextNames.backup];
-        return contextInjected.active
-            ? web3ContextNames.injected
-            : web3ContextNames.backup;
+        return contextInjected.active &&
+            isChainIdSupported(contextInjected.chainId)
+            ? contextInjected
+            : contextNetwork;
     }
 
     // account is optional
     getProviderOrSigner(library, account) {
-        console.log('[getProviderOrSigner', {
+        console.debug('[getProviderOrSigner', {
             library,
             account,
             signer: library.getSigner(account),

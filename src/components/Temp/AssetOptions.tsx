@@ -4,6 +4,11 @@ import { TokenIconAddress } from './TokenPanel';
 import { useStores } from '../../contexts/storesContext';
 import { BigNumber } from 'ethers/utils';
 import { fromWei, toWei } from 'utils/helpers';
+import {
+    getSupportedChainId,
+    isChainIdSupported,
+    web3ContextNames,
+} from '../../provider/connectors';
 
 const AssetPanelContainer = styled.div`
     display: flex;
@@ -77,27 +82,22 @@ const AssetOptions = ({ filter, modelOpen, setModalOpen }) => {
     // TODO do math and pass props into AssetPanel css to make border-bottom none for bottom row of assets
 
     const {
-        root: {
-            proxyStore,
-            swapFormStore,
-            providerStore,
-            tokenStore,
-            errorStore,
-        },
+        root: { swapFormStore, providerStore, tokenStore },
     } = useStores();
 
     let assetSelectorData: AssetSelectorData[] = [];
+    const supportedChainId = getSupportedChainId();
     const { chainId, account } = providerStore.getActiveWeb3React();
 
     let userBalances = {};
     let filteredWhitelistedTokens;
     const setSelectorDataWrapper = filter => {
         filteredWhitelistedTokens = tokenStore.getFilteredTokenMetadata(
-            chainId,
+            supportedChainId,
             filter
         );
 
-        if (account) {
+        if (account && isChainIdSupported(chainId)) {
             userBalances = tokenStore.getAccountBalances(
                 chainId,
                 filteredWhitelistedTokens,
@@ -107,10 +107,10 @@ const AssetOptions = ({ filter, modelOpen, setModalOpen }) => {
 
         assetSelectorData = filteredWhitelistedTokens.map(value => {
             let userBalance = userBalances[value.address]
-                    ? fromWei(userBalances[value.address]).toString()
-                    : 'N/A';
+                ? fromWei(userBalances[value.address]).toString()
+                : 'N/A';
             if (userBalance.length > 20) {
-                userBalance = userBalance.substring(0,20) + '...';
+                userBalance = userBalance.substring(0, 20) + '...';
             }
             return {
                 address: value.address,

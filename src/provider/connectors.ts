@@ -1,11 +1,21 @@
 import { InjectedConnector } from '@web3-react/injected-connector';
 import { NetworkConnector } from 'provider/NetworkConnector';
 
-export const supportedNetworks = [42];
+export const supportedNetworks = [
+    Number(process.env.REACT_APP_SUPPORTED_NETWORK_ID),
+];
+
+export const getSupportedChainId = () => {
+    return supportedNetworks[0];
+};
 
 export const chainNameById = {
     '1': 'mainnet',
     '42': 'kovan',
+};
+
+export const isChainIdSupported = (chainId: number): boolean => {
+    return !!supportedNetworks.find(id => id === chainId);
 };
 
 const POLLING_INTERVAL = 1000;
@@ -21,15 +31,14 @@ export const web3ContextNames = {
 
 export const backup = new NetworkConnector({
     urls: {
-        1: RPC_URLS[1],
         42: RPC_URLS[42],
     },
-    defaultChainId: 42,
+    defaultChainId: supportedNetworks[0],
     pollingInterval: POLLING_INTERVAL,
 });
 
 export const injected = new InjectedConnector({
-    supportedChainIds: supportedNetworks,
+    // supportedChainIds: supportedNetworks,
 });
 
 export default {

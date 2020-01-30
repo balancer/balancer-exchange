@@ -18,6 +18,11 @@ import { ErrorCodes, ErrorIds } from '../../stores/Error';
 import { ContractMetadata } from '../../stores/Token';
 import { bnum, checkIsPropertyEmpty, fromWei, toWei } from 'utils/helpers';
 import { BigNumber } from 'utils/bignumber';
+import {
+    getSupportedChainId,
+    supportedNetworks,
+    web3ContextNames,
+} from '../../provider/connectors';
 
 const RowContainer = styled.div`
     font-family: var(--roboto);
@@ -41,7 +46,7 @@ enum ButtonState {
     SWAP,
 }
 
-const ButtonText = ['Connect to a wallet', 'Unlock', 'Swap'];
+const ButtonText = ['Connect Wallet', 'Unlock', 'Swap'];
 
 const SwapForm = observer(({ tokenIn, tokenOut }) => {
     const [modelOpen, setModalOpen] = React.useState({
@@ -66,8 +71,12 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         },
     } = useStores();
 
+    const supportedChainId = getSupportedChainId();
+
     const { chainId, account } = providerStore.getActiveWeb3React();
-    const proxyAddress = tokenStore.getProxyAddress(chainId);
+    const { chainId: injectedChainId } = providerStore.getWeb3React(
+        web3ContextNames.injected
+    );
 
     if (!chainId) {
         // Review error message
@@ -75,7 +84,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     }
 
     const { inputs, outputs } = swapFormStore;
-    const tokenList = tokenStore.getWhitelistedTokenMetadata(chainId);
+    const tokenList = tokenStore.getWhitelistedTokenMetadata(supportedChainId);
 
     // TODO set default inputToken and outputToken to ETH and DAI (or was it token with highest user balance??)
     if (helpers.checkIsPropertyEmpty(swapFormStore.inputs.inputToken)) {
@@ -118,19 +127,14 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
 
     const unlockHandler = async () => {
         const tokenToUnlock = inputs.inputToken;
+        const proxyAddress = tokenStore.getProxyAddress(supportedNetworks[0]);
         await tokenStore.approveMax(tokenToUnlock, proxyAddress);
     };
 
     const swapHandler = async () => {
         if (!outputs.validSwap) {
-            console.log('swap not valid!' + swapFormStore.outputs.validSwap);
-            console.log(inputs.inputAmount);
-            console.log(inputs.outputAmount);
-            console.log(inputs.type);
-            console.log(inputs.swaps);
             return;
         }
-        console.log('swap handler executed', inputs.type);
 
         if (inputs.type === SwapMethods.EXACT_IN) {
             const {
@@ -182,6 +186,11 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
             }
             return ButtonState.SWAP;
         }
+
+        if (injectedChainId && injectedChainId !== supportedChainId) {
+            return ButtonState.SWAP;
+        }
+
         return ButtonState.NO_WALLET;
     };
 
@@ -203,7 +212,11 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         }
 
         if (buttonState === ButtonState.SWAP) {
-            if (isInputValid) {
+            if (
+                isInputValid &&
+                injectedChainId &&
+                injectedChainId === supportedChainId
+            ) {
                 const inputAmountBN = toWei(inputs.inputAmount);
                 return inputBalance && inputBalance.gte(inputAmountBN);
             }
@@ -257,6 +270,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
             }
         }
 
+        const proxyAddress = tokenStore.getProxyAddress(supportedNetworks[0]);
         userAllowance = tokenStore.getAllowance(
             chainId,
             inputToken,
@@ -270,7 +284,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     // TODO Pull validation errors and errors in errorStore together; maybe handle a stack of active errors
     const error = errorStore.getActiveError(ErrorIds.SWAP_FORM_STORE);
     if (error) {
-        console.log('error', error);
+        console.error('error', error);
     }
     let errorMessage;
     errorMessage = inputs.activeErrorMessage;

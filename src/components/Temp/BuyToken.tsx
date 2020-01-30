@@ -46,11 +46,11 @@ const BuyToken = observer(
                 value
             );
 
-            if(inputStatus === InputValidationStatus.VALID) {
-                if(parseFloat(value) > parseFloat(tokenBalance)) {
+            if (inputStatus === InputValidationStatus.VALID) {
+                if (parseFloat(value) > parseFloat(tokenBalance)) {
                     inputStatus = InputValidationStatus.INSUFFICIENT_BALANCE;
                 }
-            }            
+            }
 
             if (inputStatus === InputValidationStatus.VALID) {
                 const preview = await previewSwapExactAmountOutHandler();
@@ -59,7 +59,10 @@ const BuyToken = observer(
                     validSwap: false,
                 };
 
-                if (preview.outputAmount.toString() == swapFormStore.inputs.outputAmount) {
+                if (
+                    preview.outputAmount.toString() ==
+                    swapFormStore.inputs.outputAmount
+                ) {
                     if (preview.validSwap) {
                         output['inputAmount'] = fromWei(preview.totalInput);
                         output['effectivePrice'] = str(preview.effectivePrice);

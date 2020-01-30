@@ -14,6 +14,10 @@ import MetamaskIcon from '../../assets/images/metamask.png';
 import { ReactComponent as Close } from '../../assets/images/x.svg';
 import { SUPPORTED_WALLETS, injected } from 'provider/connectors';
 import { useStores } from 'contexts/storesContext';
+import {
+    isChainIdSupported,
+    web3ContextNames,
+} from '../../provider/connectors';
 
 const CloseIcon = styled.div`
     position: absolute;
@@ -119,11 +123,15 @@ const WalletModal = observer(
         const {
             chainId,
             active,
-            account,
             connector,
             error,
             activate,
         } = providerStore.getActiveWeb3React();
+
+        const {
+            account,
+            chainId: injectedChainId,
+        } = providerStore.getWeb3React(web3ContextNames.injected);
 
         const [walletView, setWalletView] = useState(WALLET_VIEWS.ACCOUNT);
         const [pendingWallet, setPendingWallet] = useState();
@@ -279,6 +287,25 @@ const WalletModal = observer(
                             ) : (
                                 'Error connecting. Try refreshing the page.'
                             )}
+                        </ContentWrapper>
+                    </UpperSection>
+                );
+            }
+            if (
+                account &&
+                !isChainIdSupported(injectedChainId) &&
+                walletView === WALLET_VIEWS.ACCOUNT
+            ) {
+                return (
+                    <UpperSection>
+                        <CloseIcon onClick={toggleWalletModal}>
+                            <CloseColor alt={'close icon'} />
+                        </CloseIcon>
+                        <HeaderRow>{'Wrong Network'}</HeaderRow>
+                        <ContentWrapper>
+                            <h5>
+                                Please connect to the main Ethereum network.
+                            </h5>
                         </ContentWrapper>
                     </UpperSection>
                 );
