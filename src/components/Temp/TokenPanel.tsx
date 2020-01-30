@@ -131,7 +131,9 @@ const InputWrapper = styled.div`
         border: ${props =>
             props.errorBorders ? '1px solid var(--error-color)' : '1px solid var(--input-hover-border);'};
         input {
-            padding: 0px;
+            background-color: var(--input-hover-background);
+            box-shadow: inset 0 0 0 1px var(--input-hover-background),
+                inset 0 0 0 100px var(--input-hover-background);
             ::placeholder {
                 color: var(--input-hover-placeholder-text);
                 background-color: var(--input-hover-background);
