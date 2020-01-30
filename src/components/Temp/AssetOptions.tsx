@@ -4,7 +4,11 @@ import { TokenIconAddress } from './TokenPanel';
 import { useStores } from '../../contexts/storesContext';
 import { BigNumber } from 'ethers/utils';
 import { fromWei, toWei } from 'utils/helpers';
-import { web3ContextNames } from '../../provider/connectors';
+import {
+    getSupportedChainId,
+    isChainIdSupported,
+    web3ContextNames,
+} from '../../provider/connectors';
 
 const AssetPanelContainer = styled.div`
     display: flex;
@@ -79,18 +83,18 @@ const AssetOptions = ({ filter, modelOpen, setModalOpen }) => {
     } = useStores();
 
     let assetSelectorData: AssetSelectorData[] = [];
-    const { chainId } = providerStore.getActiveWeb3React();
-    const { account } = providerStore.getWeb3React(web3ContextNames.injected);
+    const supportedChainId = getSupportedChainId();
+    const { chainId, account } = providerStore.getActiveWeb3React();
 
     let userBalances = {};
     let filteredWhitelistedTokens;
     const setSelectorDataWrapper = filter => {
         filteredWhitelistedTokens = tokenStore.getFilteredTokenMetadata(
-            chainId,
+            supportedChainId,
             filter
         );
 
-        if (account) {
+        if (account && isChainIdSupported(chainId)) {
             userBalances = tokenStore.getAccountBalances(
                 chainId,
                 filteredWhitelistedTokens,

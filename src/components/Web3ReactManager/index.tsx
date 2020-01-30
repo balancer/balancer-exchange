@@ -123,8 +123,8 @@ const Web3ReactManager = observer(({ children }) => {
                 injectedActive,
                 networkActive,
                 start:
-                    injectedActive ||
-                    (networkActive && !providerStore.activeFetchLoop),
+                    (injectedActive || networkActive) &&
+                    !providerStore.activeFetchLoop,
             }
         );
         if (injectedActive || networkActive) {

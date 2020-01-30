@@ -14,6 +14,7 @@ export function useEagerConnect() {
     const [tried, setTried] = useState(false);
 
     useEffect(() => {
+        console.log('[Injected Eager Connect]', injected);
         injected.isAuthorized().then(isAuthorized => {
             console.log('[Eager Connect] Activate injected if authorized', {
                 isAuthorized,

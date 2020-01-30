@@ -163,36 +163,10 @@ export default class ProviderStore {
         const contextInjected = this.contexts[web3ContextNames.injected];
         const contextNetwork = this.contexts[web3ContextNames.backup];
 
-        console.log('[Active Web3 React]', {
-            activeAndValidInjected:
-                contextInjected.active &&
-                isChainIdSupported(contextInjected.chainId),
-            result:
-                contextInjected.active &&
-                isChainIdSupported(contextInjected.chainId)
-                    ? 'injected'
-                    : 'network',
-        });
-
         return contextInjected.active &&
             isChainIdSupported(contextInjected.chainId)
             ? contextInjected
             : contextNetwork;
-    }
-
-    getActiveProviderName(): string {
-        if (
-            !this.contexts[web3ContextNames.injected] ||
-            !this.contexts[web3ContextNames.backup]
-        ) {
-            throw new Error('Contexts not loaded to store');
-        }
-
-        const contextInjected = this.contexts[web3ContextNames.injected];
-        const contextNetwork = this.contexts[web3ContextNames.backup];
-        return contextInjected.active
-            ? web3ContextNames.injected
-            : web3ContextNames.backup;
     }
 
     // account is optional

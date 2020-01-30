@@ -5,6 +5,7 @@ import { observer } from 'mobx-react';
 import { Pie } from 'react-chartjs-2';
 import { ChartData } from '../../stores/SwapForm';
 import { useStores } from '../../contexts/storesContext';
+import { getSupportedChainId } from '../../provider/connectors';
 
 const Container = styled.div`
     display: flex;
@@ -115,6 +116,7 @@ const TradeComposition = observer(
             root: { swapFormStore, providerStore, tokenStore },
         } = useStores();
 
+        const supportedChainId = getSupportedChainId();
         const { chainId, account } = providerStore.getActiveWeb3React();
         const chartData = swapFormStore.tradeCompositionData;
 
@@ -212,11 +214,11 @@ const TradeComposition = observer(
             }
 
             const inputTokenSymbol = tokenStore.getTokenMetadata(
-                chainId,
+                supportedChainId,
                 inputToken
             ).symbol;
             const outputTokenSymbol = tokenStore.getTokenMetadata(
-                chainId,
+                supportedChainId,
                 outputToken
             ).symbol;
 

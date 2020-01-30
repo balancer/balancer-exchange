@@ -5,6 +5,10 @@ export const supportedNetworks = [
     Number(process.env.REACT_APP_SUPPORTED_NETWORK_ID),
 ];
 
+export const getSupportedChainId = () => {
+    return supportedNetworks[0];
+};
+
 export const chainNameById = {
     '1': 'mainnet',
     '42': 'kovan',
@@ -27,7 +31,6 @@ export const web3ContextNames = {
 
 export const backup = new NetworkConnector({
     urls: {
-        1: RPC_URLS[1],
         42: RPC_URLS[42],
     },
     defaultChainId: supportedNetworks[0],
