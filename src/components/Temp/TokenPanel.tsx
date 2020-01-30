@@ -39,9 +39,11 @@ const TokenContainer = styled.div`
     justify-content: center;
     cursor: pointer;
     :hover {
-        height: 93px;
         background-color: var(--panel-hover-background);
         border: 1px solid var(--panel-hover-border);
+        margin-left: -1px;
+        margin-right: -1px;
+        margin-bottom: -1px;
     }
 `;
 
@@ -126,10 +128,16 @@ const InputWrapper = styled.div`
     }
     border: ${props =>
         props.errorBorders ? '1px solid var(--error-color)' : ''};
+    margin-left: ${props =>
+        props.errorBorders ? '-1px' : '0px'}
+    margin-right: ${props =>
+        props.errorBorders ? '-1px' : '0px'}
     :hover {
         background-color: var(--input-hover-background);
         border: ${props =>
             props.errorBorders ? '1px solid var(--error-color)' : '1px solid var(--input-hover-border);'};
+        margin-left: -1px;
+        margin-right: -1px;
         input {
             background-color: var(--input-hover-background);
             box-shadow: inset 0 0 0 1px var(--input-hover-background),
