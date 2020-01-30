@@ -2,12 +2,17 @@ import { action, observable, ObservableMap } from 'mobx';
 import RootStore from 'stores/Root';
 import { ContractTypes } from 'stores/Provider';
 import * as helpers from 'utils/helpers';
+import { bnum } from 'utils/helpers';
 import { parseEther } from 'ethers/utils';
 import * as deployed from 'deployed.json';
 import { FetchCode } from './Transaction';
 import { BigNumber } from 'utils/bignumber';
 import { chainNameById } from '../provider/connectors';
-import { bnum } from 'utils/helpers';
+import {
+    AsyncStatus,
+    TokenBalanceFetch,
+    UserAllowanceFetch,
+} from './actions/fetch';
 
 export interface ContractMetadata {
     bFactory: string;
@@ -20,12 +25,19 @@ export interface ContractMetadataMap {
     [index: number]: ContractMetadata;
 }
 
+export interface TokenBalance {
+    balance: BigNumber;
+    lastFetched: number;
+}
+
+export interface UserAllowance {
+    allowance: BigNumber;
+    lastFetched: number;
+}
+
 interface TokenBalanceMap {
     [index: string]: {
-        [index: string]: {
-            balance: BigNumber;
-            lastFetched: number;
-        };
+        [index: string]: TokenBalance;
     };
 }
 
@@ -43,10 +55,7 @@ export interface TokenMetadata {
 interface UserAllowanceMap {
     [index: string]: {
         [index: string]: {
-            [index: string]: {
-                allowance: BigNumber;
-                lastFetched: number;
-            };
+            [index: string]: UserAllowance;
         };
     };
 }
@@ -330,7 +339,6 @@ export default class TokenStore {
 
         const promises: Promise<any>[] = [];
         const currentBlock = providerStore.getCurrentBlockNumber(chainId);
-        //TODO: Promise.all
         tokensToTrack.forEach((value, index) => {
             promises.push(
                 this.fetchBalanceOf(
@@ -352,7 +360,33 @@ export default class TokenStore {
         });
 
         try {
-            await Promise.all(promises);
+            const responses = await Promise.all(promises);
+            responses.forEach(response => {
+                if (response instanceof TokenBalanceFetch) {
+                    const { status, request, payload } = response;
+                    if (status === AsyncStatus.SUCCESS) {
+                        this.setBalanceProperty(
+                            request.chainId,
+                            request.tokenAddress,
+                            request.account,
+                            payload.balance,
+                            payload.lastFetched
+                        );
+                    }
+                } else if (response instanceof UserAllowanceFetch) {
+                    const { status, request, payload } = response;
+                    if (status === AsyncStatus.SUCCESS) {
+                        this.setAllowanceProperty(
+                            request.chainId,
+                            request.tokenAddress,
+                            request.owner,
+                            request.spender,
+                            payload.allowance,
+                            payload.lastFetched
+                        );
+                    }
+                }
+            });
         } catch (e) {
             console.error('[Fetch] Balancer Token Data', { error: e });
             return FetchCode.FAILURE;
@@ -374,7 +408,7 @@ export default class TokenStore {
         tokenAddress: string,
         account: string,
         fetchBlock: number
-    ) => {
+    ): Promise<TokenBalanceFetch> => {
         const { providerStore } = this.rootStore;
         const token = providerStore.getContract(
             ContractTypes.TestToken,
@@ -403,18 +437,24 @@ export default class TokenStore {
                 fetchBlock <=
                 this.getBalanceLastFetched(chainId, tokenAddress, account);
             if (!stale) {
-                this.setBalanceProperty(
-                    chainId,
-                    tokenAddress,
-                    account,
-                    balance,
-                    fetchBlock
-                );
                 console.debug('[Balance Fetch]', {
                     tokenAddress,
                     account,
                     balance: balance.toString(),
                     fetchBlock,
+                });
+                return new TokenBalanceFetch({
+                    status: AsyncStatus.SUCCESS,
+                    request: {
+                        chainId,
+                        tokenAddress,
+                        account,
+                        fetchBlock,
+                    },
+                    payload: {
+                        balance,
+                        lastFetched: fetchBlock,
+                    },
                 });
             }
         } else {
@@ -422,6 +462,16 @@ export default class TokenStore {
                 tokenAddress,
                 account,
                 fetchBlock,
+            });
+            return new TokenBalanceFetch({
+                status: AsyncStatus.STALE,
+                request: {
+                    chainId,
+                    tokenAddress,
+                    account,
+                    fetchBlock,
+                },
+                payload: undefined,
             });
         }
     };
@@ -437,21 +487,34 @@ export default class TokenStore {
     };
 
     @action fetchAllowance = async (
-        chainId,
-        tokenAddress,
-        account,
-        spender,
-        fetchBlock
-    ) => {
+        chainId: number,
+        tokenAddress: string,
+        owner: string,
+        spender: string,
+        fetchBlock: number
+    ): Promise<UserAllowanceFetch> => {
         const { providerStore } = this.rootStore;
         const token = providerStore.getContract(
             ContractTypes.TestToken,
             tokenAddress
         );
 
-        // No allowance for ether
+        // Always max allowance for Ether
         if (tokenAddress === EtherKey) {
-            return;
+            return new UserAllowanceFetch({
+                status: AsyncStatus.SUCCESS,
+                request: {
+                    chainId,
+                    tokenAddress,
+                    owner,
+                    spender,
+                    fetchBlock,
+                },
+                payload: {
+                    allowance: bnum(helpers.setPropertyToMaxUintIfEmpty()),
+                    lastFetched: fetchBlock,
+                },
+            });
         }
 
         /* Before and after the network operation, check for staleness
@@ -460,45 +523,57 @@ export default class TokenStore {
         */
         const stale =
             fetchBlock <=
-            this.getAllowanceLastFetched(
-                chainId,
-                tokenAddress,
-                account,
-                spender
-            );
+            this.getAllowanceLastFetched(chainId, tokenAddress, owner, spender);
         if (!stale) {
-            const allowance = bnum(await token.allowance(account, spender));
+            const allowance = bnum(await token.allowance(owner, spender));
             const stale =
                 fetchBlock <=
                 this.getAllowanceLastFetched(
                     chainId,
                     tokenAddress,
-                    account,
+                    owner,
                     spender
                 );
             if (!stale) {
-                this.setAllowanceProperty(
-                    chainId,
-                    tokenAddress,
-                    account,
-                    spender,
-                    allowance,
-                    fetchBlock
-                );
                 console.debug('[Allowance Fetch]', {
                     tokenAddress,
-                    account,
+                    owner,
                     spender,
                     allowance: allowance.toString(),
                     fetchBlock,
+                });
+                return new UserAllowanceFetch({
+                    status: AsyncStatus.SUCCESS,
+                    request: {
+                        chainId,
+                        tokenAddress,
+                        owner,
+                        spender,
+                        fetchBlock,
+                    },
+                    payload: {
+                        allowance,
+                        lastFetched: fetchBlock,
+                    },
                 });
             }
         } else {
             console.debug('[Allowance Fetch] - Stale', {
                 tokenAddress,
-                account,
+                owner,
                 spender,
                 fetchBlock,
+            });
+            return new UserAllowanceFetch({
+                status: AsyncStatus.STALE,
+                request: {
+                    chainId,
+                    tokenAddress,
+                    owner,
+                    spender,
+                    fetchBlock,
+                },
+                payload: undefined,
             });
         }
     };
@@ -509,11 +584,6 @@ export default class TokenStore {
         account,
         spender
     ): BigNumber | undefined => {
-        // Return infinite allowance for ether (allow ether to be handled identically to ERC20 tokens)
-        if (tokenAddress === EtherKey) {
-            return bnum(helpers.setPropertyToMaxUintIfEmpty());
-        }
-
         const chainApprovals = this.allowances.get(chainId);
         if (chainApprovals) {
             const tokenApprovals = chainApprovals[tokenAddress];
