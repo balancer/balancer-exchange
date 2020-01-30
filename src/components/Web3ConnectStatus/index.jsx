@@ -137,13 +137,6 @@ const Web3ConnectStatus = observer(() => {
     }
 
     function getWeb3Status() {
-        console.log(['getWeb3Status'], {
-            chainId,
-            active,
-            account,
-            connector,
-            error,
-        });
         // Wrong network
         if (account && !isChainIdSupported(injectedChainId)) {
             return (

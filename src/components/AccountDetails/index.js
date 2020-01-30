@@ -242,13 +242,6 @@ export default function AccountDetails({
     ENSName,
     openOptions,
 }) {
-    console.log('Modal', {
-        toggleWalletModal,
-        pendingTransactions,
-        confirmedTransactions,
-        ENSName,
-        openOptions,
-    });
     const {
         root: { providerStore },
     } = useStores();

@@ -73,8 +73,6 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
 
     const supportedChainId = getSupportedChainId();
 
-    console.log(supportedChainId);
-
     const { chainId, account } = providerStore.getActiveWeb3React();
     const { chainId: injectedChainId } = providerStore.getWeb3React(
         web3ContextNames.injected
@@ -135,14 +133,8 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
 
     const swapHandler = async () => {
         if (!outputs.validSwap) {
-            console.log('swap not valid!' + swapFormStore.outputs.validSwap);
-            console.log(inputs.inputAmount);
-            console.log(inputs.outputAmount);
-            console.log(inputs.type);
-            console.log(inputs.swaps);
             return;
         }
-        console.log('swap handler executed', inputs.type);
 
         if (inputs.type === SwapMethods.EXACT_IN) {
             const {
@@ -292,7 +284,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     // TODO Pull validation errors and errors in errorStore together; maybe handle a stack of active errors
     const error = errorStore.getActiveError(ErrorIds.SWAP_FORM_STORE);
     if (error) {
-        console.log('error', error);
+        console.error('error', error);
     }
     let errorMessage;
     errorMessage = inputs.activeErrorMessage;
