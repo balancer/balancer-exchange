@@ -39,6 +39,7 @@ const Switch = () => {
     const clearInputs = () => {
         swapFormStore.inputs.inputAmount = '';
         swapFormStore.inputs.outputAmount = '';
+        swapFormStore.inputs.activeErrorMessage = '';
     };
 
     const switchAssets = () => {
