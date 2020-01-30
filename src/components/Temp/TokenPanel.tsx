@@ -133,7 +133,7 @@ const InputWrapper = styled.div`
         input {
             padding: 0px;
             ::placeholder {
-                color: var(--input-hvoer-placeholder-text);
+                color: var(--input-hover-placeholder-text);
                 background-color: var(--input-hover-background);
             }
         }
