@@ -21,6 +21,7 @@ import {
 
 const CloseIcon = styled.div`
     position: absolute;
+    color: var(--header-text);
     right: 1rem;
     top: 14px;
     &:hover {
@@ -41,28 +42,29 @@ const Wrapper = styled.div`
     padding: 0;
     width: 100%;
     background-color: ${({ theme }) => theme.backgroundColor};
+    border-radius: 10px;
 `;
 
 const HeaderRow = styled.div`
     ${({ theme }) => theme.flexRowNoWrap};
     padding: 1.5rem 1.5rem;
     font-weight: 500;
-    color: ${props =>
-        props.color === 'blue' ? ({ theme }) => theme.royalBlue : 'inherit'};
+    color: #fafafa;
     ${({ theme }) => theme.mediaWidth.upToMedium`
     padding: 1rem;
   `};
 `;
 
 const ContentWrapper = styled.div`
-    background-color: ${({ theme }) => theme.backgroundColor};
+    background-color: var(--panel-background);
+    color: var(--body-text);
     padding: 2rem;
     ${({ theme }) => theme.mediaWidth.upToMedium`padding: 1rem`};
 `;
 
 const UpperSection = styled.div`
     position: relative;
-    background-color: ${({ theme }) => theme.concreteGray};
+    background-color: var(--panel-background);
 
     h5 {
         margin: 0;
@@ -355,7 +357,7 @@ const WalletModal = observer(
                         )}
                         {walletView !== WALLET_VIEWS.PENDING && (
                             <Blurb>
-                                <span>New to Ethereum? &nbsp;</span>{' '}
+                                <span style={{color: '#90a4ae'}}>New to Ethereum? &nbsp;</span>{' '}
                                 <Link href="https://ethereum.org/use/#3-what-is-a-wallet-and-which-one-should-i-use">
                                     Learn more about wallets
                                 </Link>

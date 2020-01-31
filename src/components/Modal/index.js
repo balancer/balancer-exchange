@@ -56,14 +56,10 @@ const FilteredDialogContent = ({
 }) => <DialogContent {...rest} />;
 const StyledDialogContent = styled(FilteredDialogContent)`
     &[data-reach-dialog-content] {
-        margin: 0 0 2rem 0;
-        border: 1px solid ${({ theme }) => theme.concreteGray};
-        background-color: ${({ theme }) => theme.inputBackground};
-        box-shadow: 0 4px 8px 0
-            ${({ theme }) => transparentize(0.95, theme.shadowColor)};
+        border: 1px solid var(--panel-border);
+        background-color: var(--panel-border);
         padding: 0px;
         width: 50vw;
-
         max-width: 650px;
         ${({ maxHeight }) =>
             maxHeight &&
