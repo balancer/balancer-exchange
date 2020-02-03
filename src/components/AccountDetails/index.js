@@ -34,8 +34,7 @@ const HeaderRow = styled.div`
     ${({ theme }) => theme.flexRowNoWrap};
     padding: 1.5rem 1.5rem;
     font-weight: 500;
-    color: ${props =>
-        props.color === 'blue' ? ({ theme }) => theme.royalBlue : 'inherit'};
+    color: var(--header-text);
     ${({ theme }) => theme.mediaWidth.upToMedium`
     padding: 1rem;
   `};
@@ -43,7 +42,7 @@ const HeaderRow = styled.div`
 
 const UpperSection = styled.div`
     position: relative;
-    background-color: ${({ theme }) => theme.concreteGray};
+    background-color: var(--panel-background);
 
     h5 {
         margin: 0;
@@ -86,7 +85,7 @@ const AccountGroupingRow = styled.div`
 `;
 
 const AccountSection = styled.div`
-    background-color: ${({ theme }) => theme.concreteGray};
+    background-color: var(--panel-background);
     padding: 0rem 1.5rem;
     ${({ theme }) =>
         theme.mediaWidth.upToMedium`padding: 0rem 1rem 1rem 1rem;`};
@@ -131,7 +130,7 @@ const LowerSection = styled.div`
     padding: 2rem;
     flex-grow: 1;
     overflow: auto;
-
+    background-color: var(--panel-background);
     h5 {
         margin: 0;
         font-weight: 400;
@@ -176,6 +175,7 @@ const CloseIcon = styled.div`
     position: absolute;
     right: 1rem;
     top: 14px;
+    color: var(--header-text);
     &:hover {
         cursor: pointer;
         opacity: 0.6;

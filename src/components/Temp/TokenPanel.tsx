@@ -1,6 +1,5 @@
 import React from 'react';
 import styled from 'styled-components';
-import Popup from 'reactjs-popup';
 import { isAddress } from '../../utils/helpers';
 
 import { useEffect, useRef } from 'react';
@@ -38,6 +37,13 @@ const TokenContainer = styled.div`
     align-items: center;
     justify-content: center;
     cursor: pointer;
+    :hover {
+        background-color: var(--panel-hover-background);
+        border: 1px solid var(--panel-hover-border);
+        margin-left: -1px;
+        margin-right: -1px;
+        margin-bottom: -1px;
+    }
 `;
 
 const IconAndNameContainer = styled.div`
@@ -91,15 +97,15 @@ const InputWrapper = styled.div`
     display: flex;
     justify-content: space-between;
     align-items: center;
-    color: var(--body-text);
     padding-left: 21px;
     padding-right: 21px;
     border-top: 1px solid var(--panel-border);
     border-radius: 0px 0px 4px 4px;
     input {
         width: 100px;
-        color: var(--body-text);
+        color: var(--input-text);
         font-size: 16px;
+        font-weight: 500;
         line-height: 19px;
         background-color: var(--panel-background);
         border: none;
@@ -112,12 +118,35 @@ const InputWrapper = styled.div`
         :-internal-autofill-selected {
             -webkit-text-fill-color: var(--body-text);
         }
+        ::placeholder {
+            color: var(--input-placeholder-text);
+        }
         :focus {
             outline: none;
         }
     }
     border: ${props =>
         props.errorBorders ? '1px solid var(--error-color)' : ''};
+    margin-left: ${props =>
+        props.errorBorders ? '-1px' : '0px'}
+    margin-right: ${props =>
+        props.errorBorders ? '-1px' : '0px'}
+    :hover {
+        background-color: var(--input-hover-background);
+        border: ${props =>
+            props.errorBorders ? '1px solid var(--error-color)' : '1px solid var(--input-hover-border);'};
+        margin-left: -1px;
+        margin-right: -1px;
+        input {
+            background-color: var(--input-hover-background);
+            box-shadow: inset 0 0 0 1px var(--input-hover-background),
+                inset 0 0 0 100px var(--input-hover-background);
+            ::placeholder {
+                color: var(--input-hover-placeholder-text);
+                background-color: var(--input-hover-background);
+            }
+        }
+    }
 `;
 
 const InputErrorWrapper = styled(InputWrapper)``;
@@ -130,11 +159,6 @@ const MaxLink = styled.div`
     text-decoration-line: underline;
     color: var(--link-text);
     cursor: pointer;
-`;
-
-const PopupTokenBalance = styled.div`
-    width: 200px;
-    word-wrap: break-word;
 `;
 
 const Token = ({
@@ -198,20 +222,9 @@ const Token = ({
                     <TokenIcon src={TokenIconAddress(tokenAddress)} />
                     <TokenName>{tokenName}</TokenName>
                 </IconAndNameContainer>
-
-                <Popup
-                    trigger={
-                        <TokenBalance>
-                            {tokenName} {truncatedTokenBalance}
-                        </TokenBalance>
-                    }
-                    position="top center"
-                    on="hover"
-                >
-                    <div>
-                        <PopupTokenBalance>{tokenBalance}</PopupTokenBalance>
-                    </div>
-                </Popup>
+                <TokenBalance>
+                    {truncatedTokenBalance} {tokenName}
+                </TokenBalance>
             </TokenContainer>
             <InputContainer errorMessage={errorMessage} />
         </Panel>

@@ -99,14 +99,11 @@ const SlippageSelector = ({
 }) => {
     const [currentCell, setCurrentCell] = useState('3');
 
-    console.log('currentCell is: ' + currentCell);
-
     const {
         root: { swapFormStore },
     } = useStores();
 
     const updateSlippage = (cellIndex, slippageValue) => {
-        console.log('IN UPDATESLIPPGE . . . WHY THO');
         setCurrentCell(cellIndex);
         swapFormStore.inputs.extraSlippageAllowance = slippageValue;
     };

@@ -5,6 +5,7 @@ import { observer } from 'mobx-react';
 import { Pie } from 'react-chartjs-2';
 import { ChartData } from '../../stores/SwapForm';
 import { useStores } from '../../contexts/storesContext';
+import { getSupportedChainId } from '../../provider/connectors';
 
 const Container = styled.div`
     display: flex;
@@ -30,19 +31,16 @@ const DropDownArrow = styled.div`
     display: flex;
     justify-content: center;
     align-items: center;
-    border: 1px solid var(--link-text);
-    border-radius: 12px;
-    color: var(--link-text);
     margin-left: 12px;
     cursor: pointer;
 `;
 
 const UpCarretIcon = styled.img`
-    height: 8px;
+    height: 20px;
 `;
 
 const DownCarretIcon = styled.img`
-    height: 8px;
+    height: 20px;
 `;
 
 const CompositionDropDown = styled.div`
@@ -115,6 +113,7 @@ const TradeComposition = observer(
             root: { swapFormStore, providerStore, tokenStore },
         } = useStores();
 
+        const supportedChainId = getSupportedChainId();
         const { chainId, account } = providerStore.getActiveWeb3React();
         const chartData = swapFormStore.tradeCompositionData;
 
@@ -212,11 +211,11 @@ const TradeComposition = observer(
             }
 
             const inputTokenSymbol = tokenStore.getTokenMetadata(
-                chainId,
+                supportedChainId,
                 inputToken
             ).symbol;
             const outputTokenSymbol = tokenStore.getTokenMetadata(
-                chainId,
+                supportedChainId,
                 outputToken
             ).symbol;
 
@@ -256,7 +255,7 @@ const TradeComposition = observer(
                         }}
                     >
                         <UpCarretIcon
-                            src="UpCarret.svg"
+                            src="arrow-bottom.svg"
                             style={{
                                 display: tradeCompositionOpen
                                     ? 'block'
@@ -264,7 +263,7 @@ const TradeComposition = observer(
                             }}
                         />
                         <DownCarretIcon
-                            src="DownCarret.svg"
+                            src="dropdown.svg"
                             style={{
                                 display: tradeCompositionOpen
                                     ? 'none'

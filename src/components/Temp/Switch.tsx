@@ -31,23 +31,28 @@ const Switch = () => {
         inputToken,
         inputTicker,
         inputIconAddress,
+        inputPrecision,
         outputToken,
         outputTicker,
         outputIconAddress,
+        outputPrecision,
     } = inputs;
 
     const clearInputs = () => {
         swapFormStore.inputs.inputAmount = '';
         swapFormStore.inputs.outputAmount = '';
+        swapFormStore.inputs.activeErrorMessage = '';
     };
 
     const switchAssets = () => {
         swapFormStore.inputs.inputToken = outputToken;
         swapFormStore.inputs.inputTicker = outputTicker;
         swapFormStore.inputs.inputIconAddress = outputIconAddress;
+        swapFormStore.inputs.inputPrecision= outputPrecision;
         swapFormStore.inputs.outputToken = inputToken;
         swapFormStore.inputs.outputTicker = inputTicker;
         swapFormStore.inputs.outputIconAddress = inputIconAddress;
+        swapFormStore.inputs.outputPrecision = inputPrecision;
         swapFormStore.resetTradeComposition();
         clearInputs();
     };

@@ -14,6 +14,10 @@ import Identicon from '../Identicon';
 import { useStores } from '../../contexts/storesContext';
 import Button from '../Temp/Button';
 import Web3PillBox from '../Temp/Web3PillBox';
+import {
+    isChainIdSupported,
+    supportedNetworks,
+} from '../../provider/connectors';
 
 const Web3StatusGeneric = styled.button`
     ${({ theme }) => theme.flexRowNoWrap}
@@ -78,10 +82,13 @@ const Web3ConnectStatus = observer(() => {
     const {
         chainId,
         active,
-        account,
         connector,
         error,
     } = providerStore.getActiveWeb3React();
+
+    const { account, chainId: injectedChainId } = providerStore.getWeb3React(
+        web3ContextNames.injected
+    );
 
     const contextNetwork = providerStore.getWeb3React(web3ContextNames.backup);
 
@@ -102,10 +109,15 @@ const Web3ConnectStatus = observer(() => {
         throw new Error('No chain ID specified');
     }
 
-    const allTransactions = transactionStore.allTxRecords;
-    const pending = transactionStore.getPendingTransactions(chainId);
-    const confirmed = transactionStore.getConfirmedTransactions(chainId);
-    const hasPendingTransactions = !!pending.size;
+    let pending = undefined;
+    let confirmed = undefined;
+    let hasPendingTransactions = false;
+
+    if (account && isChainIdSupported(injectedChainId)) {
+        pending = transactionStore.getPendingTransactions(injectedChainId);
+        confirmed = transactionStore.getConfirmedTransactions(injectedChainId);
+        hasPendingTransactions = !!pending.size;
+    }
 
     console.log({
         message: 'Web3ConnectStatus Pending Tx',
@@ -125,7 +137,15 @@ const Web3ConnectStatus = observer(() => {
     }
 
     function getWeb3Status() {
-        if (account) {
+        // Wrong network
+        if (account && !isChainIdSupported(injectedChainId)) {
+            return (
+                <Web3StatusError onClick={toggleWalletModal}>
+                    <NetworkIcon />
+                    <Text> 'Wrong Network'</Text>
+                </Web3StatusError>
+            );
+        } else if (account) {
             return (
                 <Web3PillBox onClick={toggleWalletModal}>
                     {hasPendingTransactions && (

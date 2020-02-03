@@ -4,6 +4,11 @@ import { TokenIconAddress } from './TokenPanel';
 import { useStores } from '../../contexts/storesContext';
 import { BigNumber } from 'ethers/utils';
 import { fromWei, toWei } from 'utils/helpers';
+import {
+    getSupportedChainId,
+    isChainIdSupported,
+    web3ContextNames,
+} from '../../provider/connectors';
 
 const AssetPanelContainer = styled.div`
     display: flex;
@@ -12,6 +17,9 @@ const AssetPanelContainer = styled.div`
     justify-content: flex-start;
     max-height: 329px;
     overflow: auto; /* Enable scroll if needed */
+    ::-webkit-scrollbar {
+        display: none;
+    }
 `;
 
 const AssetPanel = styled.div`
@@ -74,27 +82,22 @@ const AssetOptions = ({ filter, modelOpen, setModalOpen }) => {
     // TODO do math and pass props into AssetPanel css to make border-bottom none for bottom row of assets
 
     const {
-        root: {
-            proxyStore,
-            swapFormStore,
-            providerStore,
-            tokenStore,
-            errorStore,
-        },
+        root: { swapFormStore, providerStore, tokenStore },
     } = useStores();
 
     let assetSelectorData: AssetSelectorData[] = [];
+    const supportedChainId = getSupportedChainId();
     const { chainId, account } = providerStore.getActiveWeb3React();
 
     let userBalances = {};
     let filteredWhitelistedTokens;
     const setSelectorDataWrapper = filter => {
         filteredWhitelistedTokens = tokenStore.getFilteredTokenMetadata(
-            chainId,
+            supportedChainId,
             filter
         );
 
-        if (account) {
+        if (account && isChainIdSupported(chainId)) {
             userBalances = tokenStore.getAccountBalances(
                 chainId,
                 filteredWhitelistedTokens,
@@ -103,11 +106,17 @@ const AssetOptions = ({ filter, modelOpen, setModalOpen }) => {
         }
 
         assetSelectorData = filteredWhitelistedTokens.map(value => {
-            let userBalance = userBalances[value.address]
-                    ? fromWei(userBalances[value.address]).toString()
-                    : 'N/A';
+            let userBalance = (userBalances[value.address] > 0)
+                ? fromWei(userBalances[value.address])
+                : '0.00';
+            let balanceParts = userBalance.split(".");
+            if (balanceParts[1].substring(0,8).length > 1) {
+                userBalance = balanceParts[0] + "." + balanceParts[1].substring(0, value.precision);
+            } else {
+                userBalance = balanceParts[0] + "." + balanceParts[1].substring(0, 1) + "0"
+            }
             if (userBalance.length > 20) {
-                userBalance = userBalance.substring(0,20) + '...';
+                userBalance = userBalance.substring(0, 20) + '...';
             }
             return {
                 address: value.address,

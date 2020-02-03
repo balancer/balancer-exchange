@@ -92,8 +92,10 @@ const theme = darkMode => ({
     charcoalBlack: darkMode ? '#F2F2F2' : '#404040',
     // blues
     zumthorBlue: darkMode ? '#212529' : '#EBF4FF',
-    malibuBlue: darkMode ? '#E67AEF' : '#5CA2FF',
-    royalBlue: darkMode ? '#DC6BE5' : '#2F80ED',
+    // TODO refactor; malibuBlue changed as quick hack to a different color JK 013120
+    malibuBlue: darkMode ? '#E67AEF' : '#4C5480',
+    // TODO refactor; royalBlue changed as quick hack to a different color JK 013120
+    royalBlue: darkMode ? '#DC6BE5' : '#fafafa',
     loadingBlue: darkMode ? '#e4f0ff' : '#e4f0ff',
 
     // purples

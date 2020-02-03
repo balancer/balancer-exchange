@@ -14,26 +14,11 @@ export function useEagerConnect() {
     const [tried, setTried] = useState(false);
 
     useEffect(() => {
-        // const activateIfAuthorized = async () => {
-        //     const isAuthorized = await injected.isAuthorized();
-        //     if (isAuthorized) {
-        //         activate(injected, undefined, true).catch(() => {
-        //             setTried(true);
-        //         });
-        //     } else {
-        //         if (isMobile && window.ethereum) {
-        //             activate(injected, undefined, true).catch(() => {
-        //                 setTried(true);
-        //             });
-        //         } else {
-        //             setTried(true);
-        //         }
-        //     }
-        // };
-        //
-        // activateIfAuthorized();
-
+        console.log('[Injected Eager Connect]', injected);
         injected.isAuthorized().then(isAuthorized => {
+            console.log('[Eager Connect] Activate injected if authorized', {
+                isAuthorized,
+            });
             if (isAuthorized) {
                 activate(injected, undefined, true).catch(() => {
                     setTried(true);

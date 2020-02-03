@@ -14,9 +14,14 @@ import MetamaskIcon from '../../assets/images/metamask.png';
 import { ReactComponent as Close } from '../../assets/images/x.svg';
 import { SUPPORTED_WALLETS, injected } from 'provider/connectors';
 import { useStores } from 'contexts/storesContext';
+import {
+    isChainIdSupported,
+    web3ContextNames,
+} from '../../provider/connectors';
 
 const CloseIcon = styled.div`
     position: absolute;
+    color: var(--header-text);
     right: 1rem;
     top: 14px;
     &:hover {
@@ -37,28 +42,29 @@ const Wrapper = styled.div`
     padding: 0;
     width: 100%;
     background-color: ${({ theme }) => theme.backgroundColor};
+    border-radius: 10px;
 `;
 
 const HeaderRow = styled.div`
     ${({ theme }) => theme.flexRowNoWrap};
     padding: 1.5rem 1.5rem;
     font-weight: 500;
-    color: ${props =>
-        props.color === 'blue' ? ({ theme }) => theme.royalBlue : 'inherit'};
+    color: #fafafa;
     ${({ theme }) => theme.mediaWidth.upToMedium`
     padding: 1rem;
   `};
 `;
 
 const ContentWrapper = styled.div`
-    background-color: ${({ theme }) => theme.backgroundColor};
+    background-color: var(--panel-background);
+    color: var(--body-text);
     padding: 2rem;
     ${({ theme }) => theme.mediaWidth.upToMedium`padding: 1rem`};
 `;
 
 const UpperSection = styled.div`
     position: relative;
-    background-color: ${({ theme }) => theme.concreteGray};
+    background-color: var(--panel-background);
 
     h5 {
         margin: 0;
@@ -119,11 +125,15 @@ const WalletModal = observer(
         const {
             chainId,
             active,
-            account,
             connector,
             error,
             activate,
         } = providerStore.getActiveWeb3React();
+
+        const {
+            account,
+            chainId: injectedChainId,
+        } = providerStore.getWeb3React(web3ContextNames.injected);
 
         const [walletView, setWalletView] = useState(WALLET_VIEWS.ACCOUNT);
         const [pendingWallet, setPendingWallet] = useState();
@@ -283,6 +293,25 @@ const WalletModal = observer(
                     </UpperSection>
                 );
             }
+            if (
+                account &&
+                !isChainIdSupported(injectedChainId) &&
+                walletView === WALLET_VIEWS.ACCOUNT
+            ) {
+                return (
+                    <UpperSection>
+                        <CloseIcon onClick={toggleWalletModal}>
+                            <CloseColor alt={'close icon'} />
+                        </CloseIcon>
+                        <HeaderRow>{'Wrong Network'}</HeaderRow>
+                        <ContentWrapper>
+                            <h5>
+                                Please connect to the main Ethereum network.
+                            </h5>
+                        </ContentWrapper>
+                    </UpperSection>
+                );
+            }
             if (account && walletView === WALLET_VIEWS.ACCOUNT) {
                 return (
                     <AccountDetails
@@ -328,7 +357,7 @@ const WalletModal = observer(
                         )}
                         {walletView !== WALLET_VIEWS.PENDING && (
                             <Blurb>
-                                <span>New to Ethereum? &nbsp;</span>{' '}
+                                <span style={{color: '#90a4ae'}}>New to Ethereum? &nbsp;</span>{' '}
                                 <Link href="https://ethereum.org/use/#3-what-is-a-wallet-and-which-one-should-i-use">
                                     Learn more about wallets
                                 </Link>

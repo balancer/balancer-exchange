@@ -44,7 +44,7 @@ const AppName = styled.div`
     letter-spacing: 1px;
     color: var(--header-text);
     margin-left: 12px;
-`
+`;
 
 const Header = () => {
     return (
