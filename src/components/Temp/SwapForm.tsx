@@ -91,21 +91,25 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         swapFormStore.inputs.inputToken = tokenList[0].address;
         swapFormStore.inputs.inputTicker = tokenList[0].symbol;
         swapFormStore.inputs.inputIconAddress = tokenList[0].iconAddress;
+        swapFormStore.inputs.inputPrecision = tokenList[0].precision;
     }
 
     if (helpers.checkIsPropertyEmpty(swapFormStore.inputs.outputToken)) {
         swapFormStore.inputs.outputToken = tokenList[1].address;
         swapFormStore.inputs.outputTicker = tokenList[1].symbol;
         swapFormStore.inputs.outputIconAddress = tokenList[1].iconAddress;
+        swapFormStore.inputs.outputPrecision = tokenList[1].precision;
     }
 
     const {
         inputToken,
         inputTicker,
         inputIconAddress,
+        inputPrecision,
         outputToken,
         outputTicker,
         outputIconAddress,
+        outputPrecision,
         expectedSlippage,
     } = inputs;
 
@@ -227,10 +231,10 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
 
     let inputUserBalanceBN;
     let inputUserBalance;
-    let truncatedInputUserBalance;
+    let truncatedInputUserBalance = '0.00';
     let outputUserBalanceBN;
     let outputUserBalance;
-    let truncatedOutputUserBalance;
+    let truncatedOutputUserBalance = '0.00';
     let userAllowance;
 
     if (account) {
@@ -241,9 +245,15 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         );
 
         if (inputUserBalanceBN) {
-            inputUserBalance = inputUserBalanceBN
+            inputUserBalance = (inputUserBalanceBN > 0)
                 ? helpers.fromWei(inputUserBalanceBN)
-                : 'N/A';
+                : '0.00';
+            let inputBalanceParts = inputUserBalance.split(".");
+            if (inputBalanceParts[1].substring(0,8).length > 1) {
+                inputUserBalance = inputBalanceParts[0] + "." + inputBalanceParts[1].substring(0, inputPrecision);
+            } else {
+                inputUserBalance = inputBalanceParts[0] + "." + inputBalanceParts[1].substring(0, 1) + "0"
+            }
             if (inputUserBalance.length > 20) {
                 truncatedInputUserBalance =
                     inputUserBalance.substring(0, 20) + '...';
@@ -259,9 +269,15 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         );
 
         if (outputUserBalanceBN) {
-            outputUserBalance = outputUserBalanceBN
+            outputUserBalance = (outputUserBalanceBN > 0)
                 ? helpers.fromWei(outputUserBalanceBN).toString()
-                : 'N/A';
+                : '0.00';
+            let outputBalanceParts = outputUserBalance.split(".");
+            if (outputBalanceParts[1].substring(0,8).length > 1) {
+                outputUserBalance = outputBalanceParts[0] + "." + outputBalanceParts[1].substring(0, outputPrecision);
+            } else {
+                outputUserBalance = outputBalanceParts[0] + "." + outputBalanceParts[1].substring(0, 1) + "0"
+            }
             if (outputUserBalance.length > 20) {
                 truncatedOutputUserBalance =
                     outputUserBalance.substring(0, 20) + '...';

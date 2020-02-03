@@ -1,6 +1,5 @@
 import React from 'react';
 import styled from 'styled-components';
-import Popup from 'reactjs-popup';
 import { isAddress } from '../../utils/helpers';
 
 import { useEffect, useRef } from 'react';
@@ -162,11 +161,6 @@ const MaxLink = styled.div`
     cursor: pointer;
 `;
 
-const PopupTokenBalance = styled.div`
-    width: 200px;
-    word-wrap: break-word;
-`;
-
 const Token = ({
     defaultValue,
     onChange,
@@ -228,19 +222,9 @@ const Token = ({
                     <TokenIcon src={TokenIconAddress(tokenAddress)} />
                     <TokenName>{tokenName}</TokenName>
                 </IconAndNameContainer>
-                <Popup
-                    trigger={
-                        <TokenBalance>
-                            {truncatedTokenBalance} {tokenName}
-                        </TokenBalance>
-                    }
-                    position="top center"
-                    on="hover"
-                >
-                    <div>
-                        <PopupTokenBalance>{tokenBalance}</PopupTokenBalance>
-                    </div>
-                </Popup>
+                <TokenBalance>
+                    {truncatedTokenBalance} {tokenName}
+                </TokenBalance>
             </TokenContainer>
             <InputContainer errorMessage={errorMessage} />
         </Panel>
