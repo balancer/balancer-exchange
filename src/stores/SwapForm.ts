@@ -203,12 +203,12 @@ export default class SwapFormStore {
         this.clearErrorMessage();
     }
 
-    isInputAmountStale(inputAmount: string) {
-        return inputAmount === this.inputs.inputAmount;
+    isInputAmountStale(inputAmount: string | BigNumber) {
+        return inputAmount.toString() === this.inputs.inputAmount;
     }
 
-    isOutputAmountStale(outputAmount: string) {
-        return outputAmount === this.inputs.outputAmount;
+    isOutputAmountStale(outputAmount: string | BigNumber) {
+        return outputAmount.toString() === this.inputs.outputAmount;
     }
 
     /* Assume swaps are in order of biggest to smallest value */

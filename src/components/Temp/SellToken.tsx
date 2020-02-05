@@ -57,10 +57,7 @@ const SellToken = observer(
                     swapFormStore.setErrorMessage(preview.error);
                 }
 
-                if (
-                    preview.inputAmount.toString() ==
-                    swapFormStore.inputs.inputAmount
-                ) {
+                if (swapFormStore.isInputAmountStale(preview.inputAmount)) {
                     if (preview.validSwap) {
                         swapFormStore.setOutputFromPreview(
                             SwapMethods.EXACT_IN,

@@ -53,10 +53,7 @@ const BuyToken = observer(
             if (inputStatus === InputValidationStatus.VALID) {
                 const preview = await previewSwapExactAmountOutHandler();
 
-                if (
-                    preview.outputAmount.toString() ==
-                    swapFormStore.inputs.outputAmount
-                ) {
+                if (swapFormStore.isOutputAmountStale(preview.outputAmount)) {
                     if (preview.validSwap) {
                         swapFormStore.setOutputFromPreview(
                             SwapMethods.EXACT_OUT,
