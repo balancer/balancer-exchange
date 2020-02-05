@@ -9,12 +9,14 @@ import TransactionStore from './Transaction';
 import { supportedNetworks } from 'provider/connectors';
 import AppSettingsStore from './AppSettings';
 import { action } from 'mobx';
+import PoolStore from './Pool';
 
 export default class RootStore {
     proxyStore: ProxyStore;
     providerStore: ProviderStore;
     swapFormStore: SwapFormStore;
     tokenStore: TokenStore;
+    poolStore: PoolStore;
     modalStore: ModalStore;
     transactionStore: TransactionStore;
     appSettingsStore: AppSettingsStore;
@@ -25,6 +27,7 @@ export default class RootStore {
         this.providerStore = new ProviderStore(this, supportedNetworks);
         this.swapFormStore = new SwapFormStore(this);
         this.tokenStore = new TokenStore(this, supportedNetworks);
+        this.poolStore = new PoolStore(this, supportedNetworks);
         this.modalStore = new ModalStore(this);
         this.transactionStore = new TransactionStore(this, supportedNetworks);
         this.appSettingsStore = new AppSettingsStore(this);

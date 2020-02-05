@@ -20,14 +20,10 @@ const BuyToken = observer(
         showMax,
     }) => {
         const {
-            root: {
-                proxyStore,
-                swapFormStore,
-                providerStore,
-                tokenStore,
-                errorStore,
-            },
+            root: { proxyStore, swapFormStore, providerStore, poolStore },
         } = useStores();
+
+        const { chainId } = providerStore.getActiveWeb3React();
 
         const onChange = async event => {
             const { value } = event.target;
@@ -87,14 +83,15 @@ const BuyToken = observer(
             } else {
                 console.log('[Invalid Input]', inputStatus, value);
                 if (value == swapFormStore.inputs.outputAmount) {
+                    // Don't show error message on empty value
                     if (inputStatus === InputValidationStatus.EMPTY) {
                         swapFormStore.updateInputsFromObject({
                             inputAmount: '',
                             activeErrorMessage: '',
-                            // clear preview
                         });
                         swapFormStore.resetTradeComposition();
                     } else {
+                        //Show error message
                         swapFormStore.updateInputsFromObject({
                             inputAmount: '',
                             activeErrorMessage: inputStatus,

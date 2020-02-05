@@ -283,11 +283,11 @@ export const formatPoolData = (pools: Pool[]): StringifiedPool[] => {
     pools.forEach(pool => {
         result.push({
             id: pool.id,
-            balanceIn: str(fromWei(pool.balanceIn)),
-            balanceOut: str(fromWei(pool.balanceOut)),
-            weightIn: str(fromWei(pool.weightIn)),
-            weightOut: str(fromWei(pool.weightOut)),
-            swapFee: str(fromWei(pool.swapFee)),
+            balanceIn: str(pool.balanceIn),
+            balanceOut: str(pool.balanceOut),
+            weightIn: str(pool.weightIn),
+            weightOut: str(pool.weightOut),
+            swapFee: str(pool.swapFee),
         });
     });
     return result;

@@ -6,10 +6,12 @@ import {
     calcSpotPrice,
 } from './balancerCalcs';
 import * as helpers from './helpers';
-import { bnum, formatPoolData } from './helpers';
+import { bnum, formatPoolData, printPoolData } from './helpers';
 import sor from 'balancer-sor';
 import { SwapMethods } from '../stores/SwapForm';
 import { Pool, SorSwaps, Swap } from '../stores/Proxy';
+import { TokenPairs } from '../stores/Pool';
+import { EtherKey } from '../stores/Token';
 
 export const formatSwapsExactAmountIn = (
     sorSwaps: SorSwaps,
@@ -104,6 +106,8 @@ export const findBestSwaps = (
     maxBalancers: number,
     costOutputToken: BigNumber
 ): SorSwaps => {
+    console.log(balancers);
+    printPoolData(balancers);
     return sor.linearizedSolution(
         formatPoolData(balancers),
         swapMethod,
@@ -142,6 +146,33 @@ export const calcTotalOutput = (swaps: Swap[], poolData: Pool[]): BigNumber => {
     } catch (e) {
         throw new Error(e);
     }
+};
+
+export const getTokenPairs = async (
+    tokenAddress: string,
+    wethAddress: string
+): Promise<TokenPairs> => {
+    const pools = await sor.getTokenPairs(tokenAddress);
+
+    let tokenPairs: TokenPairs = new Set<string>();
+    if (pools.pools.length === 0) return tokenPairs;
+
+    pools.pools.forEach(p => {
+        p.tokensList.forEach(token => {
+            const sanitizedToken = helpers.toChecksum(token);
+            const sanitizedWeth = helpers.toChecksum(wethAddress);
+
+            if (!tokenPairs.has(sanitizedToken)) {
+                tokenPairs.add(sanitizedToken);
+            }
+
+            // Add Ether along with WETH
+            if (sanitizedToken === sanitizedWeth && !tokenPairs.has(EtherKey)) {
+                tokenPairs.add(EtherKey);
+            }
+        });
+    });
+    return tokenPairs;
 };
 
 export const calcPrice = (amountIn, amountOut) => {

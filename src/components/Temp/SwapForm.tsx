@@ -11,12 +11,10 @@ import AssetSelector from './AssetSelector';
 
 import { observer } from 'mobx-react';
 import * as helpers from 'utils/helpers';
-import { formNames, labels, SwapMethods } from 'stores/SwapForm';
-import { validators } from '../validators';
+import { toWei } from 'utils/helpers';
+import { SwapMethods } from 'stores/SwapForm';
 import { useStores } from '../../contexts/storesContext';
-import { ErrorCodes, ErrorIds } from '../../stores/Error';
-import { ContractMetadata } from '../../stores/Token';
-import { bnum, checkIsPropertyEmpty, fromWei, toWei } from 'utils/helpers';
+import { ErrorIds } from '../../stores/Error';
 import { BigNumber } from 'utils/bignumber';
 import {
     getSupportedChainId,
@@ -68,6 +66,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
             tokenStore,
             errorStore,
             modalStore,
+            poolStore,
         },
     } = useStores();
 
@@ -86,11 +85,12 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     const { inputs, outputs } = swapFormStore;
     const tokenList = tokenStore.getWhitelistedTokenMetadata(supportedChainId);
 
-    // TODO set default inputToken and outputToken to ETH and DAI (or was it token with highest user balance??)
+    // Set default token pair to first two in config file - currently ETH and DAI
     if (helpers.checkIsPropertyEmpty(swapFormStore.inputs.inputToken)) {
         swapFormStore.inputs.inputToken = tokenList[0].address;
         swapFormStore.inputs.inputTicker = tokenList[0].symbol;
         swapFormStore.inputs.inputIconAddress = tokenList[0].iconAddress;
+        poolStore.fetchAndSetTokenPairs(chainId, tokenList[0].address);
         swapFormStore.inputs.inputPrecision = tokenList[0].precision;
     }
 
@@ -98,6 +98,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         swapFormStore.inputs.outputToken = tokenList[1].address;
         swapFormStore.inputs.outputTicker = tokenList[1].symbol;
         swapFormStore.inputs.outputIconAddress = tokenList[1].iconAddress;
+        poolStore.fetchAndSetTokenPairs(chainId, tokenList[1].address);
         swapFormStore.inputs.outputPrecision = tokenList[1].precision;
     }
 

@@ -17,16 +17,10 @@ const SwapIcon = styled.img`
 
 const Switch = () => {
     const {
-        root: {
-            proxyStore,
-            swapFormStore,
-            providerStore,
-            tokenStore,
-            errorStore,
-        },
+        root: { swapFormStore },
     } = useStores();
 
-    const { inputs, outputs } = swapFormStore;
+    const { inputs } = swapFormStore;
     const {
         inputToken,
         inputTicker,

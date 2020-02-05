@@ -1,14 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import { TokenIconAddress } from './TokenPanel';
 import { useStores } from '../../contexts/storesContext';
-import { BigNumber } from 'ethers/utils';
-import { fromWei, toWei } from 'utils/helpers';
+import { fromWei } from 'utils/helpers';
 import {
     getSupportedChainId,
     isChainIdSupported,
-    web3ContextNames,
 } from '../../provider/connectors';
+import { observer } from 'mobx-react';
 
 const AssetPanelContainer = styled.div`
     display: flex;
@@ -76,13 +75,14 @@ interface AssetSelectorData {
     iconAddress: string;
     symbol: string;
     userBalance: string;
+    isTradable: boolean;
 }
 
-const AssetOptions = ({ filter, modelOpen, setModalOpen }) => {
+const AssetOptions = observer(({ filter, modelOpen, setModalOpen }) => {
     // TODO do math and pass props into AssetPanel css to make border-bottom none for bottom row of assets
 
     const {
-        root: { swapFormStore, providerStore, tokenStore },
+        root: { swapFormStore, providerStore, tokenStore, poolStore },
     } = useStores();
 
     let assetSelectorData: AssetSelectorData[] = [];
@@ -91,11 +91,32 @@ const AssetOptions = ({ filter, modelOpen, setModalOpen }) => {
 
     let userBalances = {};
     let filteredWhitelistedTokens;
+    let tradableTokens;
     const setSelectorDataWrapper = filter => {
         filteredWhitelistedTokens = tokenStore.getFilteredTokenMetadata(
             supportedChainId,
             filter
         );
+
+        if (modelOpen.input === 'inputAmount') {
+            tradableTokens = poolStore.getTokenPairs(
+                chainId,
+                swapFormStore.inputs.outputToken
+            );
+            console.log({
+                checkingFor: swapFormStore.inputs.outputToken,
+                tradableTokens,
+            });
+        } else {
+            tradableTokens = poolStore.getTokenPairs(
+                chainId,
+                swapFormStore.inputs.inputToken
+            );
+            console.log({
+                checkingFor: swapFormStore.inputs.inputToken,
+                tradableTokens,
+            });
+        }
 
         if (account && isChainIdSupported(chainId)) {
             userBalances = tokenStore.getAccountBalances(
@@ -118,11 +139,19 @@ const AssetOptions = ({ filter, modelOpen, setModalOpen }) => {
             if (userBalance.length > 20) {
                 userBalance = userBalance.substring(0, 20) + '...';
             }
+
+            if (tradableTokens) {
+                console.log({ addressToFind: value.address, tradableTokens });
+            }
+
             return {
                 address: value.address,
                 iconAddress: value.iconAddress,
                 symbol: value.symbol,
                 userBalance: userBalance,
+                isTradable: tradableTokens
+                    ? tradableTokens.has(value.address)
+                    : false,
             };
         });
         return assetSelectorData;
@@ -140,10 +169,12 @@ const AssetOptions = ({ filter, modelOpen, setModalOpen }) => {
             swapFormStore.inputs.inputToken = token.address;
             swapFormStore.inputs.inputTicker = token.symbol;
             swapFormStore.inputs.inputIconAddress = token.iconAddress;
+            poolStore.fetchAndSetTokenPairs(chainId, token.address);
         } else {
             swapFormStore.inputs.outputToken = token.address;
             swapFormStore.inputs.outputTicker = token.symbol;
             swapFormStore.inputs.outputIconAddress = token.iconAddress;
+            poolStore.fetchAndSetTokenPairs(chainId, token.address);
         }
 
         clearInputs();
@@ -164,11 +195,12 @@ const AssetOptions = ({ filter, modelOpen, setModalOpen }) => {
                     </AssetWrapper>
                     <TokenBalance>
                         {token.userBalance + ' ' + token.symbol}
+                        {token.isTradable ? ' yes' : ' no'}
                     </TokenBalance>
                 </AssetPanel>
             ))}
         </AssetPanelContainer>
     );
-};
+});
 
 export default AssetOptions;
