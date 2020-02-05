@@ -111,8 +111,9 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         outputTicker,
         outputIconAddress,
         outputPrecision,
-        expectedSlippage,
     } = inputs;
+
+    const { expectedSlippage } = outputs;
 
     const buttonActionHandler = (buttonState: ButtonState) => {
         switch (buttonState) {
@@ -246,14 +247,22 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         );
 
         if (inputUserBalanceBN) {
-            inputUserBalance = (inputUserBalanceBN > 0)
-                ? helpers.fromWei(inputUserBalanceBN)
-                : '0.00';
-            let inputBalanceParts = inputUserBalance.split(".");
-            if (inputBalanceParts[1].substring(0,8).length > 1) {
-                inputUserBalance = inputBalanceParts[0] + "." + inputBalanceParts[1].substring(0, inputPrecision);
+            inputUserBalance =
+                inputUserBalanceBN > 0
+                    ? helpers.fromWei(inputUserBalanceBN)
+                    : '0.00';
+            let inputBalanceParts = inputUserBalance.split('.');
+            if (inputBalanceParts[1].substring(0, 8).length > 1) {
+                inputUserBalance =
+                    inputBalanceParts[0] +
+                    '.' +
+                    inputBalanceParts[1].substring(0, inputPrecision);
             } else {
-                inputUserBalance = inputBalanceParts[0] + "." + inputBalanceParts[1].substring(0, 1) + "0"
+                inputUserBalance =
+                    inputBalanceParts[0] +
+                    '.' +
+                    inputBalanceParts[1].substring(0, 1) +
+                    '0';
             }
             if (inputUserBalance.length > 20) {
                 truncatedInputUserBalance =
@@ -270,14 +279,22 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         );
 
         if (outputUserBalanceBN) {
-            outputUserBalance = (outputUserBalanceBN > 0)
-                ? helpers.fromWei(outputUserBalanceBN).toString()
-                : '0.00';
-            let outputBalanceParts = outputUserBalance.split(".");
-            if (outputBalanceParts[1].substring(0,8).length > 1) {
-                outputUserBalance = outputBalanceParts[0] + "." + outputBalanceParts[1].substring(0, outputPrecision);
+            outputUserBalance =
+                outputUserBalanceBN > 0
+                    ? helpers.fromWei(outputUserBalanceBN).toString()
+                    : '0.00';
+            let outputBalanceParts = outputUserBalance.split('.');
+            if (outputBalanceParts[1].substring(0, 8).length > 1) {
+                outputUserBalance =
+                    outputBalanceParts[0] +
+                    '.' +
+                    outputBalanceParts[1].substring(0, outputPrecision);
             } else {
-                outputUserBalance = outputBalanceParts[0] + "." + outputBalanceParts[1].substring(0, 1) + "0"
+                outputUserBalance =
+                    outputBalanceParts[0] +
+                    '.' +
+                    outputBalanceParts[1].substring(0, 1) +
+                    '0';
             }
             if (outputUserBalance.length > 20) {
                 truncatedOutputUserBalance =
@@ -303,8 +320,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     if (error) {
         console.error('error', error);
     }
-    let errorMessage;
-    errorMessage = inputs.activeErrorMessage;
+    const errorMessage = swapFormStore.getErrorMessage();
 
     return (
         <div>

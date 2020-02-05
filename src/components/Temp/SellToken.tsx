@@ -2,10 +2,13 @@ import React from 'react';
 import TokenPanel from './TokenPanel';
 import { observer } from 'mobx-react';
 import { useStores } from '../../contexts/storesContext';
-import { InputValidationStatus, SwapMethods } from 'stores/SwapForm';
-import { bnum, formatPctString, fromWei, str } from 'utils/helpers';
+import {
+    InputFocus,
+    InputValidationStatus,
+    SwapMethods,
+} from 'stores/SwapForm';
+import { bnum } from 'utils/helpers';
 import { ExactAmountInPreview } from 'stores/Proxy';
-import { calcExpectedSlippage } from '../../utils/sorWrapper';
 
 const SellToken = observer(
     ({
@@ -33,8 +36,7 @@ const SellToken = observer(
         /* To protect against race conditions in this async method we check
         for staleness of inputAmount after getting preview and before making updates */
         const updateSwapFormData = async value => {
-            swapFormStore.inputs.setBuyFocus = false;
-            swapFormStore.inputs.setSellFocus = true;
+            swapFormStore.setInputFocus(InputFocus.SELL);
             swapFormStore.inputs.type = SwapMethods.EXACT_IN;
             swapFormStore.inputs.inputAmount = value;
 
@@ -50,16 +52,9 @@ const SellToken = observer(
 
             if (inputStatus === InputValidationStatus.VALID) {
                 const preview = await previewSwapExactAmountInHandler();
-                console.log(preview);
-
-                let output = {
-                    validSwap: false,
-                };
 
                 if (preview.error) {
-                    swapFormStore.updateInputsFromObject({
-                        activeErrorMessage: preview.error,
-                    });
+                    swapFormStore.setErrorMessage(preview.error);
                 }
 
                 if (
@@ -67,25 +62,16 @@ const SellToken = observer(
                     swapFormStore.inputs.inputAmount
                 ) {
                     if (preview.validSwap) {
-                        output['outputAmount'] = fromWei(preview.totalOutput);
-                        output['effectivePrice'] = str(preview.effectivePrice);
-                        output['spotPrice'] = str(preview.spotPrice);
-                        output['expectedSlippage'] = formatPctString(
-                            calcExpectedSlippage(
-                                preview.spotPrice,
-                                preview.effectivePrice
-                            )
+                        swapFormStore.setOutputFromPreview(
+                            SwapMethods.EXACT_IN,
+                            preview
                         );
-                        output['swaps'] = preview.swaps;
-                        output['validSwap'] = true;
-                        output['activeErrorMessage'] = '';
+                        swapFormStore.clearErrorMessage();
                         swapFormStore.setTradeCompositionEAI(preview);
                     } else {
+                        swapFormStore.setValidSwap(false);
                         swapFormStore.resetTradeComposition();
                     }
-
-                    swapFormStore.updateInputsFromObject(output);
-                    swapFormStore.updateOutputsFromObject(output);
                 }
             } else {
                 console.log('[Invalid Input]', inputStatus, value);
@@ -94,15 +80,14 @@ const SellToken = observer(
                     if (inputStatus === InputValidationStatus.EMPTY) {
                         swapFormStore.updateInputsFromObject({
                             outputAmount: '',
-                            activeErrorMessage: '',
                         });
+                        swapFormStore.clearErrorMessage();
                         swapFormStore.resetTradeComposition();
                     } else {
                         swapFormStore.updateInputsFromObject({
                             outputAmount: '',
-                            activeErrorMessage: inputStatus,
-                            // clear preview
                         });
+                        swapFormStore.setErrorMessage(inputStatus);
                         swapFormStore.resetTradeComposition();
                     }
                 }

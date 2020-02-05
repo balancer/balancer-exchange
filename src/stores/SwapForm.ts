@@ -3,7 +3,15 @@ import RootStore from 'stores/Root';
 import { ValidationRules } from 'react-form-validator-core';
 import { ExactAmountInPreview, ExactAmountOutPreview, Swap } from './Proxy';
 import { BigNumber } from 'utils/bignumber';
-import { bnum, fromWei, scale, toWei } from '../utils/helpers';
+import {
+    bnum,
+    formatPctString,
+    fromWei,
+    scale,
+    str,
+    toWei,
+} from '../utils/helpers';
+import { calcExpectedSlippage } from '../utils/sorWrapper';
 
 export const formNames = {
     INPUT_FORM: 'inputs',
@@ -23,6 +31,11 @@ export const labels = {
         MARGINAL_PRICE: 'Marginal Price',
     },
 };
+
+export enum InputFocus {
+    BUY,
+    SELL,
+}
 
 export enum SwapMethods {
     EXACT_IN = 'swapExactIn',
@@ -59,7 +72,6 @@ export default class SwapFormStore {
         inputAmount: '',
         outputAmount: '',
         extraSlippageAllowance: '1.0',
-        expectedSlippage: '0',
         inputTicker: '',
         outputTicker: '',
         inputPrecision: 2,
@@ -72,17 +84,17 @@ export default class SwapFormStore {
         limitPrice: '0',
         setBuyFocus: false,
         setSellFocus: false,
-        effectivePrice: '',
         swaps: [],
-        activeErrorMessage: '',
     };
     @observable outputs = {
         inputAmount: '',
         outputAmount: '',
         effectivePrice: '',
         spotPrice: '',
+        expectedSlippage: '0',
         swaps: [],
         validSwap: false,
+        activeErrorMessage: '',
     };
     @observable tradeCompositionData: ChartData;
 
@@ -100,6 +112,103 @@ export default class SwapFormStore {
             ...this.inputs,
             ...output,
         };
+    }
+
+    @action setOutputFromPreview(
+        method: SwapMethods,
+        preview: ExactAmountInPreview | ExactAmountOutPreview
+    ) {
+        if (method === SwapMethods.EXACT_IN) {
+            preview = preview as ExactAmountInPreview;
+            this.outputs.outputAmount = fromWei(preview.totalOutput);
+        } else if (method === SwapMethods.EXACT_OUT) {
+            preview = preview as ExactAmountOutPreview;
+            this.outputs.outputAmount = fromWei(preview.totalInput);
+        } else {
+            throw new Error('Invalid swap method specified');
+        }
+
+        this.outputs = {
+            ...this.outputs,
+            effectivePrice: str(preview.effectivePrice),
+            spotPrice: str(preview.spotPrice),
+            expectedSlippage: formatPctString(
+                calcExpectedSlippage(preview.spotPrice, preview.effectivePrice)
+            ),
+            swaps: preview.swaps,
+            validSwap: true,
+        };
+    }
+
+    @action setInputFocus(element: InputFocus) {
+        if (element === InputFocus.BUY) {
+            this.inputs.setSellFocus = false;
+            this.inputs.setBuyFocus = true;
+        } else if (element === InputFocus.SELL) {
+            this.inputs.setBuyFocus = false;
+            this.inputs.setSellFocus = true;
+        } else {
+            throw new Error('Invalid input focus element specified');
+        }
+    }
+
+    @action setErrorMessage(message: string) {
+        this.outputs.activeErrorMessage = message;
+    }
+
+    getErrorMessage(): string {
+        return this.outputs.activeErrorMessage;
+    }
+
+    @action clearErrorMessage() {
+        this.outputs.activeErrorMessage = '';
+    }
+
+    @action setValidSwap(valid: boolean) {
+        this.outputs.validSwap = valid;
+    }
+
+    @action setOutputAmount(value: string) {
+        this.inputs.outputAmount = value;
+    }
+
+    @action setInputAmount(value: string) {
+        this.inputs.inputAmount = value;
+    }
+
+    @action switchInputOutputValues() {
+        const {
+            outputToken,
+            outputTicker,
+            outputIconAddress,
+            outputPrecision,
+            inputToken,
+            inputTicker,
+            inputIconAddress,
+            inputPrecision,
+        } = this.inputs;
+        this.inputs.inputToken = outputToken;
+        this.inputs.inputTicker = outputTicker;
+        this.inputs.inputIconAddress = outputIconAddress;
+        this.inputs.inputPrecision = outputPrecision;
+        this.inputs.outputToken = inputToken;
+        this.inputs.outputTicker = inputTicker;
+        this.inputs.outputIconAddress = inputIconAddress;
+        this.inputs.outputPrecision = inputPrecision;
+    }
+
+    @action clearInputs() {
+        this.setInputAmount('');
+        this.setOutputAmount('');
+        this.clearErrorMessage();
+    }
+
+    isInputAmountStale(inputAmount: string) {
+        return inputAmount === this.inputs.inputAmount;
+    }
+
+    isOutputAmountStale(outputAmount: string) {
+        return outputAmount === this.inputs.outputAmount;
     }
 
     /* Assume swaps are in order of biggest to smallest value */
@@ -233,25 +342,6 @@ export default class SwapFormStore {
         }
 
         return InputValidationStatus.VALID;
-    }
-
-    resetInputs() {
-        this.inputs = {
-            ...this.inputs,
-            inputAmount: '',
-            outputAmount: '',
-        };
-    }
-
-    resetOutputs() {
-        this.outputs = {
-            inputAmount: '',
-            outputAmount: '',
-            effectivePrice: '',
-            spotPrice: '',
-            swaps: [],
-            validSwap: false,
-        };
     }
 
     resetTradeComposition() {
