@@ -340,14 +340,10 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     if (error) {
         console.error('error', error);
     }
-    let errorMessage;
-    errorMessage = inputs.activeErrorMessage;
+    const errorMessage = outputs.activeErrorMessage;
 
     const TradeDetails = ({ inputAmount, outputAmount }) => {
-        if (
-            checkIsPropertyEmpty(inputAmount) &&
-            checkIsPropertyEmpty(outputAmount)
-        ) {
+        if (helpers.isEmpty(inputAmount) && helpers.isEmpty(outputAmount)) {
             return (
                 <ColumnContainer>
                     <TradeCompositionPlaceholder />
