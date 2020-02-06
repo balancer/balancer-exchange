@@ -314,13 +314,41 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     }
 
     const buttonState = getButtonState(account, userAllowance);
+    const errorMessage = swapFormStore.getErrorMessage();
+
+    const renderNotificationArea = () => {
+        const { validSwap } = swapFormStore.outputs;
+        if (swapFormStore.hasErrorMessage()) {
+            return <ErrorDisplay errorText={errorMessage} />;
+        } else if (validSwap) {
+            return (
+                <React.Fragment>
+                    <TradeComposition
+                        tradeCompositionOpen={tradeCompositionOpen}
+                        setTradeCompositionOpen={setTradeCompositionOpen}
+                    />
+                    <SlippageSelector
+                        expectedSlippage={expectedSlippage}
+                        slippageSelectorOpen={slippageSelectorOpen}
+                        setSlippageSelectorOpen={setSlippageSelectorOpen}
+                    />
+                </React.Fragment>
+            );
+        } else {
+            return (
+                <TradeComposition
+                    tradeCompositionOpen={tradeCompositionOpen}
+                    setTradeCompositionOpen={setTradeCompositionOpen}
+                />
+            );
+        }
+    };
 
     // TODO Pull validation errors and errors in errorStore together; maybe handle a stack of active errors
     const error = errorStore.getActiveError(ErrorIds.SWAP_FORM_STORE);
     if (error) {
         console.error('error', error);
     }
-    const errorMessage = swapFormStore.getErrorMessage();
 
     return (
         <div>
@@ -353,16 +381,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                 />
             </RowContainer>
             <ColumnContainer>
-                <TradeComposition
-                    tradeCompositionOpen={tradeCompositionOpen}
-                    setTradeCompositionOpen={setTradeCompositionOpen}
-                />
-                <ErrorDisplay errorText={errorMessage} />
-                <SlippageSelector
-                    expectedSlippage={expectedSlippage}
-                    slippageSelectorOpen={slippageSelectorOpen}
-                    setSlippageSelectorOpen={setSlippageSelectorOpen}
-                />
+                {renderNotificationArea()}
                 <Button
                     buttonText={getButtonText(buttonState)}
                     active={getButtonActive(buttonState, inputUserBalanceBN)}

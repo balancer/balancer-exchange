@@ -7,9 +7,11 @@ import {
     bnum,
     formatPctString,
     fromWei,
+    default as helpers,
     scale,
     str,
     toWei,
+    isEmpty,
 } from '../utils/helpers';
 import { calcExpectedSlippage } from '../utils/sorWrapper';
 
@@ -154,6 +156,10 @@ export default class SwapFormStore {
 
     @action setErrorMessage(message: string) {
         this.outputs.activeErrorMessage = message;
+    }
+
+    hasErrorMessage(): boolean {
+        return !isEmpty(this.outputs.activeErrorMessage);
     }
 
     getErrorMessage(): string {

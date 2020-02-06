@@ -85,6 +85,10 @@ export function toAddressStub(address) {
     return `${start}...${end}`;
 }
 
+export function isEmpty(str: string): boolean {
+    return !str || 0 === str.length;
+}
+
 export function roundValue(value, decimals = 4): string {
     const decimalPoint = value.indexOf('.');
     if (decimalPoint === -1) {
