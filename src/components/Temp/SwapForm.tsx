@@ -38,6 +38,26 @@ const ColumnContainer = styled.div`
     justify-content: center;
 `;
 
+const EnterOrderDetails = styled.div`
+    font-family: var(--roboto);
+    font-size: 14px;
+    line-height: 16px;
+    display: flex;
+    align-items: center;
+    color: var(--header-text);
+    text-align: center;
+    margin-top: 6px;
+    margin-bottom: 36px;
+`;
+
+const TradeCompositionPlaceholder = styled.div`
+    height: 72px;
+`;
+
+const SlippageSelectorPlaceholder = styled.div`
+    height: 84px;
+`;
+
 enum ButtonState {
     NO_WALLET,
     UNLOCK,
@@ -314,41 +334,66 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     }
 
     const buttonState = getButtonState(account, userAllowance);
-    const errorMessage = swapFormStore.getErrorMessage();
-
-    const renderNotificationArea = () => {
-        const { validSwap } = swapFormStore.outputs;
-        if (swapFormStore.hasErrorMessage()) {
-            return <ErrorDisplay errorText={errorMessage} />;
-        } else if (validSwap) {
-            return (
-                <React.Fragment>
-                    <TradeComposition
-                        tradeCompositionOpen={tradeCompositionOpen}
-                        setTradeCompositionOpen={setTradeCompositionOpen}
-                    />
-                    <SlippageSelector
-                        expectedSlippage={expectedSlippage}
-                        slippageSelectorOpen={slippageSelectorOpen}
-                        setSlippageSelectorOpen={setSlippageSelectorOpen}
-                    />
-                </React.Fragment>
-            );
-        } else {
-            return (
-                <TradeComposition
-                    tradeCompositionOpen={tradeCompositionOpen}
-                    setTradeCompositionOpen={setTradeCompositionOpen}
-                />
-            );
-        }
-    };
 
     // TODO Pull validation errors and errors in errorStore together; maybe handle a stack of active errors
     const error = errorStore.getActiveError(ErrorIds.SWAP_FORM_STORE);
     if (error) {
         console.error('error', error);
     }
+    let errorMessage;
+    errorMessage = inputs.activeErrorMessage;
+
+    const TradeDetails = ({ inputAmount, outputAmount }) => {
+        if (
+            checkIsPropertyEmpty(inputAmount) &&
+            checkIsPropertyEmpty(outputAmount)
+        ) {
+            return (
+                <ColumnContainer>
+                    <TradeCompositionPlaceholder />
+                    <EnterOrderDetails>
+                        Enter Order Details to Continue
+                    </EnterOrderDetails>
+                    <SlippageSelectorPlaceholder />
+                    <Button
+                        buttonText={getButtonText(buttonState)}
+                        active={getButtonActive(
+                            buttonState,
+                            inputUserBalanceBN
+                        )}
+                        onClick={() => {
+                            buttonActionHandler(buttonState);
+                        }}
+                    />
+                </ColumnContainer>
+            );
+        } else {
+            return (
+                <ColumnContainer>
+                    <TradeComposition
+                        tradeCompositionOpen={tradeCompositionOpen}
+                        setTradeCompositionOpen={setTradeCompositionOpen}
+                    />
+                    <ErrorDisplay errorText={errorMessage} />
+                    <SlippageSelector
+                        expectedSlippage={expectedSlippage}
+                        slippageSelectorOpen={slippageSelectorOpen}
+                        setSlippageSelectorOpen={setSlippageSelectorOpen}
+                    />
+                    <Button
+                        buttonText={getButtonText(buttonState)}
+                        active={getButtonActive(
+                            buttonState,
+                            inputUserBalanceBN
+                        )}
+                        onClick={() => {
+                            buttonActionHandler(buttonState);
+                        }}
+                    />
+                </ColumnContainer>
+            );
+        }
+    };
 
     return (
         <div>
@@ -380,16 +425,10 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                     showMax={!!account && !!outputUserBalanceBN}
                 />
             </RowContainer>
-            <ColumnContainer>
-                {renderNotificationArea()}
-                <Button
-                    buttonText={getButtonText(buttonState)}
-                    active={getButtonActive(buttonState, inputUserBalanceBN)}
-                    onClick={() => {
-                        buttonActionHandler(buttonState);
-                    }}
-                />
-            </ColumnContainer>
+            <TradeDetails
+                inputAmount={inputs.inputAmount}
+                outputAmount={inputs.outputAmount}
+            />
         </div>
     );
 });
