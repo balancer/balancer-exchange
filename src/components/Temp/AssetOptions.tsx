@@ -159,9 +159,11 @@ const AssetOptions = observer(({ filter, modelOpen, setModalOpen }) => {
     setSelectorDataWrapper(filter);
     const [selectorData, setSelectorData] = useState(assetSelectorData);
 
+    // TODO DRY up with function in Switch component
     const clearInputs = () => {
         swapFormStore.inputs.inputAmount = '';
         swapFormStore.inputs.outputAmount = '';
+        swapFormStore.inputs.activeErrorMessage = '';
     };
 
     const selectAsset = token => {
