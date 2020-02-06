@@ -148,10 +148,6 @@ const AssetOptions = observer(({ filter, modelOpen, setModalOpen }) => {
                 userBalance = userBalance.substring(0, 20) + '...';
             }
 
-            if (tradableTokens) {
-                console.log({ addressToFind: value.address, tradableTokens });
-            }
-
             return {
                 address: value.address,
                 iconAddress: value.iconAddress,
@@ -170,6 +166,8 @@ const AssetOptions = observer(({ filter, modelOpen, setModalOpen }) => {
     const clearInputs = () => {
         swapFormStore.inputs.inputAmount = '';
         swapFormStore.inputs.outputAmount = '';
+        swapFormStore.clearErrorMessage();
+        swapFormStore.clearTradeComposition();
     };
 
     const selectAsset = token => {
@@ -177,14 +175,13 @@ const AssetOptions = observer(({ filter, modelOpen, setModalOpen }) => {
             swapFormStore.inputs.inputToken = token.address;
             swapFormStore.inputs.inputTicker = token.symbol;
             swapFormStore.inputs.inputIconAddress = token.iconAddress;
-            poolStore.fetchAndSetTokenPairs(chainId, token.address);
         } else {
             swapFormStore.inputs.outputToken = token.address;
             swapFormStore.inputs.outputTicker = token.symbol;
             swapFormStore.inputs.outputIconAddress = token.iconAddress;
-            poolStore.fetchAndSetTokenPairs(chainId, token.address);
         }
 
+        poolStore.fetchAndSetTokenPairs(chainId, token.address);
         clearInputs();
         setModalOpen(false);
     };

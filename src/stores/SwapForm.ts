@@ -317,6 +317,10 @@ export default class SwapFormStore {
         this.tradeCompositionData = result;
     }
 
+    @action clearTradeComposition() {
+        this.resetTradeComposition();
+    }
+
     isValidInput(value: string): boolean {
         return (
             this.getSwapFormInputValidationStatus(value) ===
