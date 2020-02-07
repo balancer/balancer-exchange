@@ -106,7 +106,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     const tokenList = tokenStore.getWhitelistedTokenMetadata(supportedChainId);
 
     // Set default token pair to first two in config file - currently ETH and DAI
-    if (helpers.checkIsPropertyEmpty(swapFormStore.inputs.inputToken)) {
+    if (helpers.isEmpty(swapFormStore.inputs.inputToken)) {
         swapFormStore.inputs.inputToken = tokenList[0].address;
         swapFormStore.inputs.inputTicker = tokenList[0].symbol;
         swapFormStore.inputs.inputIconAddress = tokenList[0].iconAddress;
@@ -114,7 +114,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         swapFormStore.inputs.inputPrecision = tokenList[0].precision;
     }
 
-    if (helpers.checkIsPropertyEmpty(swapFormStore.inputs.outputToken)) {
+    if (helpers.isEmpty(swapFormStore.inputs.outputToken)) {
         swapFormStore.inputs.outputToken = tokenList[1].address;
         swapFormStore.inputs.outputTicker = tokenList[1].symbol;
         swapFormStore.inputs.outputIconAddress = tokenList[1].iconAddress;

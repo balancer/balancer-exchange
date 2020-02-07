@@ -71,13 +71,6 @@ export function setPropertyToZeroIfEmpty(value?): string {
     return value;
 }
 
-export function checkIsPropertyEmpty(value?) {
-    if (!value || value === 0 || value === '') {
-        return true;
-    }
-    return false;
-}
-
 export function toAddressStub(address) {
     const start = address.slice(0, 5);
     const end = address.slice(-3);

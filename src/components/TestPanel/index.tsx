@@ -36,11 +36,11 @@ const TestPanel = observer(() => {
 
     const tokenList = tokenStore.getWhitelistedTokenMetadata(chainId);
 
-    if (helpers.checkIsPropertyEmpty(mintToken)) {
+    if (helpers.isEmpty(mintToken)) {
         setMintToken(tokenList[0].address);
     }
 
-    if (helpers.checkIsPropertyEmpty(approvalToken)) {
+    if (helpers.isEmpty(approvalToken)) {
         setApprovalToken(tokenList[1].address);
     }
 
