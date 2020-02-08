@@ -6,6 +6,7 @@ import { Pie } from 'react-chartjs-2';
 import { ChartData } from '../../stores/SwapForm';
 import { useStores } from '../../contexts/storesContext';
 import { getSupportedChainId } from '../../provider/connectors';
+import { useActiveWeb3React } from '../../provider';
 
 const Container = styled.div`
     display: flex;
@@ -114,7 +115,7 @@ const TradeComposition = observer(
         } = useStores();
 
         const supportedChainId = getSupportedChainId();
-        const { chainId, account } = providerStore.getActiveWeb3React();
+        const { chainId } = useActiveWeb3React();
         const chartData = swapFormStore.tradeCompositionData;
 
         const options = {

@@ -64,51 +64,54 @@ export default class ProviderStore {
         return chainData;
     }
 
-    fetchLoop(this, forceFetch?: boolean) {
-        const { library, chainId } = this.getActiveWeb3React();
-        const { account } = this.getWeb3React(web3ContextNames.injected); // Get account from injected even if it's not the active provider due to being on wrong network
-
-        library
-            .getBlockNumber()
-            .then(blockNumber => {
-                const lastChecked = this.getCurrentBlockNumber(chainId);
-
-                const doFetch = blockNumber != lastChecked || forceFetch;
-                if (doFetch) {
-                    console.log('[Data Fetcher] Fetch Blockchain Data', {
-                        blockNumber,
-                        chainId,
-                        account,
-                    });
-
-                    // Set block number
-                    this.setCurrentBlockNumber(chainId, blockNumber);
-
-                    // Get global blockchain data
-                    // None
-
-                    // Get user-specific blockchain data
-                    if (account) {
-                        this.fetchUserBlockchainData(chainId, account);
-                    }
-                }
-            })
-            .catch(() => {
-                this.setCurrentBlockNumber(chainId, undefined);
-            });
-    }
-
-    startFetchLoop() {
-        this.fetchLoop(true);
-        this.activeFetchLoop = setInterval(this.fetchLoop.bind(this), 500);
-    }
-
-    stopFetchLoop() {
-        if (!this.activeFetchLoop) {
-            throw new Error('No active fetch loop to stop');
-        }
-        clearInterval(this.activeFetchLoop);
-    }
+    // fetchLoop(
+    //     this,
+    //     web3React: Web3ReactContextInterface,
+    //     forceFetch?: boolean
+    // ) {
+    //     const { library, account, chainId } = web3React;
+    //
+    //     library
+    //         .getBlockNumber()
+    //         .then(blockNumber => {
+    //             const lastChecked = this.getCurrentBlockNumber(chainId);
+    //
+    //             const doFetch = blockNumber != lastChecked || forceFetch;
+    //             if (doFetch) {
+    //                 console.log('[Data Fetcher] Fetch Blockchain Data', {
+    //                     blockNumber,
+    //                     chainId,
+    //                     account,
+    //                 });
+    //
+    //                 // Set block number
+    //                 this.setCurrentBlockNumber(chainId, blockNumber);
+    //
+    //                 // Get global blockchain data
+    //                 // None
+    //
+    //                 // Get user-specific blockchain data
+    //                 if (account) {
+    //                     this.fetchUserBlockchainData(
+    //                         web3React,
+    //                         chainId,
+    //                         account
+    //                     );
+    //                 }
+    //             }
+    //         })
+    //         .catch(() => {
+    //             this.setCurrentBlockNumber(chainId, undefined);
+    //         });
+    // }
+    //
+    // startFetchLoop(web3React: Web3ReactContextInterface) {
+    //     this.fetchLoop(web3React, true);
+    //     this.activeFetchLoop = setInterval(
+    //         this.fetchLoop.bind(this, web3React),
+    //         500
+    //     );
+    // }
 
     getCurrentBlockNumber(chainId): number {
         const chainData = this.safeGetChainData(chainId);
@@ -125,6 +128,7 @@ export default class ProviderStore {
     }
 
     @action fetchUserBlockchainData = async (
+        web3React: Web3ReactContextInterface,
         chainId: number,
         account: string
     ) => {
@@ -135,39 +139,16 @@ export default class ProviderStore {
             account,
         });
 
-        transactionStore.checkPendingTransactions(chainId);
-        tokenStore.fetchBalancerTokenData(account, chainId).then(result => {
-            console.debug('[Fetch End - User Blockchain Data]', {
-                chainId,
-                account,
+        transactionStore.checkPendingTransactions(web3React, chainId);
+        tokenStore
+            .fetchBalancerTokenData(web3React, account, chainId)
+            .then(result => {
+                console.debug('[Fetch End - User Blockchain Data]', {
+                    chainId,
+                    account,
+                });
             });
-        });
     };
-
-    getWeb3React(name: string): Web3ReactContextInterface {
-        if (!this.contexts[name]) {
-            throw new Error('Context not loaded to store');
-        }
-
-        return this.contexts[name];
-    }
-
-    getActiveWeb3React(): Web3ReactContextInterface {
-        if (
-            !this.contexts[web3ContextNames.injected] ||
-            !this.contexts[web3ContextNames.backup]
-        ) {
-            throw new Error('Contexts not loaded to store');
-        }
-
-        const contextInjected = this.contexts[web3ContextNames.injected];
-        const contextNetwork = this.contexts[web3ContextNames.backup];
-
-        return contextInjected.active &&
-            isChainIdSupported(contextInjected.chainId)
-            ? contextInjected
-            : contextNetwork;
-    }
 
     // account is optional
     getProviderOrSigner(library, account) {
@@ -183,11 +164,12 @@ export default class ProviderStore {
     }
 
     getContract(
+        web3React: Web3ReactContextInterface,
         type: ContractTypes,
         address: string,
         signerAccount?: string
     ): ethers.Contract {
-        const { library } = this.getActiveWeb3React();
+        const { library } = web3React;
 
         if (signerAccount) {
             return new ethers.Contract(
@@ -206,6 +188,7 @@ export default class ProviderStore {
     }
 
     @action sendTransaction = async (
+        web3React: Web3ReactContextInterface,
         contractType: ContractTypes,
         contractAddress: string,
         action: string,
@@ -213,7 +196,7 @@ export default class ProviderStore {
         overrides?: any
     ): Promise<void> => {
         const { transactionStore } = this.rootStore;
-        const { chainId, account } = this.getActiveWeb3React();
+        const { chainId, account } = web3React;
 
         overrides = overrides ? overrides : {};
 
@@ -230,6 +213,7 @@ export default class ProviderStore {
         }
 
         const contract = this.getContract(
+            web3React,
             contractType,
             contractAddress,
             account

@@ -13,6 +13,7 @@ import {
     TokenBalanceFetch,
     UserAllowanceFetch,
 } from './actions/fetch';
+import { Web3ReactContextInterface } from '@web3-react/core/dist/types';
 
 export interface ContractMetadata {
     bFactory: string;
@@ -53,6 +54,12 @@ export interface TokenMetadata {
     precision: number;
 }
 
+interface BlockNumberMap {
+    [index: number]: {
+        [index: string]: number;
+    };
+}
+
 interface UserAllowanceMap {
     [index: string]: {
         [index: string]: {
@@ -68,17 +75,20 @@ export default class TokenStore {
     @observable balances: ObservableMap<number, TokenBalanceMap>;
     @observable allowances: ObservableMap<number, UserAllowanceMap>;
     @observable contractMetadata: ContractMetadataMap;
+    @observable userBalancerDataLastFetched: BlockNumberMap;
     rootStore: RootStore;
 
     constructor(rootStore, networkIds) {
         this.rootStore = rootStore;
         this.balances = new ObservableMap<number, TokenBalanceMap>();
         this.allowances = new ObservableMap<number, UserAllowanceMap>();
-        this.contractMetadata = {};
+        this.contractMetadata = {} as ContractMetadataMap;
+        this.userBalancerDataLastFetched = {} as BlockNumberMap;
 
         networkIds.forEach(networkId => {
             this.balances.set(networkId, {});
             this.allowances.set(networkId, {});
+            this.userBalancerDataLastFetched[networkId] = {};
             this.loadWhitelistedTokenMetadata(networkId);
         });
     }
@@ -219,7 +229,31 @@ export default class TokenStore {
         return contractMetadata.tokens;
     }
 
-    setAllowanceProperty(
+    getUserBalancerDataLastFetched(chainId: number, account: string): number {
+        try {
+            return this.userBalancerDataLastFetched[chainId][account];
+        } catch (e) {
+            console.error(e);
+            return -1;
+        }
+    }
+
+    setUserBalancerDataLastFetched(
+        chainId: number,
+        account: string,
+        blockNumber: number
+    ) {
+        if (!this.userBalancerDataLastFetched[chainId]) {
+            throw new Error(
+                'Attempt to set user balancer data for untracked chainId'
+            );
+        }
+        if (!this.userBalancerDataLastFetched[chainId][account]) {
+            this.userBalancerDataLastFetched[chainId][account] = blockNumber;
+        }
+    }
+
+    private setAllowanceProperty(
         chainId: number,
         tokenAddress: string,
         owner: string,
@@ -250,7 +284,7 @@ export default class TokenStore {
         this.allowances.set(chainId, chainApprovals);
     }
 
-    setBalanceProperty(
+    private setBalanceProperty(
         chainId: number,
         tokenAddress: string,
         account: string,
@@ -312,9 +346,10 @@ export default class TokenStore {
         return undefined;
     }
 
-    @action approveMax = async (tokenAddress, spender) => {
+    @action approveMax = async (web3React, tokenAddress, spender) => {
         const { providerStore } = this.rootStore;
         await providerStore.sendTransaction(
+            web3React,
             ContractTypes.TestToken,
             tokenAddress,
             'approve',
@@ -322,9 +357,10 @@ export default class TokenStore {
         );
     };
 
-    @action revokeApproval = async (tokenAddress, spender) => {
+    @action revokeApproval = async (web3React, tokenAddress, spender) => {
         const { providerStore } = this.rootStore;
         await providerStore.sendTransaction(
+            web3React,
             ContractTypes.TestToken,
             tokenAddress,
             'approve',
@@ -333,6 +369,7 @@ export default class TokenStore {
     };
 
     @action fetchBalancerTokenData = async (
+        web3React,
         account,
         chainId
     ): Promise<FetchCode> => {
@@ -340,26 +377,30 @@ export default class TokenStore {
         const tokensToTrack = this.getWhitelistedTokenMetadata(chainId);
 
         const promises: Promise<any>[] = [];
-        const currentBlock = providerStore.getCurrentBlockNumber(chainId);
+        const fetchBlock = providerStore.getCurrentBlockNumber(chainId);
         tokensToTrack.forEach((value, index) => {
             promises.push(
                 this.fetchBalanceOf(
+                    web3React,
                     chainId,
                     value.address,
                     account,
-                    currentBlock
+                    fetchBlock
                 )
             );
             promises.push(
                 this.fetchAllowance(
+                    web3React,
                     chainId,
                     value.address,
                     account,
                     this.contractMetadata[chainId].proxy,
-                    currentBlock
+                    fetchBlock
                 )
             );
         });
+
+        let allFetchesSuccess = true;
 
         try {
             const responses = await Promise.all(promises);
@@ -374,6 +415,8 @@ export default class TokenStore {
                             payload.balance,
                             payload.lastFetched
                         );
+                    } else {
+                        allFetchesSuccess = false;
                     }
                 } else if (response instanceof UserAllowanceFetch) {
                     const { status, request, payload } = response;
@@ -386,9 +429,20 @@ export default class TokenStore {
                             payload.allowance,
                             payload.lastFetched
                         );
+                    } else {
+                        allFetchesSuccess = false;
                     }
                 }
             });
+
+            if (allFetchesSuccess) {
+                console.log('[All Fetches Success]');
+                this.setUserBalancerDataLastFetched(
+                    chainId,
+                    account,
+                    fetchBlock
+                );
+            }
         } catch (e) {
             console.error('[Fetch] Balancer Token Data', { error: e });
             return FetchCode.FAILURE;
@@ -396,9 +450,13 @@ export default class TokenStore {
         return FetchCode.SUCCESS;
     };
 
-    @action fetchSymbol = async tokenAddress => {
+    @action fetchSymbol = async (
+        web3React: Web3ReactContextInterface,
+        tokenAddress
+    ) => {
         const { providerStore } = this.rootStore;
         const token = providerStore.getContract(
+            web3React,
             ContractTypes.TestToken,
             tokenAddress
         );
@@ -406,6 +464,7 @@ export default class TokenStore {
     };
 
     @action fetchBalanceOf = async (
+        web3React: Web3ReactContextInterface,
         chainId: number,
         tokenAddress: string,
         account: string,
@@ -413,6 +472,7 @@ export default class TokenStore {
     ): Promise<TokenBalanceFetch> => {
         const { providerStore } = this.rootStore;
         const token = providerStore.getContract(
+            web3React,
             ContractTypes.TestToken,
             tokenAddress
         );
@@ -428,8 +488,7 @@ export default class TokenStore {
             let balance;
 
             if (tokenAddress === EtherKey) {
-                const provider = providerStore.getActiveWeb3React();
-                const { library } = provider;
+                const { library } = web3React;
                 balance = bnum(await library.getBalance(account));
             } else {
                 balance = bnum(await token.balanceOf(account));
@@ -478,9 +537,14 @@ export default class TokenStore {
         }
     };
 
-    @action mint = async (tokenAddress: string, amount: string) => {
+    @action mint = async (
+        web3React: Web3ReactContextInterface,
+        tokenAddress: string,
+        amount: string
+    ) => {
         const { providerStore } = this.rootStore;
         await providerStore.sendTransaction(
+            web3React,
             ContractTypes.TestToken,
             tokenAddress,
             'mint',
@@ -489,6 +553,7 @@ export default class TokenStore {
     };
 
     @action fetchAllowance = async (
+        web3React: Web3ReactContextInterface,
         chainId: number,
         tokenAddress: string,
         owner: string,
@@ -497,6 +562,7 @@ export default class TokenStore {
     ): Promise<UserAllowanceFetch> => {
         const { providerStore } = this.rootStore;
         const token = providerStore.getContract(
+            web3React,
             ContractTypes.TestToken,
             tokenAddress
         );

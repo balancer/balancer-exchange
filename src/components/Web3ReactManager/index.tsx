@@ -1,11 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { useWeb3React } from '@web3-react/core';
 import styled from 'styled-components';
-import { backup, injected, isChainIdSupported } from 'provider/connectors';
-import { useEagerConnect, useInactiveListener } from 'provider/index';
+import {
+    backup,
+    injected,
+    isChainIdSupported,
+    supportedChainId,
+} from 'provider/connectors';
+import {
+    useActiveWeb3React,
+    useEagerConnect,
+    useInactiveListener,
+} from 'provider/index';
 import { web3ContextNames } from 'provider/connectors';
 import { useStores } from 'contexts/storesContext';
 import { observer } from 'mobx-react';
+import web3 from '../../utils/web3';
+import { Web3ReactContextInterface } from '@web3-react/core/dist/types';
+import ProviderStore from '../../stores/Provider';
+import { useInterval } from 'hooks';
+import TokenStore from '../../stores/Token';
 
 const MessageWrapper = styled.div`
     display: flex;
@@ -18,9 +32,87 @@ const Message = styled.h2`
     color: ${({ theme }) => theme.uniswapPink};
 `;
 
+const fetchLoop = (
+    web3React: Web3ReactContextInterface,
+    providerStore: ProviderStore,
+    tokenStore: TokenStore,
+    forceFetch?: boolean
+) => {
+    if (
+        web3React.active &&
+        web3React.account &&
+        web3React.chainId === supportedChainId
+    ) {
+        const { library, account, chainId } = web3React;
+
+        library
+            .getBlockNumber()
+            .then(blockNumber => {
+                const lastCheckedForAccount = tokenStore.getUserBalancerDataLastFetched(
+                    web3React.chainId,
+                    web3React.account
+                );
+
+                const lastCheckedBlock = providerStore.getCurrentBlockNumber(
+                    web3React.chainId
+                );
+
+                console.log('[Fetch Loop] Staleness Evaluation', {
+                    blockNumber,
+                    lastCheckedBlock,
+                    forceFetch,
+                    doFetch: blockNumber != lastCheckedBlock || forceFetch,
+                });
+
+                const doFetch = blockNumber != lastCheckedBlock || forceFetch;
+
+                if (doFetch) {
+                    console.log('[Fetch Loop] Fetch Blockchain Data', {
+                        blockNumber,
+                        chainId,
+                        account,
+                    });
+
+                    tokenStore.setUserBalancerDataLastFetched(
+                        chainId,
+                        account,
+                        blockNumber
+                    );
+
+                    // Set block number
+                    providerStore.setCurrentBlockNumber(chainId, blockNumber);
+
+                    // Get global blockchain data
+                    // None
+
+                    // Get user-specific blockchain data
+                    if (account) {
+                        providerStore.fetchUserBlockchainData(
+                            web3React,
+                            chainId,
+                            account
+                        );
+                    }
+                }
+            })
+            .catch(error => {
+                console.log('[Fetch Loop Failure]', {
+                    web3React,
+                    providerStore,
+                    forceFetch,
+                    chainId,
+                    account,
+                    library,
+                    error,
+                });
+                providerStore.setCurrentBlockNumber(chainId, undefined);
+            });
+    }
+};
+
 const Web3ReactManager = observer(({ children }) => {
     const {
-        root: { providerStore },
+        root: { providerStore, tokenStore },
     } = useStores();
 
     const web3ContextInjected = useWeb3React(web3ContextNames.injected);
@@ -35,16 +127,12 @@ const Web3ReactManager = observer(({ children }) => {
         activate: activateNetwork,
     } = web3ContextBackup;
 
-    providerStore.setWeb3Context(web3ContextNames.backup, web3ContextBackup);
-
-    providerStore.setWeb3Context(
-        web3ContextNames.injected,
-        web3ContextInjected
-    );
+    const web3React = useActiveWeb3React();
 
     console.log('[Web3ReactManager] Start of render', {
         injected: web3ContextInjected,
         backup: web3ContextBackup,
+        web3React: web3React,
     });
 
     const favorInjected = injectedActive && isChainIdSupported(injectedChainId);
@@ -116,24 +204,24 @@ const Web3ReactManager = observer(({ children }) => {
     // when there's no account connected, react to logins (broadly speaking) on the injected provider, if it exists
     useInactiveListener(!triedEager);
 
-    useEffect(() => {
-        console.log(
-            '[Web3ReactManager] Start fetch loop if not started & we have an active provider',
-            {
-                injectedActive,
-                networkActive,
-                start:
-                    (injectedActive || networkActive) &&
-                    !providerStore.activeFetchLoop,
-            }
-        );
-        if (injectedActive || networkActive) {
-            if (!providerStore.activeFetchLoop) {
-                console.log('[Web3ReactManager] Start fetch loop');
-                providerStore.startFetchLoop();
-            }
-        }
-    }, [injectedActive, networkActive]);
+    // useEffect(() => {
+    //     console.log(
+    //         '[Web3ReactManager] Start fetch loop if not started & we have an active provider',
+    //         {
+    //             injectedActive,
+    //             networkActive,
+    //             start:
+    //                 (injectedActive || networkActive) &&
+    //                 !providerStore.activeFetchLoop,
+    //         }
+    //     );
+    //     if (injectedActive || networkActive) {
+    //         if (!providerStore.activeFetchLoop) {
+    //             console.log('[Web3ReactManager] Start fetch loop');
+    //             providerStore.startFetchLoop(web3React);
+    //         }
+    //     }
+    // }, [web3React, injectedActive, networkActive]);
 
     // handle delayed loader state
     const [showLoader, setShowLoader] = useState(true);
@@ -146,6 +234,58 @@ const Web3ReactManager = observer(({ children }) => {
             clearTimeout(timeout);
         };
     }, []);
+
+    //If the data is valid and has changed do an extra fetch
+
+    // // Blockchain Fetching Polling Interval - Force extra fetch on provider or account change
+    // useEffect(() => {
+    //     let id;
+    //     console.log('[Fetch Loop]- Evaluate Fetch Loop', {
+    //         web3React,
+    //         providerStore,
+    //         injectedActive,
+    //         networkActive,
+    //     });
+    //
+    //     if (
+    //         (injectedActive || networkActive) &&
+    //         web3React.account &&
+    //         web3React.chainId === supportedChainId
+    //     ) {
+    //         fetchLoop(web3React, providerStore, true);
+    //         console.log('[Fetch Loop] Start fetch loop');
+    //         let id = setInterval(() => {
+    //             fetchLoop(web3React, providerStore, false);
+    //             console.log('[Fetch Loop] - Fetch Loop Polling', {
+    //                 account: web3React.account,
+    //             });
+    //         }, 1000);
+    //     }
+    //
+    //     return () => {
+    //         console.log('[Fetch Loop]- Clear Fetch Loop Unmount');
+    //         clearInterval(id);
+    //     };
+    // }, [web3React, providerStore, injectedActive, networkActive]);
+
+    //Fetch user blockchain data on an interval using current params
+    useInterval(
+        () => fetchLoop(web3React, providerStore, tokenStore, false),
+        web3React.account ? 1000 : null
+    );
+
+    useEffect(() => {
+        if (
+            web3React.account &&
+            web3React.account !== providerStore.activeAccount
+        ) {
+            console.log('[Fetch Loop] - Extra fetch on account switch', {
+                account: web3React.account,
+                prevAccount: providerStore.activeAccount,
+            });
+            fetchLoop(web3React, providerStore, tokenStore, true);
+        }
+    }, [web3React]);
 
     // on page load, do nothing until we've tried to connect to the injected connector
     if (!triedEager) {

@@ -8,6 +8,7 @@ import {
     isChainIdSupported,
 } from '../../provider/connectors';
 import { observer } from 'mobx-react';
+import { useActiveWeb3React } from '../../provider';
 
 const AssetPanelContainer = styled.div`
     display: flex;
@@ -87,7 +88,7 @@ const AssetOptions = observer(({ filter, modelOpen, setModalOpen }) => {
 
     let assetSelectorData: AssetSelectorData[] = [];
     const supportedChainId = getSupportedChainId();
-    const { chainId, account } = providerStore.getActiveWeb3React();
+    const { chainId, account } = useActiveWeb3React();
 
     let userBalances = {};
     let filteredWhitelistedTokens;
@@ -98,18 +99,16 @@ const AssetOptions = observer(({ filter, modelOpen, setModalOpen }) => {
             filter
         );
 
-        if (modelOpen.input === 'inputAmount') {
+        if (modelOpen.input === 'inputAmount' && isChainIdSupported(chainId)) {
             tradableTokens = poolStore.getTokenPairs(
-                chainId,
                 swapFormStore.inputs.outputToken
             );
             console.log({
                 checkingFor: swapFormStore.inputs.outputToken,
                 tradableTokens,
             });
-        } else {
+        } else if (isChainIdSupported(chainId)) {
             tradableTokens = poolStore.getTokenPairs(
-                chainId,
                 swapFormStore.inputs.inputToken
             );
             console.log({
@@ -181,7 +180,7 @@ const AssetOptions = observer(({ filter, modelOpen, setModalOpen }) => {
             swapFormStore.inputs.outputIconAddress = token.iconAddress;
         }
 
-        poolStore.fetchAndSetTokenPairs(chainId, token.address);
+        poolStore.fetchAndSetTokenPairs(token.address);
         clearInputs();
         setModalOpen(false);
     };

@@ -9,6 +9,7 @@ import {
 } from 'stores/SwapForm';
 import { bnum } from 'utils/helpers';
 import { ExactAmountOutPreview } from '../../stores/Proxy';
+import { useActiveWeb3React } from '../../provider';
 
 const BuyToken = observer(
     ({
@@ -26,7 +27,7 @@ const BuyToken = observer(
             root: { proxyStore, swapFormStore, providerStore, poolStore },
         } = useStores();
 
-        const { chainId } = providerStore.getActiveWeb3React();
+        const web3React = useActiveWeb3React();
 
         const onChange = async event => {
             const { value } = event.target;

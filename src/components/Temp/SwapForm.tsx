@@ -21,6 +21,8 @@ import {
     supportedNetworks,
     web3ContextNames,
 } from '../../provider/connectors';
+import { useActiveWeb3React } from '../../provider';
+import { useWeb3React } from '@web3-react/core';
 
 const RowContainer = styled.div`
     font-family: var(--roboto);
@@ -92,8 +94,9 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
 
     const supportedChainId = getSupportedChainId();
 
-    const { chainId, account } = providerStore.getActiveWeb3React();
-    const { chainId: injectedChainId } = providerStore.getWeb3React(
+    const web3React = useActiveWeb3React();
+    const { chainId, account } = web3React;
+    const { chainId: injectedChainId } = useWeb3React(
         web3ContextNames.injected
     );
 
@@ -110,7 +113,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         swapFormStore.inputs.inputToken = tokenList[0].address;
         swapFormStore.inputs.inputTicker = tokenList[0].symbol;
         swapFormStore.inputs.inputIconAddress = tokenList[0].iconAddress;
-        poolStore.fetchAndSetTokenPairs(chainId, tokenList[0].address);
+        poolStore.fetchAndSetTokenPairs(tokenList[0].address);
         swapFormStore.inputs.inputPrecision = tokenList[0].precision;
     }
 
@@ -118,7 +121,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         swapFormStore.inputs.outputToken = tokenList[1].address;
         swapFormStore.inputs.outputTicker = tokenList[1].symbol;
         swapFormStore.inputs.outputIconAddress = tokenList[1].iconAddress;
-        poolStore.fetchAndSetTokenPairs(chainId, tokenList[1].address);
+        poolStore.fetchAndSetTokenPairs(tokenList[1].address);
         swapFormStore.inputs.outputPrecision = tokenList[1].precision;
     }
 
@@ -153,8 +156,8 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
 
     const unlockHandler = async () => {
         const tokenToUnlock = inputs.inputToken;
-        const proxyAddress = tokenStore.getProxyAddress(supportedNetworks[0]);
-        await tokenStore.approveMax(tokenToUnlock, proxyAddress);
+        const proxyAddress = tokenStore.getProxyAddress(supportedChainId);
+        await tokenStore.approveMax(web3React, tokenToUnlock, proxyAddress);
     };
 
     const swapHandler = async () => {
@@ -172,6 +175,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                 swaps,
             } = inputs;
             await proxyStore.batchSwapExactIn(
+                web3React,
                 swaps,
                 inputToken,
                 toWei(inputAmount),
@@ -189,6 +193,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                 swaps,
             } = inputs;
             await proxyStore.batchSwapExactOut(
+                web3React,
                 swaps,
                 inputToken,
                 toWei(inputLimit),
@@ -324,7 +329,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
             }
         }
 
-        const proxyAddress = tokenStore.getProxyAddress(supportedNetworks[0]);
+        const proxyAddress = tokenStore.getProxyAddress(supportedChainId);
         userAllowance = tokenStore.getAllowance(
             chainId,
             inputToken,

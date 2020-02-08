@@ -4,6 +4,7 @@ import styled from 'styled-components';
 
 import Jazzicon from 'jazzicon';
 import { useStores } from '../../contexts/storesContext';
+import { useActiveWeb3React } from '../../provider';
 
 const StyledIdenticon = styled.div`
     height: 1rem;
@@ -18,7 +19,7 @@ export default function Identicon() {
     const {
         root: { providerStore },
     } = useStores();
-    const { account } = providerStore.getActiveWeb3React();
+    const { account } = useActiveWeb3React();
 
     useEffect(() => {
         if (account && ref.current) {

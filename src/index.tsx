@@ -22,16 +22,16 @@ function getLibrary(provider) {
 }
 
 const Root = (
-    <Web3ProviderInjected getLibrary={getLibrary}>
-        <Web3ProviderBackup getLibrary={getLibrary}>
+    <Web3ProviderBackup getLibrary={getLibrary}>
+        <Web3ProviderInjected getLibrary={getLibrary}>
             <ThemeProvider>
                 <>
                     <GlobalStyle />
                     <App />
                 </>
             </ThemeProvider>
-        </Web3ProviderBackup>
-    </Web3ProviderInjected>
+        </Web3ProviderInjected>
+    </Web3ProviderBackup>
 );
 ReactDOM.render(Root, document.getElementById('root'));
 

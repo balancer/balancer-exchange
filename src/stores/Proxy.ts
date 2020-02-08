@@ -26,6 +26,8 @@ import {
 } from '../utils/sorWrapper';
 import { ethers } from 'ethers';
 import { EtherKey } from './Token';
+import { Web3ReactContextInterface } from '@web3-react/core/dist/types';
+import { supportedChainId, supportedNetworks } from '../provider/connectors';
 
 export interface ExactAmountOutPreview {
     outputAmount: BigNumber;
@@ -135,6 +137,7 @@ export default class ProxyStore {
         Swap Methods - Action
     */
     @action batchSwapExactIn = async (
+        web3React: Web3ReactContextInterface,
         swaps: Swap[],
         tokenIn: string,
         inputAmount: BigNumber,
@@ -143,7 +146,7 @@ export default class ProxyStore {
         maxPrice: BigNumber
     ) => {
         const { tokenStore, providerStore } = this.rootStore;
-        const { chainId } = providerStore.getActiveWeb3React();
+        const { chainId } = web3React;
 
         console.log('[BatchSwapExactIn]', {
             swaps,
@@ -157,6 +160,7 @@ export default class ProxyStore {
 
         if (tokenIn === EtherKey) {
             await providerStore.sendTransaction(
+                web3React,
                 ContractTypes.ExchangeProxy,
                 proxyAddress,
                 'batchEthInSwapExactIn',
@@ -165,6 +169,7 @@ export default class ProxyStore {
             );
         } else if (tokenOut === EtherKey) {
             await providerStore.sendTransaction(
+                web3React,
                 ContractTypes.ExchangeProxy,
                 proxyAddress,
                 'batchEthOutSwapExactIn',
@@ -177,6 +182,7 @@ export default class ProxyStore {
             );
         } else {
             await providerStore.sendTransaction(
+                web3React,
                 ContractTypes.ExchangeProxy,
                 proxyAddress,
                 'batchSwapExactIn',
@@ -192,6 +198,7 @@ export default class ProxyStore {
     };
 
     @action batchSwapExactOut = async (
+        web3React: Web3ReactContextInterface,
         swaps: Swap[],
         tokenIn: string,
         maxAmountIn: BigNumber,
@@ -200,12 +207,13 @@ export default class ProxyStore {
         maxPrice: BigNumber
     ) => {
         const { tokenStore, providerStore } = this.rootStore;
-        const { chainId } = providerStore.getActiveWeb3React();
+        const { chainId } = web3React;
 
         const proxyAddress = tokenStore.getProxyAddress(chainId);
 
         if (tokenIn === EtherKey) {
             await providerStore.sendTransaction(
+                web3React,
                 ContractTypes.ExchangeProxy,
                 proxyAddress,
                 'batchEthInSwapExactOut',
@@ -214,6 +222,7 @@ export default class ProxyStore {
             );
         } else if (tokenOut === EtherKey) {
             await providerStore.sendTransaction(
+                web3React,
                 ContractTypes.ExchangeProxy,
                 proxyAddress,
                 'batchEthOutSwapExactOut',
@@ -221,6 +230,7 @@ export default class ProxyStore {
             );
         } else {
             await providerStore.sendTransaction(
+                web3React,
                 ContractTypes.ExchangeProxy,
                 proxyAddress,
                 'batchSwapExactOut',
@@ -249,8 +259,7 @@ export default class ProxyStore {
     ): Promise<ExactAmountInPreview> => {
         try {
             this.setPreviewPending(true);
-            const { tokenStore, providerStore } = this.rootStore;
-            const { chainId } = providerStore.getActiveWeb3React();
+            const { tokenStore } = this.rootStore;
 
             let maxPrice = helpers.setPropertyToMaxUintIfEmpty();
             let minAmountOut = helpers.setPropertyToZeroIfEmpty();
@@ -258,11 +267,11 @@ export default class ProxyStore {
             // Use WETH address for Ether
             const tokenInToFind =
                 tokenIn === EtherKey
-                    ? tokenStore.getWethAddress(chainId)
+                    ? tokenStore.getWethAddress(supportedChainId)
                     : tokenIn;
             const tokenOutToFind =
                 tokenOut === EtherKey
-                    ? tokenStore.getWethAddress(chainId)
+                    ? tokenStore.getWethAddress(supportedChainId)
                     : tokenOut;
 
             const poolData = await findPoolsWithTokens(
@@ -353,8 +362,7 @@ export default class ProxyStore {
     ): Promise<ExactAmountOutPreview> => {
         try {
             this.setPreviewPending(true);
-            const { tokenStore, providerStore } = this.rootStore;
-            const { chainId } = providerStore.getActiveWeb3React();
+            const { tokenStore } = this.rootStore;
 
             let maxPrice = helpers.setPropertyToMaxUintIfEmpty();
             let maxAmountIn = helpers.setPropertyToMaxUintIfEmpty();
@@ -362,11 +370,11 @@ export default class ProxyStore {
             // Use WETH address for Ether
             const tokenInToFind =
                 tokenIn === EtherKey
-                    ? tokenStore.getWethAddress(chainId)
+                    ? tokenStore.getWethAddress(supportedChainId)
                     : tokenIn;
             const tokenOutToFind =
                 tokenOut === EtherKey
-                    ? tokenStore.getWethAddress(chainId)
+                    ? tokenStore.getWethAddress(supportedChainId)
                     : tokenOut;
 
             const poolData = await findPoolsWithTokens(
