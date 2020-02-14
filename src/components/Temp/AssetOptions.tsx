@@ -103,18 +103,10 @@ const AssetOptions = observer(({ filter, modelOpen, setModalOpen }) => {
             tradableTokens = poolStore.getTokenPairs(
                 swapFormStore.inputs.outputToken
             );
-            console.log({
-                checkingFor: swapFormStore.inputs.outputToken,
-                tradableTokens,
-            });
         } else if (modelOpen.input === 'outputAmount') {
             tradableTokens = poolStore.getTokenPairs(
                 swapFormStore.inputs.inputToken
             );
-            console.log({
-                checkingFor: swapFormStore.inputs.inputToken,
-                tradableTokens,
-            });
         }
 
         if (account && isChainIdSupported(chainId)) {
