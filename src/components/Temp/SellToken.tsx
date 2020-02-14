@@ -41,7 +41,7 @@ const SellToken = observer(
             swapFormStore.inputs.type = SwapMethods.EXACT_IN;
             swapFormStore.inputs.inputAmount = value;
 
-            let inputStatus = swapFormStore.getSwapFormInputValidationStatus(
+            let inputStatus = swapFormStore.getNumberInputValidationStatus(
                 value
             );
 

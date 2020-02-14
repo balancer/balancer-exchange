@@ -52,6 +52,7 @@ export enum InputValidationStatus {
     NEGATIVE = 'Negative',
     INSUFFICIENT_BALANCE = 'Insufficient Balance',
     NO_POOLS = 'There are no Pools with selected tokens',
+    MAX_DIGITS_EXCEEDED = 'Maximum Digits Exceeded',
 }
 
 export interface ChartData {
@@ -74,6 +75,7 @@ export default class SwapFormStore {
         inputAmount: '',
         outputAmount: '',
         extraSlippageAllowance: '1.0',
+        extraSlippageAllowanceErrorStatus: InputValidationStatus.VALID,
         inputTicker: '',
         outputTicker: '',
         inputPrecision: 2,
@@ -164,6 +166,14 @@ export default class SwapFormStore {
 
     getErrorMessage(): string {
         return this.outputs.activeErrorMessage;
+    }
+
+    @action setExtraSlippageAllowance(value: string) {
+        this.inputs.extraSlippageAllowance = value;
+    }
+
+    @action setSlippageSelectorErrorStatus(value: InputValidationStatus) {
+        this.inputs.extraSlippageAllowance = value;
     }
 
     @action clearErrorMessage() {
@@ -329,12 +339,17 @@ export default class SwapFormStore {
 
     isValidInput(value: string): boolean {
         return (
-            this.getSwapFormInputValidationStatus(value) ===
+            this.getNumberInputValidationStatus(value) ===
             InputValidationStatus.VALID
         );
     }
 
-    getSwapFormInputValidationStatus(value: string): InputValidationStatus {
+    getNumberInputValidationStatus(
+        value: string,
+        options?: {
+            limitDigits?: boolean;
+        }
+    ): InputValidationStatus {
         if (ValidationRules.isEmpty(value)) {
             return InputValidationStatus.EMPTY;
         }
@@ -349,6 +364,15 @@ export default class SwapFormStore {
 
         if (!ValidationRules.isPositive(value)) {
             return InputValidationStatus.NEGATIVE;
+        }
+
+        if (options && options.limitDigits) {
+            // restrict to 2 decimal places
+            const acceptableValues = [/^$/, /^\d{1,2}$/, /^\d{0,2}\.\d{0,2}$/];
+            // if its within accepted decimal limit, update the input state
+            if (!acceptableValues.some(a => a.test(value))) {
+                return InputValidationStatus.MAX_DIGITS_EXCEEDED;
+            }
         }
 
         return InputValidationStatus.VALID;

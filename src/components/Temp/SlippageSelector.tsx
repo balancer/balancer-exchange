@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { useStores } from '../../contexts/storesContext';
 import SlippageInfo from './SlippageInfo';
+import { InputValidationStatus } from '../../stores/SwapForm';
 
 const Container = styled.div`
     display: flex;
@@ -105,12 +106,25 @@ const SlippageSelector = ({
 
     const updateSlippage = (cellIndex, slippageValue) => {
         setCurrentCell(cellIndex);
-        swapFormStore.inputs.extraSlippageAllowance = slippageValue;
+        swapFormStore.setExtraSlippageAllowance(slippageValue);
     };
 
     const onChange = event => {
         const { value } = event.target;
-        swapFormStore.inputs.extraSlippageAllowance = value;
+        console.log('Update Slippage', {
+            value,
+        });
+
+        const inputStatus = swapFormStore.getNumberInputValidationStatus(
+            value,
+            {
+                limitDigits: true,
+            }
+        );
+
+        if (inputStatus === InputValidationStatus.VALID) {
+            swapFormStore.setExtraSlippageAllowance(value);
+        }
     };
 
     const CellGenerator = ({ children, cellIndex, slippageValue }) => {
