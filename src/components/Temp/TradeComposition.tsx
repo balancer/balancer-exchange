@@ -220,16 +220,19 @@ const TradeComposition = observer(
                 outputToken
             ).symbol;
 
-            const { normalizedInput, normalizedOutput } = normalizePriceValues(
-                chartData.inputPriceValue,
-                chartData.outputPriceValue
-            );
-
             if (chartData.validSwap) {
+                const {
+                    normalizedInput,
+                    normalizedOutput,
+                } = normalizePriceValues(
+                    chartData.inputPriceValue,
+                    chartData.outputPriceValue
+                );
+
                 return (
                     <div>
-                        {str(normalizedInput)} {inputTokenSymbol} ={' '}
-                        {str(normalizedOutput)} {outputTokenSymbol}
+                        {normalizedInput.toString()} {inputTokenSymbol} ={' '}
+                        {normalizedOutput.toPrecision(6)} {outputTokenSymbol}
                     </div>
                 );
             } else {

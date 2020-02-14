@@ -232,7 +232,7 @@ export const normalizePriceValues = (
 } => {
     const multiplier = bnum(1).div(inputValue);
     return {
-        normalizedInput: inputValue.times(multiplier),
+        normalizedInput: bnum(1),
         normalizedOutput: outputValue.times(multiplier),
     };
 };

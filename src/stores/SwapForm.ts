@@ -304,9 +304,12 @@ export default class SwapFormStore {
                 percentage: bnum(swapValue)
                     .div(toWei(inputValue))
                     .times(100)
+                    .dp(2, BigNumber.ROUND_HALF_EVEN)
                     .toNumber(),
             });
         });
+
+        let totalPercentage = 0;
 
         tempChartSwaps.forEach((value, index) => {
             if (index === 0 || index === 1) {
@@ -314,6 +317,8 @@ export default class SwapFormStore {
             } else {
                 others.percentage += value.percentage;
             }
+
+            totalPercentage += value.percentage;
         });
 
         if (others.percentage > 0) {
@@ -328,6 +333,10 @@ export default class SwapFormStore {
         if (method === SwapMethods.EXACT_OUT) {
             result.inputPriceValue = bnum(fromWei(totalValue));
             result.outputPriceValue = inputValue;
+        }
+
+        if (totalPercentage !== 100) {
+            console.error('Total Percentage Unexpected Value');
         }
 
         this.tradeCompositionData = result;
