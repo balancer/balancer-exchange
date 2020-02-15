@@ -124,10 +124,10 @@ export default class SwapFormStore {
     ) {
         if (method === SwapMethods.EXACT_IN) {
             preview = preview as ExactAmountInPreview;
-            this.outputs.outputAmount = fromWei(preview.totalOutput);
+            this.inputs.outputAmount = fromWei(preview.totalOutput);
         } else if (method === SwapMethods.EXACT_OUT) {
             preview = preview as ExactAmountOutPreview;
-            this.outputs.outputAmount = fromWei(preview.totalInput);
+            this.inputs.inputAmount = fromWei(preview.totalInput);
         } else {
             throw new Error('Invalid swap method specified');
         }
@@ -220,11 +220,11 @@ export default class SwapFormStore {
     }
 
     isInputAmountStale(inputAmount: string | BigNumber) {
-        return inputAmount.toString() === this.inputs.inputAmount;
+        return inputAmount.toString() !== this.inputs.inputAmount;
     }
 
     isOutputAmountStale(outputAmount: string | BigNumber) {
-        return outputAmount.toString() === this.inputs.outputAmount;
+        return outputAmount.toString() !== this.inputs.outputAmount;
     }
 
     /* Assume swaps are in order of biggest to smallest value */

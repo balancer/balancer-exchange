@@ -27,8 +27,6 @@ const SellToken = observer(
             root: { proxyStore, swapFormStore },
         } = useStores();
 
-        const web3React = useActiveWeb3React();
-
         const onChange = async event => {
             const { value } = event.target;
             updateSwapFormData(value);
@@ -58,7 +56,7 @@ const SellToken = observer(
                     swapFormStore.setErrorMessage(preview.error);
                 }
 
-                if (swapFormStore.isInputAmountStale(preview.inputAmount)) {
+                if (!swapFormStore.isInputAmountStale(preview.inputAmount)) {
                     if (preview.validSwap) {
                         swapFormStore.setOutputFromPreview(
                             SwapMethods.EXACT_IN,
@@ -114,7 +112,7 @@ const SellToken = observer(
             );
         };
 
-        const { inputs, outputs } = swapFormStore;
+        const { inputs } = swapFormStore;
         const { inputAmount, setSellFocus } = inputs;
 
         return (

@@ -24,10 +24,8 @@ const BuyToken = observer(
         showMax,
     }) => {
         const {
-            root: { proxyStore, swapFormStore, providerStore, poolStore },
+            root: { proxyStore, swapFormStore },
         } = useStores();
-
-        const web3React = useActiveWeb3React();
 
         const onChange = async event => {
             const { value } = event.target;
@@ -54,7 +52,7 @@ const BuyToken = observer(
             if (inputStatus === InputValidationStatus.VALID) {
                 const preview = await previewSwapExactAmountOutHandler();
 
-                if (swapFormStore.isOutputAmountStale(preview.outputAmount)) {
+                if (!swapFormStore.isOutputAmountStale(preview.outputAmount)) {
                     if (preview.validSwap) {
                         swapFormStore.setOutputFromPreview(
                             SwapMethods.EXACT_OUT,
