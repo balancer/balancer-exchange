@@ -3,7 +3,6 @@ import { useWeb3React } from '@web3-react/core';
 import styled from 'styled-components';
 import {
     backup,
-    injected,
     isChainIdSupported,
     supportedChainId,
 } from 'provider/connectors';
@@ -15,7 +14,6 @@ import {
 import { web3ContextNames } from 'provider/connectors';
 import { useStores } from 'contexts/storesContext';
 import { observer } from 'mobx-react';
-import web3 from '../../utils/web3';
 import { Web3ReactContextInterface } from '@web3-react/core/dist/types';
 import ProviderStore from '../../stores/Provider';
 import { useInterval } from 'hooks';
@@ -48,11 +46,6 @@ const fetchLoop = (
         library
             .getBlockNumber()
             .then(blockNumber => {
-                const lastCheckedForAccount = tokenStore.getUserBalancerDataLastFetched(
-                    web3React.chainId,
-                    web3React.account
-                );
-
                 const lastCheckedBlock = providerStore.getCurrentBlockNumber(
                     web3React.chainId
                 );
@@ -61,10 +54,10 @@ const fetchLoop = (
                     blockNumber,
                     lastCheckedBlock,
                     forceFetch,
-                    doFetch: blockNumber != lastCheckedBlock || forceFetch,
+                    doFetch: blockNumber !== lastCheckedBlock || forceFetch,
                 });
 
-                const doFetch = blockNumber != lastCheckedBlock || forceFetch;
+                const doFetch = blockNumber !== lastCheckedBlock || forceFetch;
 
                 if (doFetch) {
                     console.log('[Fetch Loop] Fetch Blockchain Data', {
@@ -72,12 +65,6 @@ const fetchLoop = (
                         chainId,
                         account,
                     });
-
-                    tokenStore.setUserBalancerDataLastFetched(
-                        chainId,
-                        account,
-                        blockNumber
-                    );
 
                     // Set block number
                     providerStore.setCurrentBlockNumber(chainId, blockNumber);
@@ -204,25 +191,6 @@ const Web3ReactManager = observer(({ children }) => {
     // when there's no account connected, react to logins (broadly speaking) on the injected provider, if it exists
     useInactiveListener(!triedEager);
 
-    // useEffect(() => {
-    //     console.log(
-    //         '[Web3ReactManager] Start fetch loop if not started & we have an active provider',
-    //         {
-    //             injectedActive,
-    //             networkActive,
-    //             start:
-    //                 (injectedActive || networkActive) &&
-    //                 !providerStore.activeFetchLoop,
-    //         }
-    //     );
-    //     if (injectedActive || networkActive) {
-    //         if (!providerStore.activeFetchLoop) {
-    //             console.log('[Web3ReactManager] Start fetch loop');
-    //             providerStore.startFetchLoop(web3React);
-    //         }
-    //     }
-    // }, [web3React, injectedActive, networkActive]);
-
     // handle delayed loader state
     const [showLoader, setShowLoader] = useState(true);
     useEffect(() => {
@@ -234,39 +202,6 @@ const Web3ReactManager = observer(({ children }) => {
             clearTimeout(timeout);
         };
     }, []);
-
-    //If the data is valid and has changed do an extra fetch
-
-    // // Blockchain Fetching Polling Interval - Force extra fetch on provider or account change
-    // useEffect(() => {
-    //     let id;
-    //     console.log('[Fetch Loop]- Evaluate Fetch Loop', {
-    //         web3React,
-    //         providerStore,
-    //         injectedActive,
-    //         networkActive,
-    //     });
-    //
-    //     if (
-    //         (injectedActive || networkActive) &&
-    //         web3React.account &&
-    //         web3React.chainId === supportedChainId
-    //     ) {
-    //         fetchLoop(web3React, providerStore, true);
-    //         console.log('[Fetch Loop] Start fetch loop');
-    //         let id = setInterval(() => {
-    //             fetchLoop(web3React, providerStore, false);
-    //             console.log('[Fetch Loop] - Fetch Loop Polling', {
-    //                 account: web3React.account,
-    //             });
-    //         }, 1000);
-    //     }
-    //
-    //     return () => {
-    //         console.log('[Fetch Loop]- Clear Fetch Loop Unmount');
-    //         clearInterval(id);
-    //     };
-    // }, [web3React, providerStore, injectedActive, networkActive]);
 
     //Fetch user blockchain data on an interval using current params
     useInterval(

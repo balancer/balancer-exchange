@@ -83,7 +83,7 @@ const AssetOptions = observer(({ filter, modelOpen, setModalOpen }) => {
     // TODO do math and pass props into AssetPanel css to make border-bottom none for bottom row of assets
 
     const {
-        root: { swapFormStore, providerStore, tokenStore, poolStore },
+        root: { swapFormStore, tokenStore, poolStore },
     } = useStores();
 
     let assetSelectorData: AssetSelectorData[] = [];
@@ -152,7 +152,6 @@ const AssetOptions = observer(({ filter, modelOpen, setModalOpen }) => {
         return assetSelectorData;
     };
     setSelectorDataWrapper(filter);
-    const [selectorData, setSelectorData] = useState(assetSelectorData);
 
     const clearInputs = () => {
         swapFormStore.inputs.inputAmount = '';

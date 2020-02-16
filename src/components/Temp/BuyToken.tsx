@@ -9,7 +9,6 @@ import {
 } from 'stores/SwapForm';
 import { bnum } from 'utils/helpers';
 import { ExactAmountOutPreview } from '../../stores/Proxy';
-import { useActiveWeb3React } from '../../provider';
 
 const BuyToken = observer(
     ({

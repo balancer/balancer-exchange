@@ -7,7 +7,6 @@ import { parseEther } from 'ethers/utils';
 import * as deployed from 'deployed.json';
 import { FetchCode } from './Transaction';
 import { BigNumber } from 'utils/bignumber';
-import { chainNameById } from '../provider/connectors';
 import {
     AsyncStatus,
     TokenBalanceFetch,
@@ -97,7 +96,6 @@ export default class TokenStore {
 
     // network -> contrants -> tokens -> tokens[a] = TokenMetadata
     @action loadWhitelistedTokenMetadata(chainId: number) {
-        const chainName = chainNameById[chainId];
         const tokenMetadata = deployed['kovan'].tokens;
 
         const contractMetadata = {
