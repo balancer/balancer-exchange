@@ -172,8 +172,8 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                 outputToken,
                 outputLimit,
                 limitPrice,
-                swaps,
             } = inputs;
+            const { swaps } = outputs;
             await proxyStore.batchSwapExactIn(
                 web3React,
                 swaps,
