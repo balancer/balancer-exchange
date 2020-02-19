@@ -107,13 +107,13 @@ const SlippageSelector = ({
     const updateSlippage = (cellIndex, slippageValue) => {
         setCurrentCell(cellIndex);
         swapFormStore.setExtraSlippageAllowance(slippageValue);
+        swapFormStore.setSlippageSelectorErrorStatus(
+            InputValidationStatus.VALID
+        );
     };
 
     const onChange = event => {
         const { value } = event.target;
-        console.log('Update Slippage', {
-            value,
-        });
 
         const inputStatus = swapFormStore.getNumberInputValidationStatus(
             value,
@@ -124,7 +124,11 @@ const SlippageSelector = ({
 
         if (inputStatus === InputValidationStatus.VALID) {
             swapFormStore.setExtraSlippageAllowance(value);
+        } else {
+            swapFormStore.setExtraSlippageAllowance('-');
         }
+
+        swapFormStore.setSlippageSelectorErrorStatus(inputStatus);
     };
 
     const CellGenerator = ({ children, cellIndex, slippageValue }) => {

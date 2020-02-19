@@ -168,12 +168,20 @@ export default class SwapFormStore {
         return this.outputs.activeErrorMessage;
     }
 
+    getExtraSlippageAllowance(): string {
+        return this.inputs.extraSlippageAllowance;
+    }
+
+    getSlippageSelectorErrorStatus(): InputValidationStatus {
+        return this.inputs.extraSlippageAllowanceErrorStatus;
+    }
+
     @action setExtraSlippageAllowance(value: string) {
         this.inputs.extraSlippageAllowance = value;
     }
 
     @action setSlippageSelectorErrorStatus(value: InputValidationStatus) {
-        this.inputs.extraSlippageAllowance = value;
+        this.inputs.extraSlippageAllowanceErrorStatus = value;
     }
 
     @action clearErrorMessage() {
