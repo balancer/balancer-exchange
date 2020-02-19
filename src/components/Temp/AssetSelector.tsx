@@ -1,9 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
-import { TokenIconAddress } from './TokenPanel';
-import { useStores } from '../../contexts/storesContext';
-import { BigNumber } from 'ethers/utils';
-import { fromWei, toWei } from 'utils/helpers';
 import AssetOptions from './AssetOptions';
 
 const Container = styled.div`
@@ -88,7 +84,7 @@ const AssetSelector = ({ modelOpen, setModalOpen }) => {
     const [filter, setFilter] = useState('');
 
     const onChange = async event => {
-        const { name, value } = event.target;
+        const { value } = event.target;
         setFilter(value);
     };
 

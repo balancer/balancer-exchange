@@ -2,6 +2,7 @@ import { action, observable, ObservableMap } from 'mobx';
 import { providers } from 'ethers';
 import RootStore from 'stores/Root';
 import { TransactionResponse } from 'ethers/providers';
+import { Web3ReactContextInterface } from '@web3-react/core/dist/types';
 
 export interface TransactionRecord {
     response: providers.TransactionResponse;
@@ -70,13 +71,13 @@ export default class TransactionStore {
     }
 
     @action async checkPendingTransactions(
-        networkId: number
+        web3React: Web3ReactContextInterface,
+        networkId
     ): Promise<FetchCode> {
         const { providerStore } = this.rootStore;
-
         const currentBlock = providerStore.getCurrentBlockNumber(networkId);
 
-        const { library } = providerStore.getActiveWeb3React();
+        const { library } = web3React;
         const txRecordHashMap = this.safeGetTxRecordHashMap(networkId);
 
         txRecordHashMap.forEach((value, key) => {

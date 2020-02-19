@@ -15,7 +15,7 @@ const ErrorTextContainer = styled.div`
 
 const ErrorTextContainerPlaceholder = styled.div`
     height: 58px;
-`
+`;
 
 const ErrorDisplay = ({ errorText }) => {
     const ErrorTextElement = ({ errorText }) => {

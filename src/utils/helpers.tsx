@@ -71,18 +71,15 @@ export function setPropertyToZeroIfEmpty(value?): string {
     return value;
 }
 
-export function checkIsPropertyEmpty(value?) {
-    if (!value || value === 0 || value === '') {
-        return true;
-    }
-    return false;
-}
-
 export function toAddressStub(address) {
     const start = address.slice(0, 5);
     const end = address.slice(-3);
 
     return `${start}...${end}`;
+}
+
+export function isEmpty(str: string): boolean {
+    return !str || 0 === str.length;
 }
 
 export function roundValue(value, decimals = 4): string {
@@ -235,7 +232,7 @@ export const normalizePriceValues = (
 } => {
     const multiplier = bnum(1).div(inputValue);
     return {
-        normalizedInput: inputValue.times(multiplier),
+        normalizedInput: bnum(1),
         normalizedOutput: outputValue.times(multiplier),
     };
 };
@@ -283,11 +280,11 @@ export const formatPoolData = (pools: Pool[]): StringifiedPool[] => {
     pools.forEach(pool => {
         result.push({
             id: pool.id,
-            balanceIn: str(pool.balanceIn),
-            balanceOut: str(pool.balanceOut),
-            weightIn: str(pool.weightIn),
-            weightOut: str(pool.weightOut),
-            swapFee: str(pool.swapFee),
+            balanceIn: str(fromWei(pool.balanceIn)),
+            balanceOut: str(fromWei(pool.balanceOut)),
+            weightIn: str(fromWei(pool.weightIn)),
+            weightOut: str(fromWei(pool.weightOut)),
+            swapFee: str(fromWei(pool.swapFee)),
         });
     });
     return result;

@@ -1,6 +1,26 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import copy from 'copy-to-clipboard';
 
+export function useInterval(callback, delay) {
+    const savedCallback = useRef();
+
+    // Remember the latest function.
+    useEffect(() => {
+        savedCallback.current = callback;
+    }, [callback]);
+
+    // Set up the interval.
+    useEffect(() => {
+        function tick() {
+            savedCallback.current();
+        }
+        if (delay !== null) {
+            let id = setInterval(tick, delay);
+            return () => clearInterval(id);
+        }
+    }, [delay]);
+}
+
 export function useCopyClipboard(timeout = 500) {
     const [isCopied, setIsCopied] = useState(false);
 

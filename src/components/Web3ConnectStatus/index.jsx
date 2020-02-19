@@ -1,6 +1,6 @@
 import React from 'react';
 import styled, { css } from 'styled-components';
-import { UnsupportedChainIdError } from '@web3-react/core';
+import { UnsupportedChainIdError, useWeb3React } from '@web3-react/core';
 import { darken, transparentize } from 'polished';
 import { Activity } from 'react-feather';
 import { observer } from 'mobx-react';
@@ -18,6 +18,7 @@ import {
     isChainIdSupported,
     supportedNetworks,
 } from '../../provider/connectors';
+import { useActiveWeb3React } from '../../provider';
 
 const Web3StatusGeneric = styled.button`
     ${({ theme }) => theme.flexRowNoWrap}
@@ -79,31 +80,12 @@ const Web3ConnectStatus = observer(() => {
     const {
         root: { providerStore, modalStore, transactionStore },
     } = useStores();
-    const {
-        chainId,
-        active,
-        connector,
-        error,
-    } = providerStore.getActiveWeb3React();
-
-    const { account, chainId: injectedChainId } = providerStore.getWeb3React(
+    const { chainId, active, connector, error } = useActiveWeb3React();
+    const { account, chainId: injectedChainId } = useWeb3React(
         web3ContextNames.injected
     );
 
-    const contextNetwork = providerStore.getWeb3React(web3ContextNames.backup);
-
-    // Run extra blockchain fetch if account has changed
-    if (account) {
-        const activeAccount = providerStore.activeAccount;
-        if (activeAccount !== account) {
-            console.log('[Web3ConnectStatus] - Account changed', {
-                oldAccount: activeAccount,
-                newAccount: account,
-            });
-            providerStore.setActiveAccount(account);
-            providerStore.fetchLoop(true);
-        }
-    }
+    const contextNetwork = useWeb3React(web3ContextNames.backup);
 
     if (!chainId) {
         throw new Error('No chain ID specified');
@@ -137,6 +119,11 @@ const Web3ConnectStatus = observer(() => {
     }
 
     function getWeb3Status() {
+        console.log('[GetWeb3Status]', {
+            account,
+            isChainIdSupported: isChainIdSupported(injectedChainId),
+            error,
+        });
         // Wrong network
         if (account && !isChainIdSupported(injectedChainId)) {
             return (

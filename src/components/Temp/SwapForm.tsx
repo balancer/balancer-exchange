@@ -21,6 +21,8 @@ import {
     supportedNetworks,
     web3ContextNames,
 } from '../../provider/connectors';
+import { useActiveWeb3React } from '../../provider';
+import { useWeb3React } from '@web3-react/core';
 
 const RowContainer = styled.div`
     font-family: var(--roboto);
@@ -52,11 +54,11 @@ const EnterOrderDetails = styled.div`
 
 const TradeCompositionPlaceholder = styled.div`
     height: 72px;
-`
+`;
 
 const SlippageSelectorPlaceholder = styled.div`
     height: 84px;
-`
+`;
 
 enum ButtonState {
     NO_WALLET,
@@ -92,8 +94,9 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
 
     const supportedChainId = getSupportedChainId();
 
-    const { chainId, account } = providerStore.getActiveWeb3React();
-    const { chainId: injectedChainId } = providerStore.getWeb3React(
+    const web3React = useActiveWeb3React();
+    const { chainId, account } = web3React;
+    const { chainId: injectedChainId } = useWeb3React(
         web3ContextNames.injected
     );
 
@@ -106,19 +109,19 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     const tokenList = tokenStore.getWhitelistedTokenMetadata(supportedChainId);
 
     // Set default token pair to first two in config file - currently ETH and DAI
-    if (helpers.checkIsPropertyEmpty(swapFormStore.inputs.inputToken)) {
+    if (helpers.isEmpty(swapFormStore.inputs.inputToken)) {
         swapFormStore.inputs.inputToken = tokenList[0].address;
         swapFormStore.inputs.inputTicker = tokenList[0].symbol;
         swapFormStore.inputs.inputIconAddress = tokenList[0].iconAddress;
-        poolStore.fetchAndSetTokenPairs(chainId, tokenList[0].address);
+        poolStore.fetchAndSetTokenPairs(tokenList[0].address);
         swapFormStore.inputs.inputPrecision = tokenList[0].precision;
     }
 
-    if (helpers.checkIsPropertyEmpty(swapFormStore.inputs.outputToken)) {
+    if (helpers.isEmpty(swapFormStore.inputs.outputToken)) {
         swapFormStore.inputs.outputToken = tokenList[1].address;
         swapFormStore.inputs.outputTicker = tokenList[1].symbol;
         swapFormStore.inputs.outputIconAddress = tokenList[1].iconAddress;
-        poolStore.fetchAndSetTokenPairs(chainId, tokenList[1].address);
+        poolStore.fetchAndSetTokenPairs(tokenList[1].address);
         swapFormStore.inputs.outputPrecision = tokenList[1].precision;
     }
 
@@ -131,8 +134,9 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         outputTicker,
         outputIconAddress,
         outputPrecision,
-        expectedSlippage,
     } = inputs;
+
+    const { expectedSlippage } = outputs;
 
     const buttonActionHandler = (buttonState: ButtonState) => {
         switch (buttonState) {
@@ -152,8 +156,8 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
 
     const unlockHandler = async () => {
         const tokenToUnlock = inputs.inputToken;
-        const proxyAddress = tokenStore.getProxyAddress(supportedNetworks[0]);
-        await tokenStore.approveMax(tokenToUnlock, proxyAddress);
+        const proxyAddress = tokenStore.getProxyAddress(supportedChainId);
+        await tokenStore.approveMax(web3React, tokenToUnlock, proxyAddress);
     };
 
     const swapHandler = async () => {
@@ -168,9 +172,10 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                 outputToken,
                 outputLimit,
                 limitPrice,
-                swaps,
             } = inputs;
+            const { swaps } = outputs;
             await proxyStore.batchSwapExactIn(
+                web3React,
                 swaps,
                 inputToken,
                 toWei(inputAmount),
@@ -188,6 +193,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                 swaps,
             } = inputs;
             await proxyStore.batchSwapExactOut(
+                web3React,
                 swaps,
                 inputToken,
                 toWei(inputLimit),
@@ -266,14 +272,22 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         );
 
         if (inputUserBalanceBN) {
-            inputUserBalance = (inputUserBalanceBN > 0)
-                ? helpers.fromWei(inputUserBalanceBN)
-                : '0.00';
-            let inputBalanceParts = inputUserBalance.split(".");
-            if (inputBalanceParts[1].substring(0,8).length > 1) {
-                inputUserBalance = inputBalanceParts[0] + "." + inputBalanceParts[1].substring(0, inputPrecision);
+            inputUserBalance =
+                inputUserBalanceBN > 0
+                    ? helpers.fromWei(inputUserBalanceBN)
+                    : '0.00';
+            let inputBalanceParts = inputUserBalance.split('.');
+            if (inputBalanceParts[1].substring(0, 8).length > 1) {
+                inputUserBalance =
+                    inputBalanceParts[0] +
+                    '.' +
+                    inputBalanceParts[1].substring(0, inputPrecision);
             } else {
-                inputUserBalance = inputBalanceParts[0] + "." + inputBalanceParts[1].substring(0, 1) + "0"
+                inputUserBalance =
+                    inputBalanceParts[0] +
+                    '.' +
+                    inputBalanceParts[1].substring(0, 1) +
+                    '0';
             }
             if (inputUserBalance.length > 20) {
                 truncatedInputUserBalance =
@@ -290,14 +304,22 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         );
 
         if (outputUserBalanceBN) {
-            outputUserBalance = (outputUserBalanceBN > 0)
-                ? helpers.fromWei(outputUserBalanceBN).toString()
-                : '0.00';
-            let outputBalanceParts = outputUserBalance.split(".");
-            if (outputBalanceParts[1].substring(0,8).length > 1) {
-                outputUserBalance = outputBalanceParts[0] + "." + outputBalanceParts[1].substring(0, outputPrecision);
+            outputUserBalance =
+                outputUserBalanceBN > 0
+                    ? helpers.fromWei(outputUserBalanceBN).toString()
+                    : '0.00';
+            let outputBalanceParts = outputUserBalance.split('.');
+            if (outputBalanceParts[1].substring(0, 8).length > 1) {
+                outputUserBalance =
+                    outputBalanceParts[0] +
+                    '.' +
+                    outputBalanceParts[1].substring(0, outputPrecision);
             } else {
-                outputUserBalance = outputBalanceParts[0] + "." + outputBalanceParts[1].substring(0, 1) + "0"
+                outputUserBalance =
+                    outputBalanceParts[0] +
+                    '.' +
+                    outputBalanceParts[1].substring(0, 1) +
+                    '0';
             }
             if (outputUserBalance.length > 20) {
                 truncatedOutputUserBalance =
@@ -307,7 +329,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
             }
         }
 
-        const proxyAddress = tokenStore.getProxyAddress(supportedNetworks[0]);
+        const proxyAddress = tokenStore.getProxyAddress(supportedChainId);
         userAllowance = tokenStore.getAllowance(
             chainId,
             inputToken,
@@ -323,27 +345,31 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     if (error) {
         console.error('error', error);
     }
-    let errorMessage;
-    errorMessage = inputs.activeErrorMessage;
+    const errorMessage = outputs.activeErrorMessage;
 
-    const TradeDetails = ({inputAmount, outputAmount}) => {
-        if (checkIsPropertyEmpty(inputAmount) && checkIsPropertyEmpty(outputAmount)) {
-            return(
+    const TradeDetails = ({ inputAmount, outputAmount }) => {
+        if (helpers.isEmpty(inputAmount) && helpers.isEmpty(outputAmount)) {
+            return (
                 <ColumnContainer>
                     <TradeCompositionPlaceholder />
-                    <EnterOrderDetails>Enter Order Details to Continue</EnterOrderDetails>
+                    <EnterOrderDetails>
+                        Enter Order Details to Continue
+                    </EnterOrderDetails>
                     <SlippageSelectorPlaceholder />
                     <Button
                         buttonText={getButtonText(buttonState)}
-                        active={getButtonActive(buttonState, inputUserBalanceBN)}
+                        active={getButtonActive(
+                            buttonState,
+                            inputUserBalanceBN
+                        )}
                         onClick={() => {
                             buttonActionHandler(buttonState);
                         }}
                     />
                 </ColumnContainer>
-            )
+            );
         } else {
-            return(
+            return (
                 <ColumnContainer>
                     <TradeComposition
                         tradeCompositionOpen={tradeCompositionOpen}
@@ -357,15 +383,18 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                     />
                     <Button
                         buttonText={getButtonText(buttonState)}
-                        active={getButtonActive(buttonState, inputUserBalanceBN)}
+                        active={getButtonActive(
+                            buttonState,
+                            inputUserBalanceBN
+                        )}
                         onClick={() => {
                             buttonActionHandler(buttonState);
                         }}
                     />
                 </ColumnContainer>
-            )
+            );
         }
-    }
+    };
 
     return (
         <div>
@@ -397,7 +426,10 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                     showMax={!!account && !!outputUserBalanceBN}
                 />
             </RowContainer>
-            <TradeDetails inputAmount={inputs.inputAmount} outputAmount={inputs.outputAmount} />
+            <TradeDetails
+                inputAmount={inputs.inputAmount}
+                outputAmount={inputs.outputAmount}
+            />
         </div>
     );
 });

@@ -8,6 +8,7 @@ import {
     isChainIdSupported,
 } from '../../provider/connectors';
 import { observer } from 'mobx-react';
+import { useActiveWeb3React } from '../../provider';
 
 const AssetPanelContainer = styled.div`
     display: flex;
@@ -82,12 +83,12 @@ const AssetOptions = observer(({ filter, modelOpen, setModalOpen }) => {
     // TODO do math and pass props into AssetPanel css to make border-bottom none for bottom row of assets
 
     const {
-        root: { swapFormStore, providerStore, tokenStore, poolStore },
+        root: { swapFormStore, tokenStore, poolStore },
     } = useStores();
 
     let assetSelectorData: AssetSelectorData[] = [];
     const supportedChainId = getSupportedChainId();
-    const { chainId, account } = providerStore.getActiveWeb3React();
+    const { chainId, account } = useActiveWeb3React();
 
     let userBalances = {};
     let filteredWhitelistedTokens;
@@ -100,22 +101,12 @@ const AssetOptions = observer(({ filter, modelOpen, setModalOpen }) => {
 
         if (modelOpen.input === 'inputAmount') {
             tradableTokens = poolStore.getTokenPairs(
-                chainId,
                 swapFormStore.inputs.outputToken
             );
-            console.log({
-                checkingFor: swapFormStore.inputs.outputToken,
-                tradableTokens,
-            });
-        } else {
+        } else if (modelOpen.input === 'outputAmount') {
             tradableTokens = poolStore.getTokenPairs(
-                chainId,
                 swapFormStore.inputs.inputToken
             );
-            console.log({
-                checkingFor: swapFormStore.inputs.inputToken,
-                tradableTokens,
-            });
         }
 
         if (account && isChainIdSupported(chainId)) {
@@ -127,21 +118,25 @@ const AssetOptions = observer(({ filter, modelOpen, setModalOpen }) => {
         }
 
         assetSelectorData = filteredWhitelistedTokens.map(value => {
-            let userBalance = (userBalances[value.address] > 0)
-                ? fromWei(userBalances[value.address])
-                : '0.00';
-            let balanceParts = userBalance.split(".");
-            if (balanceParts[1].substring(0,8).length > 1) {
-                userBalance = balanceParts[0] + "." + balanceParts[1].substring(0, value.precision);
+            let userBalance =
+                userBalances[value.address] > 0
+                    ? fromWei(userBalances[value.address])
+                    : '0.00';
+            let balanceParts = userBalance.split('.');
+            if (balanceParts[1].substring(0, 8).length > 1) {
+                userBalance =
+                    balanceParts[0] +
+                    '.' +
+                    balanceParts[1].substring(0, value.precision);
             } else {
-                userBalance = balanceParts[0] + "." + balanceParts[1].substring(0, 1) + "0"
+                userBalance =
+                    balanceParts[0] +
+                    '.' +
+                    balanceParts[1].substring(0, 1) +
+                    '0';
             }
             if (userBalance.length > 20) {
                 userBalance = userBalance.substring(0, 20) + '...';
-            }
-
-            if (tradableTokens) {
-                console.log({ addressToFind: value.address, tradableTokens });
             }
 
             return {
@@ -157,13 +152,12 @@ const AssetOptions = observer(({ filter, modelOpen, setModalOpen }) => {
         return assetSelectorData;
     };
     setSelectorDataWrapper(filter);
-    const [selectorData, setSelectorData] = useState(assetSelectorData);
 
-    // TODO DRY up with function in Switch component
     const clearInputs = () => {
         swapFormStore.inputs.inputAmount = '';
         swapFormStore.inputs.outputAmount = '';
-        swapFormStore.inputs.activeErrorMessage = '';
+        swapFormStore.clearErrorMessage();
+        swapFormStore.clearTradeComposition();
     };
 
     const selectAsset = token => {
@@ -171,14 +165,13 @@ const AssetOptions = observer(({ filter, modelOpen, setModalOpen }) => {
             swapFormStore.inputs.inputToken = token.address;
             swapFormStore.inputs.inputTicker = token.symbol;
             swapFormStore.inputs.inputIconAddress = token.iconAddress;
-            poolStore.fetchAndSetTokenPairs(chainId, token.address);
         } else {
             swapFormStore.inputs.outputToken = token.address;
             swapFormStore.inputs.outputTicker = token.symbol;
             swapFormStore.inputs.outputIconAddress = token.iconAddress;
-            poolStore.fetchAndSetTokenPairs(chainId, token.address);
         }
 
+        poolStore.fetchAndSetTokenPairs(token.address);
         clearInputs();
         setModalOpen(false);
     };
