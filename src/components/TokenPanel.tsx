@@ -1,9 +1,7 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import styled from 'styled-components';
-import { isAddress } from '../../utils/helpers';
-
-import { useEffect, useRef } from 'react';
-import { EtherKey } from '../../stores/Token';
+import { isAddress } from '../utils/helpers';
+import { EtherKey } from '../stores/Token';
 
 const Panel = styled.div`
     width: 180px;
@@ -127,14 +125,14 @@ const InputWrapper = styled.div`
     }
     border: ${props =>
         props.errorBorders ? '1px solid var(--error-color)' : ''};
-    margin-left: ${props =>
-        props.errorBorders ? '-1px' : '0px'}
-    margin-right: ${props =>
-        props.errorBorders ? '-1px' : '0px'}
+    margin-left: ${props => (props.errorBorders ? '-1px' : '0px')}
+    margin-right: ${props => (props.errorBorders ? '-1px' : '0px')}
     :hover {
         background-color: var(--input-hover-background);
         border: ${props =>
-            props.errorBorders ? '1px solid var(--error-color)' : '1px solid var(--input-hover-border);'};
+            props.errorBorders
+                ? '1px solid var(--error-color)'
+                : '1px solid var(--input-hover-border);'};
         margin-left: -1px;
         margin-right: -1px;
         input {

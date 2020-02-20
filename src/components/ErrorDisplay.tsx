@@ -13,12 +13,16 @@ const ErrorTextContainer = styled.div`
     margin-bottom: 36px;
 `;
 
+const ErrorTextContainerPlaceholder = styled.div`
+    height: 58px;
+`;
+
 const ErrorDisplay = ({ errorText }) => {
     const ErrorTextElement = ({ errorText }) => {
         if (errorText) {
             return <ErrorTextContainer>{errorText}</ErrorTextContainer>;
         } else {
-            return <div></div>;
+            return <ErrorTextContainerPlaceholder />;
         }
     };
 

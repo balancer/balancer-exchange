@@ -5,7 +5,6 @@ import { ethers } from 'ethers';
 import 'index.css';
 import App from 'App';
 import * as serviceWorker from './serviceWorker';
-import { Provider } from 'mobx-react';
 import { web3ContextNames } from 'provider/connectors';
 import ThemeProvider, { GlobalStyle } from './theme';
 
@@ -22,16 +21,16 @@ function getLibrary(provider) {
 }
 
 const Root = (
-    <Web3ProviderInjected getLibrary={getLibrary}>
-        <Web3ProviderBackup getLibrary={getLibrary}>
+    <Web3ProviderBackup getLibrary={getLibrary}>
+        <Web3ProviderInjected getLibrary={getLibrary}>
             <ThemeProvider>
                 <>
                     <GlobalStyle />
                     <App />
                 </>
             </ThemeProvider>
-        </Web3ProviderBackup>
-    </Web3ProviderInjected>
+        </Web3ProviderInjected>
+    </Web3ProviderBackup>
 );
 ReactDOM.render(Root, document.getElementById('root'));
 

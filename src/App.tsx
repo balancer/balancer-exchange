@@ -1,9 +1,8 @@
-import React, { Component } from 'react';
-import { HashRouter, Route, Redirect, Switch } from 'react-router-dom';
-import { theme } from 'configs';
-import { Header, Web3ReactManager } from 'components';
-import { observer, inject } from 'mobx-react';
-import SwapForm from 'components/Temp/SwapForm';
+import React from 'react';
+import { HashRouter, Redirect, Route, Switch } from 'react-router-dom';
+import Web3ReactManager from 'components/Web3ReactManager';
+import Header from 'components/Header';
+import SwapForm from 'components/SwapForm';
 import './App.css';
 
 const App = () => {

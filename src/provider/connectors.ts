@@ -5,8 +5,12 @@ export const supportedNetworks = [
     Number(process.env.REACT_APP_SUPPORTED_NETWORK_ID),
 ];
 
+export const supportedChainId = Number(
+    process.env.REACT_APP_SUPPORTED_NETWORK_ID
+);
+
 export const getSupportedChainId = () => {
-    return supportedNetworks[0];
+    return supportedChainId;
 };
 
 export const chainNameById = {
@@ -33,7 +37,7 @@ export const backup = new NetworkConnector({
     urls: {
         42: RPC_URLS[42],
     },
-    defaultChainId: supportedNetworks[0],
+    defaultChainId: supportedChainId,
     pollingInterval: POLLING_INTERVAL,
 });
 

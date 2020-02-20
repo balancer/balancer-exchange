@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import styled from 'styled-components';
 import { TokenIconAddress } from './TokenPanel';
-import { useStores } from '../../contexts/storesContext';
-import { BigNumber } from 'ethers/utils';
-import { fromWei, toWei } from 'utils/helpers';
+import { useStores } from '../contexts/storesContext';
+import { bnum, fromWei } from 'utils/helpers';
 import {
     getSupportedChainId,
     isChainIdSupported,
-    web3ContextNames,
-} from '../../provider/connectors';
+} from '../provider/connectors';
+import { observer } from 'mobx-react';
+import { useActiveWeb3React } from '../provider/index';
 
 const AssetPanelContainer = styled.div`
     display: flex;
@@ -71,31 +71,43 @@ const TokenBalance = styled.div`
     margin-top: 12px;
 `;
 
-interface AssetSelectorData {
+interface Asset {
     address: string;
     iconAddress: string;
     symbol: string;
     userBalance: string;
+    isTradable: boolean;
 }
 
-const AssetOptions = ({ filter, modelOpen, setModalOpen }) => {
+const AssetOptions = observer(({ filter, modelOpen, setModalOpen }) => {
     // TODO do math and pass props into AssetPanel css to make border-bottom none for bottom row of assets
 
     const {
-        root: { swapFormStore, providerStore, tokenStore },
+        root: { swapFormStore, tokenStore, poolStore },
     } = useStores();
 
-    let assetSelectorData: AssetSelectorData[] = [];
     const supportedChainId = getSupportedChainId();
-    const { chainId, account } = providerStore.getActiveWeb3React();
+    const { chainId, account } = useActiveWeb3React();
 
-    let userBalances = {};
-    let filteredWhitelistedTokens;
-    const setSelectorDataWrapper = filter => {
-        filteredWhitelistedTokens = tokenStore.getFilteredTokenMetadata(
+    const getAssetOptions = (filter, chainId, account): Asset[] => {
+        const filteredWhitelistedTokens = tokenStore.getFilteredTokenMetadata(
             supportedChainId,
             filter
         );
+
+        let assetSelectorData: Asset[] = [];
+        let userBalances = {};
+        let tradableTokens;
+
+        if (modelOpen.input === 'inputAmount') {
+            tradableTokens = poolStore.getTokenPairs(
+                swapFormStore.inputs.outputToken
+            );
+        } else if (modelOpen.input === 'outputAmount') {
+            tradableTokens = poolStore.getTokenPairs(
+                swapFormStore.inputs.inputToken
+            );
+        }
 
         if (account && isChainIdSupported(chainId)) {
             userBalances = tokenStore.getAccountBalances(
@@ -106,33 +118,82 @@ const AssetOptions = ({ filter, modelOpen, setModalOpen }) => {
         }
 
         assetSelectorData = filteredWhitelistedTokens.map(value => {
-            let userBalance = (userBalances[value.address] > 0)
-                ? fromWei(userBalances[value.address])
-                : '0.00';
-            let balanceParts = userBalance.split(".");
-            if (balanceParts[1].substring(0,8).length > 1) {
-                userBalance = balanceParts[0] + "." + balanceParts[1].substring(0, value.precision);
+            let userBalance =
+                userBalances[value.address] > 0
+                    ? fromWei(userBalances[value.address])
+                    : '0.00';
+            let balanceParts = userBalance.split('.');
+            if (balanceParts[1].substring(0, 8).length > 1) {
+                userBalance =
+                    balanceParts[0] +
+                    '.' +
+                    balanceParts[1].substring(0, value.precision);
             } else {
-                userBalance = balanceParts[0] + "." + balanceParts[1].substring(0, 1) + "0"
+                userBalance =
+                    balanceParts[0] +
+                    '.' +
+                    balanceParts[1].substring(0, 1) +
+                    '0';
             }
             if (userBalance.length > 20) {
                 userBalance = userBalance.substring(0, 20) + '...';
             }
+
             return {
                 address: value.address,
                 iconAddress: value.iconAddress,
                 symbol: value.symbol,
                 userBalance: userBalance,
+                isTradable: tradableTokens
+                    ? tradableTokens.has(value.address)
+                    : false,
             };
         });
+
         return assetSelectorData;
     };
-    setSelectorDataWrapper(filter);
-    const [selectorData, setSelectorData] = useState(assetSelectorData);
+
+    const sortAssetOptions = (assets: Asset[], account) => {
+        const buckets = {
+            tradableWithBalance: [] as Asset[],
+            tradableWithoutBalance: [] as Asset[],
+            notTradableWithBalance: [] as Asset[],
+            notTradableWithoutBalance: [] as Asset[],
+        };
+        assets.forEach(asset => {
+            const isTradable = asset.isTradable;
+            const hasBalance = account && bnum(asset.userBalance).gt(0);
+
+            if (isTradable && hasBalance) {
+                buckets.tradableWithBalance.push(asset);
+            } else if (isTradable && !hasBalance) {
+                buckets.tradableWithoutBalance.push(asset);
+            } else if (!isTradable && hasBalance) {
+                buckets.notTradableWithBalance.push(asset);
+            } else if (!isTradable && !hasBalance) {
+                buckets.notTradableWithoutBalance.push(asset);
+            }
+        });
+
+        // We don't introduce a possibility of duplicates and there for don't need to use Set
+        return [
+            ...buckets.tradableWithBalance,
+            ...buckets.tradableWithoutBalance,
+            ...buckets.notTradableWithBalance,
+            ...buckets.notTradableWithoutBalance,
+        ];
+    };
+
+    const assets = sortAssetOptions(
+        getAssetOptions(filter, chainId, account),
+        account
+    );
 
     const clearInputs = () => {
         swapFormStore.inputs.inputAmount = '';
         swapFormStore.inputs.outputAmount = '';
+        swapFormStore.clearErrorMessage();
+        swapFormStore.clearTradeComposition();
     };
 
     const selectAsset = token => {
@@ -146,13 +207,14 @@ const AssetOptions = ({ filter, modelOpen, setModalOpen }) => {
             swapFormStore.inputs.outputIconAddress = token.iconAddress;
         }
 
+        poolStore.fetchAndSetTokenPairs(token.address);
         clearInputs();
         setModalOpen(false);
     };
 
     return (
         <AssetPanelContainer>
-            {assetSelectorData.map(token => (
+            {assets.map(token => (
                 <AssetPanel
                     onClick={() => {
                         selectAsset(token);
@@ -164,11 +226,12 @@ const AssetOptions = ({ filter, modelOpen, setModalOpen }) => {
                     </AssetWrapper>
                     <TokenBalance>
                         {token.userBalance + ' ' + token.symbol}
+                        {token.isTradable ? ' yes' : ' no'}
                     </TokenBalance>
                 </AssetPanel>
             ))}
         </AssetPanelContainer>
     );
-};
+});
 
 export default AssetOptions;

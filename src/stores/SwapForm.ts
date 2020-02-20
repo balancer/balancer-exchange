@@ -1,9 +1,21 @@
-import { observable, action } from 'mobx';
+import { action, observable } from 'mobx';
 import RootStore from 'stores/Root';
 import { ValidationRules } from 'react-form-validator-core';
-import { ExactAmountInPreview, ExactAmountOutPreview, Swap } from './Proxy';
+import {
+    ExactAmountInPreview,
+    ExactAmountOutPreview,
+    Swap,
+    SwapPreview,
+} from './Proxy';
 import { BigNumber } from 'utils/bignumber';
-import { bnum, fromWei, scale, toWei } from '../utils/helpers';
+import {
+    bnum,
+    formatPctString,
+    fromWei,
+    isEmpty,
+    str,
+    toWei,
+} from '../utils/helpers';
 
 export const formNames = {
     INPUT_FORM: 'inputs',
@@ -24,6 +36,11 @@ export const labels = {
     },
 };
 
+export enum InputFocus {
+    BUY,
+    SELL,
+}
+
 export enum SwapMethods {
     EXACT_IN = 'swapExactIn',
     EXACT_OUT = 'swapExactOut',
@@ -36,6 +53,8 @@ export enum InputValidationStatus {
     NOT_FLOAT = 'Not Float',
     NEGATIVE = 'Negative',
     INSUFFICIENT_BALANCE = 'Insufficient Balance',
+    NO_POOLS = 'There are no Pools with selected tokens',
+    MAX_DIGITS_EXCEEDED = 'Maximum Digits Exceeded',
 }
 
 export interface ChartData {
@@ -58,7 +77,7 @@ export default class SwapFormStore {
         inputAmount: '',
         outputAmount: '',
         extraSlippageAllowance: '1.0',
-        expectedSlippage: '0',
+        extraSlippageAllowanceErrorStatus: InputValidationStatus.VALID,
         inputTicker: '',
         outputTicker: '',
         inputPrecision: 2,
@@ -71,19 +90,22 @@ export default class SwapFormStore {
         limitPrice: '0',
         setBuyFocus: false,
         setSellFocus: false,
-        effectivePrice: '',
         swaps: [],
-        activeErrorMessage: '',
     };
     @observable outputs = {
         inputAmount: '',
         outputAmount: '',
         effectivePrice: '',
         spotPrice: '',
+        expectedSlippage: '0',
+        outputLimit: '',
         swaps: [],
         validSwap: false,
+        activeErrorMessage: '',
     };
+    @observable preview: SwapPreview;
     @observable tradeCompositionData: ChartData;
+    @observable slippageCell: number = 3;
 
     rootStore: RootStore;
 
@@ -99,6 +121,135 @@ export default class SwapFormStore {
             ...this.inputs,
             ...output,
         };
+    }
+
+    @action setOutputFromPreview(
+        method: SwapMethods,
+        preview: ExactAmountInPreview | ExactAmountOutPreview
+    ) {
+        if (method === SwapMethods.EXACT_IN) {
+            preview = preview as ExactAmountInPreview;
+            this.inputs.outputAmount = fromWei(preview.totalOutput);
+        } else if (method === SwapMethods.EXACT_OUT) {
+            preview = preview as ExactAmountOutPreview;
+            this.inputs.inputAmount = fromWei(preview.totalInput);
+        } else {
+            throw new Error('Invalid swap method specified');
+        }
+
+        this.preview = preview;
+
+        this.outputs = {
+            ...this.outputs,
+            effectivePrice: str(preview.effectivePrice),
+            spotPrice: str(preview.spotPrice),
+            expectedSlippage: formatPctString(preview.expectedSlippage),
+            swaps: preview.swaps,
+            validSwap: true,
+        };
+    }
+
+    @action setInputFocus(element: InputFocus) {
+        if (element === InputFocus.BUY) {
+            this.inputs.setSellFocus = false;
+            this.inputs.setBuyFocus = true;
+        } else if (element === InputFocus.SELL) {
+            this.inputs.setBuyFocus = false;
+            this.inputs.setSellFocus = true;
+        } else {
+            throw new Error('Invalid input focus element specified');
+        }
+    }
+
+    @action setErrorMessage(message: string) {
+        this.outputs.activeErrorMessage = message;
+    }
+
+    hasErrorMessage(): boolean {
+        return !isEmpty(this.outputs.activeErrorMessage);
+    }
+
+    getErrorMessage(): string {
+        return this.outputs.activeErrorMessage;
+    }
+
+    isValidStatus(value: InputValidationStatus) {
+        return value === InputValidationStatus.VALID;
+    }
+
+    getSlippageCell() {
+        return this.slippageCell;
+    }
+
+    @action setSlippageCell(value: number) {
+        this.slippageCell = value;
+    }
+
+    getExtraSlippageAllowance(): string {
+        return this.inputs.extraSlippageAllowance;
+    }
+
+    getSlippageSelectorErrorStatus(): InputValidationStatus {
+        return this.inputs.extraSlippageAllowanceErrorStatus;
+    }
+
+    @action setExtraSlippageAllowance(value: string) {
+        this.inputs.extraSlippageAllowance = value;
+    }
+
+    @action setSlippageSelectorErrorStatus(value: InputValidationStatus) {
+        this.inputs.extraSlippageAllowanceErrorStatus = value;
+    }
+
+    @action clearErrorMessage() {
+        this.outputs.activeErrorMessage = '';
+    }
+
+    @action setValidSwap(valid: boolean) {
+        this.outputs.validSwap = valid;
+    }
+
+    @action setOutputAmount(value: string) {
+        this.inputs.outputAmount = value;
+    }
+
+    @action setInputAmount(value: string) {
+        this.inputs.inputAmount = value;
+    }
+
+    @action switchInputOutputValues() {
+        const {
+            outputToken,
+            outputTicker,
+            outputIconAddress,
+            outputPrecision,
+            inputToken,
+            inputTicker,
+            inputIconAddress,
+            inputPrecision,
+        } = this.inputs;
+        this.inputs.inputToken = outputToken;
+        this.inputs.inputTicker = outputTicker;
+        this.inputs.inputIconAddress = outputIconAddress;
+        this.inputs.inputPrecision = outputPrecision;
+        this.inputs.outputToken = inputToken;
+        this.inputs.outputTicker = inputTicker;
+        this.inputs.outputIconAddress = inputIconAddress;
+        this.inputs.outputPrecision = inputPrecision;
+    }
+
+    @action clearInputs() {
+        this.setInputAmount('');
+        this.setOutputAmount('');
+        this.clearErrorMessage();
+    }
+
+    isInputAmountStale(inputAmount: string | BigNumber) {
+        return inputAmount.toString() !== this.inputs.inputAmount;
+    }
+
+    isOutputAmountStale(outputAmount: string | BigNumber) {
+        return outputAmount.toString() !== this.inputs.outputAmount;
     }
 
     /* Assume swaps are in order of biggest to smallest value */
@@ -178,9 +329,12 @@ export default class SwapFormStore {
                 percentage: bnum(swapValue)
                     .div(toWei(inputValue))
                     .times(100)
+                    .dp(2, BigNumber.ROUND_HALF_EVEN)
                     .toNumber(),
             });
         });
+
+        let totalPercentage = 0;
 
         tempChartSwaps.forEach((value, index) => {
             if (index === 0 || index === 1) {
@@ -188,6 +342,8 @@ export default class SwapFormStore {
             } else {
                 others.percentage += value.percentage;
             }
+
+            totalPercentage += value.percentage;
         });
 
         if (others.percentage > 0) {
@@ -204,17 +360,30 @@ export default class SwapFormStore {
             result.outputPriceValue = inputValue;
         }
 
+        if (totalPercentage !== 100) {
+            console.error('Total Percentage Unexpected Value');
+        }
+
         this.tradeCompositionData = result;
+    }
+
+    @action clearTradeComposition() {
+        this.resetTradeComposition();
     }
 
     isValidInput(value: string): boolean {
         return (
-            this.getSwapFormInputValidationStatus(value) ===
+            this.getNumberInputValidationStatus(value) ===
             InputValidationStatus.VALID
         );
     }
 
-    getSwapFormInputValidationStatus(value: string): InputValidationStatus {
+    getNumberInputValidationStatus(
+        value: string,
+        options?: {
+            limitDigits?: boolean;
+        }
+    ): InputValidationStatus {
         if (ValidationRules.isEmpty(value)) {
             return InputValidationStatus.EMPTY;
         }
@@ -231,26 +400,16 @@ export default class SwapFormStore {
             return InputValidationStatus.NEGATIVE;
         }
 
+        if (options && options.limitDigits) {
+            // restrict to 2 decimal places
+            const acceptableValues = [/^$/, /^\d{1,2}$/, /^\d{0,2}\.\d{0,2}$/];
+            // if its within accepted decimal limit, update the input state
+            if (!acceptableValues.some(a => a.test(value))) {
+                return InputValidationStatus.MAX_DIGITS_EXCEEDED;
+            }
+        }
+
         return InputValidationStatus.VALID;
-    }
-
-    resetInputs() {
-        this.inputs = {
-            ...this.inputs,
-            inputAmount: '',
-            outputAmount: '',
-        };
-    }
-
-    resetOutputs() {
-        this.outputs = {
-            inputAmount: '',
-            outputAmount: '',
-            effectivePrice: '',
-            spotPrice: '',
-            swaps: [],
-            validSwap: false,
-        };
     }
 
     resetTradeComposition() {

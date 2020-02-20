@@ -1,4 +1,4 @@
-import { observable, action } from 'mobx';
+import { action, observable } from 'mobx';
 import RootStore from 'stores/Root';
 
 export default class AppSettingsStore {

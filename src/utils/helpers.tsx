@@ -6,7 +6,7 @@ import { BigNumber } from 'utils/bignumber';
 import { SUPPORTED_THEMES } from '../theme';
 import {
     Pool,
-    SorSwaps,
+    SorSwap,
     StringifiedPool,
     Swap,
     SwapInput,
@@ -16,11 +16,6 @@ import { SwapMethods } from '../stores/SwapForm';
 // Utils
 export const MAX_GAS = utils.bigNumberify('0xffffffff');
 export const MAX_UINT = utils.bigNumberify(ethers.constants.MaxUint256);
-
-export enum Scale {
-    toWei = '18',
-    fromWei = '-18',
-}
 
 export function toChecksum(address) {
     return utils.getAddress(address);
@@ -43,8 +38,8 @@ export function bnum(
     return new BigNumber(val.toString());
 }
 
-export function scale(input: BigNumber, decimalPlaces: string): BigNumber {
-    const scalePow = new BigNumber(decimalPlaces);
+export function scale(input: BigNumber, decimalPlaces: number): BigNumber {
+    const scalePow = new BigNumber(decimalPlaces.toString());
     const scaleMul = new BigNumber(10).pow(scalePow);
     return input.times(scaleMul);
 }
@@ -54,7 +49,8 @@ export function fromWei(val: string | utils.BigNumber | BigNumber): string {
 }
 
 export function toWei(val: string | utils.BigNumber | BigNumber): BigNumber {
-    return bnum(utils.parseEther(val.toString()));
+    console.log('toWei', val.toString());
+    return scale(bnum(val.toString()), 18).integerValue();
 }
 
 export function setPropertyToMaxUintIfEmpty(value?): string {
@@ -71,18 +67,15 @@ export function setPropertyToZeroIfEmpty(value?): string {
     return value;
 }
 
-export function checkIsPropertyEmpty(value?) {
-    if (!value || value === 0 || value === '') {
-        return true;
-    }
-    return false;
-}
-
 export function toAddressStub(address) {
     const start = address.slice(0, 5);
     const end = address.slice(-3);
 
     return `${start}...${end}`;
+}
+
+export function isEmpty(str: string): boolean {
+    return !str || 0 === str.length;
 }
 
 export function roundValue(value, decimals = 4): string {
@@ -235,7 +228,7 @@ export const normalizePriceValues = (
 } => {
     const multiplier = bnum(1).div(inputValue);
     return {
-        normalizedInput: inputValue.times(multiplier),
+        normalizedInput: bnum(1),
         normalizedOutput: outputValue.times(multiplier),
     };
 };
@@ -259,22 +252,6 @@ export const getGasPriceFromETHGasStation = () => {
             }
         );
     });
-};
-
-// TODO: Issue between new BigNumber() and BigNumber() cast in javascript SOR
-export const stringifyPoolData = (pools: Pool[]): StringifiedPool[] => {
-    const result: StringifiedPool[] = [];
-    pools.forEach(pool => {
-        result.push({
-            id: pool.id,
-            balanceIn: str(pool.balanceIn),
-            balanceOut: str(pool.balanceOut),
-            weightIn: str(pool.weightIn),
-            weightOut: str(pool.weightOut),
-            swapFee: str(pool.swapFee),
-        });
-    });
-    return result;
 };
 
 // TODO: Issue between new BigNumber() and BigNumber() cast in javascript SOR
@@ -323,20 +300,15 @@ export const printSwaps = (swapMethod: SwapMethods, swaps: Swap[]) => {
     console.table(result);
 };
 
-export const printSorSwaps = (sorSwaps: SorSwaps) => {
-    const formatted = {
-        totalOutput: '',
-        swaps: [] as any[],
-    };
-    formatted.totalOutput = sorSwaps.totalOutput.toString();
-    sorSwaps.inputAmounts.forEach((value, index) => {
-        formatted.swaps.push({
-            amount: value.toString(),
-            balancer: sorSwaps.selectedBalancers[index],
+export const printSorSwaps = (sorSwaps: SorSwap[]) => {
+    const formatted = [];
+    sorSwaps.forEach(swap => {
+        formatted.push({
+            amount: swap.amount.toString(),
+            balancer: swap.pool,
         });
     });
 
     console.log('---SorSwaps---');
-    console.table(formatted.swaps);
-    console.log(`TotalOutput: ${formatted.totalOutput}`);
+    console.table(formatted);
 };

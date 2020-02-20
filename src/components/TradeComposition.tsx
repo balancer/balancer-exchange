@@ -1,11 +1,11 @@
 import React from 'react';
 import styled from 'styled-components';
-import { normalizePriceValues, str, toAddressStub } from 'utils/helpers';
+import { normalizePriceValues, toAddressStub } from 'utils/helpers';
 import { observer } from 'mobx-react';
 import { Pie } from 'react-chartjs-2';
-import { ChartData } from '../../stores/SwapForm';
-import { useStores } from '../../contexts/storesContext';
-import { getSupportedChainId } from '../../provider/connectors';
+import { ChartData } from '../stores/SwapForm';
+import { useStores } from '../contexts/storesContext';
+import { getSupportedChainId } from '../provider/connectors';
 
 const Container = styled.div`
     display: flex;
@@ -110,11 +110,10 @@ const PieChart = styled.div`
 const TradeComposition = observer(
     ({ setTradeCompositionOpen, tradeCompositionOpen }) => {
         const {
-            root: { swapFormStore, providerStore, tokenStore },
+            root: { swapFormStore, tokenStore },
         } = useStores();
 
         const supportedChainId = getSupportedChainId();
-        const { chainId, account } = providerStore.getActiveWeb3React();
         const chartData = swapFormStore.tradeCompositionData;
 
         const options = {
@@ -157,7 +156,7 @@ const TradeComposition = observer(
             };
 
             if (chartData.validSwap) {
-                chartData.swaps.forEach((swap, index) => {
+                chartData.swaps.forEach(swap => {
                     pieData.datasets[1].data.push(swap.percentage);
                 });
             }
@@ -206,10 +205,6 @@ const TradeComposition = observer(
         };
 
         const renderExchangeRate = (chartData: ChartData) => {
-            if (!chainId) {
-                return <div />;
-            }
-
             const inputTokenSymbol = tokenStore.getTokenMetadata(
                 supportedChainId,
                 inputToken
@@ -219,31 +214,25 @@ const TradeComposition = observer(
                 outputToken
             ).symbol;
 
-            const { normalizedInput, normalizedOutput } = normalizePriceValues(
-                chartData.inputPriceValue,
-                chartData.outputPriceValue
-            );
-
             if (chartData.validSwap) {
+                const {
+                    normalizedInput,
+                    normalizedOutput,
+                } = normalizePriceValues(
+                    chartData.inputPriceValue,
+                    chartData.outputPriceValue
+                );
+
                 return (
                     <div>
-                        {str(normalizedInput)} {inputTokenSymbol} ={' '}
-                        {str(normalizedOutput)} {outputTokenSymbol}
+                        {normalizedInput.toString()} {inputTokenSymbol} ={' '}
+                        {normalizedOutput.toPrecision(6)} {outputTokenSymbol}
                     </div>
                 );
             } else {
                 return <div>Input swap parameters</div>;
             }
         };
-
-        console.log(
-            '[Trade Composition] Debug',
-            {
-                swaps: [...chartData.swaps],
-                validSwap: chartData.validSwap,
-            },
-            formatPieData(chartData)
-        );
 
         return (
             <Container>

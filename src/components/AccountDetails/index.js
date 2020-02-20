@@ -9,7 +9,7 @@ import { getEtherscanLink } from 'utils/helpers';
 import Identicon from '../Identicon';
 
 import { Link } from '../../theme';
-import { useStores } from '../../contexts/storesContext';
+import { useActiveWeb3React } from '../../provider';
 
 const OptionButton = styled.div`
     ${({ theme }) => theme.flexColumnNoWrap}
@@ -242,10 +242,7 @@ export default function AccountDetails({
     ENSName,
     openOptions,
 }) {
-    const {
-        root: { providerStore },
-    } = useStores();
-    const { chainId, account, connector } = providerStore.getActiveWeb3React();
+    const { chainId, account, connector } = useActiveWeb3React();
 
     function formatConnectorName() {
         const isMetaMask =

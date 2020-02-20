@@ -1,13 +1,23 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useWeb3React as useWeb3ReactCore } from '@web3-react/core';
 import { isMobile } from 'react-device-detect';
-import { web3ContextNames } from 'provider/connectors';
-import { injected } from 'provider/connectors';
+import { injected, web3ContextNames } from 'provider/connectors';
+import { supportedChainId } from './connectors';
 
 /*  Attempt to connect to & activate injected connector
     If we're on mobile and have an injected connector, attempt even if not authorized (legacy support)
     If we tried to connect, or it's active, return true;
  */
+export function useActiveWeb3React() {
+    const contextBackup = useWeb3ReactCore(web3ContextNames.backup);
+    const contextInjected = useWeb3ReactCore(web3ContextNames.injected);
+
+    return contextInjected.active &&
+        contextInjected.chainId === supportedChainId
+        ? contextInjected
+        : contextBackup;
+}
+
 export function useEagerConnect() {
     const { activate, active } = useWeb3ReactCore(web3ContextNames.injected);
 

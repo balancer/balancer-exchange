@@ -2,7 +2,8 @@ import React from 'react';
 import Popup from 'reactjs-popup';
 import styled from 'styled-components';
 import { observer } from 'mobx-react';
-import { useStores } from '../../contexts/storesContext';
+import { useStores } from '../contexts/storesContext';
+import { InputValidationStatus } from '../stores/SwapForm';
 
 const SlippageInfoContainer = styled.div`
     display: flex;
@@ -56,7 +57,10 @@ const SlippageInfo = observer(
                         setSlippageSelectorOpen(true);
                     }}
                 >
-                    {swapFormStore.inputs.extraSlippageAllowance}%
+                    {swapFormStore.getSlippageSelectorErrorStatus() ===
+                    InputValidationStatus.VALID
+                        ? `${swapFormStore.inputs.extraSlippageAllowance}%`
+                        : `-`}
                 </SlippageInlineDisplay>
                 <div>additional limit</div>
                 <Popup

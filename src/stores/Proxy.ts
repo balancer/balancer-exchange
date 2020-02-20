@@ -6,7 +6,6 @@ import {
     printSorSwaps,
     printSwapInput,
     printSwaps,
-    Scale,
 } from 'utils/helpers';
 import RootStore from 'stores/Root';
 import { BigNumber } from 'utils/bignumber';
@@ -15,6 +14,7 @@ import { ContractTypes } from './Provider';
 import { SwapMethods } from './SwapForm';
 import CostCalculator from '../utils/CostCalculator';
 import {
+    calcExpectedSlippage,
     calcPrice,
     calcTotalInput,
     calcTotalOutput,
@@ -26,12 +26,18 @@ import {
 } from '../utils/sorWrapper';
 import { ethers } from 'ethers';
 import { EtherKey } from './Token';
+import { Web3ReactContextInterface } from '@web3-react/core/dist/types';
+import { supportedChainId } from '../provider/connectors';
+
+export type SwapPreview = ExactAmountInPreview | ExactAmountOutPreview;
 
 export interface ExactAmountOutPreview {
     outputAmount: BigNumber;
     totalInput: BigNumber | null;
+    spotInput: BigNumber | null;
     effectivePrice: BigNumber | null;
     spotPrice: BigNumber | null;
+    expectedSlippage: BigNumber | null;
     swaps: Swap[];
     validSwap: boolean;
     error?: string;
@@ -40,8 +46,10 @@ export interface ExactAmountOutPreview {
 export interface ExactAmountInPreview {
     inputAmount: BigNumber;
     totalOutput: BigNumber | null;
+    spotOutput: BigNumber | null;
     effectivePrice: BigNumber | null;
     spotPrice: BigNumber | null;
+    expectedSlippage: BigNumber | null;
     swaps: Swap[];
     validSwap: boolean;
     error?: string;
@@ -76,10 +84,9 @@ export interface StringifiedPool {
     swapFee: string;
 }
 
-export interface SorSwaps {
-    inputAmounts: BigNumber[];
-    selectedBalancers: string[];
-    totalOutput: BigNumber;
+export interface SorSwap {
+    pool: string;
+    amount: BigNumber;
 }
 
 export type Swap = {
@@ -92,7 +99,7 @@ export type Swap = {
 function printDebugInfo(
     input: SwapInput,
     swaps: Swap[],
-    sorSwaps: SorSwaps,
+    sorSwaps: SorSwap[],
     poolData: Pool[],
     result: BigNumber,
     effectivePrice: BigNumber
@@ -108,6 +115,40 @@ function printDebugInfo(
     });
 }
 
+export function emptyExactAmountInPreview(
+    inputAmount,
+    e?: string
+): ExactAmountInPreview {
+    return {
+        inputAmount,
+        totalOutput: null,
+        spotOutput: null,
+        effectivePrice: null,
+        spotPrice: null,
+        expectedSlippage: null,
+        swaps: null,
+        validSwap: false,
+        error: !!e ? e : undefined,
+    };
+}
+
+export function emptyExactAmountOutPreview(
+    outputAmount,
+    e?: string
+): ExactAmountOutPreview {
+    return {
+        outputAmount,
+        totalInput: null,
+        spotInput: null,
+        effectivePrice: null,
+        spotPrice: null,
+        expectedSlippage: null,
+        swaps: null,
+        validSwap: false,
+        error: !!e ? e : undefined,
+    };
+}
+
 export default class ProxyStore {
     @observable previewPending: boolean;
     costCalculator: CostCalculator;
@@ -117,9 +158,9 @@ export default class ProxyStore {
         this.rootStore = rootStore;
         this.previewPending = false;
         this.costCalculator = new CostCalculator({
-            gasPrice: bnum(0.00000001),
-            gasPerTrade: bnum(210000),
-            outTokenEthPrice: bnum(100),
+            gasPrice: bnum(0),
+            gasPerTrade: bnum(0),
+            outTokenEthPrice: bnum(0),
         });
     }
 
@@ -127,7 +168,7 @@ export default class ProxyStore {
         return this.previewPending;
     }
 
-    setPreviewPending(value) {
+    @action setPreviewPending(value) {
         this.previewPending = value;
     }
 
@@ -135,15 +176,15 @@ export default class ProxyStore {
         Swap Methods - Action
     */
     @action batchSwapExactIn = async (
+        web3React: Web3ReactContextInterface,
         swaps: Swap[],
         tokenIn: string,
         inputAmount: BigNumber,
         tokenOut: string,
-        minAmountOut: BigNumber,
-        maxPrice: BigNumber
+        minAmountOut: BigNumber
     ) => {
         const { tokenStore, providerStore } = this.rootStore;
-        const { chainId } = providerStore.getActiveWeb3React();
+        const { chainId } = web3React;
 
         console.log('[BatchSwapExactIn]', {
             swaps,
@@ -157,6 +198,7 @@ export default class ProxyStore {
 
         if (tokenIn === EtherKey) {
             await providerStore.sendTransaction(
+                web3React,
                 ContractTypes.ExchangeProxy,
                 proxyAddress,
                 'batchEthInSwapExactIn',
@@ -165,6 +207,7 @@ export default class ProxyStore {
             );
         } else if (tokenOut === EtherKey) {
             await providerStore.sendTransaction(
+                web3React,
                 ContractTypes.ExchangeProxy,
                 proxyAddress,
                 'batchEthOutSwapExactIn',
@@ -177,6 +220,7 @@ export default class ProxyStore {
             );
         } else {
             await providerStore.sendTransaction(
+                web3React,
                 ContractTypes.ExchangeProxy,
                 proxyAddress,
                 'batchSwapExactIn',
@@ -192,20 +236,21 @@ export default class ProxyStore {
     };
 
     @action batchSwapExactOut = async (
+        web3React: Web3ReactContextInterface,
         swaps: Swap[],
         tokenIn: string,
         maxAmountIn: BigNumber,
         tokenOut: string,
-        amountOut: BigNumber,
-        maxPrice: BigNumber
+        amountOut: BigNumber
     ) => {
         const { tokenStore, providerStore } = this.rootStore;
-        const { chainId } = providerStore.getActiveWeb3React();
+        const { chainId } = web3React;
 
         const proxyAddress = tokenStore.getProxyAddress(chainId);
 
         if (tokenIn === EtherKey) {
             await providerStore.sendTransaction(
+                web3React,
                 ContractTypes.ExchangeProxy,
                 proxyAddress,
                 'batchEthInSwapExactOut',
@@ -214,6 +259,7 @@ export default class ProxyStore {
             );
         } else if (tokenOut === EtherKey) {
             await providerStore.sendTransaction(
+                web3React,
                 ContractTypes.ExchangeProxy,
                 proxyAddress,
                 'batchEthOutSwapExactOut',
@@ -221,6 +267,7 @@ export default class ProxyStore {
             );
         } else {
             await providerStore.sendTransaction(
+                web3React,
                 ContractTypes.ExchangeProxy,
                 proxyAddress,
                 'batchSwapExactOut',
@@ -249,8 +296,7 @@ export default class ProxyStore {
     ): Promise<ExactAmountInPreview> => {
         try {
             this.setPreviewPending(true);
-            const { tokenStore, providerStore } = this.rootStore;
-            const { chainId } = providerStore.getActiveWeb3React();
+            const { tokenStore } = this.rootStore;
 
             let maxPrice = helpers.setPropertyToMaxUintIfEmpty();
             let minAmountOut = helpers.setPropertyToZeroIfEmpty();
@@ -258,11 +304,11 @@ export default class ProxyStore {
             // Use WETH address for Ether
             const tokenInToFind =
                 tokenIn === EtherKey
-                    ? tokenStore.getWethAddress(chainId)
+                    ? tokenStore.getWethAddress(supportedChainId)
                     : tokenIn;
             const tokenOutToFind =
                 tokenOut === EtherKey
-                    ? tokenStore.getWethAddress(chainId)
+                    ? tokenStore.getWethAddress(supportedChainId)
                     : tokenOut;
 
             const poolData = await findPoolsWithTokens(
@@ -287,24 +333,23 @@ export default class ProxyStore {
                 bnum(minAmountOut)
             );
 
-            const totalOutputSpot = calcTotalSpotValue(
+            const spotOutput = calcTotalSpotValue(
                 SwapMethods.EXACT_IN,
                 swaps,
                 poolData
             );
 
-            console.log('[Spot Price Calc]', {
-                inputAmount: inputAmount.toString(),
-                totalOutputSpot: totalOutputSpot.toString(),
-            });
-
-            const spotPrice = calcPrice(inputAmount, totalOutputSpot);
-
+            const spotPrice = calcPrice(inputAmount, spotOutput);
             const totalOutput = calcTotalOutput(swaps, poolData);
 
             const effectivePrice = this.calcEffectivePrice(
                 inputAmount,
-                helpers.scale(totalOutput, Scale.fromWei)
+                helpers.scale(totalOutput, -18)
+            );
+
+            const expectedSlippage = calcExpectedSlippage(
+                spotPrice,
+                effectivePrice
             );
 
             printDebugInfo(
@@ -326,23 +371,17 @@ export default class ProxyStore {
             return {
                 inputAmount,
                 totalOutput,
+                spotOutput,
                 effectivePrice,
                 spotPrice,
+                expectedSlippage,
                 swaps,
                 validSwap: true,
             };
         } catch (e) {
             log.error('[Error] previewSwapExactAmountIn', e);
             this.setPreviewPending(false);
-            return {
-                inputAmount,
-                totalOutput: null,
-                effectivePrice: null,
-                spotPrice: null,
-                swaps: null,
-                validSwap: false,
-                error: e.message,
-            };
+            return emptyExactAmountInPreview(inputAmount, e.message);
         }
     };
 
@@ -353,8 +392,7 @@ export default class ProxyStore {
     ): Promise<ExactAmountOutPreview> => {
         try {
             this.setPreviewPending(true);
-            const { tokenStore, providerStore } = this.rootStore;
-            const { chainId } = providerStore.getActiveWeb3React();
+            const { tokenStore } = this.rootStore;
 
             let maxPrice = helpers.setPropertyToMaxUintIfEmpty();
             let maxAmountIn = helpers.setPropertyToMaxUintIfEmpty();
@@ -362,11 +400,11 @@ export default class ProxyStore {
             // Use WETH address for Ether
             const tokenInToFind =
                 tokenIn === EtherKey
-                    ? tokenStore.getWethAddress(chainId)
+                    ? tokenStore.getWethAddress(supportedChainId)
                     : tokenIn;
             const tokenOutToFind =
                 tokenOut === EtherKey
-                    ? tokenStore.getWethAddress(chainId)
+                    ? tokenStore.getWethAddress(supportedChainId)
                     : tokenOut;
 
             const poolData = await findPoolsWithTokens(
@@ -376,7 +414,7 @@ export default class ProxyStore {
             );
             const costOutputToken = this.costCalculator.getCostOutputToken();
 
-            let sorSwaps: SorSwaps = findBestSwaps(
+            let sorSwaps: SorSwap[] = findBestSwaps(
                 poolData,
                 SwapMethods.EXACT_OUT,
                 outputAmount,
@@ -398,22 +436,27 @@ export default class ProxyStore {
                 maxAmountIn
             );
 
-            const totalInputSpot = calcTotalSpotValue(
+            const spotInput = calcTotalSpotValue(
                 SwapMethods.EXACT_OUT,
                 swaps,
                 poolData
             );
 
-            const spotPrice = calcPrice(bnum(outputAmount), totalInputSpot);
+            const spotPrice = calcPrice(bnum(outputAmount), spotInput);
 
             console.log('[Spot Price Calc]', {
                 outputAmount: outputAmount.toString(),
-                totalInputSpot: totalInputSpot.toString(),
+                totalInputSpot: spotInput.toString(),
             });
 
             const effectivePrice = this.calcEffectivePrice(
                 bnum(outputAmount),
-                helpers.scale(totalInput, Scale.fromWei)
+                helpers.scale(totalInput, -18)
+            );
+
+            const expectedSlippage = calcExpectedSlippage(
+                spotPrice,
+                effectivePrice
             );
 
             printDebugInfo(
@@ -439,23 +482,17 @@ export default class ProxyStore {
             return {
                 outputAmount,
                 totalInput,
+                spotInput,
                 effectivePrice,
                 spotPrice,
+                expectedSlippage,
                 swaps,
                 validSwap: true,
             };
         } catch (e) {
             log.error('[Error] previewSwapExactAmountOut', e);
             this.setPreviewPending(false);
-            return {
-                outputAmount,
-                totalInput: null,
-                effectivePrice: null,
-                spotPrice: null,
-                swaps: null,
-                validSwap: false,
-                error: e.message,
-            };
+            return emptyExactAmountOutPreview(outputAmount, e.message);
         }
     };
 }

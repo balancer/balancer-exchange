@@ -11,11 +11,11 @@
     --token-balance-text: #90a4ae;
 
     /* Input Fields */
-    --input-text: #FAFAFA;
+    --input-text: #fafafa;
     --input-placeholder-text: #575860;
-    --input-hover-background: #31313B;
+    --input-hover-background: #31313b;
     --input-hover-placeholder-text: #818187;
-    --input-hover-border: #4C5480;
+    --input-hover-border: #4c5480;
 
     /* Button Styles */
     --button-text: #fafafa;
@@ -30,8 +30,8 @@
     /* Panel Styles */
     --panel-border: #41476b;
     --panel-background: #2e2f39;
-    --panel-hover-border: #4C5480;
-    --panel-hover-background: #31313B;
+    --panel-hover-border: #4c5480;
+    --panel-hover-background: #31313b;
     --panel-header-background: #282932;
 
     /* Selector Styles */
@@ -45,7 +45,11 @@
 
 body {
     background: var(--background);
+}
 
+.app-shell {
+    margin-top: 108px;
+    margin-bottom: 100px;
 }
 
 #root::-webkit-scrollbar {
@@ -53,11 +57,11 @@ body {
 }
 
 .popup-content {
-  color: var(--background);
-  border-radius: 4px;
-  height: 60px;
-  width: 180px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+    color: var(--background);
+    border-radius: 4px;
+    height: 60px;
+    width: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }

@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { isMobile } from 'react-device-detect';
-import { useWeb3React, UnsupportedChainIdError } from '@web3-react/core';
+import { UnsupportedChainIdError, useWeb3React } from '@web3-react/core';
 import { observer } from 'mobx-react';
 
 import Modal from '../Modal';
@@ -12,12 +12,13 @@ import { usePrevious } from '../../hooks';
 import { Link } from '../../theme';
 import MetamaskIcon from '../../assets/images/metamask.png';
 import { ReactComponent as Close } from '../../assets/images/x.svg';
-import { SUPPORTED_WALLETS, injected } from 'provider/connectors';
+import { injected, SUPPORTED_WALLETS } from 'provider/connectors';
 import { useStores } from 'contexts/storesContext';
 import {
     isChainIdSupported,
     web3ContextNames,
 } from '../../provider/connectors';
+import { useActiveWeb3React } from '../../provider';
 
 const CloseIcon = styled.div`
     position: absolute;
@@ -128,12 +129,11 @@ const WalletModal = observer(
             connector,
             error,
             activate,
-        } = providerStore.getActiveWeb3React();
+        } = useActiveWeb3React();
 
-        const {
-            account,
-            chainId: injectedChainId,
-        } = providerStore.getWeb3React(web3ContextNames.injected);
+        const { account, chainId: injectedChainId } = useWeb3React(
+            web3ContextNames.injected
+        );
 
         const [walletView, setWalletView] = useState(WALLET_VIEWS.ACCOUNT);
         const [pendingWallet, setPendingWallet] = useState();
@@ -357,7 +357,9 @@ const WalletModal = observer(
                         )}
                         {walletView !== WALLET_VIEWS.PENDING && (
                             <Blurb>
-                                <span style={{color: '#90a4ae'}}>New to Ethereum? &nbsp;</span>{' '}
+                                <span style={{ color: '#90a4ae' }}>
+                                    New to Ethereum? &nbsp;
+                                </span>{' '}
                                 <Link href="https://ethereum.org/use/#3-what-is-a-wallet-and-which-one-should-i-use">
                                     Learn more about wallets
                                 </Link>

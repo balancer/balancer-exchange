@@ -1,10 +1,10 @@
 import React, { useEffect } from 'react';
 import {
-    ThemeProvider as StyledComponentsThemeProvider,
     createGlobalStyle,
     css,
+    ThemeProvider as StyledComponentsThemeProvider,
 } from 'styled-components';
-import { getQueryParam, checkSupportedTheme } from 'utils/helpers';
+import { checkSupportedTheme, getQueryParam } from 'utils/helpers';
 import { useStores } from '../contexts/storesContext';
 
 export * from './components';

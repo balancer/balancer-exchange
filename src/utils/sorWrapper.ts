@@ -6,22 +6,28 @@ import {
     calcSpotPrice,
 } from './balancerCalcs';
 import * as helpers from './helpers';
-import { bnum, formatPoolData } from './helpers';
-import sor from 'balancer-sor';
+import { bnum, printPoolData } from './helpers';
+import {
+    getPoolsWithTokens,
+    getTokenPairs,
+    linearizedSolution,
+} from '@balancer-labs/sor';
 import { SwapMethods } from '../stores/SwapForm';
-import { Pool, SorSwaps, Swap } from '../stores/Proxy';
+import { Pool, SorSwap, Swap } from '../stores/Proxy';
+import { TokenPairs } from '../stores/Pool';
+import { EtherKey } from '../stores/Token';
 
 export const formatSwapsExactAmountIn = (
-    sorSwaps: SorSwaps,
+    sorSwaps: SorSwap[],
     poolData: Pool[],
     maxPrice: BigNumber,
     minAmountOut: BigNumber
 ): Swap[] => {
     const swaps: Swap[] = [];
-    for (let i = 0; i < sorSwaps.inputAmounts.length; i++) {
-        let swapAmount = sorSwaps.inputAmounts[i];
+    for (let i = 0; i < sorSwaps.length; i++) {
+        let swapAmount = sorSwaps[i].amount;
         let swap: Swap = {
-            pool: sorSwaps.selectedBalancers[i],
+            pool: sorSwaps[i].pool,
             tokenInParam: swapAmount
                 .times(BONE)
                 .integerValue(3)
@@ -35,16 +41,16 @@ export const formatSwapsExactAmountIn = (
 };
 
 export const formatSwapsExactAmountOut = (
-    sorSwaps: SorSwaps,
+    sorSwaps: SorSwap[],
     poolData: Pool[],
     maxPrice: BigNumber,
     maxAmountIn: BigNumber
 ): Swap[] => {
     const swaps: Swap[] = [];
-    for (let i = 0; i < sorSwaps.inputAmounts.length; i++) {
-        let swapAmount = sorSwaps.inputAmounts[i];
+    for (let i = 0; i < sorSwaps.length; i++) {
+        let swapAmount = sorSwaps[i].amount;
         let swap: Swap = {
-            pool: sorSwaps.selectedBalancers[i],
+            pool: sorSwaps[i].pool,
             tokenInParam: maxAmountIn.toString(),
             tokenOutParam: swapAmount
                 .times(BONE)
@@ -62,7 +68,7 @@ export const findPoolsWithTokens = async (
     tokenOut: string,
     fromWei: boolean = false
 ): Promise<Pool[]> => {
-    let pools = await sor.getPoolsWithTokens(tokenIn, tokenOut);
+    let pools = await getPoolsWithTokens(tokenIn, tokenOut);
 
     if (pools.pools.length === 0)
         throw Error('There are no pools with selected tokens');
@@ -103,13 +109,14 @@ export const findBestSwaps = (
     inputAmount: BigNumber,
     maxBalancers: number,
     costOutputToken: BigNumber
-): SorSwaps => {
-    return sor.linearizedSolution(
-        formatPoolData(balancers),
+): SorSwap[] => {
+    printPoolData(balancers);
+    return linearizedSolution(
+        balancers,
         swapMethod,
-        inputAmount.toString(),
+        inputAmount,
         maxBalancers,
-        costOutputToken.toString()
+        costOutputToken
     );
 };
 
@@ -142,6 +149,33 @@ export const calcTotalOutput = (swaps: Swap[], poolData: Pool[]): BigNumber => {
     } catch (e) {
         throw new Error(e);
     }
+};
+
+export const sorTokenPairs = async (
+    tokenAddress: string,
+    wethAddress: string
+): Promise<TokenPairs> => {
+    const pools = await getTokenPairs(tokenAddress);
+
+    let tokenPairs: TokenPairs = new Set<string>();
+    if (pools.pools.length === 0) return tokenPairs;
+
+    pools.pools.forEach(p => {
+        p.tokensList.forEach(token => {
+            const sanitizedToken = helpers.toChecksum(token);
+            const sanitizedWeth = helpers.toChecksum(wethAddress);
+
+            if (!tokenPairs.has(sanitizedToken)) {
+                tokenPairs.add(sanitizedToken);
+            }
+
+            // Add Ether along with WETH
+            if (sanitizedToken === sanitizedWeth && !tokenPairs.has(EtherKey)) {
+                tokenPairs.add(EtherKey);
+            }
+        });
+    });
+    return tokenPairs;
 };
 
 export const calcPrice = (amountIn, amountOut) => {
@@ -240,4 +274,35 @@ export const calcTotalInput = (
     } catch (e) {
         throw new Error(e);
     }
+};
+
+export const calcMinAmountOut = (
+    spotValue: BigNumber,
+    slippagePercent: BigNumber
+): BigNumber => {
+    const result = spotValue.minus(spotValue.times(slippagePercent.div(100)));
+
+    console.log('[Min Out]', {
+        spotValue: spotValue.toString(),
+        slippagePercent: slippagePercent.toString(),
+        results: spotValue
+            .minus(spotValue.times(slippagePercent.div(100)))
+            .toString(),
+    });
+
+    return result.gt(0) ? result : bnum(0);
+};
+
+export const calcMaxAmountIn = (
+    spotValue: BigNumber,
+    slippagePercent: BigNumber
+): BigNumber => {
+    const result = spotValue.plus(spotValue.times(slippagePercent.div(100)));
+
+    console.log('[Max In]', {
+        spotValue: spotValue.toString(),
+        slippagePercent: slippagePercent.toString(),
+        results: result.toString(),
+    });
+    return result;
 };
