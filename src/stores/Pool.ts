@@ -1,7 +1,7 @@
 import { action, observable } from 'mobx';
 import RootStore from 'stores/Root';
 import { EtherKey } from './Token';
-import { getTokenPairs } from '../utils/sorWrapper';
+import { sorTokenPairs } from '../utils/sorWrapper';
 import { supportedChainId } from '../provider/connectors';
 import { AsyncStatus, TokenPairsFetch } from './actions/fetch';
 
@@ -60,7 +60,7 @@ export default class PoolStore {
                     ? tokenStore.getWethAddress(supportedChainId)
                     : tokenAddress;
 
-            const tokenPairs = await getTokenPairs(
+            const tokenPairs = await sorTokenPairs(
                 tokenAddressToFind,
                 tokenStore.getWethAddress(supportedChainId)
             );

@@ -1,4 +1,4 @@
 [submodule "lib/balancer-sor"]
 	path = lib/balancer-sor
 	url = git@github.com:balancer-labs/balancer-sor.git
-  ignore = all
+    branch = develop

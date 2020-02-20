@@ -84,10 +84,9 @@ export interface StringifiedPool {
     swapFee: string;
 }
 
-export interface SorSwaps {
-    inputAmounts: BigNumber[];
-    selectedBalancers: string[];
-    totalOutput: BigNumber;
+export interface SorSwap {
+    pool: string;
+    amount: BigNumber;
 }
 
 export type Swap = {
@@ -100,7 +99,7 @@ export type Swap = {
 function printDebugInfo(
     input: SwapInput,
     swaps: Swap[],
-    sorSwaps: SorSwaps,
+    sorSwaps: SorSwap[],
     poolData: Pool[],
     result: BigNumber,
     effectivePrice: BigNumber
@@ -415,7 +414,7 @@ export default class ProxyStore {
             );
             const costOutputToken = this.costCalculator.getCostOutputToken();
 
-            let sorSwaps: SorSwaps = findBestSwaps(
+            let sorSwaps: SorSwap[] = findBestSwaps(
                 poolData,
                 SwapMethods.EXACT_OUT,
                 outputAmount,
