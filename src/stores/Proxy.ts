@@ -158,9 +158,9 @@ export default class ProxyStore {
         this.rootStore = rootStore;
         this.previewPending = false;
         this.costCalculator = new CostCalculator({
-            gasPrice: bnum(0.00000001),
-            gasPerTrade: bnum(210000),
-            outTokenEthPrice: bnum(100),
+            gasPrice: bnum(0),
+            gasPerTrade: bnum(0),
+            outTokenEthPrice: bnum(0),
         });
     }
 
