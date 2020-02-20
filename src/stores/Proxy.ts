@@ -118,7 +118,7 @@ function printDebugInfo(
 
 export function emptyExactAmountInPreview(
     inputAmount,
-    e?: Error
+    e?: string
 ): ExactAmountInPreview {
     return {
         inputAmount,
@@ -129,13 +129,13 @@ export function emptyExactAmountInPreview(
         expectedSlippage: null,
         swaps: null,
         validSwap: false,
-        error: !!e ? e.message : undefined,
+        error: !!e ? e : undefined,
     };
 }
 
 export function emptyExactAmountOutPreview(
     outputAmount,
-    e?: Error
+    e?: string
 ): ExactAmountOutPreview {
     return {
         outputAmount,
@@ -146,7 +146,7 @@ export function emptyExactAmountOutPreview(
         expectedSlippage: null,
         swaps: null,
         validSwap: false,
-        error: !!e ? e.message : undefined,
+        error: !!e ? e : undefined,
     };
 }
 
@@ -169,7 +169,7 @@ export default class ProxyStore {
         return this.previewPending;
     }
 
-    setPreviewPending(value) {
+    @action setPreviewPending(value) {
         this.previewPending = value;
     }
 
@@ -339,11 +339,6 @@ export default class ProxyStore {
                 swaps,
                 poolData
             );
-
-            console.log('[Spot Price Calc]', {
-                inputAmount: inputAmount.toString(),
-                totalOutputSpot: spotOutput.toString(),
-            });
 
             const spotPrice = calcPrice(inputAmount, spotOutput);
             const totalOutput = calcTotalOutput(swaps, poolData);
