@@ -272,3 +272,34 @@ export const calcTotalInput = (
         throw new Error(e);
     }
 };
+
+export const calcMinAmountOut = (
+    spotValue: BigNumber,
+    slippagePercent: BigNumber
+): BigNumber => {
+    const result = spotValue.minus(spotValue.times(slippagePercent.div(100)));
+
+    console.log('[Min Out]', {
+        spotValue: spotValue.toString(),
+        slippagePercent: slippagePercent.toString(),
+        results: spotValue
+            .minus(spotValue.times(slippagePercent.div(100)))
+            .toString(),
+    });
+
+    return result.gt(0) ? result : bnum(0);
+};
+
+export const calcMaxAmountIn = (
+    spotValue: BigNumber,
+    slippagePercent: BigNumber
+): BigNumber => {
+    const result = spotValue.plus(spotValue.times(slippagePercent.div(100)));
+
+    console.log('[Max In]', {
+        spotValue: spotValue.toString(),
+        slippagePercent: slippagePercent.toString(),
+        results: result.toString(),
+    });
+    return result;
+};

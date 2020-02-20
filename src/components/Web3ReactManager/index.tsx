@@ -49,13 +49,13 @@ const fetchLoop = (
                 const lastCheckedBlock = providerStore.getCurrentBlockNumber(
                     web3React.chainId
                 );
-
-                console.log('[Fetch Loop] Staleness Evaluation', {
-                    blockNumber,
-                    lastCheckedBlock,
-                    forceFetch,
-                    doFetch: blockNumber !== lastCheckedBlock || forceFetch,
-                });
+                //
+                // console.log('[Fetch Loop] Staleness Evaluation', {
+                //     blockNumber,
+                //     lastCheckedBlock,
+                //     forceFetch,
+                //     doFetch: blockNumber !== lastCheckedBlock || forceFetch,
+                // });
 
                 const doFetch = blockNumber !== lastCheckedBlock || forceFetch;
 
