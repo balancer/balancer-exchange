@@ -255,22 +255,6 @@ export const getGasPriceFromETHGasStation = () => {
 };
 
 // TODO: Issue between new BigNumber() and BigNumber() cast in javascript SOR
-export const stringifyPoolData = (pools: Pool[]): StringifiedPool[] => {
-    const result: StringifiedPool[] = [];
-    pools.forEach(pool => {
-        result.push({
-            id: pool.id,
-            balanceIn: str(pool.balanceIn),
-            balanceOut: str(pool.balanceOut),
-            weightIn: str(pool.weightIn),
-            weightOut: str(pool.weightOut),
-            swapFee: str(pool.swapFee),
-        });
-    });
-    return result;
-};
-
-// TODO: Issue between new BigNumber() and BigNumber() cast in javascript SOR
 export const formatPoolData = (pools: Pool[]): StringifiedPool[] => {
     const result: StringifiedPool[] = [];
     pools.forEach(pool => {
