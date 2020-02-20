@@ -2,13 +2,14 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { TokenIconAddress } from './TokenPanel';
 import { useStores } from '../../contexts/storesContext';
-import { fromWei } from 'utils/helpers';
+import { bnum, fromWei } from 'utils/helpers';
 import {
     getSupportedChainId,
     isChainIdSupported,
 } from '../../provider/connectors';
 import { observer } from 'mobx-react';
 import { useActiveWeb3React } from '../../provider';
+import { has } from 'mobx';
 
 const AssetPanelContainer = styled.div`
     display: flex;
@@ -71,7 +72,7 @@ const TokenBalance = styled.div`
     margin-top: 12px;
 `;
 
-interface AssetSelectorData {
+interface Asset {
     address: string;
     iconAddress: string;
     symbol: string;
@@ -86,18 +87,18 @@ const AssetOptions = observer(({ filter, modelOpen, setModalOpen }) => {
         root: { swapFormStore, tokenStore, poolStore },
     } = useStores();
 
-    let assetSelectorData: AssetSelectorData[] = [];
     const supportedChainId = getSupportedChainId();
     const { chainId, account } = useActiveWeb3React();
 
-    let userBalances = {};
-    let filteredWhitelistedTokens;
-    let tradableTokens;
-    const setSelectorDataWrapper = filter => {
-        filteredWhitelistedTokens = tokenStore.getFilteredTokenMetadata(
+    const getAssetOptions = (filter, chainId, account): Asset[] => {
+        const filteredWhitelistedTokens = tokenStore.getFilteredTokenMetadata(
             supportedChainId,
             filter
         );
+
+        let assetSelectorData: Asset[] = [];
+        let userBalances = {};
+        let tradableTokens;
 
         if (modelOpen.input === 'inputAmount') {
             tradableTokens = poolStore.getTokenPairs(
@@ -149,9 +150,45 @@ const AssetOptions = observer(({ filter, modelOpen, setModalOpen }) => {
                     : false,
             };
         });
+
         return assetSelectorData;
     };
-    setSelectorDataWrapper(filter);
+
+    const sortAssetOptions = (assets: Asset[], account) => {
+        const buckets = {
+            tradableWithBalance: [] as Asset[],
+            tradableWithoutBalance: [] as Asset[],
+            notTradableWithBalance: [] as Asset[],
+            notTradableWithoutBalance: [] as Asset[],
+        };
+        assets.forEach(asset => {
+            const isTradable = asset.isTradable;
+            const hasBalance = account && bnum(asset.userBalance).gt(0);
+
+            if (isTradable && hasBalance) {
+                buckets.tradableWithBalance.push(asset);
+            } else if (isTradable && !hasBalance) {
+                buckets.tradableWithoutBalance.push(asset);
+            } else if (!isTradable && hasBalance) {
+                buckets.notTradableWithBalance.push(asset);
+            } else if (!isTradable && !hasBalance) {
+                buckets.notTradableWithoutBalance.push(asset);
+            }
+        });
+
+        // We don't introduce a possibility of duplicates and there for don't need to use Set
+        return [
+            ...buckets.tradableWithBalance,
+            ...buckets.tradableWithoutBalance,
+            ...buckets.notTradableWithBalance,
+            ...buckets.notTradableWithoutBalance,
+        ];
+    };
+
+    const assets = sortAssetOptions(
+        getAssetOptions(filter, chainId, account),
+        account
+    );
 
     const clearInputs = () => {
         swapFormStore.inputs.inputAmount = '';
@@ -178,7 +215,7 @@ const AssetOptions = observer(({ filter, modelOpen, setModalOpen }) => {
 
     return (
         <AssetPanelContainer>
-            {assetSelectorData.map(token => (
+            {assets.map(token => (
                 <AssetPanel
                     onClick={() => {
                         selectAsset(token);
