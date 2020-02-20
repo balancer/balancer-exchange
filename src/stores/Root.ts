@@ -8,7 +8,6 @@ import ErrorStore from './Error';
 import TransactionStore from './Transaction';
 import { supportedNetworks } from 'provider/connectors';
 import AppSettingsStore from './AppSettings';
-import { action } from 'mobx';
 import PoolStore from './Pool';
 
 export default class RootStore {

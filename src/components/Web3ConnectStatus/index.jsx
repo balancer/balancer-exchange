@@ -1,23 +1,19 @@
 import React from 'react';
-import styled, { css } from 'styled-components';
+import styled from 'styled-components';
 import { UnsupportedChainIdError, useWeb3React } from '@web3-react/core';
-import { darken, transparentize } from 'polished';
+import { darken } from 'polished';
 import { Activity } from 'react-feather';
 import { observer } from 'mobx-react';
 import { shortenAddress } from 'utils/helpers';
 import WalletModal from 'components/WalletModal';
 import { Spinner } from '../../theme';
 import Circle from 'assets/images/circle.svg';
-import { injected } from 'provider/connectors';
-import { web3ContextNames } from 'provider/connectors';
+import { injected, web3ContextNames } from 'provider/connectors';
 import Identicon from '../Identicon';
 import { useStores } from '../../contexts/storesContext';
-import Button from '../Temp/Button';
-import Web3PillBox from '../Temp/Web3PillBox';
-import {
-    isChainIdSupported,
-    supportedNetworks,
-} from '../../provider/connectors';
+import Button from '../Button';
+import Web3PillBox from '../Web3PillBox';
+import { isChainIdSupported } from '../../provider/connectors';
 import { useActiveWeb3React } from '../../provider';
 
 const Web3StatusGeneric = styled.button`

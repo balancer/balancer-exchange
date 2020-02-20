@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import styled from 'styled-components';
-import { useStores } from '../../contexts/storesContext';
+import { useStores } from '../contexts/storesContext';
 import SlippageInfo from './SlippageInfo';
-import { InputValidationStatus } from '../../stores/SwapForm';
+import { InputValidationStatus } from '../stores/SwapForm';
 import { observer } from 'mobx-react';
 
 const Container = styled.div`

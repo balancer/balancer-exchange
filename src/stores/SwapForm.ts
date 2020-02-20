@@ -1,4 +1,4 @@
-import { observable, action } from 'mobx';
+import { action, observable } from 'mobx';
 import RootStore from 'stores/Root';
 import { ValidationRules } from 'react-form-validator-core';
 import {
@@ -12,9 +12,9 @@ import {
     bnum,
     formatPctString,
     fromWei,
+    isEmpty,
     str,
     toWei,
-    isEmpty,
 } from '../utils/helpers';
 
 export const formNames = {

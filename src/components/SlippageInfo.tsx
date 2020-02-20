@@ -2,8 +2,8 @@ import React from 'react';
 import Popup from 'reactjs-popup';
 import styled from 'styled-components';
 import { observer } from 'mobx-react';
-import { useStores } from '../../contexts/storesContext';
-import { InputValidationStatus } from '../../stores/SwapForm';
+import { useStores } from '../contexts/storesContext';
+import { InputValidationStatus } from '../stores/SwapForm';
 
 const SlippageInfoContainer = styled.div`
     display: flex;

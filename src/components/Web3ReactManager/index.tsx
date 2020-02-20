@@ -1,17 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useWeb3React } from '@web3-react/core';
 import styled from 'styled-components';
 import {
     backup,
     isChainIdSupported,
     supportedChainId,
+    web3ContextNames,
 } from 'provider/connectors';
 import {
     useActiveWeb3React,
     useEagerConnect,
     useInactiveListener,
 } from 'provider/index';
-import { web3ContextNames } from 'provider/connectors';
 import { useStores } from 'contexts/storesContext';
 import { observer } from 'mobx-react';
 import { Web3ReactContextInterface } from '@web3-react/core/dist/types';

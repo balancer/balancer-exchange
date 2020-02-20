@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import copy from 'copy-to-clipboard';
 
 export function useInterval(callback, delay) {

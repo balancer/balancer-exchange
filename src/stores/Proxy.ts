@@ -27,7 +27,7 @@ import {
 import { ethers } from 'ethers';
 import { EtherKey } from './Token';
 import { Web3ReactContextInterface } from '@web3-react/core/dist/types';
-import { supportedChainId, supportedNetworks } from '../provider/connectors';
+import { supportedChainId } from '../provider/connectors';
 
 export type SwapPreview = ExactAmountInPreview | ExactAmountOutPreview;
 

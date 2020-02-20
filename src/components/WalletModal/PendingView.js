@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import Option from './Option';
-import { SUPPORTED_WALLETS, injected } from 'provider/connectors';
+import { injected, SUPPORTED_WALLETS } from 'provider/connectors';
 import { Spinner } from '../../theme';
 import Circle from '../../assets/images/circle.svg';
 import { darken } from 'polished';

@@ -3,9 +3,9 @@ import styled from 'styled-components';
 import { normalizePriceValues, toAddressStub } from 'utils/helpers';
 import { observer } from 'mobx-react';
 import { Pie } from 'react-chartjs-2';
-import { ChartData } from '../../stores/SwapForm';
-import { useStores } from '../../contexts/storesContext';
-import { getSupportedChainId } from '../../provider/connectors';
+import { ChartData } from '../stores/SwapForm';
+import { useStores } from '../contexts/storesContext';
+import { getSupportedChainId } from '../provider/connectors';
 
 const Container = styled.div`
     display: flex;
