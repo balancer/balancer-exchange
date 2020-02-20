@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import { useStores } from '../../contexts/storesContext';
+import { useStores } from '../contexts/storesContext';
 
 const Container = styled.div`
 	display: flex;

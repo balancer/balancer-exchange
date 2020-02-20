@@ -12,8 +12,8 @@ import { injected } from 'provider/connectors';
 import { web3ContextNames } from 'provider/connectors';
 import Identicon from '../Identicon';
 import { useStores } from '../../contexts/storesContext';
-import Button from '../Temp/Button';
-import Web3PillBox from '../Temp/Web3PillBox';
+import Button from '../Button';
+import Web3PillBox from '../Web3PillBox';
 import {
     isChainIdSupported,
     supportedNetworks,

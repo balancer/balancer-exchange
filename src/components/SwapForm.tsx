@@ -13,22 +13,22 @@ import { observer } from 'mobx-react';
 import * as helpers from 'utils/helpers';
 import { bnum, toWei } from 'utils/helpers';
 import { InputValidationStatus, SwapMethods } from 'stores/SwapForm';
-import { useStores } from '../../contexts/storesContext';
-import { ErrorIds } from '../../stores/Error';
+import { useStores } from '../contexts/storesContext';
+import { ErrorIds } from '../stores/Error';
 import { BigNumber } from 'utils/bignumber';
 import {
     getSupportedChainId,
     supportedNetworks,
     web3ContextNames,
-} from '../../provider/connectors';
-import { useActiveWeb3React } from '../../provider';
+} from '../provider/connectors';
+import { useActiveWeb3React } from '../provider/index';
 import { useWeb3React } from '@web3-react/core';
-import { calcMaxAmountIn, calcMinAmountOut } from '../../utils/sorWrapper';
+import { calcMaxAmountIn, calcMinAmountOut } from '../utils/sorWrapper';
 import {
     ExactAmountInPreview,
     ExactAmountOutPreview,
     Swap,
-} from '../../stores/Proxy';
+} from '../stores/Proxy';
 import { Web3ReactContextInterface } from '@web3-react/core/dist/types';
 
 const RowContainer = styled.div`

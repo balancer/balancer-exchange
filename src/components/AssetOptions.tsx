@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { TokenIconAddress } from './TokenPanel';
-import { useStores } from '../../contexts/storesContext';
+import { useStores } from '../contexts/storesContext';
 import { bnum, fromWei } from 'utils/helpers';
 import {
     getSupportedChainId,
     isChainIdSupported,
-} from '../../provider/connectors';
+} from '../provider/connectors';
 import { observer } from 'mobx-react';
-import { useActiveWeb3React } from '../../provider';
+import { useActiveWeb3React } from '../provider/index';
 import { has } from 'mobx';
 
 const AssetPanelContainer = styled.div`

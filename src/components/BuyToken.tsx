@@ -1,16 +1,16 @@
 import React from 'react';
 import TokenPanel from './TokenPanel';
 import { observer } from 'mobx-react';
-import { useStores } from '../../contexts/storesContext';
+import { useStores } from '../contexts/storesContext';
 import {
     InputFocus,
     InputValidationStatus,
     SwapMethods,
 } from 'stores/SwapForm';
 import { bnum } from 'utils/helpers';
-import { ExactAmountInPreview } from 'stores/Proxy';
+import { ExactAmountOutPreview } from '../stores/Proxy';
 
-const SellToken = observer(
+const BuyToken = observer(
     ({
         inputID,
         inputName,
@@ -34,9 +34,9 @@ const SellToken = observer(
         /* To protect against race conditions in this async method we check
         for staleness of inputAmount after getting preview and before making updates */
         const updateSwapFormData = async value => {
-            swapFormStore.setInputFocus(InputFocus.SELL);
-            swapFormStore.inputs.type = SwapMethods.EXACT_IN;
-            swapFormStore.inputs.inputAmount = value;
+            swapFormStore.setInputFocus(InputFocus.BUY);
+            swapFormStore.inputs.type = SwapMethods.EXACT_OUT;
+            swapFormStore.inputs.outputAmount = value;
 
             let inputStatus = swapFormStore.getNumberInputValidationStatus(
                 value
@@ -49,20 +49,16 @@ const SellToken = observer(
             }
 
             if (inputStatus === InputValidationStatus.VALID) {
-                const preview = await previewSwapExactAmountInHandler();
+                const preview = await previewSwapExactAmountOutHandler();
 
-                if (preview.error) {
-                    swapFormStore.setErrorMessage(preview.error);
-                }
-
-                if (!swapFormStore.isInputAmountStale(preview.inputAmount)) {
+                if (!swapFormStore.isOutputAmountStale(preview.outputAmount)) {
                     if (preview.validSwap) {
                         swapFormStore.setOutputFromPreview(
-                            SwapMethods.EXACT_IN,
+                            SwapMethods.EXACT_OUT,
                             preview
                         );
                         swapFormStore.clearErrorMessage();
-                        swapFormStore.setTradeCompositionEAI(preview);
+                        swapFormStore.setTradeCompositionEAO(preview);
                     } else {
                         swapFormStore.setValidSwap(false);
                         swapFormStore.resetTradeComposition();
@@ -70,18 +66,16 @@ const SellToken = observer(
                 }
             } else {
                 console.log('[Invalid Input]', inputStatus, value);
-                if (value == swapFormStore.inputs.inputAmount) {
-                    // Clear error messages on updating to empty input
+                if (value == swapFormStore.inputs.outputAmount) {
+                    // Don't show error message on empty value
                     if (inputStatus === InputValidationStatus.EMPTY) {
-                        swapFormStore.updateInputsFromObject({
-                            outputAmount: '',
-                        });
+                        swapFormStore.setInputAmount('');
+
                         swapFormStore.clearErrorMessage();
                         swapFormStore.resetTradeComposition();
                     } else {
-                        swapFormStore.updateInputsFromObject({
-                            outputAmount: '',
-                        });
+                        //Show error message on other invalid input status
+                        swapFormStore.setInputAmount('');
                         swapFormStore.setErrorMessage(inputStatus);
                         swapFormStore.resetTradeComposition();
                     }
@@ -89,24 +83,24 @@ const SellToken = observer(
             }
         };
 
-        const previewSwapExactAmountInHandler = async (): Promise<ExactAmountInPreview> => {
+        const previewSwapExactAmountOutHandler = async (): Promise<ExactAmountOutPreview> => {
             const inputs = swapFormStore.inputs;
-            const { inputToken, outputToken, inputAmount } = inputs;
+            const { inputToken, outputToken, outputAmount } = inputs;
 
-            return await proxyStore.previewBatchSwapExactIn(
+            return await proxyStore.previewBatchSwapExactOut(
                 inputToken,
                 outputToken,
-                bnum(inputAmount)
+                bnum(outputAmount)
             );
         };
 
         const { inputs } = swapFormStore;
-        const { inputAmount, setSellFocus } = inputs;
+        const { outputAmount, setBuyFocus } = inputs;
 
         return (
             <TokenPanel
-                headerText="Token to Sell"
-                defaultValue={inputAmount}
+                headerText="Token to Buy"
+                defaultValue={outputAmount}
                 onChange={e => onChange(e)}
                 updateSwapFormData={updateSwapFormData}
                 inputID={inputID}
@@ -116,7 +110,7 @@ const SellToken = observer(
                 truncatedTokenBalance={truncatedTokenBalance}
                 tokenAddress={tokenAddress}
                 setModalOpen={setModalOpen}
-                setFocus={setSellFocus}
+                setFocus={setBuyFocus}
                 errorMessage={errorMessage}
                 showMax={showMax}
             />
@@ -124,4 +118,4 @@ const SellToken = observer(
     }
 );
 
-export default SellToken;
+export default BuyToken;
