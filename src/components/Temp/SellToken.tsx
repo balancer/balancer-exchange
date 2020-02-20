@@ -9,7 +9,6 @@ import {
 } from 'stores/SwapForm';
 import { bnum } from 'utils/helpers';
 import { ExactAmountInPreview } from 'stores/Proxy';
-import { useActiveWeb3React } from 'provider';
 
 const SellToken = observer(
     ({
@@ -93,17 +92,6 @@ const SellToken = observer(
         const previewSwapExactAmountInHandler = async (): Promise<ExactAmountInPreview> => {
             const inputs = swapFormStore.inputs;
             const { inputToken, outputToken, inputAmount } = inputs;
-
-            if (!inputAmount || inputAmount === '') {
-                return {
-                    inputAmount: bnum(inputAmount),
-                    totalOutput: null,
-                    effectivePrice: null,
-                    spotPrice: null,
-                    swaps: null,
-                    validSwap: false,
-                };
-            }
 
             return await proxyStore.previewBatchSwapExactIn(
                 inputToken,

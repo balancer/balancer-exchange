@@ -11,8 +11,8 @@ import AssetSelector from './AssetSelector';
 
 import { observer } from 'mobx-react';
 import * as helpers from 'utils/helpers';
-import { toWei } from 'utils/helpers';
-import { SwapMethods } from 'stores/SwapForm';
+import { bnum, toWei } from 'utils/helpers';
+import { InputValidationStatus, SwapMethods } from 'stores/SwapForm';
 import { useStores } from '../../contexts/storesContext';
 import { ErrorIds } from '../../stores/Error';
 import { BigNumber } from 'utils/bignumber';
@@ -23,6 +23,13 @@ import {
 } from '../../provider/connectors';
 import { useActiveWeb3React } from '../../provider';
 import { useWeb3React } from '@web3-react/core';
+import { calcMaxAmountIn, calcMinAmountOut } from '../../utils/sorWrapper';
+import {
+    ExactAmountInPreview,
+    ExactAmountOutPreview,
+    Swap,
+} from '../../stores/Proxy';
+import { Web3ReactContextInterface } from '@web3-react/core/dist/types';
 
 const RowContainer = styled.div`
     font-family: var(--roboto);
@@ -161,7 +168,8 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     };
 
     const swapHandler = async () => {
-        if (!outputs.validSwap) {
+        // Don't attempt Swap if preview is in progress - we don't change the UI while it's loading and hope it resolves near immediately
+        if (proxyStore.isPreviewPending()) {
             return;
         }
 
@@ -170,36 +178,58 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                 inputAmount,
                 inputToken,
                 outputToken,
-                outputLimit,
-                limitPrice,
+                extraSlippageAllowance,
             } = inputs;
-            const { swaps } = outputs;
+
+            const {
+                spotOutput,
+                expectedSlippage,
+                swaps,
+            } = swapFormStore.preview as ExactAmountInPreview;
+
+            const minAmountOut = calcMinAmountOut(
+                spotOutput,
+                expectedSlippage.plus(bnum(extraSlippageAllowance))
+            );
+
             await proxyStore.batchSwapExactIn(
                 web3React,
                 swaps,
                 inputToken,
                 toWei(inputAmount),
                 outputToken,
-                toWei(outputLimit),
-                toWei(limitPrice)
+                toWei(minAmountOut)
             );
         } else if (inputs.type === SwapMethods.EXACT_OUT) {
             const {
-                inputLimit,
                 inputToken,
                 outputToken,
                 outputAmount,
-                limitPrice,
-                swaps,
+                extraSlippageAllowance,
             } = inputs;
+
+            const {
+                spotInput,
+                expectedSlippage,
+                swaps,
+            } = swapFormStore.preview as ExactAmountOutPreview;
+
+            const maxAmountIn = calcMaxAmountIn(
+                spotInput,
+                expectedSlippage.plus(extraSlippageAllowance)
+            );
+
+            console.log('maxAmountIn', {
+                maxAmountIn: maxAmountIn.toString(),
+            });
+
             await proxyStore.batchSwapExactOut(
                 web3React,
                 swaps,
                 inputToken,
-                toWei(inputLimit),
+                maxAmountIn,
                 outputToken,
-                toWei(outputAmount),
-                toWei(limitPrice)
+                toWei(outputAmount)
             );
         }
     };
@@ -211,14 +241,14 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         const validInput = swapFormStore.isValidInput(inputs.inputAmount);
         const sufficientAllowance = userAllowance && userAllowance.gt(0);
 
+        if (injectedChainId && injectedChainId !== supportedChainId) {
+            return ButtonState.SWAP;
+        }
+
         if (account) {
             if (!sufficientAllowance) {
                 return ButtonState.UNLOCK;
             }
-            return ButtonState.SWAP;
-        }
-
-        if (injectedChainId && injectedChainId !== supportedChainId) {
             return ButtonState.SWAP;
         }
 
@@ -234,6 +264,12 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         inputBalance: BigNumber | undefined
     ): boolean => {
         const isInputValid = swapFormStore.isValidInput(inputs.inputAmount);
+        const isExtraSlippageAmountValid = swapFormStore.isValidStatus(
+            inputs.extraSlippageAllowanceErrorStatus
+        );
+
+        const isPreviewValid =
+            swapFormStore.preview && !swapFormStore.preview.error;
 
         if (
             buttonState === ButtonState.UNLOCK ||
@@ -245,7 +281,9 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         if (buttonState === ButtonState.SWAP) {
             if (
                 isInputValid &&
+                isExtraSlippageAmountValid &&
                 injectedChainId &&
+                isPreviewValid &&
                 injectedChainId === supportedChainId
             ) {
                 const inputAmountBN = toWei(inputs.inputAmount);

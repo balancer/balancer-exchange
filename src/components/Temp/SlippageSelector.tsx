@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { useStores } from '../../contexts/storesContext';
 import SlippageInfo from './SlippageInfo';
 import { InputValidationStatus } from '../../stores/SwapForm';
+import { observer } from 'mobx-react';
 
 const Container = styled.div`
     display: flex;
@@ -93,116 +94,111 @@ const InputWrapper = styled.div`
     }
 `;
 
-const SlippageSelector = ({
-    expectedSlippage,
-    slippageSelectorOpen,
-    setSlippageSelectorOpen,
-}) => {
-    const [currentCell, setCurrentCell] = useState('3');
+const SlippageSelector = observer(
+    ({ expectedSlippage, slippageSelectorOpen, setSlippageSelectorOpen }) => {
+        const {
+            root: { swapFormStore },
+        } = useStores();
 
-    const {
-        root: { swapFormStore },
-    } = useStores();
+        const { slippageCell } = swapFormStore;
 
-    const updateSlippage = (cellIndex, slippageValue) => {
-        setCurrentCell(cellIndex);
-        swapFormStore.setExtraSlippageAllowance(slippageValue);
-        swapFormStore.setSlippageSelectorErrorStatus(
-            InputValidationStatus.VALID
-        );
-    };
+        const updateSlippage = (cellIndex, slippageValue) => {
+            swapFormStore.setSlippageCell(cellIndex);
+            swapFormStore.setExtraSlippageAllowance(slippageValue);
+        };
 
-    const onChange = event => {
-        const { value } = event.target;
+        const onChange = event => {
+            const { value } = event.target;
 
-        const inputStatus = swapFormStore.getNumberInputValidationStatus(
-            value,
-            {
-                limitDigits: true,
+            const inputStatus = swapFormStore.getNumberInputValidationStatus(
+                value,
+                {
+                    limitDigits: true,
+                }
+            );
+
+            if (inputStatus === InputValidationStatus.VALID) {
+                swapFormStore.setExtraSlippageAllowance(value);
+            } else {
+                swapFormStore.setExtraSlippageAllowance('-');
             }
+
+            swapFormStore.setSlippageSelectorErrorStatus(inputStatus);
+        };
+
+        const CellGenerator = ({ children, cellIndex, slippageValue }) => {
+            if (slippageCell == cellIndex) {
+                return (
+                    <ActiveSelectorDropDownCell>
+                        {children}
+                    </ActiveSelectorDropDownCell>
+                );
+            } else {
+                return (
+                    <SelectorDropDownCell
+                        onClick={() => {
+                            updateSlippage(cellIndex, slippageValue);
+                        }}
+                    >
+                        {children}
+                    </SelectorDropDownCell>
+                );
+            }
+        };
+
+        const CustomCell = ({ cellIndex }) => {
+            if (slippageCell == cellIndex) {
+                return (
+                    <ActiveSelectorDropDownCell>
+                        <InputWrapper>
+                            <input
+                                placeholder="0"
+                                defaultValue={
+                                    swapFormStore.inputs.extraSlippageAllowance
+                                }
+                                onChange={e => onChange(e)}
+                            />
+                            %
+                        </InputWrapper>
+                    </ActiveSelectorDropDownCell>
+                );
+            } else {
+                return (
+                    <SelectorDropDownCell
+                        onClick={() => {
+                            swapFormStore.setSlippageCell(cellIndex);
+                        }}
+                    >
+                        Custom %
+                    </SelectorDropDownCell>
+                );
+            }
+        };
+
+        return (
+            <Container>
+                <SlippageInfo
+                    expectedSlippage={expectedSlippage}
+                    setSlippageSelectorOpen={setSlippageSelectorOpen}
+                />
+                <SelectorDropDown
+                    style={{ display: slippageSelectorOpen ? 'flex' : 'none' }}
+                >
+                    <CellGenerator cellIndex="1" slippageValue="0.1">
+                        0.1%
+                    </CellGenerator>
+                    <CellGenerator cellIndex="2" slippageValue="0.5">
+                        0.5%
+                    </CellGenerator>
+                    <CellGenerator cellIndex="3" slippageValue="1.0">
+                        1.0%
+                    </CellGenerator>
+                    <Arrow />
+                    <CustomCell cellIndex="4" />
+                </SelectorDropDown>
+            </Container>
         );
-
-        if (inputStatus === InputValidationStatus.VALID) {
-            swapFormStore.setExtraSlippageAllowance(value);
-        } else {
-            swapFormStore.setExtraSlippageAllowance('-');
-        }
-
-        swapFormStore.setSlippageSelectorErrorStatus(inputStatus);
-    };
-
-    const CellGenerator = ({ children, cellIndex, slippageValue }) => {
-        if (currentCell == cellIndex) {
-            return (
-                <ActiveSelectorDropDownCell>
-                    {children}
-                </ActiveSelectorDropDownCell>
-            );
-        } else {
-            return (
-                <SelectorDropDownCell
-                    onClick={() => {
-                        updateSlippage(cellIndex, slippageValue);
-                    }}
-                >
-                    {children}
-                </SelectorDropDownCell>
-            );
-        }
-    };
-
-    const CustomCell = ({ cellIndex }) => {
-        if (currentCell == cellIndex) {
-            return (
-                <ActiveSelectorDropDownCell>
-                    <InputWrapper>
-                        <input
-                            placeholder="0"
-                            defaultValue={
-                                swapFormStore.inputs.extraSlippageAllowance
-                            }
-                            onChange={e => onChange(e)}
-                        />
-                        %
-                    </InputWrapper>
-                </ActiveSelectorDropDownCell>
-            );
-        } else {
-            return (
-                <SelectorDropDownCell
-                    onClick={() => {
-                        setCurrentCell(cellIndex);
-                    }}
-                >
-                    Custom %
-                </SelectorDropDownCell>
-            );
-        }
-    };
-
-    return (
-        <Container>
-            <SlippageInfo
-                expectedSlippage={expectedSlippage}
-                setSlippageSelectorOpen={setSlippageSelectorOpen}
-            />
-            <SelectorDropDown
-                style={{ display: slippageSelectorOpen ? 'flex' : 'none' }}
-            >
-                <CellGenerator cellIndex="1" slippageValue="0.1">
-                    0.1%
-                </CellGenerator>
-                <CellGenerator cellIndex="2" slippageValue="0.5">
-                    0.5%
-                </CellGenerator>
-                <CellGenerator cellIndex="3" slippageValue="1.0">
-                    1.0%
-                </CellGenerator>
-                <Arrow />
-                <CustomCell cellIndex="4" />
-            </SelectorDropDown>
-        </Container>
-    );
-};
+    }
+);
 
 export default SlippageSelector;
