@@ -112,6 +112,7 @@ export default class SwapFormStore {
     };
     @observable preview: SwapPreview;
     @observable tradeCompositionData: ChartData;
+    @observable slippageCell: number = 3;
 
     rootStore: RootStore;
 
@@ -181,6 +182,14 @@ export default class SwapFormStore {
 
     isValidStatus(value: InputValidationStatus) {
         return value === InputValidationStatus.VALID;
+    }
+
+    getSlippageCell() {
+        return this.slippageCell;
+    }
+
+    @action setSlippageCell(value: number) {
+        this.slippageCell = value;
     }
 
     @action setExtraSlippageAllowance(value: string) {
