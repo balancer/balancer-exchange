@@ -12,17 +12,10 @@ import {
     bnum,
     formatPctString,
     fromWei,
-    default as helpers,
-    scale,
     str,
     toWei,
     isEmpty,
 } from '../utils/helpers';
-import {
-    calcExpectedSlippage,
-    calcMaxAmountIn,
-    calcMinAmountOut,
-} from '../utils/sorWrapper';
 
 export const formNames = {
     INPUT_FORM: 'inputs',
@@ -192,12 +185,20 @@ export default class SwapFormStore {
         this.slippageCell = value;
     }
 
+    getExtraSlippageAllowance(): string {
+        return this.inputs.extraSlippageAllowance;
+    }
+
+    getSlippageSelectorErrorStatus(): InputValidationStatus {
+        return this.inputs.extraSlippageAllowanceErrorStatus;
+    }
+
     @action setExtraSlippageAllowance(value: string) {
         this.inputs.extraSlippageAllowance = value;
     }
 
     @action setSlippageSelectorErrorStatus(value: InputValidationStatus) {
-        this.inputs.extraSlippageAllowance = value;
+        this.inputs.extraSlippageAllowanceErrorStatus = value;
     }
 
     @action clearErrorMessage() {
