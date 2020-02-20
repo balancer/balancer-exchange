@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { isMobile } from 'react-device-detect';
-import { useWeb3React, UnsupportedChainIdError } from '@web3-react/core';
+import { UnsupportedChainIdError, useWeb3React } from '@web3-react/core';
 import { observer } from 'mobx-react';
 
 import Modal from '../Modal';
@@ -12,7 +12,7 @@ import { usePrevious } from '../../hooks';
 import { Link } from '../../theme';
 import MetamaskIcon from '../../assets/images/metamask.png';
 import { ReactComponent as Close } from '../../assets/images/x.svg';
-import { SUPPORTED_WALLETS, injected } from 'provider/connectors';
+import { injected, SUPPORTED_WALLETS } from 'provider/connectors';
 import { useStores } from 'contexts/storesContext';
 import {
     isChainIdSupported,

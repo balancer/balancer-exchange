@@ -1,5 +1,5 @@
 import React from 'react';
-import { HashRouter, Route, Redirect, Switch } from 'react-router-dom';
+import { HashRouter, Redirect, Route, Switch } from 'react-router-dom';
 import Web3ReactManager from 'components/Web3ReactManager';
 import Header from 'components/Header';
 import SwapForm from 'components/SwapForm';

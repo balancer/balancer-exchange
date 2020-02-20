@@ -1,8 +1,7 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useWeb3React as useWeb3ReactCore } from '@web3-react/core';
 import { isMobile } from 'react-device-detect';
-import { web3ContextNames } from 'provider/connectors';
-import { injected } from 'provider/connectors';
+import { injected, web3ContextNames } from 'provider/connectors';
 import { supportedChainId } from './connectors';
 
 /*  Attempt to connect to & activate injected connector

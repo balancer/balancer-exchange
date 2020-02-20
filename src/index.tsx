@@ -5,7 +5,6 @@ import { ethers } from 'ethers';
 import 'index.css';
 import App from 'App';
 import * as serviceWorker from './serviceWorker';
-import { Provider } from 'mobx-react';
 import { web3ContextNames } from 'provider/connectors';
 import ThemeProvider, { GlobalStyle } from './theme';
 

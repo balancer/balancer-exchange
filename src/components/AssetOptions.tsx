@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import styled from 'styled-components';
 import { TokenIconAddress } from './TokenPanel';
 import { useStores } from '../contexts/storesContext';
@@ -9,7 +9,6 @@ import {
 } from '../provider/connectors';
 import { observer } from 'mobx-react';
 import { useActiveWeb3React } from '../provider/index';
-import { has } from 'mobx';
 
 const AssetPanelContainer = styled.div`
     display: flex;

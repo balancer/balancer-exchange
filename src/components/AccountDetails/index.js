@@ -9,7 +9,6 @@ import { getEtherscanLink } from 'utils/helpers';
 import Identicon from '../Identicon';
 
 import { Link } from '../../theme';
-import { useStores } from '../../contexts/storesContext';
 import { useActiveWeb3React } from '../../provider';
 
 const OptionButton = styled.div`

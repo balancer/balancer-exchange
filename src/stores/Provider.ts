@@ -1,7 +1,6 @@
-import { observable, action, ObservableMap } from 'mobx';
+import { action, observable, ObservableMap } from 'mobx';
 import RootStore from 'stores/Root';
-import { isChainIdSupported, web3ContextNames } from 'provider/connectors';
-import { ethers, utils, providers } from 'ethers';
+import { ethers } from 'ethers';
 import { Web3ReactContextInterface } from '@web3-react/core/dist/types';
 import UncheckedJsonRpcSigner from 'provider/UncheckedJsonRpcSigner';
 import { sendAction } from './actions/actions';

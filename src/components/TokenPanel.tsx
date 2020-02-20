@@ -1,8 +1,6 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { isAddress } from '../utils/helpers';
-
-import { useEffect, useRef } from 'react';
 import { EtherKey } from '../stores/Token';
 
 const Panel = styled.div`

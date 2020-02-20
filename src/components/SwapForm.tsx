@@ -10,17 +10,12 @@ import TradeComposition from './TradeComposition';
 import AssetSelector from './AssetSelector';
 
 import { observer } from 'mobx-react';
-import * as helpers from 'utils/helpers';
-import { bnum, toWei } from 'utils/helpers';
-import { InputValidationStatus, SwapMethods } from 'stores/SwapForm';
+import { isEmpty, bnum, toWei, fromWei } from 'utils/helpers';
+import { SwapMethods } from 'stores/SwapForm';
 import { useStores } from '../contexts/storesContext';
 import { ErrorIds } from '../stores/Error';
 import { BigNumber } from 'utils/bignumber';
-import {
-    getSupportedChainId,
-    supportedNetworks,
-    web3ContextNames,
-} from '../provider/connectors';
+import { getSupportedChainId, web3ContextNames } from '../provider/connectors';
 import { useActiveWeb3React } from '../provider/index';
 import { useWeb3React } from '@web3-react/core';
 import { calcMaxAmountIn, calcMinAmountOut } from '../utils/sorWrapper';
@@ -29,7 +24,6 @@ import {
     ExactAmountOutPreview,
     Swap,
 } from '../stores/Proxy';
-import { Web3ReactContextInterface } from '@web3-react/core/dist/types';
 
 const RowContainer = styled.div`
     font-family: var(--roboto);
@@ -116,7 +110,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     const tokenList = tokenStore.getWhitelistedTokenMetadata(supportedChainId);
 
     // Set default token pair to first two in config file - currently ETH and DAI
-    if (helpers.isEmpty(swapFormStore.inputs.inputToken)) {
+    if (isEmpty(swapFormStore.inputs.inputToken)) {
         swapFormStore.inputs.inputToken = tokenList[0].address;
         swapFormStore.inputs.inputTicker = tokenList[0].symbol;
         swapFormStore.inputs.inputIconAddress = tokenList[0].iconAddress;
@@ -124,7 +118,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         swapFormStore.inputs.inputPrecision = tokenList[0].precision;
     }
 
-    if (helpers.isEmpty(swapFormStore.inputs.outputToken)) {
+    if (isEmpty(swapFormStore.inputs.outputToken)) {
         swapFormStore.inputs.outputToken = tokenList[1].address;
         swapFormStore.inputs.outputTicker = tokenList[1].symbol;
         swapFormStore.inputs.outputIconAddress = tokenList[1].iconAddress;
@@ -311,9 +305,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
 
         if (inputUserBalanceBN) {
             inputUserBalance =
-                inputUserBalanceBN > 0
-                    ? helpers.fromWei(inputUserBalanceBN)
-                    : '0.00';
+                inputUserBalanceBN > 0 ? fromWei(inputUserBalanceBN) : '0.00';
             let inputBalanceParts = inputUserBalance.split('.');
             if (inputBalanceParts[1].substring(0, 8).length > 1) {
                 inputUserBalance =
@@ -344,7 +336,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         if (outputUserBalanceBN) {
             outputUserBalance =
                 outputUserBalanceBN > 0
-                    ? helpers.fromWei(outputUserBalanceBN).toString()
+                    ? fromWei(outputUserBalanceBN).toString()
                     : '0.00';
             let outputBalanceParts = outputUserBalance.split('.');
             if (outputBalanceParts[1].substring(0, 8).length > 1) {
@@ -386,7 +378,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     const errorMessage = outputs.activeErrorMessage;
 
     const TradeDetails = ({ inputAmount, outputAmount }) => {
-        if (helpers.isEmpty(inputAmount) && helpers.isEmpty(outputAmount)) {
+        if (isEmpty(inputAmount) && isEmpty(outputAmount)) {
             return (
                 <ColumnContainer>
                     <TradeCompositionPlaceholder />

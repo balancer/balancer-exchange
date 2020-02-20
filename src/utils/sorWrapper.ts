@@ -8,8 +8,8 @@ import {
 import * as helpers from './helpers';
 import { bnum, formatPoolData, printPoolData } from './helpers';
 import {
-    getTokenPairs,
     getPoolsWithTokens,
+    getTokenPairs,
     linearizedSolution,
 } from 'balancer-sor';
 import { SwapMethods } from '../stores/SwapForm';
