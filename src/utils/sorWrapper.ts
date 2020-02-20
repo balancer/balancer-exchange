@@ -6,12 +6,12 @@ import {
     calcSpotPrice,
 } from './balancerCalcs';
 import * as helpers from './helpers';
-import { bnum, formatPoolData, printPoolData } from './helpers';
+import { bnum, printPoolData } from './helpers';
 import {
     getTokenPairs,
     getPoolsWithTokens,
     linearizedSolution,
-} from 'balancer-sor';
+} from '@balancer-labs/sor';
 import { SwapMethods } from '../stores/SwapForm';
 import { Pool, SorSwap, Swap } from '../stores/Proxy';
 import { TokenPairs } from '../stores/Pool';
@@ -112,11 +112,11 @@ export const findBestSwaps = (
 ): SorSwap[] => {
     printPoolData(balancers);
     return linearizedSolution(
-        formatPoolData(balancers),
+        balancers,
         swapMethod,
-        inputAmount.toString(),
+        inputAmount,
         maxBalancers,
-        costOutputToken.toString()
+        costOutputToken
     );
 };
 
