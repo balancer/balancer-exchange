@@ -105,6 +105,9 @@ const SlippageSelector = observer(
         const updateSlippage = (cellIndex, slippageValue) => {
             swapFormStore.setSlippageCell(cellIndex);
             swapFormStore.setExtraSlippageAllowance(slippageValue);
+            swapFormStore.setSlippageSelectorErrorStatus(
+                InputValidationStatus.VALID
+            );
         };
 
         const onChange = event => {
