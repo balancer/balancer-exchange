@@ -1,7 +1,12 @@
 import { observable, action } from 'mobx';
 import RootStore from 'stores/Root';
 import { ValidationRules } from 'react-form-validator-core';
-import { ExactAmountInPreview, ExactAmountOutPreview, Swap } from './Proxy';
+import {
+    ExactAmountInPreview,
+    ExactAmountOutPreview,
+    Swap,
+    SwapPreview,
+} from './Proxy';
 import { BigNumber } from 'utils/bignumber';
 import {
     bnum,
@@ -13,7 +18,11 @@ import {
     toWei,
     isEmpty,
 } from '../utils/helpers';
-import { calcExpectedSlippage } from '../utils/sorWrapper';
+import {
+    calcExpectedSlippage,
+    calcMaxAmountIn,
+    calcMinAmountOut,
+} from '../utils/sorWrapper';
 
 export const formNames = {
     INPUT_FORM: 'inputs',
@@ -96,10 +105,12 @@ export default class SwapFormStore {
         effectivePrice: '',
         spotPrice: '',
         expectedSlippage: '0',
+        outputLimit: '',
         swaps: [],
         validSwap: false,
         activeErrorMessage: '',
     };
+    @observable preview: SwapPreview;
     @observable tradeCompositionData: ChartData;
 
     rootStore: RootStore;
@@ -132,13 +143,13 @@ export default class SwapFormStore {
             throw new Error('Invalid swap method specified');
         }
 
+        this.preview = preview;
+
         this.outputs = {
             ...this.outputs,
             effectivePrice: str(preview.effectivePrice),
             spotPrice: str(preview.spotPrice),
-            expectedSlippage: formatPctString(
-                calcExpectedSlippage(preview.spotPrice, preview.effectivePrice)
-            ),
+            expectedSlippage: formatPctString(preview.expectedSlippage),
             swaps: preview.swaps,
             validSwap: true,
         };
@@ -166,6 +177,10 @@ export default class SwapFormStore {
 
     getErrorMessage(): string {
         return this.outputs.activeErrorMessage;
+    }
+
+    isValidStatus(value: InputValidationStatus) {
+        return value === InputValidationStatus.VALID;
     }
 
     @action setExtraSlippageAllowance(value: string) {

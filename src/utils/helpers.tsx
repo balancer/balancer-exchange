@@ -17,11 +17,6 @@ import { SwapMethods } from '../stores/SwapForm';
 export const MAX_GAS = utils.bigNumberify('0xffffffff');
 export const MAX_UINT = utils.bigNumberify(ethers.constants.MaxUint256);
 
-export enum Scale {
-    toWei = '18',
-    fromWei = '-18',
-}
-
 export function toChecksum(address) {
     return utils.getAddress(address);
 }
@@ -43,8 +38,8 @@ export function bnum(
     return new BigNumber(val.toString());
 }
 
-export function scale(input: BigNumber, decimalPlaces: string): BigNumber {
-    const scalePow = new BigNumber(decimalPlaces);
+export function scale(input: BigNumber, decimalPlaces: number): BigNumber {
+    const scalePow = new BigNumber(decimalPlaces.toString());
     const scaleMul = new BigNumber(10).pow(scalePow);
     return input.times(scaleMul);
 }
@@ -54,7 +49,8 @@ export function fromWei(val: string | utils.BigNumber | BigNumber): string {
 }
 
 export function toWei(val: string | utils.BigNumber | BigNumber): BigNumber {
-    return bnum(utils.parseEther(val.toString()));
+    console.log('toWei', val.toString());
+    return scale(bnum(val.toString()), 18).integerValue();
 }
 
 export function setPropertyToMaxUintIfEmpty(value?): string {

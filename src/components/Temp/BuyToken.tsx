@@ -87,17 +87,6 @@ const BuyToken = observer(
             const inputs = swapFormStore.inputs;
             const { inputToken, outputToken, outputAmount } = inputs;
 
-            if (!outputAmount || outputAmount === '') {
-                return {
-                    outputAmount: bnum(outputAmount),
-                    totalInput: null,
-                    effectivePrice: null,
-                    spotPrice: null,
-                    swaps: null,
-                    validSwap: false,
-                };
-            }
-
             return await proxyStore.previewBatchSwapExactOut(
                 inputToken,
                 outputToken,
