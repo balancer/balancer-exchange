@@ -6,7 +6,7 @@ import { BigNumber } from 'utils/bignumber';
 import { SUPPORTED_THEMES } from '../theme';
 import {
     Pool,
-    SorSwaps,
+    SorSwap,
     StringifiedPool,
     Swap,
     SwapInput,
@@ -316,20 +316,15 @@ export const printSwaps = (swapMethod: SwapMethods, swaps: Swap[]) => {
     console.table(result);
 };
 
-export const printSorSwaps = (sorSwaps: SorSwaps) => {
-    const formatted = {
-        totalOutput: '',
-        swaps: [] as any[],
-    };
-    formatted.totalOutput = sorSwaps.totalOutput.toString();
-    sorSwaps.inputAmounts.forEach((value, index) => {
-        formatted.swaps.push({
-            amount: value.toString(),
-            balancer: sorSwaps.selectedBalancers[index],
+export const printSorSwaps = (sorSwaps: SorSwap[]) => {
+    const formatted = [];
+    sorSwaps.forEach(swap => {
+        formatted.push({
+            amount: swap.amount.toString(),
+            balancer: swap.pool,
         });
     });
 
     console.log('---SorSwaps---');
-    console.table(formatted.swaps);
-    console.log(`TotalOutput: ${formatted.totalOutput}`);
+    console.table(formatted);
 };

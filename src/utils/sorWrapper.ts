@@ -7,23 +7,27 @@ import {
 } from './balancerCalcs';
 import * as helpers from './helpers';
 import { bnum, formatPoolData, printPoolData } from './helpers';
-import sor from 'balancer-sor';
+import {
+    getTokenPairs,
+    getPoolsWithTokens,
+    linearizedSolution,
+} from 'balancer-sor';
 import { SwapMethods } from '../stores/SwapForm';
-import { Pool, SorSwaps, Swap } from '../stores/Proxy';
+import { Pool, SorSwap, Swap } from '../stores/Proxy';
 import { TokenPairs } from '../stores/Pool';
 import { EtherKey } from '../stores/Token';
 
 export const formatSwapsExactAmountIn = (
-    sorSwaps: SorSwaps,
+    sorSwaps: SorSwap[],
     poolData: Pool[],
     maxPrice: BigNumber,
     minAmountOut: BigNumber
 ): Swap[] => {
     const swaps: Swap[] = [];
-    for (let i = 0; i < sorSwaps.inputAmounts.length; i++) {
-        let swapAmount = sorSwaps.inputAmounts[i];
+    for (let i = 0; i < sorSwaps.length; i++) {
+        let swapAmount = sorSwaps[i].amount;
         let swap: Swap = {
-            pool: sorSwaps.selectedBalancers[i],
+            pool: sorSwaps[i].pool,
             tokenInParam: swapAmount
                 .times(BONE)
                 .integerValue(3)
@@ -37,16 +41,16 @@ export const formatSwapsExactAmountIn = (
 };
 
 export const formatSwapsExactAmountOut = (
-    sorSwaps: SorSwaps,
+    sorSwaps: SorSwap[],
     poolData: Pool[],
     maxPrice: BigNumber,
     maxAmountIn: BigNumber
 ): Swap[] => {
     const swaps: Swap[] = [];
-    for (let i = 0; i < sorSwaps.inputAmounts.length; i++) {
-        let swapAmount = sorSwaps.inputAmounts[i];
+    for (let i = 0; i < sorSwaps.length; i++) {
+        let swapAmount = sorSwaps[i].amount;
         let swap: Swap = {
-            pool: sorSwaps.selectedBalancers[i],
+            pool: sorSwaps[i].pool,
             tokenInParam: maxAmountIn.toString(),
             tokenOutParam: swapAmount
                 .times(BONE)
@@ -64,7 +68,7 @@ export const findPoolsWithTokens = async (
     tokenOut: string,
     fromWei: boolean = false
 ): Promise<Pool[]> => {
-    let pools = await sor.getPoolsWithTokens(tokenIn, tokenOut);
+    let pools = await getPoolsWithTokens(tokenIn, tokenOut);
 
     if (pools.pools.length === 0)
         throw Error('There are no pools with selected tokens');
@@ -105,10 +109,9 @@ export const findBestSwaps = (
     inputAmount: BigNumber,
     maxBalancers: number,
     costOutputToken: BigNumber
-): SorSwaps => {
-    console.log(balancers);
+): SorSwap[] => {
     printPoolData(balancers);
-    return sor.linearizedSolution(
+    return linearizedSolution(
         formatPoolData(balancers),
         swapMethod,
         inputAmount.toString(),
@@ -148,11 +151,11 @@ export const calcTotalOutput = (swaps: Swap[], poolData: Pool[]): BigNumber => {
     }
 };
 
-export const getTokenPairs = async (
+export const sorTokenPairs = async (
     tokenAddress: string,
     wethAddress: string
 ): Promise<TokenPairs> => {
-    const pools = await sor.getTokenPairs(tokenAddress);
+    const pools = await getTokenPairs(tokenAddress);
 
     let tokenPairs: TokenPairs = new Set<string>();
     if (pools.pools.length === 0) return tokenPairs;
