@@ -168,12 +168,8 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     };
 
     const swapHandler = async () => {
-        if (
-            !outputs.validSwap ||
-            !swapFormStore.isValidStatus(
-                inputs.extraSlippageAllowanceErrorStatus
-            )
-        ) {
+        // Don't attempt Swap if preview is in progress - we don't change the UI while it's loading and hope it resolves near immediately
+        if (proxyStore.isPreviewPending()) {
             return;
         }
 
@@ -182,8 +178,6 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                 inputAmount,
                 inputToken,
                 outputToken,
-                outputLimit,
-                limitPrice,
                 extraSlippageAllowance,
             } = inputs;
 
@@ -192,12 +186,6 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                 expectedSlippage,
                 swaps,
             } = swapFormStore.preview as ExactAmountInPreview;
-
-            console.log("Let's calculate", {
-                spotOutput: spotOutput.toString(),
-                expectedSlippage: expectedSlippage.toString(),
-                extraSlippageAllowance: extraSlippageAllowance.toString(),
-            });
 
             const minAmountOut = calcMinAmountOut(
                 spotOutput,
@@ -214,11 +202,9 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
             );
         } else if (inputs.type === SwapMethods.EXACT_OUT) {
             const {
-                inputLimit,
                 inputToken,
                 outputToken,
                 outputAmount,
-                limitPrice,
                 extraSlippageAllowance,
             } = inputs;
 
@@ -282,6 +268,9 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
             inputs.extraSlippageAllowanceErrorStatus
         );
 
+        const isPreviewValid =
+            swapFormStore.preview && !swapFormStore.preview.error;
+
         if (
             buttonState === ButtonState.UNLOCK ||
             buttonState === ButtonState.NO_WALLET
@@ -294,6 +283,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                 isInputValid &&
                 isExtraSlippageAmountValid &&
                 injectedChainId &&
+                isPreviewValid &&
                 injectedChainId === supportedChainId
             ) {
                 const inputAmountBN = toWei(inputs.inputAmount);
