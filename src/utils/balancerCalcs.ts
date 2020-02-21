@@ -1,7 +1,7 @@
 import { BigNumber } from 'utils/bignumber';
 
 export const BONE = new BigNumber(10).pow(18);
-const BPOW_PRECISION = BONE.idiv(10).pow(10);
+const BPOW_PRECISION = BONE.idiv(new BigNumber(10).pow(10));
 
 export function calcOutGivenIn(
     tokenBalanceIn: BigNumber,
@@ -54,14 +54,14 @@ export function calcSpotPrice(
 
 function bmul(a: BigNumber, b: BigNumber): BigNumber {
     let c0 = a.times(b);
-    let c1 = c0.plus(BONE.div(2));
+    let c1 = c0.plus(BONE.div(new BigNumber(2)));
     let c2 = c1.idiv(BONE);
     return c2;
 }
 
 function bdiv(a: BigNumber, b: BigNumber): BigNumber {
     let c0 = a.times(BONE);
-    let c1 = c0.plus(BONE.div(2));
+    let c1 = c0.plus(BONE.div(new BigNumber(2)));
     let c2 = c1.idiv(b);
     return c2;
 }
@@ -90,11 +90,15 @@ function bsubSign(
 }
 
 function bpowi(a: BigNumber, n: BigNumber): BigNumber {
-    let z = !n.modulo(2).eq(0) ? a : BONE;
+    let z = !n.modulo(new BigNumber(2)).eq(new BigNumber(0)) ? a : BONE;
 
-    for (n = n.idiv(2); !n.eq(0); n = n.idiv(2)) {
+    for (
+        n = n.idiv(new BigNumber(2));
+        !n.eq(new BigNumber(0));
+        n = n.idiv(new BigNumber(2))
+    ) {
         a = bmul(a, a);
-        if (!n.modulo(2).eq(0)) {
+        if (!n.modulo(new BigNumber(2)).eq(new BigNumber(0))) {
             z = bmul(z, a);
         }
     }
@@ -105,7 +109,7 @@ function bpow(base: BigNumber, exp: BigNumber): BigNumber {
     let whole = bfloor(exp);
     let remain = exp.minus(whole);
     let wholePow = bpowi(base, btoi(whole));
-    if (remain.eq(0)) {
+    if (remain.eq(new BigNumber(0))) {
         return wholePow;
     }
 
@@ -129,7 +133,7 @@ function bpowApprox(
         let { res: c, bool: cneg } = bsubSign(a, bigK.minus(BONE));
         term = bmul(term, bmul(c, x));
         term = bdiv(term, bigK);
-        if (term.eq(0)) break;
+        if (term.eq(new BigNumber(0))) break;
 
         if (xneg) negative = !negative;
         if (cneg) negative = !negative;
