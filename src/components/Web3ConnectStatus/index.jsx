@@ -74,7 +74,7 @@ const IconWrapper = styled.div`
 
 const Web3ConnectStatus = observer(() => {
     const {
-        root: { providerStore, modalStore, transactionStore },
+        root: { modalStore, transactionStore },
     } = useStores();
     const { chainId, active, connector, error } = useActiveWeb3React();
     const { account, chainId: injectedChainId } = useWeb3React(
@@ -92,9 +92,9 @@ const Web3ConnectStatus = observer(() => {
     let hasPendingTransactions = false;
 
     if (account && isChainIdSupported(injectedChainId)) {
-        pending = transactionStore.getPendingTransactions(injectedChainId);
-        confirmed = transactionStore.getConfirmedTransactions(injectedChainId);
-        hasPendingTransactions = !!pending.size;
+        pending = transactionStore.getPendingTransactions(account);
+        confirmed = transactionStore.getConfirmedTransactions(account);
+        hasPendingTransactions = !!pending.length;
     }
 
     const toggleWalletModal = () => {

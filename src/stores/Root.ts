@@ -28,7 +28,7 @@ export default class RootStore {
         this.tokenStore = new TokenStore(this, supportedNetworks);
         this.poolStore = new PoolStore(this, supportedNetworks);
         this.modalStore = new ModalStore(this);
-        this.transactionStore = new TransactionStore(this, supportedNetworks);
+        this.transactionStore = new TransactionStore(this);
         this.appSettingsStore = new AppSettingsStore(this);
         this.errorStore = new ErrorStore(this);
     }
