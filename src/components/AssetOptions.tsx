@@ -8,7 +8,7 @@ import {
     isChainIdSupported,
 } from '../provider/connectors';
 import { observer } from 'mobx-react';
-import { useActiveWeb3React } from '../provider/index';
+import { useActiveWeb3React } from '../provider/providerHooks';
 
 const AssetPanelContainer = styled.div`
     display: flex;

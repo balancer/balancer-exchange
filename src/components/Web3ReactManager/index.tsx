@@ -11,12 +11,12 @@ import {
     useActiveWeb3React,
     useEagerConnect,
     useInactiveListener,
-} from 'provider/index';
+} from 'provider/providerHooks';
 import { useStores } from 'contexts/storesContext';
 import { observer } from 'mobx-react';
 import { Web3ReactContextInterface } from '@web3-react/core/dist/types';
 import ProviderStore from '../../stores/Provider';
-import { useInterval } from 'hooks';
+import { useInterval } from 'utils/helperHooks';
 import TokenStore from '../../stores/Token';
 
 const MessageWrapper = styled.div`

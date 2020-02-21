@@ -14,7 +14,7 @@ import { useStores } from '../../contexts/storesContext';
 import Button from '../Button';
 import Web3PillBox from '../Web3PillBox';
 import { isChainIdSupported } from '../../provider/connectors';
-import { useActiveWeb3React } from '../../provider';
+import { useActiveWeb3React } from 'provider/providerHooks';
 
 const Web3StatusGeneric = styled.button`
     ${({ theme }) => theme.flexRowNoWrap}
@@ -96,12 +96,6 @@ const Web3ConnectStatus = observer(() => {
         confirmed = transactionStore.getConfirmedTransactions(injectedChainId);
         hasPendingTransactions = !!pending.size;
     }
-
-    console.log({
-        message: 'Web3ConnectStatus Pending Tx',
-        pending,
-        hasPendingTransactions,
-    });
 
     const toggleWalletModal = () => {
         modalStore.toggleWalletModal();

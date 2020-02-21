@@ -49,7 +49,6 @@ export function fromWei(val: string | utils.BigNumber | BigNumber): string {
 }
 
 export function toWei(val: string | utils.BigNumber | BigNumber): BigNumber {
-    console.log('toWei', val.toString());
     return scale(bnum(val.toString()), 18).integerValue();
 }
 

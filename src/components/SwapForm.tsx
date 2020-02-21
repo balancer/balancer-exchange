@@ -16,7 +16,7 @@ import { useStores } from '../contexts/storesContext';
 import { ErrorIds } from '../stores/Error';
 import { BigNumber } from 'utils/bignumber';
 import { getSupportedChainId, web3ContextNames } from '../provider/connectors';
-import { useActiveWeb3React } from '../provider/index';
+import { useActiveWeb3React } from '../provider/providerHooks';
 import { useWeb3React } from '@web3-react/core';
 import { calcMaxAmountIn, calcMinAmountOut } from '../utils/sorWrapper';
 import {

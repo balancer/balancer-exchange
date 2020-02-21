@@ -9,7 +9,7 @@ import { getEtherscanLink } from 'utils/helpers';
 import Identicon from '../Identicon';
 
 import { Link } from '../../theme';
-import { useActiveWeb3React } from '../../provider';
+import { useActiveWeb3React } from 'provider/providerHooks';
 
 const OptionButton = styled.div`
     ${({ theme }) => theme.flexColumnNoWrap}
