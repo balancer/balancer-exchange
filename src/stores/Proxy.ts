@@ -75,15 +75,6 @@ export interface Pool {
     swapFee: BigNumber;
 }
 
-export interface StringifiedPool {
-    id: string;
-    balanceIn: string;
-    balanceOut: string;
-    weightIn: string;
-    weightOut: string;
-    swapFee: string;
-}
-
 export interface SorSwap {
     pool: string;
     amount: BigNumber;
