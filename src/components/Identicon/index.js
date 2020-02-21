@@ -4,7 +4,7 @@ import styled from 'styled-components';
 
 import Jazzicon from 'jazzicon';
 import { useStores } from '../../contexts/storesContext';
-import { useActiveWeb3React } from '../../provider';
+import { useActiveWeb3React } from 'provider/providerHooks';
 
 const StyledIdenticon = styled.div`
     height: 1rem;

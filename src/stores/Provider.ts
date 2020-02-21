@@ -138,7 +138,7 @@ export default class ProviderStore {
             account,
         });
 
-        transactionStore.checkPendingTransactions(web3React, chainId);
+        transactionStore.checkPendingTransactions(web3React, chainId, account);
         tokenStore
             .fetchBalancerTokenData(web3React, account, chainId)
             .then(result => {
@@ -229,7 +229,7 @@ export default class ProviderStore {
         if (error) {
             console.log('[Send Transaction Error', error);
         } else if (txResponse) {
-            transactionStore.addTransactionRecord(chainId, txResponse);
+            transactionStore.addTransactionRecord(account, txResponse);
         } else {
             throw new Error(
                 '[Invariant]: No error or response received from blockchain action'

@@ -8,9 +8,9 @@ import Modal from '../Modal';
 import AccountDetails from '../AccountDetails';
 import PendingView from './PendingView';
 import Option from './Option';
-import { usePrevious } from '../../hooks';
+import { usePrevious } from 'utils/helperHooks';
 import { Link } from '../../theme';
-import MetamaskIcon from '../../assets/images/metamask.png';
+import MetamaskIcon from 'assets/images/metamask.png';
 import { ReactComponent as Close } from '../../assets/images/x.svg';
 import { injected, SUPPORTED_WALLETS } from 'provider/connectors';
 import { useStores } from 'contexts/storesContext';
@@ -18,7 +18,7 @@ import {
     isChainIdSupported,
     web3ContextNames,
 } from '../../provider/connectors';
-import { useActiveWeb3React } from '../../provider';
+import { useActiveWeb3React } from 'provider/providerHooks';
 
 const CloseIcon = styled.div`
     position: absolute;

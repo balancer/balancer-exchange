@@ -9,7 +9,7 @@ import Circle from '../../assets/images/circle.svg';
 
 import { transparentize } from 'polished';
 import { useStores } from '../../contexts/storesContext';
-import { useActiveWeb3React } from '../../provider';
+import { useActiveWeb3React } from 'provider/providerHooks';
 
 const TransactionStatusWrapper = styled.div`
     display: flex;
