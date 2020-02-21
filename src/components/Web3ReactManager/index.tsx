@@ -99,7 +99,7 @@ const fetchLoop = (
 
 const Web3ReactManager = observer(({ children }) => {
     const {
-        root: { providerStore, tokenStore },
+        root: { providerStore, blockchainFetchStore, tokenStore },
     } = useStores();
 
     const web3ContextInjected = useWeb3React(web3ContextNames.injected);
@@ -205,7 +205,7 @@ const Web3ReactManager = observer(({ children }) => {
 
     //Fetch user blockchain data on an interval using current params
     useInterval(
-        () => fetchLoop(web3React, providerStore, tokenStore, false),
+        () => blockchainFetchStore.setFetchLoop(web3React, false),
         web3React.account ? 1000 : null
     );
 
@@ -218,7 +218,7 @@ const Web3ReactManager = observer(({ children }) => {
                 account: web3React.account,
                 prevAccount: providerStore.activeAccount,
             });
-            fetchLoop(web3React, providerStore, tokenStore, true);
+            blockchainFetchStore.setFetchLoop(web3React, true);
         }
     }, [web3React]);
 
