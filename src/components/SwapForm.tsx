@@ -341,7 +341,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     }
     const errorMessage = outputs.activeErrorMessage;
 
-    const TradeDetails = ({ inputAmount, outputAmount }) => {
+    const renderTradeDetails = (inputAmount, outputAmount) => {
         if (isEmpty(inputAmount) && isEmpty(outputAmount)) {
             return (
                 <ColumnContainer>
@@ -411,10 +411,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                     showMax={!!account && !!outputUserBalanceBN}
                 />
             </RowContainer>
-            <TradeDetails
-                inputAmount={inputs.inputAmount}
-                outputAmount={inputs.outputAmount}
-            />
+            {renderTradeDetails(inputs.inputAmount, inputs.outputAmount)}
         </div>
     );
 });
