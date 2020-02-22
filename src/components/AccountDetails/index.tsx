@@ -11,8 +11,8 @@ import Identicon from '../Identicon';
 import { web3Window as window } from 'provider/Web3Window';
 
 import { Link } from '../../theme';
-import { useActiveWeb3React } from 'provider/providerHooks';
 import { TransactionRecord } from 'stores/Transaction';
+import { useStores } from '../../contexts/storesContext';
 
 const OptionButton = styled.div`
     ${({ theme }) => theme.flexColumnNoWrap}
@@ -244,7 +244,10 @@ export default function AccountDetails(props: Props) {
         ENSName,
         openOptions,
     } = props;
-    const { chainId, account, connector } = useActiveWeb3React();
+    const {
+        root: { providerStore },
+    } = useStores();
+    const { chainId, account, connector } = providerStore.getActiveWeb3React();
 
     function renderTransactions(transactions: TransactionRecord[], pending) {
         console.log('[renderTransactions]', transactions, pending);

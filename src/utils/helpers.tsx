@@ -232,6 +232,51 @@ export const normalizePriceValues = (
     };
 };
 
+export const formatBalanceTruncated = (
+    balance: BigNumber,
+    precision: number,
+    truncateAt: number
+): string => {
+    const result = formatBalance(balance, precision);
+    if (result.length > truncateAt) {
+        return result.substring(0, 20) + '...';
+    } else {
+        return result;
+    }
+};
+
+export const formatBalance = (
+    balance: BigNumber,
+    precision: number
+): string => {
+    if (balance.eq(0)) {
+        return bnum(0).toFixed(2);
+    }
+
+    const result = bnum(fromWei(balance))
+        .decimalPlaces(precision)
+        .toString();
+
+    return padToDecimalPlaces(result, 2);
+};
+
+export const padToDecimalPlaces = (
+    value: string,
+    minDecimals: number
+): string => {
+    const split = value.split('.');
+    const zerosToPad = split[1] ? minDecimals - split[1].length : minDecimals;
+
+    if (zerosToPad > 0) {
+        let pad = '.';
+        for (let i = 0; i < zerosToPad; i++) {
+            pad += '0';
+        }
+        return value + pad;
+    }
+    return value;
+};
+
 export const getGasPriceFromETHGasStation = () => {
     return new Promise((resolve, reject) => {
         const timeout = setTimeout(() => {

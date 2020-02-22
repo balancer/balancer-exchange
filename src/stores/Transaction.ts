@@ -1,4 +1,4 @@
-import { action, observable, ObservableMap } from 'mobx';
+import { action, observable } from 'mobx';
 import { providers } from 'ethers';
 import RootStore from 'stores/Root';
 import { TransactionResponse } from 'ethers/providers';

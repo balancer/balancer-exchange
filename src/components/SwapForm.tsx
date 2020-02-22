@@ -10,14 +10,19 @@ import TradeComposition from './TradeComposition';
 import AssetSelector from './AssetSelector';
 
 import { observer } from 'mobx-react';
-import { isEmpty, bnum, toWei, fromWei } from 'utils/helpers';
+import {
+    bnum,
+    fromWei,
+    isEmpty,
+    toWei,
+    formatBalance,
+    formatBalanceTruncated,
+} from 'utils/helpers';
 import { SwapMethods } from 'stores/SwapForm';
 import { useStores } from '../contexts/storesContext';
 import { ErrorIds } from '../stores/Error';
 import { BigNumber } from 'utils/bignumber';
 import { getSupportedChainId, web3ContextNames } from '../provider/connectors';
-import { useActiveWeb3React } from '../provider/providerHooks';
-import { useWeb3React } from '@web3-react/core';
 import { calcMaxAmountIn, calcMinAmountOut } from '../utils/sorWrapper';
 import {
     ExactAmountInPreview,
@@ -70,17 +75,6 @@ enum ButtonState {
 const ButtonText = ['Connect Wallet', 'Unlock', 'Swap'];
 
 const SwapForm = observer(({ tokenIn, tokenOut }) => {
-    const [modelOpen, setModalOpen] = React.useState({
-        state: false,
-        input: 'inputAmount',
-    });
-    const [tradeCompositionOpen, setTradeCompositionOpen] = React.useState(
-        false
-    );
-    const [slippageSelectorOpen, setSlippageSelectorOpen] = React.useState(
-        false
-    );
-
     const {
         root: {
             proxyStore,
@@ -95,9 +89,9 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
 
     const supportedChainId = getSupportedChainId();
 
-    const web3React = useActiveWeb3React();
+    const web3React = providerStore.getActiveWeb3React();
     const { chainId, account } = web3React;
-    const { chainId: injectedChainId } = useWeb3React(
+    const { chainId: injectedChainId } = providerStore.getWeb3React(
         web3ContextNames.injected
     );
 
@@ -136,8 +130,6 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         outputIconAddress,
         outputPrecision,
     } = inputs;
-
-    const { expectedSlippage } = outputs;
 
     const buttonActionHandler = (buttonState: ButtonState) => {
         switch (buttonState) {
@@ -290,10 +282,10 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
 
     let inputUserBalanceBN;
     let inputUserBalance;
-    let truncatedInputUserBalance = '0.00';
+    let truncatedInputUserBalance;
     let outputUserBalanceBN;
     let outputUserBalance;
-    let truncatedOutputUserBalance = '0.00';
+    let truncatedOutputUserBalance;
     let userAllowance;
 
     if (account) {
@@ -303,61 +295,11 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
             account
         );
 
-        if (inputUserBalanceBN) {
-            inputUserBalance =
-                inputUserBalanceBN > 0 ? fromWei(inputUserBalanceBN) : '0.00';
-            let inputBalanceParts = inputUserBalance.split('.');
-            if (inputBalanceParts[1].substring(0, 8).length > 1) {
-                inputUserBalance =
-                    inputBalanceParts[0] +
-                    '.' +
-                    inputBalanceParts[1].substring(0, inputPrecision);
-            } else {
-                inputUserBalance =
-                    inputBalanceParts[0] +
-                    '.' +
-                    inputBalanceParts[1].substring(0, 1) +
-                    '0';
-            }
-            if (inputUserBalance.length > 20) {
-                truncatedInputUserBalance =
-                    inputUserBalance.substring(0, 20) + '...';
-            } else {
-                truncatedInputUserBalance = inputUserBalance;
-            }
-        }
-
         outputUserBalanceBN = tokenStore.getBalance(
             chainId,
             outputToken,
             account
         );
-
-        if (outputUserBalanceBN) {
-            outputUserBalance =
-                outputUserBalanceBN > 0
-                    ? fromWei(outputUserBalanceBN).toString()
-                    : '0.00';
-            let outputBalanceParts = outputUserBalance.split('.');
-            if (outputBalanceParts[1].substring(0, 8).length > 1) {
-                outputUserBalance =
-                    outputBalanceParts[0] +
-                    '.' +
-                    outputBalanceParts[1].substring(0, outputPrecision);
-            } else {
-                outputUserBalance =
-                    outputBalanceParts[0] +
-                    '.' +
-                    outputBalanceParts[1].substring(0, 1) +
-                    '0';
-            }
-            if (outputUserBalance.length > 20) {
-                truncatedOutputUserBalance =
-                    outputUserBalance.substring(0, 20) + '...';
-            } else {
-                truncatedOutputUserBalance = outputUserBalance;
-            }
-        }
 
         const proxyAddress = tokenStore.getProxyAddress(supportedChainId);
         userAllowance = tokenStore.getAllowance(
@@ -367,6 +309,28 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
             proxyAddress
         );
     }
+
+    if (!inputUserBalanceBN) {
+        inputUserBalanceBN = bnum(0);
+    }
+
+    if (!outputUserBalanceBN) {
+        outputUserBalanceBN = bnum(0);
+    }
+
+    inputUserBalance = formatBalance(inputUserBalanceBN, inputPrecision);
+    truncatedInputUserBalance = formatBalanceTruncated(
+        inputUserBalanceBN,
+        inputPrecision,
+        20
+    );
+
+    outputUserBalance = formatBalance(outputUserBalanceBN, outputPrecision);
+    truncatedOutputUserBalance = formatBalanceTruncated(
+        outputUserBalanceBN,
+        outputPrecision,
+        20
+    );
 
     const buttonState = getButtonState(account, userAllowance);
 
@@ -401,16 +365,9 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         } else {
             return (
                 <ColumnContainer>
-                    <TradeComposition
-                        tradeCompositionOpen={tradeCompositionOpen}
-                        setTradeCompositionOpen={setTradeCompositionOpen}
-                    />
+                    <TradeComposition />
                     <ErrorDisplay errorText={errorMessage} />
-                    <SlippageSelector
-                        expectedSlippage={expectedSlippage}
-                        slippageSelectorOpen={slippageSelectorOpen}
-                        setSlippageSelectorOpen={setSlippageSelectorOpen}
-                    />
+                    <SlippageSelector />
                     <Button
                         buttonText={getButtonText(buttonState)}
                         active={getButtonActive(
@@ -428,13 +385,12 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
 
     return (
         <div>
-            <AssetSelector modelOpen={modelOpen} setModalOpen={setModalOpen} />
+            <AssetSelector />
             <RowContainer>
                 <SellToken
                     key="122"
                     inputID="amount-in"
                     inputName="inputAmount"
-                    setModalOpen={setModalOpen}
                     tokenName={inputTicker}
                     tokenBalance={inputUserBalance}
                     truncatedTokenBalance={truncatedInputUserBalance}
@@ -447,7 +403,6 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                     key="123"
                     inputID="amount-out"
                     inputName="outputAmount"
-                    setModalOpen={setModalOpen}
                     tokenName={outputTicker}
                     tokenBalance={outputUserBalance}
                     truncatedTokenBalance={truncatedOutputUserBalance}
