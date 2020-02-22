@@ -2,6 +2,8 @@ import React, { useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { isAddress } from '../utils/helpers';
 import { EtherKey } from '../stores/Token';
+import { observer } from 'mobx-react';
+import { useStores } from '../contexts/storesContext';
 
 const Panel = styled.div`
     width: 180px;
@@ -159,74 +161,86 @@ const MaxLink = styled.div`
     cursor: pointer;
 `;
 
-const Token = ({
-    defaultValue,
-    onChange,
-    updateSwapFormData,
-    inputID,
-    inputName,
-    headerText,
-    tokenName,
-    tokenBalance,
-    truncatedTokenBalance,
-    tokenAddress,
-    setModalOpen,
-    setFocus,
-    errorMessage,
-    showMax,
-}) => {
-    const textInput = useRef(null);
+const Token = observer(
+    ({
+        defaultValue,
+        onChange,
+        updateSwapFormData,
+        inputID,
+        inputName,
+        headerText,
+        tokenName,
+        tokenBalance,
+        truncatedTokenBalance,
+        tokenAddress,
+        setFocus,
+        errorMessage,
+        showMax,
+    }) => {
+        const textInput = useRef(null);
+        const {
+            root: { swapFormStore },
+        } = useStores();
 
-    useEffect(() => {
-        if (setFocus) {
-            textInput.current.focus();
-        }
-    });
+        useEffect(() => {
+            if (setFocus) {
+                textInput.current.focus();
+            }
+        });
 
-    const InputContainer = ({ errorMessage }) => {
-        // TODO make sure conditional is checking the correct thing
-        const errorBorders = errorMessage === '' ? false : true;
+        const InputContainer = ({ errorMessage }) => {
+            // TODO make sure conditional is checking the correct thing
+            const errorBorders = errorMessage === '' ? false : true;
+            return (
+                <InputWrapper errorBorders={errorBorders}>
+                    <input
+                        id={inputID}
+                        name={inputName}
+                        defaultValue={defaultValue}
+                        onChange={onChange}
+                        ref={textInput}
+                        placeholder="0"
+                    />
+                    {(tokenAddress === EtherKey &&
+                        inputName === 'inputAmount') ||
+                    !showMax ? (
+                        <div />
+                    ) : (
+                        <MaxLink
+                            onClick={() => updateSwapFormData(tokenBalance)}
+                        >
+                            Max
+                        </MaxLink>
+                    )}
+                </InputWrapper>
+            );
+        };
+
+        console.log(truncatedTokenBalance);
+
         return (
-            <InputWrapper errorBorders={errorBorders}>
-                <input
-                    id={inputID}
-                    name={inputName}
-                    defaultValue={defaultValue}
-                    onChange={onChange}
-                    ref={textInput}
-                    placeholder="0"
-                />
-                {(tokenAddress === EtherKey && inputName === 'inputAmount') ||
-                !showMax ? (
-                    <div />
-                ) : (
-                    <MaxLink onClick={() => updateSwapFormData(tokenBalance)}>
-                        Max
-                    </MaxLink>
-                )}
-            </InputWrapper>
+            <Panel>
+                <PanelHeader>{headerText}</PanelHeader>
+                <TokenContainer
+                    onClick={() => {
+                        swapFormStore.setAssetModalState({
+                            open: true,
+                            input: inputName,
+                        });
+                    }}
+                >
+                    <IconAndNameContainer>
+                        <TokenIcon src={TokenIconAddress(tokenAddress)} />
+                        <TokenName>{tokenName}</TokenName>
+                    </IconAndNameContainer>
+                    <TokenBalance>
+                        {truncatedTokenBalance} {tokenName}
+                    </TokenBalance>
+                </TokenContainer>
+                <InputContainer errorMessage={errorMessage} />
+            </Panel>
         );
-    };
-
-    return (
-        <Panel>
-            <PanelHeader>{headerText}</PanelHeader>
-            <TokenContainer
-                onClick={() => {
-                    setModalOpen({ state: true, input: inputName });
-                }}
-            >
-                <IconAndNameContainer>
-                    <TokenIcon src={TokenIconAddress(tokenAddress)} />
-                    <TokenName>{tokenName}</TokenName>
-                </IconAndNameContainer>
-                <TokenBalance>
-                    {truncatedTokenBalance} {tokenName}
-                </TokenBalance>
-            </TokenContainer>
-            <InputContainer errorMessage={errorMessage} />
-        </Panel>
-    );
-};
+    }
+);
 
 export default Token;

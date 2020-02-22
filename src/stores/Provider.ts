@@ -4,6 +4,7 @@ import { ethers } from 'ethers';
 import { Web3ReactContextInterface } from '@web3-react/core/dist/types';
 import UncheckedJsonRpcSigner from 'provider/UncheckedJsonRpcSigner';
 import { sendAction } from './actions/actions';
+import { supportedChainId, web3ContextNames } from '../provider/connectors';
 
 export enum ContractTypes {
     BPool = 'BPool',
@@ -23,6 +24,14 @@ export const schema = {
 
 export interface ChainData {
     currentBlockNumber: number;
+}
+
+enum ERRORS {
+    UntrackedChainId = 'Attempting to access data for untracked chainId',
+    ContextNotFound = 'Specified context name note stored',
+    BlockchainActionNoAccount = 'Attempting to do blockchain transaction with no account',
+    BlockchainActionNoChainId = 'Attempting to do blockchain transaction with no chainId',
+    BlockchainActionNoResponse = 'No error or response received from blockchain action',
 }
 
 type ChainDataMap = ObservableMap<number, ChainData>;
@@ -56,61 +65,10 @@ export default class ProviderStore {
     private safeGetChainData(chainId): ChainData {
         const chainData = this.chainData.get(chainId);
         if (!chainData) {
-            throw new Error(
-                'Attempting to access chain data for non-existent chainId'
-            );
+            throw new Error(ERRORS.UntrackedChainId);
         }
         return chainData;
     }
-
-    // fetchLoop(
-    //     this,
-    //     web3React: Web3ReactContextInterface,
-    //     forceFetch?: boolean
-    // ) {
-    //     const { library, account, chainId } = web3React;
-    //
-    //     library
-    //         .getBlockNumber()
-    //         .then(blockNumber => {
-    //             const lastChecked = this.getCurrentBlockNumber(chainId);
-    //
-    //             const doFetch = blockNumber != lastChecked || forceFetch;
-    //             if (doFetch) {
-    //                 console.log('[Data Fetcher] Fetch Blockchain Data', {
-    //                     blockNumber,
-    //                     chainId,
-    //                     account,
-    //                 });
-    //
-    //                 // Set block number
-    //                 this.setCurrentBlockNumber(chainId, blockNumber);
-    //
-    //                 // Get global blockchain data
-    //                 // None
-    //
-    //                 // Get user-specific blockchain data
-    //                 if (account) {
-    //                     this.fetchUserBlockchainData(
-    //                         web3React,
-    //                         chainId,
-    //                         account
-    //                     );
-    //                 }
-    //             }
-    //         })
-    //         .catch(() => {
-    //             this.setCurrentBlockNumber(chainId, undefined);
-    //         });
-    // }
-    //
-    // startFetchLoop(web3React: Web3ReactContextInterface) {
-    //     this.fetchLoop(web3React, true);
-    //     this.activeFetchLoop = setInterval(
-    //         this.fetchLoop.bind(this, web3React),
-    //         500
-    //     );
-    // }
 
     getCurrentBlockNumber(chainId): number {
         const chainData = this.safeGetChainData(chainId);
@@ -181,7 +139,24 @@ export default class ProviderStore {
         return new ethers.Contract(address, schema[type], library);
     }
 
-    @action setWeb3Context(name, context) {
+    getActiveWeb3React(): Web3ReactContextInterface {
+        const contextBackup = this.contexts[web3ContextNames.backup];
+        const contextInjected = this.contexts[web3ContextNames.injected];
+
+        return contextInjected.active &&
+            contextInjected.chainId === supportedChainId
+            ? contextInjected
+            : contextBackup;
+    }
+
+    getWeb3React(name): Web3ReactContextInterface {
+        if (!this.contexts[name]) {
+            throw new Error(ERRORS.ContextNotFound);
+        }
+        return this.contexts[name];
+    }
+
+    @action setWeb3Context(name, context: Web3ReactContextInterface) {
         console.log('[setWeb3Context]', name, context);
         this.contexts[name] = context;
     }
@@ -200,15 +175,11 @@ export default class ProviderStore {
         overrides = overrides ? overrides : {};
 
         if (!account) {
-            throw new Error(
-                '[Error] Attempting to do blockchain transaction with no account'
-            );
+            throw new Error(ERRORS.BlockchainActionNoAccount);
         }
 
         if (!chainId) {
-            throw new Error(
-                '[Invariant] Attempting to do blockchain transaction with no chainId'
-            );
+            throw new Error(ERRORS.BlockchainActionNoChainId);
         }
 
         const contract = this.getContract(
@@ -231,9 +202,7 @@ export default class ProviderStore {
         } else if (txResponse) {
             transactionStore.addTransactionRecord(account, txResponse);
         } else {
-            throw new Error(
-                '[Invariant]: No error or response received from blockchain action'
-            );
+            throw new Error(ERRORS.BlockchainActionNoResponse);
         }
     };
 }

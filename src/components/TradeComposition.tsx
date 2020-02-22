@@ -107,176 +107,165 @@ const PieChart = styled.div`
     border-radius: 50px;
 `;
 
-const TradeComposition = observer(
-    ({ setTradeCompositionOpen, tradeCompositionOpen }) => {
-        const {
-            root: { swapFormStore, tokenStore },
-        } = useStores();
+const TradeComposition = observer(() => {
+    const {
+        root: { swapFormStore, tokenStore },
+    } = useStores();
 
-        const supportedChainId = getSupportedChainId();
-        const chartData = swapFormStore.tradeCompositionData;
+    const supportedChainId = getSupportedChainId();
+    const chartData = swapFormStore.tradeCompositionData;
+    const { tradeCompositionOpen } = swapFormStore;
 
-        const options = {
-            maintainAspectRatio: false,
-            legend: {
-                display: false,
-            },
-            tooltips: {
-                enabled: false,
-            },
+    const options = {
+        maintainAspectRatio: false,
+        legend: {
+            display: false,
+        },
+        tooltips: {
+            enabled: false,
+        },
+    };
+
+    const formatting = {
+        borderAlign: 'center',
+        backgroundColor: ['#A7FFEB', '#FF9E80', '#B388FF'],
+        borderColor: ['#A7FFEB', '#FF9E80', '#B388FF'],
+        borderWidth: '0',
+        weight: 95,
+    };
+
+    const formatPieData = (chartData: ChartData) => {
+        const pieData = {
+            datasets: [
+                {
+                    data: [1],
+                    borderAlign: 'center',
+                    borderColor: '#B388FF',
+                    borderWidth: '1',
+                    weight: 1,
+                },
+                {
+                    data: [],
+                    borderAlign: 'center',
+                    backgroundColor: ['#A7FFEB', '#FF9E80', '#B388FF'],
+                    borderColor: ['#A7FFEB', '#FF9E80', '#B388FF'],
+                    borderWidth: '0',
+                    weight: 95,
+                },
+            ],
         };
 
-        const formatting = {
-            borderAlign: 'center',
-            backgroundColor: ['#A7FFEB', '#FF9E80', '#B388FF'],
-            borderColor: ['#A7FFEB', '#FF9E80', '#B388FF'],
-            borderWidth: '0',
-            weight: 95,
-        };
+        if (chartData.validSwap) {
+            chartData.swaps.forEach(swap => {
+                pieData.datasets[1].data.push(swap.percentage);
+            });
+        }
+        return pieData;
+    };
 
-        const formatPieData = (chartData: ChartData) => {
-            const pieData = {
-                datasets: [
-                    {
-                        data: [1],
-                        borderAlign: 'center',
-                        borderColor: '#B388FF',
-                        borderWidth: '1',
-                        weight: 1,
-                    },
-                    {
-                        data: [],
-                        borderAlign: 'center',
-                        backgroundColor: ['#A7FFEB', '#FF9E80', '#B388FF'],
-                        borderColor: ['#A7FFEB', '#FF9E80', '#B388FF'],
-                        borderWidth: '0',
-                        weight: 95,
-                    },
-                ],
-            };
+    const toggleDropDown = () => {
+        if (tradeCompositionOpen) {
+            return swapFormStore.setTradeCompositionOpen(false);
+        } else {
+            return swapFormStore.setTradeCompositionOpen(true);
+        }
+    };
 
-            if (chartData.validSwap) {
-                chartData.swaps.forEach(swap => {
-                    pieData.datasets[1].data.push(swap.percentage);
-                });
-            }
-            return pieData;
-        };
+    const { inputToken, outputToken } = swapFormStore.inputs;
 
-        const toggleDropDown = () => {
-            if (tradeCompositionOpen) {
-                return setTradeCompositionOpen(false);
-            } else {
-                return setTradeCompositionOpen(true);
-            }
-        };
-
-        const { inputToken, outputToken } = swapFormStore.inputs;
-
-        const renderChartRows = (chartData: ChartData, formatting) => {
-            if (chartData.validSwap) {
-                return chartData.swaps.map((swap, index) => {
-                    return (
-                        <PoolLine>
-                            <AddressAndBullet>
-                                <BulletPoint
-                                    color={formatting.borderColor[index]}
-                                />
-                                <Address>
-                                    {swap.isOthers
-                                        ? 'Others'
-                                        : toAddressStub(swap.poolAddress)}
-                                </Address>
-                            </AddressAndBullet>
-                            <Percentage>{swap.percentage}%</Percentage>
-                        </PoolLine>
-                    );
-                });
-            }
-
-            return (
-                <PoolLine>
-                    <AddressAndBullet>
-                        <BulletPoint color={formatting.borderColor[0]} />
-                        <Address>Please input a valid swap</Address>
-                    </AddressAndBullet>
-                </PoolLine>
-            );
-        };
-
-        const renderExchangeRate = (chartData: ChartData) => {
-            const inputTokenSymbol = tokenStore.getTokenMetadata(
-                supportedChainId,
-                inputToken
-            ).symbol;
-            const outputTokenSymbol = tokenStore.getTokenMetadata(
-                supportedChainId,
-                outputToken
-            ).symbol;
-
-            if (chartData.validSwap) {
-                const {
-                    normalizedInput,
-                    normalizedOutput,
-                } = normalizePriceValues(
-                    chartData.inputPriceValue,
-                    chartData.outputPriceValue
-                );
-
+    const renderChartRows = (chartData: ChartData, formatting) => {
+        if (chartData.validSwap) {
+            return chartData.swaps.map((swap, index) => {
                 return (
-                    <div>
-                        {normalizedInput.toString()} {inputTokenSymbol} ={' '}
-                        {normalizedOutput.toPrecision(6)} {outputTokenSymbol}
-                    </div>
+                    <PoolLine>
+                        <AddressAndBullet>
+                            <BulletPoint
+                                color={formatting.borderColor[index]}
+                            />
+                            <Address>
+                                {swap.isOthers
+                                    ? 'Others'
+                                    : toAddressStub(swap.poolAddress)}
+                            </Address>
+                        </AddressAndBullet>
+                        <Percentage>{swap.percentage}%</Percentage>
+                    </PoolLine>
                 );
-            } else {
-                return <div>Input swap parameters</div>;
-            }
-        };
+            });
+        }
 
         return (
-            <Container>
-                <Info>
-                    {renderExchangeRate(chartData)}
-                    <DropDownArrow
-                        onClick={() => {
-                            toggleDropDown();
-                        }}
-                    >
-                        <UpCarretIcon
-                            src="arrow-bottom.svg"
-                            style={{
-                                display: tradeCompositionOpen
-                                    ? 'block'
-                                    : 'none',
-                            }}
-                        />
-                        <DownCarretIcon
-                            src="dropdown.svg"
-                            style={{
-                                display: tradeCompositionOpen
-                                    ? 'none'
-                                    : 'block',
-                            }}
-                        />
-                    </DropDownArrow>
-                </Info>
-                <CompositionDropDown
-                    style={{ display: tradeCompositionOpen ? 'flex' : 'none' }}
-                >
-                    <PoolLineContainer>
-                        {renderChartRows(chartData, formatting)}
-                    </PoolLineContainer>
-                    <PieChartWrapper>
-                        <Pie
-                            data={formatPieData(chartData)}
-                            options={options}
-                        />
-                    </PieChartWrapper>
-                </CompositionDropDown>
-            </Container>
+            <PoolLine>
+                <AddressAndBullet>
+                    <BulletPoint color={formatting.borderColor[0]} />
+                    <Address>Please input a valid swap</Address>
+                </AddressAndBullet>
+            </PoolLine>
         );
-    }
-);
+    };
+
+    const renderExchangeRate = (chartData: ChartData) => {
+        const inputTokenSymbol = tokenStore.getTokenMetadata(
+            supportedChainId,
+            inputToken
+        ).symbol;
+        const outputTokenSymbol = tokenStore.getTokenMetadata(
+            supportedChainId,
+            outputToken
+        ).symbol;
+
+        if (chartData.validSwap) {
+            const { normalizedInput, normalizedOutput } = normalizePriceValues(
+                chartData.inputPriceValue,
+                chartData.outputPriceValue
+            );
+
+            return (
+                <div>
+                    {normalizedInput.toString()} {inputTokenSymbol} ={' '}
+                    {normalizedOutput.toPrecision(6)} {outputTokenSymbol}
+                </div>
+            );
+        } else {
+            return <div>Input swap parameters</div>;
+        }
+    };
+
+    return (
+        <Container>
+            <Info>
+                {renderExchangeRate(chartData)}
+                <DropDownArrow
+                    onClick={() => {
+                        toggleDropDown();
+                    }}
+                >
+                    <UpCarretIcon
+                        src="arrow-bottom.svg"
+                        style={{
+                            display: tradeCompositionOpen ? 'block' : 'none',
+                        }}
+                    />
+                    <DownCarretIcon
+                        src="dropdown.svg"
+                        style={{
+                            display: tradeCompositionOpen ? 'none' : 'block',
+                        }}
+                    />
+                </DropDownArrow>
+            </Info>
+            <CompositionDropDown
+                style={{ display: tradeCompositionOpen ? 'flex' : 'none' }}
+            >
+                <PoolLineContainer>
+                    {renderChartRows(chartData, formatting)}
+                </PoolLineContainer>
+                <PieChartWrapper>
+                    <Pie data={formatPieData(chartData)} options={options} />
+                </PieChartWrapper>
+            </CompositionDropDown>
+        </Container>
+    );
+});
 
 export default TradeComposition;

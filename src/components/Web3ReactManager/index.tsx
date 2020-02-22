@@ -4,20 +4,12 @@ import styled from 'styled-components';
 import {
     backup,
     isChainIdSupported,
-    supportedChainId,
     web3ContextNames,
 } from 'provider/connectors';
-import {
-    useActiveWeb3React,
-    useEagerConnect,
-    useInactiveListener,
-} from 'provider/providerHooks';
+import { useEagerConnect, useInactiveListener } from 'provider/providerHooks';
 import { useStores } from 'contexts/storesContext';
 import { observer } from 'mobx-react';
-import { Web3ReactContextInterface } from '@web3-react/core/dist/types';
-import ProviderStore from '../../stores/Provider';
 import { useInterval } from 'utils/helperHooks';
-import TokenStore from '../../stores/Token';
 
 const MessageWrapper = styled.div`
     display: flex;
@@ -30,76 +22,9 @@ const Message = styled.h2`
     color: ${({ theme }) => theme.uniswapPink};
 `;
 
-const fetchLoop = (
-    web3React: Web3ReactContextInterface,
-    providerStore: ProviderStore,
-    tokenStore: TokenStore,
-    forceFetch?: boolean
-) => {
-    if (
-        web3React.active &&
-        web3React.account &&
-        web3React.chainId === supportedChainId
-    ) {
-        const { library, account, chainId } = web3React;
-
-        library
-            .getBlockNumber()
-            .then(blockNumber => {
-                const lastCheckedBlock = providerStore.getCurrentBlockNumber(
-                    web3React.chainId
-                );
-                //
-                // console.log('[Fetch Loop] Staleness Evaluation', {
-                //     blockNumber,
-                //     lastCheckedBlock,
-                //     forceFetch,
-                //     doFetch: blockNumber !== lastCheckedBlock || forceFetch,
-                // });
-
-                const doFetch = blockNumber !== lastCheckedBlock || forceFetch;
-
-                if (doFetch) {
-                    console.log('[Fetch Loop] Fetch Blockchain Data', {
-                        blockNumber,
-                        chainId,
-                        account,
-                    });
-
-                    // Set block number
-                    providerStore.setCurrentBlockNumber(chainId, blockNumber);
-
-                    // Get global blockchain data
-                    // None
-
-                    // Get user-specific blockchain data
-                    if (account) {
-                        providerStore.fetchUserBlockchainData(
-                            web3React,
-                            chainId,
-                            account
-                        );
-                    }
-                }
-            })
-            .catch(error => {
-                console.log('[Fetch Loop Failure]', {
-                    web3React,
-                    providerStore,
-                    forceFetch,
-                    chainId,
-                    account,
-                    library,
-                    error,
-                });
-                providerStore.setCurrentBlockNumber(chainId, undefined);
-            });
-    }
-};
-
 const Web3ReactManager = observer(({ children }) => {
     const {
-        root: { providerStore, tokenStore },
+        root: { providerStore, blockchainFetchStore },
     } = useStores();
 
     const web3ContextInjected = useWeb3React(web3ContextNames.injected);
@@ -114,7 +39,13 @@ const Web3ReactManager = observer(({ children }) => {
         activate: activateNetwork,
     } = web3ContextBackup;
 
-    const web3React = useActiveWeb3React();
+    providerStore.setWeb3Context(
+        web3ContextNames.injected,
+        web3ContextInjected
+    );
+    providerStore.setWeb3Context(web3ContextNames.backup, web3ContextBackup);
+
+    const web3React = providerStore.getActiveWeb3React();
 
     console.log('[Web3ReactManager] Start of render', {
         injected: web3ContextInjected,
@@ -205,7 +136,7 @@ const Web3ReactManager = observer(({ children }) => {
 
     //Fetch user blockchain data on an interval using current params
     useInterval(
-        () => fetchLoop(web3React, providerStore, tokenStore, false),
+        () => blockchainFetchStore.setFetchLoop(web3React, false),
         web3React.account ? 1000 : null
     );
 
@@ -218,7 +149,7 @@ const Web3ReactManager = observer(({ children }) => {
                 account: web3React.account,
                 prevAccount: providerStore.activeAccount,
             });
-            fetchLoop(web3React, providerStore, tokenStore, true);
+            blockchainFetchStore.setFetchLoop(web3React, true);
         }
     }, [web3React]);
 

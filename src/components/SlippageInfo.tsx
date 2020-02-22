@@ -43,38 +43,40 @@ const InfoPopover = styled.img`
     cursor: pointer;
 `;
 
-const SlippageInfo = observer(
-    ({ expectedSlippage, setSlippageSelectorOpen }) => {
-        const {
-            root: { swapFormStore },
-        } = useStores();
+const SlippageInfo = observer(() => {
+    const {
+        root: { swapFormStore },
+    } = useStores();
+    const {
+        inputs: { extraSlippageAllowance },
+        outputs: { expectedSlippage },
+    } = swapFormStore;
 
-        return (
-            <SlippageInfoContainer>
-                <div>Expected price slippage of {expectedSlippage} with</div>
-                <SlippageInlineDisplay
-                    onClick={() => {
-                        setSlippageSelectorOpen(true);
-                    }}
-                >
-                    {swapFormStore.getSlippageSelectorErrorStatus() ===
-                    InputValidationStatus.VALID
-                        ? `${swapFormStore.inputs.extraSlippageAllowance}%`
-                        : `-`}
-                </SlippageInlineDisplay>
-                <div>additional limit</div>
-                <Popup
-                    trigger={<InfoPopover src="info.svg" />}
-                    position="top center"
-                    on="hover"
-                >
-                    <div>
-                        <div>Expected effective price</div>
-                    </div>
-                </Popup>
-            </SlippageInfoContainer>
-        );
-    }
-);
+    return (
+        <SlippageInfoContainer>
+            <div>Expected price slippage of {expectedSlippage} with</div>
+            <SlippageInlineDisplay
+                onClick={() => {
+                    swapFormStore.setSlippageSelectorOpen(true);
+                }}
+            >
+                {swapFormStore.getSlippageSelectorErrorStatus() ===
+                InputValidationStatus.VALID
+                    ? `${extraSlippageAllowance}%`
+                    : `-`}
+            </SlippageInlineDisplay>
+            <div>additional limit</div>
+            <Popup
+                trigger={<InfoPopover src="info.svg" />}
+                position="top center"
+                on="hover"
+            >
+                <div>
+                    <div>Expected effective price</div>
+                </div>
+            </Popup>
+        </SlippageInfoContainer>
+    );
+});
 
 export default SlippageInfo;

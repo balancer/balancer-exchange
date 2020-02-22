@@ -18,7 +18,6 @@ const BuyToken = observer(
         tokenBalance,
         truncatedTokenBalance,
         tokenAddress,
-        setModalOpen,
         errorMessage,
         showMax,
     }) => {
@@ -109,7 +108,6 @@ const BuyToken = observer(
                 tokenBalance={tokenBalance}
                 truncatedTokenBalance={truncatedTokenBalance}
                 tokenAddress={tokenAddress}
-                setModalOpen={setModalOpen}
                 setFocus={setBuyFocus}
                 errorMessage={errorMessage}
                 showMax={showMax}
