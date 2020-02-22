@@ -4,13 +4,7 @@ import jazzicon from 'jazzicon';
 import { ethers, utils } from 'ethers';
 import { BigNumber } from 'utils/bignumber';
 import { SUPPORTED_THEMES } from '../theme';
-import {
-    Pool,
-    SorSwap,
-    StringifiedPool,
-    Swap,
-    SwapInput,
-} from '../stores/Proxy';
+import { Pool, SorSwap, Swap, SwapInput } from '../stores/Proxy';
 import { SwapMethods } from '../stores/SwapForm';
 
 // Utils
@@ -299,16 +293,16 @@ export const getGasPriceFromETHGasStation = () => {
 };
 
 // TODO: Issue between new BigNumber() and BigNumber() cast in javascript SOR
-export const formatPoolData = (pools: Pool[]): StringifiedPool[] => {
-    const result: StringifiedPool[] = [];
+export const formatPoolData = (pools: Pool[]): Pool[] => {
+    const result: Pool[] = [];
     pools.forEach(pool => {
         result.push({
             id: pool.id,
-            balanceIn: str(fromWei(pool.balanceIn)),
-            balanceOut: str(fromWei(pool.balanceOut)),
-            weightIn: str(fromWei(pool.weightIn)),
-            weightOut: str(fromWei(pool.weightOut)),
-            swapFee: str(fromWei(pool.swapFee)),
+            balanceIn: new BigNumber(fromWei(pool.balanceIn)),
+            balanceOut: new BigNumber(fromWei(pool.balanceOut)),
+            weightIn: new BigNumber(fromWei(pool.weightIn)),
+            weightOut: new BigNumber(fromWei(pool.weightOut)),
+            swapFee: new BigNumber(fromWei(pool.swapFee)),
         });
     });
     return result;
