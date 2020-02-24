@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import AssetOptions from './AssetOptions';
+import { observer } from 'mobx-react';
+import { useStores } from '../contexts/storesContext';
 
 const Container = styled.div`
     display: block;
@@ -80,22 +82,25 @@ const InputContainer = styled.div`
     }
 `;
 
-const AssetSelector = ({ modelOpen, setModalOpen }) => {
-    const [filter, setFilter] = useState('');
+const AssetSelector = observer(() => {
+    const {
+        root: { swapFormStore },
+    } = useStores();
+
+    const { assetModalState } = swapFormStore;
 
     const onChange = async event => {
-        const { value } = event.target;
-        setFilter(value);
+        swapFormStore.setAssetSelectFilter(event.target.value);
     };
 
     return (
-        <Container style={{ display: modelOpen.state ? 'block' : 'none' }}>
+        <Container style={{ display: assetModalState.open ? 'block' : 'none' }}>
             <ModalContent>
                 <AssetSelectorHeader>
                     <HeaderContent>Select Token to Sell</HeaderContent>
                     <ExitComponent
                         onClick={() => {
-                            setModalOpen({ state: false });
+                            swapFormStore.setAssetModalState({ open: false });
                         }}
                     >
                         +
@@ -107,14 +112,10 @@ const AssetSelector = ({ modelOpen, setModalOpen }) => {
                         placeholder="Search Token Name, Symbol, or Address"
                     />
                 </InputContainer>
-                <AssetOptions
-                    filter={filter}
-                    modelOpen={modelOpen}
-                    setModalOpen={setModalOpen}
-                />
+                <AssetOptions />
             </ModalContent>
         </Container>
     );
-};
+});
 
 export default AssetSelector;

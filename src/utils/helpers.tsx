@@ -4,13 +4,7 @@ import jazzicon from 'jazzicon';
 import { ethers, utils } from 'ethers';
 import { BigNumber } from 'utils/bignumber';
 import { SUPPORTED_THEMES } from '../theme';
-import {
-    Pool,
-    SorSwap,
-    StringifiedPool,
-    Swap,
-    SwapInput,
-} from '../stores/Proxy';
+import { Pool, SorSwap, Swap, SwapInput } from '../stores/Proxy';
 import { SwapMethods } from '../stores/SwapForm';
 
 // Utils
@@ -49,7 +43,6 @@ export function fromWei(val: string | utils.BigNumber | BigNumber): string {
 }
 
 export function toWei(val: string | utils.BigNumber | BigNumber): BigNumber {
-    console.log('toWei', val.toString());
     return scale(bnum(val.toString()), 18).integerValue();
 }
 
@@ -233,6 +226,51 @@ export const normalizePriceValues = (
     };
 };
 
+export const formatBalanceTruncated = (
+    balance: BigNumber,
+    precision: number,
+    truncateAt: number
+): string => {
+    const result = formatBalance(balance, precision);
+    if (result.length > truncateAt) {
+        return result.substring(0, 20) + '...';
+    } else {
+        return result;
+    }
+};
+
+export const formatBalance = (
+    balance: BigNumber,
+    precision: number
+): string => {
+    if (balance.eq(0)) {
+        return bnum(0).toFixed(2);
+    }
+
+    const result = bnum(fromWei(balance))
+        .decimalPlaces(precision)
+        .toString();
+
+    return padToDecimalPlaces(result, 2);
+};
+
+export const padToDecimalPlaces = (
+    value: string,
+    minDecimals: number
+): string => {
+    const split = value.split('.');
+    const zerosToPad = split[1] ? minDecimals - split[1].length : minDecimals;
+
+    if (zerosToPad > 0) {
+        let pad = '.';
+        for (let i = 0; i < zerosToPad; i++) {
+            pad += '0';
+        }
+        return value + pad;
+    }
+    return value;
+};
+
 export const getGasPriceFromETHGasStation = () => {
     return new Promise((resolve, reject) => {
         const timeout = setTimeout(() => {
@@ -255,16 +293,16 @@ export const getGasPriceFromETHGasStation = () => {
 };
 
 // TODO: Issue between new BigNumber() and BigNumber() cast in javascript SOR
-export const formatPoolData = (pools: Pool[]): StringifiedPool[] => {
-    const result: StringifiedPool[] = [];
+export const formatPoolData = (pools: Pool[]): Pool[] => {
+    const result: Pool[] = [];
     pools.forEach(pool => {
         result.push({
             id: pool.id,
-            balanceIn: str(fromWei(pool.balanceIn)),
-            balanceOut: str(fromWei(pool.balanceOut)),
-            weightIn: str(fromWei(pool.weightIn)),
-            weightOut: str(fromWei(pool.weightOut)),
-            swapFee: str(fromWei(pool.swapFee)),
+            balanceIn: new BigNumber(fromWei(pool.balanceIn)),
+            balanceOut: new BigNumber(fromWei(pool.balanceOut)),
+            weightIn: new BigNumber(fromWei(pool.weightIn)),
+            weightOut: new BigNumber(fromWei(pool.weightOut)),
+            swapFee: new BigNumber(fromWei(pool.swapFee)),
         });
     });
     return result;

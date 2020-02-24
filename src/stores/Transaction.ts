@@ -1,10 +1,11 @@
-import { action, observable, ObservableMap } from 'mobx';
+import { action, observable } from 'mobx';
 import { providers } from 'ethers';
 import RootStore from 'stores/Root';
 import { TransactionResponse } from 'ethers/providers';
 import { Web3ReactContextInterface } from '@web3-react/core/dist/types';
 
 export interface TransactionRecord {
+    hash: string;
     response: providers.TransactionResponse;
     blockNumberChecked: number;
     receipt: providers.TransactionReceipt | undefined;
@@ -14,6 +15,7 @@ const ERRORS = {
     unknownTxHash: 'Transaction hash is not stored',
     unknownNetworkId: 'NetworkID specified is not tracked',
     txHashAlreadyExists: 'Transaction hash already exists for network',
+    txHasNoHash: 'Attempting to add transaction record without hash',
 };
 
 export enum FetchCode {
@@ -22,97 +24,83 @@ export enum FetchCode {
     STALE,
 }
 
-type TransactionHashMap = ObservableMap<string, TransactionRecord>;
-type NetworkIdsMap = ObservableMap<number, TransactionHashMap>;
+export interface TransactionRecordMap {
+    [index: string]: TransactionRecord[];
+}
 
 export default class TransactionStore {
-    @observable allTxRecords: NetworkIdsMap;
+    @observable txRecords: TransactionRecordMap;
     rootStore: RootStore;
 
-    constructor(rootStore, networkIds: number[]) {
+    constructor(rootStore) {
         this.rootStore = rootStore;
-        this.allTxRecords = new ObservableMap<number, TransactionHashMap>();
-
-        networkIds.forEach(networkId => {
-            this.allTxRecords.set(
-                networkId,
-                new ObservableMap<string, TransactionRecord>()
-            );
-        });
-    }
-
-    getTransactionRecord(networkId: number, txHash: string): TransactionRecord {
-        return this.safeGetTxRecord(networkId, txHash);
+        this.txRecords = {} as TransactionRecordMap;
     }
 
     // @dev Transactions are pending if we haven't seen their receipt yet
-    getPendingTransactions(networkId: number): TransactionHashMap {
-        const txRecordHashMap = this.safeGetTxRecordHashMap(networkId);
-        const pending = new ObservableMap<string, TransactionRecord>();
+    getPendingTransactions(account: string): TransactionRecord[] {
+        if (this.txRecords[account]) {
+            const records = this.txRecords[account];
+            return records.filter(value => {
+                return this.isTxPending(value);
+            });
+        }
 
-        txRecordHashMap.forEach((value, key) => {
-            if (this.isTxPending(value)) {
-                pending.set(key, value);
-            }
-        });
-        return pending;
+        return [] as TransactionRecord[];
     }
 
-    getConfirmedTransactions(networkId: number): TransactionHashMap {
-        const txRecordHashMap = this.safeGetTxRecordHashMap(networkId);
-        const confirmed = new ObservableMap<string, TransactionRecord>();
+    getConfirmedTransactions(account: string): TransactionRecord[] {
+        if (this.txRecords[account]) {
+            const records = this.txRecords[account];
+            return records.filter(value => {
+                return !this.isTxPending(value);
+            });
+        }
 
-        txRecordHashMap.forEach((value, key) => {
-            if (!this.isTxPending(value)) {
-                confirmed.set(key, value);
-            }
-        });
-        return confirmed;
+        return [] as TransactionRecord[];
     }
 
     @action async checkPendingTransactions(
         web3React: Web3ReactContextInterface,
-        networkId
+        networkId,
+        account
     ): Promise<FetchCode> {
         const { providerStore } = this.rootStore;
         const currentBlock = providerStore.getCurrentBlockNumber(networkId);
 
         const { library } = web3React;
-        const txRecordHashMap = this.safeGetTxRecordHashMap(networkId);
-
-        txRecordHashMap.forEach((value, key) => {
-            if (this.isTxPending(value) && this.isStale(value, currentBlock)) {
-                library
-                    .getTransactionReceipt(key)
-                    .then(receipt => {
-                        this.setTxRecordBlockChecked(
-                            networkId,
-                            key,
-                            currentBlock
-                        );
-                        if (receipt) {
-                            this.setTxRecordReceipt(networkId, key, receipt);
-                        }
-                    })
-                    .catch(() => {
-                        this.setTxRecordBlockChecked(
-                            networkId,
-                            key,
-                            currentBlock
-                        );
-                    });
-            }
-        });
+        if (this.txRecords[account]) {
+            const records = this.txRecords[account];
+            records.forEach(value => {
+                if (
+                    this.isTxPending(value) &&
+                    this.isStale(value, currentBlock)
+                ) {
+                    library
+                        .getTransactionReceipt(value.hash)
+                        .then(receipt => {
+                            value.blockNumberChecked = currentBlock;
+                            if (receipt) {
+                                value.receipt = receipt;
+                            }
+                        })
+                        .catch(() => {
+                            value.blockNumberChecked = currentBlock;
+                        });
+                }
+            });
+        }
 
         return FetchCode.SUCCESS;
     }
 
     // @dev Add transaction record. It's in a pending state until mined.
     @action addTransactionRecord(
-        networkId: number,
+        account: string,
         txResponse: TransactionResponse
     ) {
-        const txRecord: TransactionRecord = {
+        const record: TransactionRecord = {
+            hash: txResponse.hash,
             response: txResponse,
             blockNumberChecked: 0,
             receipt: undefined,
@@ -126,57 +114,20 @@ export default class TransactionStore {
             );
         }
 
-        const txRecordHashMap = this.safeGetTxRecordHashMap(networkId);
+        let records = this.txRecords[account];
 
-        if (txRecordHashMap.has(txHash)) {
-            throw new Error(ERRORS.txHashAlreadyExists);
+        if (records) {
+            const duplicate = records.find(value => value.hash === txHash);
+            if (!!duplicate) {
+                throw new Error(ERRORS.txHashAlreadyExists);
+            }
+            this.txRecords[account].push(record);
+        } else {
+            this.txRecords[account] = [] as TransactionRecord[];
+            this.txRecords[account].push(record);
         }
 
-        txRecordHashMap.set(txHash, txRecord);
-    }
-
-    @action setTxRecordBlockChecked(
-        networkId: number,
-        txHash: string,
-        blockNumber: number
-    ) {
-        const txRecordHashMap = this.safeGetTxRecordHashMap(networkId);
-        const txRecord = this.safeGetTxRecord(networkId, txHash);
-
-        txRecord.blockNumberChecked = blockNumber;
-        txRecordHashMap.set(txHash, txRecord);
-    }
-
-    @action setTxRecordReceipt(
-        networkId: number,
-        txHash: string,
-        txReceipt: providers.TransactionReceipt
-    ) {
-        const txRecordHashMap = this.safeGetTxRecordHashMap(networkId);
-        const txRecord = this.safeGetTxRecord(networkId, txHash);
-
-        txRecord.receipt = txReceipt;
-        txRecordHashMap.set(txHash, txRecord);
-    }
-
-    private safeGetTxRecordHashMap(networkId: number): TransactionHashMap {
-        const txRecordHashMap = this.allTxRecords.get(networkId);
-        if (!txRecordHashMap) {
-            throw new Error(ERRORS.unknownNetworkId);
-        }
-        return txRecordHashMap;
-    }
-
-    private safeGetTxRecord(
-        networkId: number,
-        txHash: string
-    ): TransactionRecord {
-        const txRecordHashMap = this.safeGetTxRecordHashMap(networkId);
-        const txRecord = txRecordHashMap.get(txHash);
-        if (!txRecord) {
-            throw new Error(ERRORS.unknownTxHash);
-        }
-        return txRecord;
+        console.log('records', records);
     }
 
     private isTxPending(txRecord: TransactionRecord): boolean {

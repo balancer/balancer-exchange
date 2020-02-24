@@ -2,13 +2,12 @@ import React from 'react';
 import styled from 'styled-components';
 import { TokenIconAddress } from './TokenPanel';
 import { useStores } from '../contexts/storesContext';
-import { bnum, fromWei } from 'utils/helpers';
+import { bnum, formatBalanceTruncated, fromWei } from 'utils/helpers';
 import {
     getSupportedChainId,
     isChainIdSupported,
 } from '../provider/connectors';
 import { observer } from 'mobx-react';
-import { useActiveWeb3React } from '../provider/index';
 
 const AssetPanelContainer = styled.div`
     display: flex;
@@ -79,15 +78,17 @@ interface Asset {
     isTradable: boolean;
 }
 
-const AssetOptions = observer(({ filter, modelOpen, setModalOpen }) => {
+const AssetOptions = observer(() => {
     // TODO do math and pass props into AssetPanel css to make border-bottom none for bottom row of assets
 
     const {
-        root: { swapFormStore, tokenStore, poolStore },
+        root: { providerStore, swapFormStore, tokenStore, poolStore },
     } = useStores();
 
     const supportedChainId = getSupportedChainId();
-    const { chainId, account } = useActiveWeb3React();
+    const { chainId, account } = providerStore.getActiveWeb3React();
+
+    const { assetSelectFilter, assetModalState } = swapFormStore;
 
     const getAssetOptions = (filter, chainId, account): Asset[] => {
         const filteredWhitelistedTokens = tokenStore.getFilteredTokenMetadata(
@@ -99,11 +100,11 @@ const AssetOptions = observer(({ filter, modelOpen, setModalOpen }) => {
         let userBalances = {};
         let tradableTokens;
 
-        if (modelOpen.input === 'inputAmount') {
+        if (assetModalState.input === 'inputAmount') {
             tradableTokens = poolStore.getTokenPairs(
                 swapFormStore.inputs.outputToken
             );
-        } else if (modelOpen.input === 'outputAmount') {
+        } else if (assetModalState.input === 'outputAmount') {
             tradableTokens = poolStore.getTokenPairs(
                 swapFormStore.inputs.inputToken
             );
@@ -118,26 +119,13 @@ const AssetOptions = observer(({ filter, modelOpen, setModalOpen }) => {
         }
 
         assetSelectorData = filteredWhitelistedTokens.map(value => {
-            let userBalance =
-                userBalances[value.address] > 0
-                    ? fromWei(userBalances[value.address])
-                    : '0.00';
-            let balanceParts = userBalance.split('.');
-            if (balanceParts[1].substring(0, 8).length > 1) {
-                userBalance =
-                    balanceParts[0] +
-                    '.' +
-                    balanceParts[1].substring(0, value.precision);
-            } else {
-                userBalance =
-                    balanceParts[0] +
-                    '.' +
-                    balanceParts[1].substring(0, 1) +
-                    '0';
-            }
-            if (userBalance.length > 20) {
-                userBalance = userBalance.substring(0, 20) + '...';
-            }
+            const userBalance = formatBalanceTruncated(
+                userBalances[value.address]
+                    ? bnum(userBalances[value.address])
+                    : bnum(0),
+                value.precision,
+                20
+            );
 
             return {
                 address: value.address,
@@ -185,7 +173,7 @@ const AssetOptions = observer(({ filter, modelOpen, setModalOpen }) => {
     };
 
     const assets = sortAssetOptions(
-        getAssetOptions(filter, chainId, account),
+        getAssetOptions(assetSelectFilter, chainId, account),
         account
     );
 
@@ -197,7 +185,7 @@ const AssetOptions = observer(({ filter, modelOpen, setModalOpen }) => {
     };
 
     const selectAsset = token => {
-        if (modelOpen.input === 'inputAmount') {
+        if (assetModalState.input === 'inputAmount') {
             swapFormStore.inputs.inputToken = token.address;
             swapFormStore.inputs.inputTicker = token.symbol;
             swapFormStore.inputs.inputIconAddress = token.iconAddress;
@@ -209,7 +197,7 @@ const AssetOptions = observer(({ filter, modelOpen, setModalOpen }) => {
 
         poolStore.fetchAndSetTokenPairs(token.address);
         clearInputs();
-        setModalOpen(false);
+        swapFormStore.setAssetModalState({ open: false });
     };
 
     return (

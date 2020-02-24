@@ -4,12 +4,15 @@ import { isMobile } from 'react-device-detect';
 import Copy from './Copy';
 import Transaction from './Transaction';
 import { injected, SUPPORTED_WALLETS } from 'provider/connectors';
+//@ts-ignore
 import { ReactComponent as Close } from '../../assets/images/x.svg';
 import { getEtherscanLink } from 'utils/helpers';
 import Identicon from '../Identicon';
+import { web3Window as window } from 'provider/Web3Window';
 
 import { Link } from '../../theme';
-import { useActiveWeb3React } from '../../provider';
+import { TransactionRecord } from 'stores/Transaction';
+import { useStores } from '../../contexts/storesContext';
 
 const OptionButton = styled.div`
     ${({ theme }) => theme.flexColumnNoWrap}
@@ -225,24 +228,43 @@ const MainWalletAction = styled(WalletAction)`
     color: ${({ theme }) => theme.royalBlue};
 `;
 
-function renderTransactions(transactions, pending) {
-    return (
-        <TransactionListWrapper>
-            {transactions.map((hash, i) => {
-                return <Transaction key={i} hash={hash} pending={pending} />;
-            })}
-        </TransactionListWrapper>
-    );
+interface Props {
+    toggleWalletModal: any;
+    pendingTransactions: TransactionRecord[];
+    confirmedTransactions: TransactionRecord[];
+    ENSName: any;
+    openOptions: any;
 }
 
-export default function AccountDetails({
-    toggleWalletModal,
-    pendingTransactions,
-    confirmedTransactions,
-    ENSName,
-    openOptions,
-}) {
-    const { chainId, account, connector } = useActiveWeb3React();
+export default function AccountDetails(props: Props) {
+    const {
+        toggleWalletModal,
+        pendingTransactions,
+        confirmedTransactions,
+        ENSName,
+        openOptions,
+    } = props;
+    const {
+        root: { providerStore },
+    } = useStores();
+    const { chainId, account, connector } = providerStore.getActiveWeb3React();
+
+    function renderTransactions(transactions: TransactionRecord[], pending) {
+        console.log('[renderTransactions]', transactions, pending);
+        return (
+            <TransactionListWrapper>
+                {transactions.map((value, i) => {
+                    return (
+                        <Transaction
+                            key={i}
+                            hash={value.hash}
+                            pending={pending}
+                        />
+                    );
+                })}
+            </TransactionListWrapper>
+        );
+    }
 
     function formatConnectorName() {
         const isMetaMask =
@@ -268,6 +290,9 @@ export default function AccountDetails({
         }
     }
 
+    const hasTx =
+        !!pendingTransactions.length || !!confirmedTransactions.length;
+
     return (
         <>
             <UpperSection>
@@ -284,6 +309,7 @@ export default function AccountDetails({
                                     {connector !== injected && (
                                         <WalletAction
                                             onClick={() => {
+                                                //@ts-ignore
                                                 connector.close();
                                             }}
                                         >
@@ -352,7 +378,7 @@ export default function AccountDetails({
                     )}
                 </AccountSection>
             </UpperSection>
-            {!!pendingTransactions.length || !!confirmedTransactions.length ? (
+            {hasTx ? (
                 <LowerSection>
                     <h5>Recent Transactions</h5>
                     {renderTransactions(pendingTransactions, true)}

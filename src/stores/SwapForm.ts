@@ -105,6 +105,13 @@ export default class SwapFormStore {
     };
     @observable preview: SwapPreview;
     @observable tradeCompositionData: ChartData;
+    @observable tradeCompositionOpen: boolean;
+    @observable slippageSelectorOpen: boolean;
+    @observable assetModalState = {
+        open: false,
+        input: 'inputAmount',
+    };
+    @observable assetSelectFilter: string = '';
     @observable slippageCell: number = 3;
 
     rootStore: RootStore;
@@ -217,6 +224,21 @@ export default class SwapFormStore {
         this.inputs.inputAmount = value;
     }
 
+    @action setTradeCompositionOpen(value) {
+        this.tradeCompositionOpen = value;
+    }
+
+    @action setSlippageSelectorOpen(value) {
+        this.slippageSelectorOpen = value;
+    }
+
+    @action setAssetModalState(value: { open?: boolean; input?: string }) {
+        this.assetModalState = {
+            ...this.assetModalState,
+            ...value,
+        };
+    }
+
     @action switchInputOutputValues() {
         const {
             outputToken,
@@ -242,6 +264,10 @@ export default class SwapFormStore {
         this.setInputAmount('');
         this.setOutputAmount('');
         this.clearErrorMessage();
+    }
+
+    @action setAssetSelectFilter(value: string) {
+        this.assetSelectFilter = value;
     }
 
     isInputAmountStale(inputAmount: string | BigNumber) {

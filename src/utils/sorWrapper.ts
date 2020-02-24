@@ -6,7 +6,7 @@ import {
     calcSpotPrice,
 } from './balancerCalcs';
 import * as helpers from './helpers';
-import { bnum, printPoolData } from './helpers';
+import { bnum, formatPoolData, printPoolData } from './helpers';
 import {
     getPoolsWithTokens,
     getTokenPairs,
@@ -112,7 +112,7 @@ export const findBestSwaps = (
 ): SorSwap[] => {
     printPoolData(balancers);
     return linearizedSolution(
-        balancers,
+        formatPoolData(balancers),
         swapMethod,
         inputAmount,
         maxBalancers,
