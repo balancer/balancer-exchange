@@ -48,6 +48,7 @@ export interface BigNumberMap {
 export interface TokenMetadata {
     address: string;
     symbol: string;
+    decimals: number;
     iconAddress: string;
     precision: number;
 }
@@ -105,10 +106,11 @@ export default class TokenStore {
         };
 
         tokenMetadata.forEach(token => {
-            const { address, symbol, iconAddress, precision } = token;
+            const { address, symbol, decimals, iconAddress, precision } = token;
             contractMetadata.tokens.push({
                 address,
                 symbol,
+                decimals,
                 iconAddress,
                 precision,
             });
