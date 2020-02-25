@@ -12,7 +12,7 @@ import { bnum, scale, printPoolData } from './helpers';
 import {
     getPoolsWithTokens,
     getTokenPairs,
-    linearizedSolution,
+    smartOrderRouter,
 } from '@balancer-labs/sor';
 import { SwapMethods } from '../stores/SwapForm';
 import { Pool, SorSwap, Swap } from '../stores/Proxy';
@@ -103,7 +103,7 @@ export const findBestSwaps = (
     costOutputToken: BigNumber
 ): SorSwap[] => {
     printPoolData(balancers);
-    return linearizedSolution(
+    return smartOrderRouter(
         balancers,
         swapMethod,
         inputAmount,
