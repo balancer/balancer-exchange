@@ -259,16 +259,14 @@ export const padToDecimalPlaces = (
     minDecimals: number
 ): string => {
     const split = value.split('.');
-    const zerosToPad = split[1] ? minDecimals - split[1].length : minDecimals;
-
-    if (zerosToPad > 0) {
-        let pad = '.';
-        for (let i = 0; i < zerosToPad; i++) {
-            pad += '0';
-        }
-        return value + pad;
+    
+    if (!split[1]) {
+        return value + ".00";
+    } else if (split[1].length > 1) {
+        return value;
+    } else {
+        return value + "0"
     }
-    return value;
 };
 
 export const getGasPriceFromETHGasStation = () => {
