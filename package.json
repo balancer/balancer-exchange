@@ -29,7 +29,7 @@
         "babel-loader": "8.0.6",
         "babel-plugin-named-asset-import": "^0.3.4",
         "babel-preset-react-app": "^9.0.2",
-        "@balancer-labs/sor": "^0.1.2-0",
+        "@balancer-labs/sor": "../sor/balancer-sor",
         "big.js": "^5.2.2",
         "bignumber.js": "^9.0.0",
         "camelcase": "^5.2.0",

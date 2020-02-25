@@ -6,6 +6,7 @@ import {
     printSorSwaps,
     printSwapInput,
     printSwaps,
+    scale,
 } from 'utils/helpers';
 import RootStore from 'stores/Root';
 import { BigNumber } from 'utils/bignumber';
@@ -68,6 +69,8 @@ export interface SwapInput {
 
 export interface Pool {
     id: string;
+    decimalsIn: number;
+    decimalsOut: number;
     balanceIn: BigNumber;
     balanceOut: BigNumber;
     weightIn: BigNumber;
@@ -304,9 +307,12 @@ export default class ProxyStore {
 
             const poolData = await findPoolsWithTokens(
                 tokenInToFind,
-                tokenOutToFind,
-                true
+                tokenOutToFind
             );
+
+            // FIX ONCE TOKEN DECIMALS ARE FETCHED SEPARATELY
+            inputAmount = scale(inputAmount, poolData[0].decimalsIn);
+
             const costOutputToken = this.costCalculator.getCostOutputToken();
 
             const sorSwaps = findBestSwaps(
@@ -330,12 +336,15 @@ export default class ProxyStore {
                 poolData
             );
 
-            const spotPrice = calcPrice(inputAmount, spotOutput);
+            const spotPrice = calcPrice(
+                scale(inputAmount, -poolData[0].decimalsIn),
+                scale(spotOutput, -poolData[0].decimalsOut)
+            );
             const totalOutput = calcTotalOutput(swaps, poolData);
 
             const effectivePrice = this.calcEffectivePrice(
-                inputAmount,
-                helpers.scale(totalOutput, -18)
+                scale(inputAmount, -poolData[0].decimalsIn),
+                totalOutput
             );
 
             const expectedSlippage = calcExpectedSlippage(
@@ -400,8 +409,7 @@ export default class ProxyStore {
 
             const poolData = await findPoolsWithTokens(
                 tokenInToFind,
-                tokenOutToFind,
-                true
+                tokenOutToFind
             );
             const costOutputToken = this.costCalculator.getCostOutputToken();
 
