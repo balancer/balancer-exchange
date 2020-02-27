@@ -52,14 +52,14 @@ export function calcSpotPrice(
     return bmul(ratio, scale);
 }
 
-function bmul(a: BigNumber, b: BigNumber): BigNumber {
+export function bmul(a: BigNumber, b: BigNumber): BigNumber {
     let c0 = a.times(b);
     let c1 = c0.plus(BONE.div(new BigNumber(2)));
     let c2 = c1.idiv(BONE);
     return c2;
 }
 
-function bdiv(a: BigNumber, b: BigNumber): BigNumber {
+export function bdiv(a: BigNumber, b: BigNumber): BigNumber {
     let c0 = a.times(BONE);
     let c1 = c0.plus(BONE.div(new BigNumber(2)));
     let c2 = c1.idiv(b);

@@ -4,13 +4,15 @@ import {
     calcInGivenOut,
     calcOutGivenIn,
     calcSpotPrice,
+    bmul,
+    bdiv,
 } from './balancerCalcs';
 import * as helpers from './helpers';
-import { bnum, formatPoolData, printPoolData } from './helpers';
+import { bnum, scale, printPoolData } from './helpers';
 import {
     getPoolsWithTokens,
     getTokenPairs,
-    linearizedSolution,
+    smartOrderRouter,
 } from '@balancer-labs/sor';
 import { SwapMethods } from '../stores/SwapForm';
 import { Pool, SorSwap, Swap } from '../stores/Proxy';
@@ -28,10 +30,7 @@ export const formatSwapsExactAmountIn = (
         let swapAmount = sorSwaps[i].amount;
         let swap: Swap = {
             pool: sorSwaps[i].pool,
-            tokenInParam: swapAmount
-                .times(BONE)
-                .integerValue(3)
-                .toString(),
+            tokenInParam: swapAmount.toString(),
             tokenOutParam: minAmountOut.toString(),
             maxPrice: maxPrice.toString(),
         };
@@ -52,10 +51,7 @@ export const formatSwapsExactAmountOut = (
         let swap: Swap = {
             pool: sorSwaps[i].pool,
             tokenInParam: maxAmountIn.toString(),
-            tokenOutParam: swapAmount
-                .times(BONE)
-                .integerValue(3)
-                .toString(),
+            tokenOutParam: swapAmount.toString(),
             maxPrice: maxPrice.toString(),
         };
         swaps.push(swap);
@@ -65,8 +61,7 @@ export const formatSwapsExactAmountOut = (
 
 export const findPoolsWithTokens = async (
     tokenIn: string,
-    tokenOut: string,
-    fromWei: boolean = false
+    tokenOut: string
 ): Promise<Pool[]> => {
     let pools = await getPoolsWithTokens(tokenIn, tokenOut);
 
@@ -83,20 +78,17 @@ export const findPoolsWithTokens = async (
         );
         let obj: Pool = {
             id: helpers.toChecksum(p.id),
-            balanceIn: bnum(tI.balance),
-            balanceOut: bnum(tO.balance),
-            weightIn: bnum(tI.denormWeight).div(bnum(p.totalWeight)),
-            weightOut: bnum(tO.denormWeight).div(bnum(p.totalWeight)),
-            swapFee: bnum(p.swapFee),
+            decimalsIn: tI.decimals,
+            decimalsOut: tO.decimals,
+            balanceIn: scale(bnum(tI.balance), tI.decimals),
+            balanceOut: scale(bnum(tO.balance), tO.decimals),
+            weightIn: scale(bnum(tI.denormWeight).div(bnum(p.totalWeight)), 18),
+            weightOut: scale(
+                bnum(tO.denormWeight).div(bnum(p.totalWeight)),
+                18
+            ),
+            swapFee: scale(bnum(p.swapFee), 18),
         };
-
-        if (fromWei) {
-            obj.balanceIn = obj.balanceIn.times(BONE);
-            obj.balanceOut = obj.balanceOut.times(BONE);
-            obj.weightIn = obj.weightIn.times(BONE);
-            obj.weightOut = obj.weightOut.times(BONE);
-            obj.swapFee = obj.swapFee.times(BONE);
-        }
 
         poolData.push(obj);
     });
@@ -111,8 +103,8 @@ export const findBestSwaps = (
     costOutputToken: BigNumber
 ): SorSwap[] => {
     printPoolData(balancers);
-    return linearizedSolution(
-        formatPoolData(balancers),
+    return smartOrderRouter(
+        balancers,
         swapMethod,
         inputAmount,
         maxBalancers,
@@ -126,6 +118,7 @@ export const calcTotalOutput = (swaps: Swap[], poolData: Pool[]): BigNumber => {
         let totalAmountOut = bnum(0);
         swaps.forEach(swap => {
             const swapAmount = swap.tokenInParam;
+            console.log(`swapAmount ${swapAmount}`);
 
             const pool = poolData.find(p => p.id == swap.pool);
             if (!pool) {
@@ -230,10 +223,12 @@ export const calcTotalSpotValue = (
             pool.swapFee
         );
 
+        console.log(`ctsv ${swapAmount}`);
+
         if (method === SwapMethods.EXACT_IN) {
-            totalValue = totalValue.plus(bnum(swapAmount).div(spotPrice));
+            totalValue = totalValue.plus(bdiv(bnum(swapAmount), spotPrice));
         } else if (method === SwapMethods.EXACT_OUT) {
-            totalValue = totalValue.plus(bnum(swapAmount).times(spotPrice));
+            totalValue = totalValue.plus(bmul(bnum(swapAmount), spotPrice));
         }
     });
 

@@ -293,20 +293,20 @@ export const getGasPriceFromETHGasStation = () => {
 };
 
 // TODO: Issue between new BigNumber() and BigNumber() cast in javascript SOR
-export const formatPoolData = (pools: Pool[]): Pool[] => {
-    const result: Pool[] = [];
-    pools.forEach(pool => {
-        result.push({
-            id: pool.id,
-            balanceIn: new BigNumber(fromWei(pool.balanceIn)),
-            balanceOut: new BigNumber(fromWei(pool.balanceOut)),
-            weightIn: new BigNumber(fromWei(pool.weightIn)),
-            weightOut: new BigNumber(fromWei(pool.weightOut)),
-            swapFee: new BigNumber(fromWei(pool.swapFee)),
-        });
-    });
-    return result;
-};
+// export const formatPoolData = (pools: Pool[]): Pool[] => {
+//     const result: Pool[] = [];
+//     pools.forEach(pool => {
+//         result.push({
+//             id: pool.id,
+//             balanceIn: new BigNumber(fromWei(pool.balanceIn)),
+//             balanceOut: new BigNumber(fromWei(pool.balanceOut)),
+//             weightIn: new BigNumber(fromWei(pool.weightIn)),
+//             weightOut: new BigNumber(fromWei(pool.weightOut)),
+//             swapFee: new BigNumber(fromWei(pool.swapFee)),
+//         });
+//     });
+//     return result;
+// };
 
 export const printSwapInput = (input: SwapInput) => {
     if (input.method === SwapMethods.EXACT_IN) {
@@ -317,7 +317,7 @@ export const printSwapInput = (input: SwapInput) => {
 };
 
 export const printPoolData = (poolData: Pool[]) => {
-    const formatted = formatPoolData(poolData);
+    const formatted = poolData;
     console.log('---Pool Data---');
     console.table(formatted);
 };

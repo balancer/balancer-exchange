@@ -54,18 +54,18 @@ const SellToken = observer(
                     swapFormStore.setErrorMessage(preview.error);
                 }
 
-                if (!swapFormStore.isInputAmountStale(preview.inputAmount)) {
-                    if (preview.validSwap) {
-                        swapFormStore.setOutputFromPreview(
-                            SwapMethods.EXACT_IN,
-                            preview
-                        );
-                        swapFormStore.clearErrorMessage();
-                        swapFormStore.setTradeCompositionEAI(preview);
-                    } else {
-                        swapFormStore.setValidSwap(false);
-                        swapFormStore.resetTradeComposition();
-                    }
+                // if (!swapFormStore.isInputAmountStale(preview.inputAmount)) {
+                if (preview.validSwap) {
+                    swapFormStore.setOutputFromPreview(
+                        SwapMethods.EXACT_IN,
+                        preview
+                    );
+                    swapFormStore.clearErrorMessage();
+                    swapFormStore.setTradeCompositionEAI(preview);
+                    // } else {
+                    //     swapFormStore.setValidSwap(false);
+                    //     swapFormStore.resetTradeComposition();
+                    // }
                 }
             } else {
                 console.log('[Invalid Input]', inputStatus, value);
