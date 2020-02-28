@@ -123,6 +123,7 @@ const AssetOptions = observer(() => {
                 userBalances[value.address]
                     ? bnum(userBalances[value.address])
                     : bnum(0),
+                value.decimals,
                 value.precision,
                 20
             );

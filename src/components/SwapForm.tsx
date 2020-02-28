@@ -104,6 +104,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         swapFormStore.inputs.inputTicker = tokenList[0].symbol;
         swapFormStore.inputs.inputIconAddress = tokenList[0].iconAddress;
         poolStore.fetchAndSetTokenPairs(tokenList[0].address);
+        swapFormStore.inputs.inputDecimals = tokenList[0].decimals;
         swapFormStore.inputs.inputPrecision = tokenList[0].precision;
     }
 
@@ -112,6 +113,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         swapFormStore.inputs.outputTicker = tokenList[1].symbol;
         swapFormStore.inputs.outputIconAddress = tokenList[1].iconAddress;
         poolStore.fetchAndSetTokenPairs(tokenList[1].address);
+        swapFormStore.inputs.outputDecimals = tokenList[1].decimals;
         swapFormStore.inputs.outputPrecision = tokenList[1].precision;
     }
 
@@ -120,10 +122,12 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         inputTicker,
         inputIconAddress,
         inputPrecision,
+        inputDecimals,
         outputToken,
         outputTicker,
         outputIconAddress,
         outputPrecision,
+        outputDecimals,
     } = inputs;
 
     const buttonActionHandler = (buttonState: ButtonState) => {
@@ -312,16 +316,26 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         outputUserBalanceBN = bnum(0);
     }
 
-    inputUserBalance = formatBalance(inputUserBalanceBN, inputPrecision);
+    inputUserBalance = formatBalance(
+        inputUserBalanceBN,
+        inputDecimals,
+        inputPrecision
+    );
     truncatedInputUserBalance = formatBalanceTruncated(
         inputUserBalanceBN,
+        inputDecimals,
         inputPrecision,
         20
     );
 
-    outputUserBalance = formatBalance(outputUserBalanceBN, outputPrecision);
+    outputUserBalance = formatBalance(
+        outputUserBalanceBN,
+        outputDecimals,
+        outputPrecision
+    );
     truncatedOutputUserBalance = formatBalanceTruncated(
         outputUserBalanceBN,
+        outputDecimals,
         outputPrecision,
         20
     );
