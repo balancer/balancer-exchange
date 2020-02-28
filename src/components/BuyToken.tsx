@@ -65,7 +65,7 @@ const BuyToken = observer(
                 }
             } else {
                 console.log('[Invalid Input]', inputStatus, value);
-                if (value == swapFormStore.inputs.outputAmount) {
+                if (value === swapFormStore.inputs.outputAmount) {
                     // Don't show error message on empty value
                     if (inputStatus === InputValidationStatus.EMPTY) {
                         swapFormStore.setInputAmount('');

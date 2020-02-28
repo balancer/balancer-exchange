@@ -12,7 +12,6 @@ import AssetSelector from './AssetSelector';
 import { observer } from 'mobx-react';
 import {
     bnum,
-    fromWei,
     isEmpty,
     toWei,
     formatBalance,
@@ -24,11 +23,7 @@ import { ErrorIds } from '../stores/Error';
 import { BigNumber } from 'utils/bignumber';
 import { getSupportedChainId, web3ContextNames } from '../provider/connectors';
 import { calcMaxAmountIn, calcMinAmountOut } from '../utils/sorWrapper';
-import {
-    ExactAmountInPreview,
-    ExactAmountOutPreview,
-    Swap,
-} from '../stores/Proxy';
+import { ExactAmountInPreview, ExactAmountOutPreview } from '../stores/Proxy';
 
 const RowContainer = styled.div`
     font-family: var(--roboto);
@@ -224,7 +219,6 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         account,
         userAllowance: BigNumber | undefined
     ): ButtonState => {
-        const validInput = swapFormStore.isValidInput(inputs.inputAmount);
         const sufficientAllowance = userAllowance && userAllowance.gt(0);
 
         if (injectedChainId && injectedChainId !== supportedChainId) {

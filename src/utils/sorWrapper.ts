@@ -1,6 +1,5 @@
 import { BigNumber } from './bignumber';
 import {
-    BONE,
     calcInGivenOut,
     calcOutGivenIn,
     calcSpotPrice,
@@ -118,9 +117,8 @@ export const calcTotalOutput = (swaps: Swap[], poolData: Pool[]): BigNumber => {
         let totalAmountOut = bnum(0);
         swaps.forEach(swap => {
             const swapAmount = swap.tokenInParam;
-            console.log(`swapAmount ${swapAmount}`);
 
-            const pool = poolData.find(p => p.id == swap.pool);
+            const pool = poolData.find(p => p.id === swap.pool);
             if (!pool) {
                 throw new Error(
                     '[Invariant] No pool found for selected balancer index'
@@ -208,7 +206,7 @@ export const calcTotalSpotValue = (
             method === SwapMethods.EXACT_IN
                 ? swap.tokenInParam
                 : swap.tokenOutParam;
-        const pool = poolData.find(p => p.id == swap.pool);
+        const pool = poolData.find(p => p.id === swap.pool);
         if (!pool) {
             throw new Error(
                 '[Invariant] No pool found for selected balancer index'
@@ -222,8 +220,6 @@ export const calcTotalSpotValue = (
             pool.weightOut,
             pool.swapFee
         );
-
-        console.log(`ctsv ${swapAmount}`);
 
         if (method === SwapMethods.EXACT_IN) {
             totalValue = totalValue.plus(bdiv(bnum(swapAmount), spotPrice));
@@ -246,7 +242,7 @@ export const calcTotalInput = (
         let totalAmountIn = bnum(0);
         swaps.forEach(swap => {
             const swapAmount = swap.tokenOutParam;
-            const pool = poolData.find(p => p.id == swap.pool);
+            const pool = poolData.find(p => p.id === swap.pool);
             if (!pool) {
                 throw new Error(
                     '[Invariant] No pool found for selected balancer index'

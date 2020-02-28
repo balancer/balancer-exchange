@@ -52,7 +52,7 @@ const Header = () => {
             <HeaderElement>
                 <Title>
                     <a href="/">
-                        <img src="pebbles-pad.svg" />
+                        <img src="pebbles-pad.svg" alt="pebbles" />
                     </a>
                     <AppName>{appConfig.name}</AppName>
                 </Title>

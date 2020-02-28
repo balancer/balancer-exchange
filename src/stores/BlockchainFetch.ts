@@ -21,7 +21,7 @@ export default class BlockchainFetchStore {
             web3React.chainId === supportedChainId
         ) {
             const { library, account, chainId } = web3React;
-            const { providerStore, tokenStore } = this.rootStore;
+            const { providerStore } = this.rootStore;
 
             library
                 .getBlockNumber()

@@ -100,13 +100,6 @@ const PieChartWrapper = styled.div`
     height: 96px;
 `;
 
-const PieChart = styled.div`
-    width: 96px;
-    height: 96px;
-    border: 1px solid #b388ff;
-    border-radius: 50px;
-`;
-
 const TradeComposition = observer(() => {
     const {
         root: { swapFormStore, tokenStore },

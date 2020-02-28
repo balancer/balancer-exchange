@@ -62,16 +62,6 @@ const SpinnerWrapper = styled(Spinner)`
     margin: 0 0.25rem 0 0.25rem;
 `;
 
-const IconWrapper = styled.div`
-    ${({ theme }) => theme.flexColumnNoWrap};
-    align-items: center;
-    justify-content: center;
-    & > * {
-        height: ${({ size }) => (size ? size + 'px' : '32px')};
-        width: ${({ size }) => (size ? size + 'px' : '32px')};
-    }
-`;
-
 const Web3ConnectStatus = observer(() => {
     const {
         root: { modalStore, transactionStore },
