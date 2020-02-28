@@ -208,6 +208,7 @@ const AssetOptions = observer(() => {
                     onClick={() => {
                         selectAsset(token);
                     }}
+                    key={token.address}
                 >
                     <AssetWrapper>
                         <TokenIcon src={TokenIconAddress(token.iconAddress)} />

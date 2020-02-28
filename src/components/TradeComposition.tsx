@@ -132,6 +132,7 @@ const TradeComposition = observer(() => {
             datasets: [
                 {
                     data: [1],
+                    label: 'swaps',
                     borderAlign: 'center',
                     borderColor: '#B388FF',
                     borderWidth: '1',
@@ -139,6 +140,7 @@ const TradeComposition = observer(() => {
                 },
                 {
                     data: [],
+                    label: 'other',
                     borderAlign: 'center',
                     backgroundColor: ['#A7FFEB', '#FF9E80', '#B388FF'],
                     borderColor: ['#A7FFEB', '#FF9E80', '#B388FF'],
@@ -170,7 +172,7 @@ const TradeComposition = observer(() => {
         if (chartData.validSwap) {
             return chartData.swaps.map((swap, index) => {
                 return (
-                    <PoolLine>
+                    <PoolLine key={index}>
                         <AddressAndBullet>
                             <BulletPoint
                                 color={formatting.borderColor[index]}
