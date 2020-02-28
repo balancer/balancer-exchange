@@ -271,11 +271,19 @@ export default class SwapFormStore {
     }
 
     isInputAmountStale(inputAmount: string | BigNumber) {
-        return inputAmount.toString() !== this.inputs.inputAmount;
+        let storedAmount = this.inputs.inputAmount;
+        if (storedAmount.substr(0,1) === ".") {
+            storedAmount = "0" + storedAmount;
+        }
+        return inputAmount.toString() !== storedAmount;
     }
 
     isOutputAmountStale(outputAmount: string | BigNumber) {
-        return outputAmount.toString() !== this.inputs.outputAmount;
+        let storedAmount = this.inputs.outputAmount;
+        if (storedAmount.substr(0,1) === ".") {
+            storedAmount = "0" + storedAmount;
+        }
+        return outputAmount.toString() !== storedAmount;
     }
 
     /* Assume swaps are in order of biggest to smallest value */
@@ -410,6 +418,10 @@ export default class SwapFormStore {
             limitDigits?: boolean;
         }
     ): InputValidationStatus {
+        if (value.substr(0,1) === ".") {
+            value = "0" + value;
+        }
+
         if (ValidationRules.isEmpty(value)) {
             return InputValidationStatus.EMPTY;
         }
