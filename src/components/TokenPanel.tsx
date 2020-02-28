@@ -216,8 +216,6 @@ const Token = observer(
             );
         };
 
-        console.log(truncatedTokenBalance);
-
         return (
             <Panel>
                 <PanelHeader>{headerText}</PanelHeader>

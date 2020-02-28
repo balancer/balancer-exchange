@@ -80,7 +80,9 @@ export default class SwapFormStore {
         extraSlippageAllowanceErrorStatus: InputValidationStatus.VALID,
         inputTicker: '',
         outputTicker: '',
+        inputDecimals: 18,
         inputPrecision: 2,
+        outputDecimals: 18,
         outputPrecision: 2,
         inputIconAddress: '',
         outputIconAddress: '',
@@ -248,11 +250,13 @@ export default class SwapFormStore {
             inputToken,
             inputTicker,
             inputIconAddress,
+            inputDecimals,
             inputPrecision,
         } = this.inputs;
         this.inputs.inputToken = outputToken;
         this.inputs.inputTicker = outputTicker;
         this.inputs.inputIconAddress = outputIconAddress;
+        this.inputs.inputDecimals = inputDecimals;
         this.inputs.inputPrecision = outputPrecision;
         this.inputs.outputToken = inputToken;
         this.inputs.outputTicker = inputTicker;
