@@ -129,7 +129,7 @@ const SlippageSelector = observer(() => {
     };
 
     const CellGenerator = ({ children, cellIndex, slippageValue }) => {
-        if (slippageCell == cellIndex) {
+        if (slippageCell === cellIndex) {
             return (
                 <ActiveSelectorDropDownCell>
                     {children}
@@ -149,7 +149,7 @@ const SlippageSelector = observer(() => {
     };
 
     const CustomCell = ({ cellIndex }) => {
-        if (slippageCell == cellIndex) {
+        if (slippageCell === cellIndex) {
             return (
                 <ActiveSelectorDropDownCell>
                     <InputWrapper>

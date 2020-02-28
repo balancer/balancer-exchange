@@ -2,7 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { TokenIconAddress } from './TokenPanel';
 import { useStores } from '../contexts/storesContext';
-import { bnum, formatBalanceTruncated, fromWei } from 'utils/helpers';
+import { bnum, formatBalanceTruncated } from 'utils/helpers';
 import {
     getSupportedChainId,
     isChainIdSupported,

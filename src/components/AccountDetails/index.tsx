@@ -224,10 +224,6 @@ const WalletAction = styled.div`
     }
 `;
 
-const MainWalletAction = styled(WalletAction)`
-    color: ${({ theme }) => theme.royalBlue};
-`;
-
 interface Props {
     toggleWalletModal: any;
     pendingTransactions: TransactionRecord[];

@@ -3,7 +3,6 @@ import React, { useEffect, useRef } from 'react';
 import styled from 'styled-components';
 
 import Jazzicon from 'jazzicon';
-import { useStores } from '../../contexts/storesContext';
 import { useActiveWeb3React } from 'provider/providerHooks';
 
 const StyledIdenticon = styled.div`
@@ -16,9 +15,6 @@ const StyledIdenticon = styled.div`
 export default function Identicon() {
     const ref = useRef();
 
-    const {
-        root: { providerStore },
-    } = useStores();
     const { account } = useActiveWeb3React();
 
     useEffect(() => {

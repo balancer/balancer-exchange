@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import styled from 'styled-components';
 import AssetOptions from './AssetOptions';
 import { observer } from 'mobx-react';

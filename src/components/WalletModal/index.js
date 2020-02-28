@@ -121,15 +121,9 @@ const WALLET_VIEWS = {
 const WalletModal = observer(
     ({ pendingTransactions, confirmedTransactions }) => {
         const {
-            root: { providerStore, modalStore, transactionStore },
+            root: { modalStore },
         } = useStores();
-        const {
-            chainId,
-            active,
-            connector,
-            error,
-            activate,
-        } = useActiveWeb3React();
+        const { active, connector, error, activate } = useActiveWeb3React();
 
         const { account, chainId: injectedChainId } = useWeb3React(
             web3ContextNames.injected

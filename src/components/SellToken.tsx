@@ -69,7 +69,7 @@ const SellToken = observer(
                 }
             } else {
                 console.log('[Invalid Input]', inputStatus, value);
-                if (value == swapFormStore.inputs.inputAmount) {
+                if (value === swapFormStore.inputs.inputAmount) {
                     // Clear error messages on updating to empty input
                     if (inputStatus === InputValidationStatus.EMPTY) {
                         swapFormStore.updateInputsFromObject({
