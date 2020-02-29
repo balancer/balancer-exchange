@@ -10,6 +10,7 @@ import {
 import { BigNumber } from 'utils/bignumber';
 import {
     bnum,
+    scale,
     formatPctString,
     fromWei,
     isEmpty,
@@ -138,10 +139,16 @@ export default class SwapFormStore {
     ) {
         if (method === SwapMethods.EXACT_IN) {
             preview = preview as ExactAmountInPreview;
-            this.inputs.outputAmount = fromWei(preview.totalOutput);
+            this.inputs.outputAmount = scale(
+                preview.totalOutput,
+                -this.inputs.outputDecimals
+            ).toString();
         } else if (method === SwapMethods.EXACT_OUT) {
             preview = preview as ExactAmountOutPreview;
-            this.inputs.inputAmount = fromWei(preview.totalInput);
+            this.inputs.inputAmount = scale(
+                preview.totalInput,
+                -this.inputs.inputDecimals
+            ).toString();
         } else {
             throw new Error('Invalid swap method specified');
         }
@@ -276,16 +283,16 @@ export default class SwapFormStore {
 
     isInputAmountStale(inputAmount: string | BigNumber) {
         let storedAmount = this.inputs.inputAmount;
-        if (storedAmount.substr(0,1) === ".") {
-            storedAmount = "0" + storedAmount;
+        if (storedAmount.substr(0, 1) === '.') {
+            storedAmount = '0' + storedAmount;
         }
         return inputAmount.toString() !== storedAmount;
     }
 
     isOutputAmountStale(outputAmount: string | BigNumber) {
         let storedAmount = this.inputs.outputAmount;
-        if (storedAmount.substr(0,1) === ".") {
-            storedAmount = "0" + storedAmount;
+        if (storedAmount.substr(0, 1) === '.') {
+            storedAmount = '0' + storedAmount;
         }
         return outputAmount.toString() !== storedAmount;
     }
@@ -293,7 +300,7 @@ export default class SwapFormStore {
     /* Assume swaps are in order of biggest to smallest value */
     @action setTradeCompositionEAI(preview: ExactAmountInPreview) {
         const {
-            inputAmount,
+            tokenAmountIn,
             swaps,
             totalOutput,
             effectivePrice,
@@ -302,7 +309,7 @@ export default class SwapFormStore {
         this.setTradeComposition(
             SwapMethods.EXACT_IN,
             swaps,
-            inputAmount,
+            tokenAmountIn,
             totalOutput,
             effectivePrice,
             validSwap
@@ -365,7 +372,7 @@ export default class SwapFormStore {
                 isOthers: false,
                 poolAddress: value.pool,
                 percentage: bnum(swapValue)
-                    .div(toWei(inputValue))
+                    .div(inputValue)
                     .times(100)
                     .dp(2, BigNumber.ROUND_HALF_EVEN)
                     .toNumber(),
@@ -390,11 +397,11 @@ export default class SwapFormStore {
 
         if (method === SwapMethods.EXACT_IN) {
             result.inputPriceValue = inputValue;
-            result.outputPriceValue = bnum(fromWei(totalValue));
+            result.outputPriceValue = totalValue;
         }
 
         if (method === SwapMethods.EXACT_OUT) {
-            result.inputPriceValue = bnum(fromWei(totalValue));
+            result.inputPriceValue = totalValue;
             result.outputPriceValue = inputValue;
         }
 
@@ -422,8 +429,8 @@ export default class SwapFormStore {
             limitDigits?: boolean;
         }
     ): InputValidationStatus {
-        if (value.substr(0,1) === ".") {
-            value = "0" + value;
+        if (value.substr(0, 1) === '.') {
+            value = '0' + value;
         }
 
         if (ValidationRules.isEmpty(value)) {

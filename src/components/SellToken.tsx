@@ -7,7 +7,7 @@ import {
     InputValidationStatus,
     SwapMethods,
 } from 'stores/SwapForm';
-import { bnum } from 'utils/helpers';
+import { bnum, scale } from 'utils/helpers';
 import { ExactAmountInPreview } from 'stores/Proxy';
 
 const SellToken = observer(
@@ -62,11 +62,11 @@ const SellToken = observer(
                     );
                     swapFormStore.clearErrorMessage();
                     swapFormStore.setTradeCompositionEAI(preview);
-                    // } else {
-                    //     swapFormStore.setValidSwap(false);
-                    //     swapFormStore.resetTradeComposition();
-                    // }
+                } else {
+                    swapFormStore.setValidSwap(false);
+                    swapFormStore.resetTradeComposition();
                 }
+                // }
             } else {
                 console.log('[Invalid Input]', inputStatus, value);
                 if (value === swapFormStore.inputs.inputAmount) {
@@ -90,12 +90,20 @@ const SellToken = observer(
 
         const previewSwapExactAmountInHandler = async (): Promise<ExactAmountInPreview> => {
             const inputs = swapFormStore.inputs;
-            const { inputToken, outputToken, inputAmount } = inputs;
+            const {
+                inputToken,
+                outputToken,
+                inputAmount,
+                inputDecimals,
+            } = inputs;
+
+            // const tokenAmountIn = scale(bnum(inputAmount), inputDecimals);
 
             return await proxyStore.previewBatchSwapExactIn(
                 inputToken,
                 outputToken,
-                bnum(inputAmount)
+                bnum(inputAmount),
+                inputDecimals
             );
         };
 

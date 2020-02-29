@@ -45,7 +45,7 @@ export interface ExactAmountOutPreview {
 }
 
 export interface ExactAmountInPreview {
-    inputAmount: BigNumber;
+    tokenAmountIn: BigNumber;
     totalOutput: BigNumber | null;
     spotOutput: BigNumber | null;
     effectivePrice: BigNumber | null;
@@ -60,7 +60,7 @@ export interface SwapInput {
     method: SwapMethods;
     tokenIn: string;
     tokenOut: string;
-    inputAmount?: BigNumber;
+    tokenAmountIn?: BigNumber;
     outputAmount?: BigNumber;
     minAmountOut?: BigNumber;
     maxAmountIn?: BigNumber;
@@ -114,7 +114,7 @@ export function emptyExactAmountInPreview(
     e?: string
 ): ExactAmountInPreview {
     return {
-        inputAmount,
+        tokenAmountIn: null,
         totalOutput: null,
         spotOutput: null,
         effectivePrice: null,
@@ -173,9 +173,11 @@ export default class ProxyStore {
         web3React: Web3ReactContextInterface,
         swaps: Swap[],
         tokenIn: string,
-        inputAmount: BigNumber,
+        tokenAmountIn: BigNumber,
+        decimalsIn: number,
         tokenOut: string,
-        minAmountOut: BigNumber
+        minAmountOut: BigNumber,
+        decimalsOut: number
     ) => {
         const { tokenStore, providerStore } = this.rootStore;
         const { chainId } = web3React;
@@ -184,20 +186,25 @@ export default class ProxyStore {
             swaps,
             tokenIn,
             tokenOut,
-            tokenAmountIn: inputAmount.toString(),
+            tokenAmountIn: tokenAmountIn.toString(),
             minAmountOut: minAmountOut.toString(),
         });
 
         const proxyAddress = tokenStore.getProxyAddress(chainId);
 
         if (tokenIn === EtherKey) {
+            console.log(`decimalsIn ${decimalsIn}`);
             await providerStore.sendTransaction(
                 web3React,
                 ContractTypes.ExchangeProxy,
                 proxyAddress,
                 'batchEthInSwapExactIn',
                 [swaps, tokenOut, minAmountOut.toString()],
-                { value: ethers.utils.bigNumberify(inputAmount.toString()) }
+                {
+                    value: ethers.utils.bigNumberify(
+                        scale(tokenAmountIn, decimalsIn).toString()
+                    ),
+                }
             );
         } else if (tokenOut === EtherKey) {
             await providerStore.sendTransaction(
@@ -208,7 +215,7 @@ export default class ProxyStore {
                 [
                     swaps,
                     tokenIn,
-                    inputAmount.toString(),
+                    scale(tokenAmountIn, decimalsIn).toString(),
                     minAmountOut.toString(),
                 ]
             );
@@ -222,7 +229,7 @@ export default class ProxyStore {
                     swaps,
                     tokenIn,
                     tokenOut,
-                    inputAmount.toString(),
+                    scale(tokenAmountIn, decimalsIn).toString(),
                     minAmountOut.toString(),
                 ]
             );
@@ -235,7 +242,7 @@ export default class ProxyStore {
         tokenIn: string,
         maxAmountIn: BigNumber,
         tokenOut: string,
-        amountOut: BigNumber
+        tokenAmountOut: BigNumber
     ) => {
         const { tokenStore, providerStore } = this.rootStore;
         const { chainId } = web3React;
@@ -248,7 +255,7 @@ export default class ProxyStore {
                 ContractTypes.ExchangeProxy,
                 proxyAddress,
                 'batchEthInSwapExactOut',
-                [swaps, tokenOut, amountOut.toString()],
+                [swaps, tokenOut, tokenAmountOut.toString()],
                 { value: ethers.utils.bigNumberify(maxAmountIn.toString()) }
             );
         } else if (tokenOut === EtherKey) {
@@ -257,7 +264,12 @@ export default class ProxyStore {
                 ContractTypes.ExchangeProxy,
                 proxyAddress,
                 'batchEthOutSwapExactOut',
-                [swaps, tokenIn, amountOut.toString(), maxAmountIn.toString()]
+                [
+                    swaps,
+                    tokenIn,
+                    tokenAmountOut.toString(),
+                    maxAmountIn.toString(),
+                ]
             );
         } else {
             await providerStore.sendTransaction(
@@ -269,7 +281,7 @@ export default class ProxyStore {
                     swaps,
                     tokenIn,
                     tokenOut,
-                    amountOut.toString(),
+                    tokenAmountOut.toString(),
                     maxAmountIn.toString(),
                 ]
             );
@@ -286,11 +298,14 @@ export default class ProxyStore {
     previewBatchSwapExactIn = async (
         tokenIn: string,
         tokenOut: string,
-        inputAmount: BigNumber
+        inputAmount: BigNumber,
+        inputDecimals: number
     ): Promise<ExactAmountInPreview> => {
         try {
             this.setPreviewPending(true);
             const { tokenStore } = this.rootStore;
+
+            const tokenAmountIn = scale(bnum(inputAmount), inputDecimals);
 
             let maxPrice = helpers.setPropertyToMaxUintIfEmpty();
             let minAmountOut = helpers.setPropertyToZeroIfEmpty();
@@ -310,15 +325,12 @@ export default class ProxyStore {
                 tokenOutToFind
             );
 
-            // FIX ONCE TOKEN DECIMALS ARE FETCHED SEPARATELY
-            inputAmount = scale(inputAmount, poolData[0].decimalsIn);
-
             const costOutputToken = this.costCalculator.getCostOutputToken();
 
             const sorSwaps = findBestSwaps(
                 poolData,
                 SwapMethods.EXACT_IN,
-                inputAmount,
+                tokenAmountIn,
                 20,
                 costOutputToken
             );
@@ -336,28 +348,36 @@ export default class ProxyStore {
                 poolData
             );
 
-            const spotPrice = calcPrice(
-                scale(inputAmount, -poolData[0].decimalsIn),
-                scale(spotOutput, -poolData[0].decimalsOut)
-            );
+            console.log(`spotOutput ${spotOutput}`);
+
+            const spotPrice = calcPrice(tokenAmountIn, spotOutput);
+
+            console.log(`spotPrice ${spotPrice}`);
+
             const totalOutput = calcTotalOutput(swaps, poolData);
 
+            console.log(`totalOutput ${totalOutput}`);
+
             const effectivePrice = this.calcEffectivePrice(
-                scale(inputAmount, -poolData[0].decimalsIn),
+                tokenAmountIn,
                 totalOutput
             );
+
+            console.log(`effectivePrice ${effectivePrice}`);
 
             const expectedSlippage = calcExpectedSlippage(
                 spotPrice,
                 effectivePrice
             );
 
+            console.log(`expectedSlippage ${expectedSlippage}`);
+
             printDebugInfo(
                 {
                     method: SwapMethods.EXACT_IN,
                     tokenIn,
                     tokenOut,
-                    inputAmount,
+                    tokenAmountIn,
                     maxPrice: bnum(0),
                 },
                 swaps,
@@ -369,7 +389,7 @@ export default class ProxyStore {
 
             this.setPreviewPending(false);
             return {
-                inputAmount,
+                tokenAmountIn,
                 totalOutput,
                 spotOutput,
                 effectivePrice,
