@@ -2,6 +2,7 @@
     "kovan": {
         "chainId": 42,
         "bFactory": "0x8f7F78080219d4066A8036ccD30D588B416a40DB",
+        "notification": "This project is in beta. Only put small amounts of funds at risk.",
         "proxy": "0x4149AfB519203b58d72a2A82FCDe0e20B96F53C9",
         "weth": "0xd0A1E359811322d97991E03f863a0C30C2cF029C",
         "tokens": [
