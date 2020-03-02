@@ -290,7 +290,9 @@ export const calcMaxAmountIn = (
     spotValue: BigNumber,
     slippagePercent: BigNumber
 ): BigNumber => {
-    const result = spotValue.plus(spotValue.times(slippagePercent.div(100)));
+    const result = spotValue
+        .plus(spotValue.times(slippagePercent.div(100)))
+        .integerValue(); // TODO - fix this to be fully integer math
 
     console.log('[Max In]', {
         spotValue: spotValue.toString(),

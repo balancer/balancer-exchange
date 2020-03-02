@@ -215,8 +215,10 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                 swaps,
                 inputToken,
                 maxAmountIn,
+                inputDecimals,
                 outputToken,
-                toWei(outputAmount)
+                bnum(outputAmount),
+                outputDecimals
             );
         }
     };

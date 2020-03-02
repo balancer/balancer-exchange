@@ -319,7 +319,7 @@ export default class SwapFormStore {
     /* Assume swaps are in order of biggest to smallest value */
     @action setTradeCompositionEAO(preview: ExactAmountOutPreview) {
         const {
-            outputAmount,
+            tokenAmountOut,
             swaps,
             totalInput,
             effectivePrice,
@@ -328,7 +328,7 @@ export default class SwapFormStore {
         this.setTradeComposition(
             SwapMethods.EXACT_OUT,
             swaps,
-            outputAmount,
+            tokenAmountOut,
             totalInput,
             effectivePrice,
             validSwap

@@ -7,7 +7,7 @@ import {
     InputValidationStatus,
     SwapMethods,
 } from 'stores/SwapForm';
-import { bnum } from 'utils/helpers';
+import { bnum, scale } from 'utils/helpers';
 import { ExactAmountOutPreview } from '../stores/Proxy';
 
 const BuyToken = observer(
@@ -50,19 +50,19 @@ const BuyToken = observer(
             if (inputStatus === InputValidationStatus.VALID) {
                 const preview = await previewSwapExactAmountOutHandler();
 
-                if (!swapFormStore.isOutputAmountStale(preview.outputAmount)) {
-                    if (preview.validSwap) {
-                        swapFormStore.setOutputFromPreview(
-                            SwapMethods.EXACT_OUT,
-                            preview
-                        );
-                        swapFormStore.clearErrorMessage();
-                        swapFormStore.setTradeCompositionEAO(preview);
-                    } else {
-                        swapFormStore.setValidSwap(false);
-                        swapFormStore.resetTradeComposition();
-                    }
+                // if (!swapFormStore.isOutputAmountStale(preview.outputAmount)) {
+                if (preview.validSwap) {
+                    swapFormStore.setOutputFromPreview(
+                        SwapMethods.EXACT_OUT,
+                        preview
+                    );
+                    swapFormStore.clearErrorMessage();
+                    swapFormStore.setTradeCompositionEAO(preview);
+                } else {
+                    swapFormStore.setValidSwap(false);
+                    swapFormStore.resetTradeComposition();
                 }
+                // }
             } else {
                 console.log('[Invalid Input]', inputStatus, value);
                 if (value === swapFormStore.inputs.outputAmount) {
@@ -84,12 +84,18 @@ const BuyToken = observer(
 
         const previewSwapExactAmountOutHandler = async (): Promise<ExactAmountOutPreview> => {
             const inputs = swapFormStore.inputs;
-            const { inputToken, outputToken, outputAmount } = inputs;
+            const {
+                inputToken,
+                outputToken,
+                outputAmount,
+                outputDecimals,
+            } = inputs;
 
             return await proxyStore.previewBatchSwapExactOut(
                 inputToken,
                 outputToken,
-                bnum(outputAmount)
+                bnum(outputAmount),
+                outputDecimals
             );
         };
 

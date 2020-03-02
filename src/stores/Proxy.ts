@@ -33,7 +33,7 @@ import { supportedChainId } from '../provider/connectors';
 export type SwapPreview = ExactAmountInPreview | ExactAmountOutPreview;
 
 export interface ExactAmountOutPreview {
-    outputAmount: BigNumber;
+    tokenAmountOut: BigNumber;
     totalInput: BigNumber | null;
     spotInput: BigNumber | null;
     effectivePrice: BigNumber | null;
@@ -61,7 +61,7 @@ export interface SwapInput {
     tokenIn: string;
     tokenOut: string;
     tokenAmountIn?: BigNumber;
-    outputAmount?: BigNumber;
+    tokenAmountOut?: BigNumber;
     minAmountOut?: BigNumber;
     maxAmountIn?: BigNumber;
     maxPrice: BigNumber;
@@ -131,7 +131,7 @@ export function emptyExactAmountOutPreview(
     e?: string
 ): ExactAmountOutPreview {
     return {
-        outputAmount,
+        tokenAmountOut: null,
         totalInput: null,
         spotInput: null,
         effectivePrice: null,
@@ -241,8 +241,10 @@ export default class ProxyStore {
         swaps: Swap[],
         tokenIn: string,
         maxAmountIn: BigNumber,
+        decimalsIn: number,
         tokenOut: string,
-        tokenAmountOut: BigNumber
+        tokenAmountOut: BigNumber,
+        decimalsOut: number
     ) => {
         const { tokenStore, providerStore } = this.rootStore;
         const { chainId } = web3React;
@@ -267,8 +269,8 @@ export default class ProxyStore {
                 [
                     swaps,
                     tokenIn,
-                    tokenAmountOut.toString(),
-                    maxAmountIn.toString(),
+                    scale(tokenAmountOut, decimalsOut).toString(),
+                    scale(maxAmountIn, decimalsIn).toString(),
                 ]
             );
         } else {
@@ -281,8 +283,8 @@ export default class ProxyStore {
                     swaps,
                     tokenIn,
                     tokenOut,
-                    tokenAmountOut.toString(),
-                    maxAmountIn.toString(),
+                    scale(tokenAmountOut, decimalsOut).toString(),
+                    scale(maxAmountIn, decimalsIn).toString(),
                 ]
             );
         }
@@ -348,29 +350,19 @@ export default class ProxyStore {
                 poolData
             );
 
-            console.log(`spotOutput ${spotOutput}`);
-
             const spotPrice = calcPrice(tokenAmountIn, spotOutput);
 
-            console.log(`spotPrice ${spotPrice}`);
-
             const totalOutput = calcTotalOutput(swaps, poolData);
-
-            console.log(`totalOutput ${totalOutput}`);
 
             const effectivePrice = this.calcEffectivePrice(
                 tokenAmountIn,
                 totalOutput
             );
 
-            console.log(`effectivePrice ${effectivePrice}`);
-
             const expectedSlippage = calcExpectedSlippage(
                 spotPrice,
                 effectivePrice
             );
-
-            console.log(`expectedSlippage ${expectedSlippage}`);
 
             printDebugInfo(
                 {
@@ -408,11 +400,14 @@ export default class ProxyStore {
     previewBatchSwapExactOut = async (
         tokenIn: string,
         tokenOut: string,
-        outputAmount: BigNumber
+        outputAmount: BigNumber,
+        outputDecimals: number
     ): Promise<ExactAmountOutPreview> => {
         try {
             this.setPreviewPending(true);
             const { tokenStore } = this.rootStore;
+
+            const tokenAmountOut = scale(bnum(outputAmount), outputDecimals);
 
             let maxPrice = helpers.setPropertyToMaxUintIfEmpty();
             let maxAmountIn = helpers.setPropertyToMaxUintIfEmpty();
@@ -436,7 +431,7 @@ export default class ProxyStore {
             let sorSwaps: SorSwap[] = findBestSwaps(
                 poolData,
                 SwapMethods.EXACT_OUT,
-                outputAmount,
+                tokenAmountOut,
                 20,
                 costOutputToken
             );
@@ -461,16 +456,16 @@ export default class ProxyStore {
                 poolData
             );
 
-            const spotPrice = calcPrice(bnum(outputAmount), spotInput);
+            const spotPrice = calcPrice(tokenAmountOut, spotInput);
 
             console.log('[Spot Price Calc]', {
-                outputAmount: outputAmount.toString(),
+                tokenAmountOut: tokenAmountOut.toString(),
                 totalInputSpot: spotInput.toString(),
             });
 
             const effectivePrice = this.calcEffectivePrice(
-                bnum(outputAmount),
-                helpers.scale(totalInput, -18)
+                tokenAmountOut,
+                totalInput
             );
 
             const expectedSlippage = calcExpectedSlippage(
@@ -483,7 +478,7 @@ export default class ProxyStore {
                     method: SwapMethods.EXACT_OUT,
                     tokenIn,
                     tokenOut,
-                    outputAmount,
+                    tokenAmountOut,
                     maxPrice: bnum(0),
                 },
                 swaps,
@@ -499,7 +494,7 @@ export default class ProxyStore {
 
             this.setPreviewPending(false);
             return {
-                outputAmount,
+                tokenAmountOut,
                 totalInput,
                 spotInput,
                 effectivePrice,
