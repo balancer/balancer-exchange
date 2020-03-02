@@ -22,14 +22,15 @@ const SlippageInlineDisplay = styled.div`
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 44px;
+    width: 50px;
     height: 24px;
     border: 1px solid var(--link-text);
+    border-color: ${ props => props.errorStatus == InputValidationStatus.VALID ? "var(--link-text)" : "var(--error-color)" };
     box-sizing: border-box;
     border-radius: 4px;
     margin-left: 10px;
     margin-right: 10px;
-    color: var(--link-text);
+    color: ${ props => props.errorStatus == InputValidationStatus.VALID ? "var(--link-text)" : "var(--error-color)" };
     cursor: pointer;
 `;
 
@@ -56,6 +57,7 @@ const SlippageInfo = observer(() => {
         <SlippageInfoContainer>
             <div>Expected price slippage of {expectedSlippage} with</div>
             <SlippageInlineDisplay
+                errorStatus={swapFormStore.getSlippageSelectorErrorStatus()}
                 onClick={() => {
                     swapFormStore.setSlippageSelectorOpen(true);
                 }}
