@@ -164,7 +164,7 @@ const AssetOptions = observer(() => {
             }
         });
 
-        // We don't introduce a possibility of duplicates and there for don't need to use Set
+        // We don't introduce a possibility of duplicates and therefore don't need to use Set
         return [
             ...buckets.tradableWithBalance,
             ...buckets.tradableWithoutBalance,

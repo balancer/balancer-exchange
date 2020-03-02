@@ -117,18 +117,12 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         swapFormStore.inputs.outputPrecision = tokenList[1].precision;
     }
 
-    const {
-        inputToken,
-        inputTicker,
-        inputIconAddress,
-        inputPrecision,
-        inputDecimals,
-        outputToken,
-        outputTicker,
-        outputIconAddress,
-        outputPrecision,
-        outputDecimals,
-    } = inputs;
+    const { inputToken, outputToken } = inputs;
+
+    const tokenMetadata = {
+        input: tokenStore.getTokenMetadata(chainId, inputToken),
+        output: tokenStore.getTokenMetadata(chainId, outputToken),
+    };
 
     const buttonActionHandler = (buttonState: ButtonState) => {
         switch (buttonState) {
@@ -159,14 +153,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         }
 
         if (inputs.type === SwapMethods.EXACT_IN) {
-            const {
-                inputAmount,
-                inputToken,
-                inputDecimals,
-                outputToken,
-                outputDecimals,
-                extraSlippageAllowance,
-            } = inputs;
+            const { inputAmount, extraSlippageAllowance } = inputs;
 
             const {
                 spotOutput,
@@ -184,20 +171,13 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                 swaps,
                 inputToken,
                 bnum(inputAmount),
-                inputDecimals,
+                tokenMetadata.input.decimals,
                 outputToken,
                 bnum(minAmountOut),
-                outputDecimals
+                tokenMetadata.output.decimals
             );
         } else if (inputs.type === SwapMethods.EXACT_OUT) {
-            const {
-                inputToken,
-                inputDecimals,
-                outputToken,
-                outputDecimals,
-                outputAmount,
-                extraSlippageAllowance,
-            } = inputs;
+            const { outputAmount, extraSlippageAllowance } = inputs;
 
             const {
                 spotInput,
@@ -215,10 +195,10 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                 swaps,
                 inputToken,
                 maxAmountIn,
-                inputDecimals,
+                tokenMetadata.input.decimals,
                 outputToken,
                 bnum(outputAmount),
-                outputDecimals
+                tokenMetadata.output.decimals
             );
         }
     };
@@ -322,26 +302,27 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
 
     inputUserBalance = formatBalance(
         inputUserBalanceBN,
-        inputDecimals,
-        inputPrecision
+        tokenMetadata.input.decimals,
+        tokenMetadata.input.precision
     );
 
     truncatedInputUserBalance = formatBalanceTruncated(
         inputUserBalanceBN,
-        inputDecimals,
-        inputPrecision,
+        tokenMetadata.input.decimals,
+        tokenMetadata.input.precision,
         20
     );
 
     outputUserBalance = formatBalance(
         outputUserBalanceBN,
-        outputDecimals,
-        outputPrecision
+        tokenMetadata.output.decimals,
+        tokenMetadata.output.precision
     );
+
     truncatedOutputUserBalance = formatBalanceTruncated(
         outputUserBalanceBN,
-        outputDecimals,
-        outputPrecision,
+        tokenMetadata.output.decimals,
+        tokenMetadata.output.precision,
         20
     );
 
@@ -404,10 +385,10 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                     key="122"
                     inputID="amount-in"
                     inputName="inputAmount"
-                    tokenName={inputTicker}
+                    tokenName={tokenMetadata.input.symbol}
                     tokenBalance={inputUserBalance}
                     truncatedTokenBalance={truncatedInputUserBalance}
-                    tokenAddress={inputIconAddress}
+                    tokenAddress={tokenMetadata.input.iconAddress}
                     errorMessage={errorMessage}
                     showMax={!!account && !!inputUserBalanceBN}
                 />
@@ -416,10 +397,10 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                     key="123"
                     inputID="amount-out"
                     inputName="outputAmount"
-                    tokenName={outputTicker}
+                    tokenName={tokenMetadata.output.symbol}
                     tokenBalance={outputUserBalance}
                     truncatedTokenBalance={truncatedOutputUserBalance}
-                    tokenAddress={outputIconAddress}
+                    tokenAddress={tokenMetadata.output.iconAddress}
                     errorMessage={errorMessage}
                     showMax={!!account && !!outputUserBalanceBN}
                 />
