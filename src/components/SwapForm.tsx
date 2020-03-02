@@ -41,7 +41,7 @@ const ColumnContainer = styled.div`
     justify-content: center;
 `;
 
-const EnterOrderDetails = styled.div`
+const MessageBlock = styled.div`
     font-family: var(--roboto);
     font-size: 14px;
     line-height: 16px;
@@ -349,14 +349,26 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     }
     const errorMessage = outputs.activeErrorMessage;
 
+    const renderMessageBlock = () => {
+        if (!isEmpty(errorMessage)) {
+            return (
+                <ErrorDisplay errorText={errorMessage} />
+            )
+        } else {
+            return (
+                <MessageBlock>
+                    Enter Order Details to Continue
+                </MessageBlock>
+            )
+        }
+    }
+
     const renderTradeDetails = (inputAmount, outputAmount) => {
-        if (isEmpty(inputAmount) && isEmpty(outputAmount)) {
+        if (isEmpty(inputAmount) && isEmpty(outputAmount) || !isEmpty(errorMessage)) {
             return (
                 <ColumnContainer>
                     <TradeCompositionPlaceholder />
-                    <EnterOrderDetails>
-                        Enter Order Details to Continue
-                    </EnterOrderDetails>
+                    {renderMessageBlock()}
                     <SlippageSelectorPlaceholder />
                     <Button
                         buttonText={getButtonText(buttonState)}
