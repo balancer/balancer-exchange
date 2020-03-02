@@ -174,15 +174,10 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                 swaps,
             } = swapFormStore.preview as ExactAmountInPreview;
 
-            console.log(`spotOutput ${spotOutput.toString()}`);
-            console.log(`expectedSlippage ${expectedSlippage.toString()}`);
-
             const minAmountOut = calcMinAmountOut(
                 spotOutput,
                 expectedSlippage.plus(bnum(extraSlippageAllowance))
             );
-
-            console.log(`minAmountOut ${minAmountOut.toString()}`);
 
             await proxyStore.batchSwapExactIn(
                 web3React,
@@ -197,7 +192,9 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         } else if (inputs.type === SwapMethods.EXACT_OUT) {
             const {
                 inputToken,
+                inputDecimals,
                 outputToken,
+                outputDecimals,
                 outputAmount,
                 extraSlippageAllowance,
             } = inputs;
@@ -212,10 +209,6 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                 spotInput,
                 expectedSlippage.plus(extraSlippageAllowance)
             );
-
-            console.log('maxAmountIn', {
-                maxAmountIn: maxAmountIn.toString(),
-            });
 
             await proxyStore.batchSwapExactOut(
                 web3React,
@@ -330,6 +323,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         inputDecimals,
         inputPrecision
     );
+
     truncatedInputUserBalance = formatBalanceTruncated(
         inputUserBalanceBN,
         inputDecimals,

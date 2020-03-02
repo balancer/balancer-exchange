@@ -97,8 +97,6 @@ const SellToken = observer(
                 inputDecimals,
             } = inputs;
 
-            // const tokenAmountIn = scale(bnum(inputAmount), inputDecimals);
-
             return await proxyStore.previewBatchSwapExactIn(
                 inputToken,
                 outputToken,
