@@ -33,6 +33,7 @@ export function calcInGivenOut(
     let diff = tokenBalanceOut.minus(tokenAmountOut);
     let y = bdiv(tokenBalanceOut, diff);
     let foo = bpow(y, weightRatio);
+    foo = foo.minus(BONE);
     let tokenAmountIn = BONE.minus(swapFee);
     tokenAmountIn = bdiv(bmul(tokenBalanceIn, foo), tokenAmountIn);
     return tokenAmountIn;

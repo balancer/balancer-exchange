@@ -7,7 +7,7 @@ import {
     InputValidationStatus,
     SwapMethods,
 } from 'stores/SwapForm';
-import { bnum, scale } from 'utils/helpers';
+import { bnum } from 'utils/helpers';
 import { ExactAmountInPreview } from 'stores/Proxy';
 
 const SellToken = observer(
@@ -39,6 +39,9 @@ const SellToken = observer(
             swapFormStore.inputs.type = SwapMethods.EXACT_IN;
             swapFormStore.inputs.inputAmount = value;
 
+            const inputs = swapFormStore.inputs;
+            const { outputToken } = inputs;
+
             let inputStatus = swapFormStore.getNumberInputValidationStatus(
                 value
             );
@@ -60,7 +63,9 @@ const SellToken = observer(
                 if (preview.validSwap) {
                     swapFormStore.setOutputFromPreview(
                         SwapMethods.EXACT_IN,
-                        preview
+                        preview,
+                        tokenStore.getTokenMetadata(chainId, outputToken)
+                            .decimals
                     );
                     swapFormStore.clearErrorMessage();
                     swapFormStore.setTradeCompositionEAI(preview);

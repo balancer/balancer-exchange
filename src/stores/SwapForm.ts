@@ -8,15 +8,7 @@ import {
     SwapPreview,
 } from './Proxy';
 import { BigNumber } from 'utils/bignumber';
-import {
-    bnum,
-    scale,
-    formatPctString,
-    fromWei,
-    isEmpty,
-    str,
-    toWei,
-} from '../utils/helpers';
+import { bnum, scale, formatPctString, isEmpty, str } from '../utils/helpers';
 
 export const formNames = {
     INPUT_FORM: 'inputs',
@@ -135,19 +127,20 @@ export default class SwapFormStore {
 
     @action setOutputFromPreview(
         method: SwapMethods,
-        preview: ExactAmountInPreview | ExactAmountOutPreview
+        preview: ExactAmountInPreview | ExactAmountOutPreview,
+        decimals: number
     ) {
         if (method === SwapMethods.EXACT_IN) {
             preview = preview as ExactAmountInPreview;
             this.inputs.outputAmount = scale(
                 preview.totalOutput,
-                -this.inputs.outputDecimals
+                -decimals
             ).toString();
         } else if (method === SwapMethods.EXACT_OUT) {
             preview = preview as ExactAmountOutPreview;
             this.inputs.inputAmount = scale(
                 preview.totalInput,
-                -this.inputs.inputDecimals
+                -decimals
             ).toString();
         } else {
             throw new Error('Invalid swap method specified');
@@ -406,6 +399,7 @@ export default class SwapFormStore {
         }
 
         if (totalPercentage !== 100) {
+            console.log(totalPercentage);
             console.error('Total Percentage Unexpected Value');
         }
 

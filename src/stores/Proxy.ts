@@ -249,6 +249,14 @@ export default class ProxyStore {
         const { tokenStore, providerStore } = this.rootStore;
         const { chainId } = web3React;
 
+        console.log('[BatchSwapExactOut]', {
+            swaps,
+            tokenIn,
+            tokenOut,
+            tokenAmountOut: tokenAmountOut.toString(),
+            maxAmountIn: maxAmountIn.toString(),
+        });
+
         const proxyAddress = tokenStore.getProxyAddress(chainId);
 
         if (tokenIn === EtherKey) {
@@ -257,7 +265,11 @@ export default class ProxyStore {
                 ContractTypes.ExchangeProxy,
                 proxyAddress,
                 'batchEthInSwapExactOut',
-                [swaps, tokenOut, tokenAmountOut.toString()],
+                [
+                    swaps,
+                    tokenOut,
+                    scale(tokenAmountOut, decimalsOut).toString(),
+                ],
                 { value: ethers.utils.bigNumberify(maxAmountIn.toString()) }
             );
         } else if (tokenOut === EtherKey) {
@@ -469,8 +481,8 @@ export default class ProxyStore {
             );
 
             const expectedSlippage = calcExpectedSlippage(
-                spotPrice,
-                effectivePrice
+                effectivePrice,
+                spotPrice
             );
 
             printDebugInfo(

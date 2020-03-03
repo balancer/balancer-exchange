@@ -12,8 +12,8 @@ import AssetSelector from './AssetSelector';
 import { observer } from 'mobx-react';
 import {
     bnum,
+    scale,
     isEmpty,
-    toWei,
     formatBalance,
     formatBalanceTruncated,
 } from 'utils/helpers';
@@ -254,7 +254,10 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                 isPreviewValid &&
                 injectedChainId === supportedChainId
             ) {
-                const inputAmountBN = toWei(inputs.inputAmount);
+                const inputAmountBN = scale(
+                    bnum(inputs.inputAmount),
+                    tokenMetadata.input.decimals
+                );
                 return inputBalance && inputBalance.gte(inputAmountBN);
             }
         }
