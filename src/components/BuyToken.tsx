@@ -22,8 +22,10 @@ const BuyToken = observer(
         showMax,
     }) => {
         const {
-            root: { proxyStore, swapFormStore },
+            root: { providerStore, proxyStore, swapFormStore, tokenStore },
         } = useStores();
+
+        const { chainId } = providerStore.getActiveWeb3React();
 
         const onChange = async event => {
             const { value } = event.target;
@@ -84,18 +86,13 @@ const BuyToken = observer(
 
         const previewSwapExactAmountOutHandler = async (): Promise<ExactAmountOutPreview> => {
             const inputs = swapFormStore.inputs;
-            const {
-                inputToken,
-                outputToken,
-                outputAmount,
-                outputDecimals,
-            } = inputs;
+            const { inputToken, outputToken, outputAmount } = inputs;
 
             return await proxyStore.previewBatchSwapExactOut(
                 inputToken,
                 outputToken,
                 bnum(outputAmount),
-                outputDecimals
+                tokenStore.getTokenMetadata(chainId, outputToken).decimals
             );
         };
 
