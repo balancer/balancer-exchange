@@ -214,15 +214,17 @@ export const generateIcon = address => {
 
 export const normalizePriceValues = (
     inputValue: BigNumber,
-    outputValue: BigNumber
+    inputDecimals: number,
+    outputValue: BigNumber,
+    outputDecimals: number
 ): {
     normalizedInput: BigNumber;
     normalizedOutput: BigNumber;
 } => {
-    const multiplier = bnum(1).div(inputValue);
+    const multiplier = scale(bnum(1), inputDecimals).div(inputValue);
     return {
         normalizedInput: bnum(1),
-        normalizedOutput: outputValue.times(multiplier),
+        normalizedOutput: scale(outputValue.times(multiplier), -outputDecimals),
     };
 };
 

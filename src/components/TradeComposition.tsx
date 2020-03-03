@@ -200,25 +200,27 @@ const TradeComposition = observer(() => {
     };
 
     const renderExchangeRate = (chartData: ChartData) => {
-        const inputTokenSymbol = tokenStore.getTokenMetadata(
+        const inputTokenData = tokenStore.getTokenMetadata(
             supportedChainId,
             inputToken
-        ).symbol;
-        const outputTokenSymbol = tokenStore.getTokenMetadata(
+        );
+        const outputTokenData = tokenStore.getTokenMetadata(
             supportedChainId,
             outputToken
-        ).symbol;
+        );
 
         if (chartData.validSwap) {
             const { normalizedInput, normalizedOutput } = normalizePriceValues(
                 chartData.inputPriceValue,
-                chartData.outputPriceValue
+                inputTokenData.decimals,
+                chartData.outputPriceValue,
+                outputTokenData.decimals
             );
 
             return (
                 <div>
-                    {normalizedInput.toString()} {inputTokenSymbol} ={' '}
-                    {normalizedOutput.toPrecision(6)} {outputTokenSymbol}
+                    {normalizedInput.toString()} {inputTokenData.symbol} ={' '}
+                    {normalizedOutput.toPrecision(6)} {outputTokenData.symbol}
                 </div>
             );
         } else {
