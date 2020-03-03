@@ -12,8 +12,8 @@ import AssetSelector from './AssetSelector';
 import { observer } from 'mobx-react';
 import {
     bnum,
+    scale,
     isEmpty,
-    toWei,
     formatBalance,
     formatBalanceTruncated,
 } from 'utils/helpers';
@@ -117,18 +117,12 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         swapFormStore.inputs.outputPrecision = tokenList[1].precision;
     }
 
-    const {
-        inputToken,
-        inputTicker,
-        inputIconAddress,
-        inputPrecision,
-        inputDecimals,
-        outputToken,
-        outputTicker,
-        outputIconAddress,
-        outputPrecision,
-        outputDecimals,
-    } = inputs;
+    const { inputToken, outputToken } = inputs;
+
+    const tokenMetadata = {
+        input: tokenStore.getTokenMetadata(chainId, inputToken),
+        output: tokenStore.getTokenMetadata(chainId, outputToken),
+    };
 
     const buttonActionHandler = (buttonState: ButtonState) => {
         switch (buttonState) {
@@ -159,12 +153,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         }
 
         if (inputs.type === SwapMethods.EXACT_IN) {
-            const {
-                inputAmount,
-                inputToken,
-                outputToken,
-                extraSlippageAllowance,
-            } = inputs;
+            const { inputAmount, extraSlippageAllowance } = inputs;
 
             const {
                 spotOutput,
@@ -181,17 +170,14 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                 web3React,
                 swaps,
                 inputToken,
-                toWei(inputAmount),
+                bnum(inputAmount),
+                tokenMetadata.input.decimals,
                 outputToken,
-                toWei(minAmountOut)
+                bnum(minAmountOut),
+                tokenMetadata.output.decimals
             );
         } else if (inputs.type === SwapMethods.EXACT_OUT) {
-            const {
-                inputToken,
-                outputToken,
-                outputAmount,
-                extraSlippageAllowance,
-            } = inputs;
+            const { outputAmount, extraSlippageAllowance } = inputs;
 
             const {
                 spotInput,
@@ -204,17 +190,15 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                 expectedSlippage.plus(extraSlippageAllowance)
             );
 
-            console.log('maxAmountIn', {
-                maxAmountIn: maxAmountIn.toString(),
-            });
-
             await proxyStore.batchSwapExactOut(
                 web3React,
                 swaps,
                 inputToken,
                 maxAmountIn,
+                tokenMetadata.input.decimals,
                 outputToken,
-                toWei(outputAmount)
+                bnum(outputAmount),
+                tokenMetadata.output.decimals
             );
         }
     };
@@ -270,7 +254,10 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                 isPreviewValid &&
                 injectedChainId === supportedChainId
             ) {
-                const inputAmountBN = toWei(inputs.inputAmount);
+                const inputAmountBN = scale(
+                    bnum(inputs.inputAmount),
+                    tokenMetadata.input.decimals
+                );
                 return inputBalance && inputBalance.gte(inputAmountBN);
             }
         }
@@ -318,25 +305,27 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
 
     inputUserBalance = formatBalance(
         inputUserBalanceBN,
-        inputDecimals,
-        inputPrecision
+        tokenMetadata.input.decimals,
+        tokenMetadata.input.precision
     );
+
     truncatedInputUserBalance = formatBalanceTruncated(
         inputUserBalanceBN,
-        inputDecimals,
-        inputPrecision,
+        tokenMetadata.input.decimals,
+        tokenMetadata.input.precision,
         20
     );
 
     outputUserBalance = formatBalance(
         outputUserBalanceBN,
-        outputDecimals,
-        outputPrecision
+        tokenMetadata.output.decimals,
+        tokenMetadata.output.precision
     );
+
     truncatedOutputUserBalance = formatBalanceTruncated(
         outputUserBalanceBN,
-        outputDecimals,
-        outputPrecision,
+        tokenMetadata.output.decimals,
+        tokenMetadata.output.precision,
         20
     );
 
@@ -399,10 +388,10 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                     key="122"
                     inputID="amount-in"
                     inputName="inputAmount"
-                    tokenName={inputTicker}
+                    tokenName={tokenMetadata.input.symbol}
                     tokenBalance={inputUserBalance}
                     truncatedTokenBalance={truncatedInputUserBalance}
-                    tokenAddress={inputIconAddress}
+                    tokenAddress={tokenMetadata.input.iconAddress}
                     errorMessage={errorMessage}
                     showMax={!!account && !!inputUserBalanceBN}
                 />
@@ -411,10 +400,10 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                     key="123"
                     inputID="amount-out"
                     inputName="outputAmount"
-                    tokenName={outputTicker}
+                    tokenName={tokenMetadata.output.symbol}
                     tokenBalance={outputUserBalance}
                     truncatedTokenBalance={truncatedOutputUserBalance}
-                    tokenAddress={outputIconAddress}
+                    tokenAddress={tokenMetadata.output.iconAddress}
                     errorMessage={errorMessage}
                     showMax={!!account && !!outputUserBalanceBN}
                 />

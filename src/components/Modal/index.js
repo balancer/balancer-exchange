@@ -176,6 +176,7 @@ export default function Modal({
                                         minHeight={minHeight}
                                         maxHeight={maxHeight}
                                         mobile={isMobile}
+                                        aria-label="modal"
                                     >
                                         <HiddenCloseButton
                                             onClick={onDismiss}
@@ -205,6 +206,7 @@ export default function Modal({
                             maxHeight={maxHeight}
                             isOpen={isOpen}
                             mobile={isMobile}
+                            aria-label="modal"
                         >
                             <HiddenCloseButton onClick={onDismiss} />
                             {children}

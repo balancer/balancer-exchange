@@ -22,8 +22,10 @@ const BuyToken = observer(
         showMax,
     }) => {
         const {
-            root: { proxyStore, swapFormStore },
+            root: { providerStore, proxyStore, swapFormStore, tokenStore },
         } = useStores();
+
+        const { chainId } = providerStore.getActiveWeb3React();
 
         const onChange = async event => {
             const { value } = event.target;
@@ -36,6 +38,9 @@ const BuyToken = observer(
             swapFormStore.setInputFocus(InputFocus.BUY);
             swapFormStore.inputs.type = SwapMethods.EXACT_OUT;
             swapFormStore.inputs.outputAmount = value;
+
+            const inputs = swapFormStore.inputs;
+            const { inputToken } = inputs;
 
             let inputStatus = swapFormStore.getNumberInputValidationStatus(
                 value
@@ -50,19 +55,21 @@ const BuyToken = observer(
             if (inputStatus === InputValidationStatus.VALID) {
                 const preview = await previewSwapExactAmountOutHandler();
 
-                if (!swapFormStore.isOutputAmountStale(preview.outputAmount)) {
-                    if (preview.validSwap) {
-                        swapFormStore.setOutputFromPreview(
-                            SwapMethods.EXACT_OUT,
-                            preview
-                        );
-                        swapFormStore.clearErrorMessage();
-                        swapFormStore.setTradeCompositionEAO(preview);
-                    } else {
-                        swapFormStore.setValidSwap(false);
-                        swapFormStore.resetTradeComposition();
-                    }
+                // if (!swapFormStore.isOutputAmountStale(preview.outputAmount)) {
+                if (preview.validSwap) {
+                    swapFormStore.setOutputFromPreview(
+                        SwapMethods.EXACT_OUT,
+                        preview,
+                        tokenStore.getTokenMetadata(chainId, inputToken)
+                            .decimals
+                    );
+                    swapFormStore.clearErrorMessage();
+                    swapFormStore.setTradeCompositionEAO(preview);
+                } else {
+                    swapFormStore.setValidSwap(false);
+                    swapFormStore.resetTradeComposition();
                 }
+                // }
             } else {
                 console.log('[Invalid Input]', inputStatus, value);
                 if (value === swapFormStore.inputs.outputAmount) {
@@ -89,7 +96,8 @@ const BuyToken = observer(
             return await proxyStore.previewBatchSwapExactOut(
                 inputToken,
                 outputToken,
-                bnum(outputAmount)
+                bnum(outputAmount),
+                tokenStore.getTokenMetadata(chainId, outputToken).decimals
             );
         };
 

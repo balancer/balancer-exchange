@@ -4,7 +4,6 @@ import styled from 'styled-components';
 import { backup, web3ContextNames } from 'provider/connectors';
 import { useEagerConnect, useInactiveListener } from 'provider/providerHooks';
 import { useStores } from 'contexts/storesContext';
-import { observer } from 'mobx-react';
 import { useInterval } from 'utils/helperHooks';
 
 const MessageWrapper = styled.div`
@@ -18,7 +17,7 @@ const Message = styled.h2`
     color: ${({ theme }) => theme.uniswapPink};
 `;
 
-const Web3ReactManager = observer(({ children }) => {
+const Web3ReactManager = ({ children }) => {
     const {
         root: { providerStore, blockchainFetchStore },
     } = useStores();
@@ -142,7 +141,7 @@ const Web3ReactManager = observer(({ children }) => {
             });
             blockchainFetchStore.setFetchLoop(web3React, true);
         }
-    }, [web3React, blockchainFetchStore, providerStore]);
+    }, [web3React, providerStore.activeAccount, blockchainFetchStore]);
 
     // on page load, do nothing until we've tried to connect to the injected connector
     if (!triedEager) {
@@ -176,6 +175,6 @@ const Web3ReactManager = observer(({ children }) => {
         networkActive,
     });
     return children;
-});
+};
 
 export default Web3ReactManager;
