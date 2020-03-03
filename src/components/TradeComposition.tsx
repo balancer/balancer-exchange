@@ -100,13 +100,6 @@ const PieChartWrapper = styled.div`
     height: 96px;
 `;
 
-const PieChart = styled.div`
-    width: 96px;
-    height: 96px;
-    border: 1px solid #b388ff;
-    border-radius: 50px;
-`;
-
 const TradeComposition = observer(() => {
     const {
         root: { swapFormStore, tokenStore },
@@ -139,6 +132,7 @@ const TradeComposition = observer(() => {
             datasets: [
                 {
                     data: [1],
+                    label: 'swaps',
                     borderAlign: 'center',
                     borderColor: '#B388FF',
                     borderWidth: '1',
@@ -146,6 +140,7 @@ const TradeComposition = observer(() => {
                 },
                 {
                     data: [],
+                    label: 'other',
                     borderAlign: 'center',
                     backgroundColor: ['#A7FFEB', '#FF9E80', '#B388FF'],
                     borderColor: ['#A7FFEB', '#FF9E80', '#B388FF'],
@@ -177,7 +172,7 @@ const TradeComposition = observer(() => {
         if (chartData.validSwap) {
             return chartData.swaps.map((swap, index) => {
                 return (
-                    <PoolLine>
+                    <PoolLine key={index}>
                         <AddressAndBullet>
                             <BulletPoint
                                 color={formatting.borderColor[index]}
@@ -205,25 +200,27 @@ const TradeComposition = observer(() => {
     };
 
     const renderExchangeRate = (chartData: ChartData) => {
-        const inputTokenSymbol = tokenStore.getTokenMetadata(
+        const inputTokenData = tokenStore.getTokenMetadata(
             supportedChainId,
             inputToken
-        ).symbol;
-        const outputTokenSymbol = tokenStore.getTokenMetadata(
+        );
+        const outputTokenData = tokenStore.getTokenMetadata(
             supportedChainId,
             outputToken
-        ).symbol;
+        );
 
         if (chartData.validSwap) {
             const { normalizedInput, normalizedOutput } = normalizePriceValues(
                 chartData.inputPriceValue,
-                chartData.outputPriceValue
+                inputTokenData.decimals,
+                chartData.outputPriceValue,
+                outputTokenData.decimals
             );
 
             return (
                 <div>
-                    {normalizedInput.toString()} {inputTokenSymbol} ={' '}
-                    {normalizedOutput.toPrecision(6)} {outputTokenSymbol}
+                    {normalizedInput.toString()} {inputTokenData.symbol} ={' '}
+                    {normalizedOutput.toPrecision(6)} {outputTokenData.symbol}
                 </div>
             );
         } else {

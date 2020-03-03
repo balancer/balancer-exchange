@@ -2,7 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { TokenIconAddress } from './TokenPanel';
 import { useStores } from '../contexts/storesContext';
-import { bnum, formatBalanceTruncated, fromWei } from 'utils/helpers';
+import { bnum, formatBalanceTruncated } from 'utils/helpers';
 import {
     getSupportedChainId,
     isChainIdSupported,
@@ -123,6 +123,7 @@ const AssetOptions = observer(() => {
                 userBalances[value.address]
                     ? bnum(userBalances[value.address])
                     : bnum(0),
+                value.decimals,
                 value.precision,
                 20
             );
@@ -163,7 +164,7 @@ const AssetOptions = observer(() => {
             }
         });
 
-        // We don't introduce a possibility of duplicates and there for don't need to use Set
+        // We don't introduce a possibility of duplicates and therefore don't need to use Set
         return [
             ...buckets.tradableWithBalance,
             ...buckets.tradableWithoutBalance,
@@ -207,6 +208,7 @@ const AssetOptions = observer(() => {
                     onClick={() => {
                         selectAsset(token);
                     }}
+                    key={token.address}
                 >
                     <AssetWrapper>
                         <TokenIcon src={TokenIconAddress(token.iconAddress)} />

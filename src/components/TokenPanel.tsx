@@ -149,8 +149,6 @@ const InputWrapper = styled.div`
     }
 `;
 
-const InputErrorWrapper = styled(InputWrapper)``;
-
 const MaxLink = styled.div`
     font-weight: 500;
     font-size: 14px;
@@ -215,8 +213,6 @@ const Token = observer(
                 </InputWrapper>
             );
         };
-
-        console.log(truncatedTokenBalance);
 
         return (
             <Panel>

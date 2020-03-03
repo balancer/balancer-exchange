@@ -214,24 +214,27 @@ export const generateIcon = address => {
 
 export const normalizePriceValues = (
     inputValue: BigNumber,
-    outputValue: BigNumber
+    inputDecimals: number,
+    outputValue: BigNumber,
+    outputDecimals: number
 ): {
     normalizedInput: BigNumber;
     normalizedOutput: BigNumber;
 } => {
-    const multiplier = bnum(1).div(inputValue);
+    const multiplier = scale(bnum(1), inputDecimals).div(inputValue);
     return {
         normalizedInput: bnum(1),
-        normalizedOutput: outputValue.times(multiplier),
+        normalizedOutput: scale(outputValue.times(multiplier), -outputDecimals),
     };
 };
 
 export const formatBalanceTruncated = (
     balance: BigNumber,
+    decimals: number,
     precision: number,
     truncateAt: number
 ): string => {
-    const result = formatBalance(balance, precision);
+    const result = formatBalance(balance, decimals, precision);
     if (result.length > truncateAt) {
         return result.substring(0, 20) + '...';
     } else {
@@ -241,13 +244,14 @@ export const formatBalanceTruncated = (
 
 export const formatBalance = (
     balance: BigNumber,
+    decimals: number,
     precision: number
 ): string => {
     if (balance.eq(0)) {
         return bnum(0).toFixed(2);
     }
 
-    const result = bnum(fromWei(balance))
+    const result = scale(balance, -decimals)
         .decimalPlaces(precision)
         .toString();
 
@@ -291,20 +295,20 @@ export const getGasPriceFromETHGasStation = () => {
 };
 
 // TODO: Issue between new BigNumber() and BigNumber() cast in javascript SOR
-export const formatPoolData = (pools: Pool[]): Pool[] => {
-    const result: Pool[] = [];
-    pools.forEach(pool => {
-        result.push({
-            id: pool.id,
-            balanceIn: new BigNumber(fromWei(pool.balanceIn)),
-            balanceOut: new BigNumber(fromWei(pool.balanceOut)),
-            weightIn: new BigNumber(fromWei(pool.weightIn)),
-            weightOut: new BigNumber(fromWei(pool.weightOut)),
-            swapFee: new BigNumber(fromWei(pool.swapFee)),
-        });
-    });
-    return result;
-};
+// export const formatPoolData = (pools: Pool[]): Pool[] => {
+//     const result: Pool[] = [];
+//     pools.forEach(pool => {
+//         result.push({
+//             id: pool.id,
+//             balanceIn: new BigNumber(fromWei(pool.balanceIn)),
+//             balanceOut: new BigNumber(fromWei(pool.balanceOut)),
+//             weightIn: new BigNumber(fromWei(pool.weightIn)),
+//             weightOut: new BigNumber(fromWei(pool.weightOut)),
+//             swapFee: new BigNumber(fromWei(pool.swapFee)),
+//         });
+//     });
+//     return result;
+// };
 
 export const printSwapInput = (input: SwapInput) => {
     if (input.method === SwapMethods.EXACT_IN) {
@@ -315,7 +319,7 @@ export const printSwapInput = (input: SwapInput) => {
 };
 
 export const printPoolData = (poolData: Pool[]) => {
-    const formatted = formatPoolData(poolData);
+    const formatted = poolData;
     console.log('---Pool Data---');
     console.table(formatted);
 };

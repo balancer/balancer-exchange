@@ -1,14 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useWeb3React } from '@web3-react/core';
 import styled from 'styled-components';
-import {
-    backup,
-    isChainIdSupported,
-    web3ContextNames,
-} from 'provider/connectors';
+import { backup, web3ContextNames } from 'provider/connectors';
 import { useEagerConnect, useInactiveListener } from 'provider/providerHooks';
 import { useStores } from 'contexts/storesContext';
-import { observer } from 'mobx-react';
 import { useInterval } from 'utils/helperHooks';
 
 const MessageWrapper = styled.div`
@@ -22,17 +17,14 @@ const Message = styled.h2`
     color: ${({ theme }) => theme.uniswapPink};
 `;
 
-const Web3ReactManager = observer(({ children }) => {
+const Web3ReactManager = ({ children }) => {
     const {
         root: { providerStore, blockchainFetchStore },
     } = useStores();
 
     const web3ContextInjected = useWeb3React(web3ContextNames.injected);
     const web3ContextBackup = useWeb3React(web3ContextNames.backup);
-    const {
-        active: injectedActive,
-        chainId: injectedChainId,
-    } = web3ContextInjected;
+    const { active: injectedActive } = web3ContextInjected;
     const {
         active: networkActive,
         error: networkError,
@@ -52,8 +44,6 @@ const Web3ReactManager = observer(({ children }) => {
         backup: web3ContextBackup,
         web3React: web3React,
     });
-
-    const favorInjected = injectedActive && isChainIdSupported(injectedChainId);
 
     // try to eagerly connect to an injected provider, if it exists and has granted access already
     const triedEager = useEagerConnect();
@@ -151,7 +141,7 @@ const Web3ReactManager = observer(({ children }) => {
             });
             blockchainFetchStore.setFetchLoop(web3React, true);
         }
-    }, [web3React]);
+    }, [web3React, providerStore.activeAccount, blockchainFetchStore]);
 
     // on page load, do nothing until we've tried to connect to the injected connector
     if (!triedEager) {
@@ -185,6 +175,6 @@ const Web3ReactManager = observer(({ children }) => {
         networkActive,
     });
     return children;
-});
+};
 
 export default Web3ReactManager;
