@@ -252,7 +252,7 @@ export const formatBalance = (
     }
 
     const result = scale(balance, -decimals)
-        .decimalPlaces(precision)
+        .decimalPlaces(precision, BigNumber.ROUND_DOWN)
         .toString();
 
     return padToDecimalPlaces(result, 2);
@@ -263,13 +263,13 @@ export const padToDecimalPlaces = (
     minDecimals: number
 ): string => {
     const split = value.split('.');
-    
+
     if (!split[1]) {
-        return value + ".00";
+        return value + '.00';
     } else if (split[1].length > 1) {
         return value;
     } else {
-        return value + "0"
+        return value + '0';
     }
 };
 
