@@ -169,7 +169,7 @@ const AssetOptions = observer(() => {
             }
         });
 
-        // We don't introduce a possibility of duplicates and there for don't need to use Set
+        // We don't introduce a possibility of duplicates and therefore don't need to use Set
         return [
             ...buckets.tradableWithBalance,
             ...buckets.tradableWithoutBalance,
@@ -227,6 +227,7 @@ const AssetOptions = observer(() => {
                     onClick={() => {
                         selectAsset(token);
                     }}
+                    key={token.address}
                 >
                     <AssetWrapper>
                         <TokenIcon src={TokenIconAddress(token.iconAddress)} />
