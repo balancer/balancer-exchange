@@ -266,7 +266,12 @@ export const padToDecimalPlaces = (
     const zerosToPad = split[1] ? minDecimals - split[1].length : minDecimals;
 
     if (zerosToPad > 0) {
-        let pad = '.';
+        let pad = '';
+
+        // Add decimal point if no decimal portion in original number
+        if (zerosToPad === minDecimals) {
+            pad += '.';
+        }
         for (let i = 0; i < zerosToPad; i++) {
             pad += '0';
         }
