@@ -2,6 +2,7 @@ import React from 'react';
 import { HashRouter, Redirect, Route, Switch } from 'react-router-dom';
 import Web3ReactManager from 'components/Web3ReactManager';
 import Header from 'components/Header';
+import GeneralNotification from 'components/GeneralNotification';
 import SwapForm from 'components/SwapForm';
 import './App.css';
 
@@ -30,6 +31,7 @@ const App = () => {
         <Web3ReactManager>
             <HashRouter>
                 <Header />
+                <GeneralNotification />
                 {renderViews()}
             </HashRouter>
         </Web3ReactManager>

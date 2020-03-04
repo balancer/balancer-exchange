@@ -64,6 +64,7 @@ const Arrow = styled.div`
     position: absolute;
     top: -6px;
     right: 185px;
+    cursor: pointer;
 `;
 
 const InputWrapper = styled.div`
@@ -192,7 +193,11 @@ const SlippageSelector = observer(() => {
                 <CellGenerator cellIndex="3" slippageValue="1.0">
                     1.0%
                 </CellGenerator>
-                <Arrow />
+                <Arrow 
+                    onClick={() => {
+                        swapFormStore.setSlippageSelectorOpen(false);
+                    }}
+                />
                 <CustomCell cellIndex="4" />
             </SelectorDropDown>
         </Container>
