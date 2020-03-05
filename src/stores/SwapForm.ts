@@ -202,6 +202,100 @@ export default class SwapFormStore {
         return this.inputs.extraSlippageAllowanceErrorStatus;
     }
 
+    async refreshExactAmountInPreview() {
+        const { proxyStore, providerStore, tokenStore } = this.rootStore;
+        const { chainId } = providerStore.getActiveWeb3React();
+        const { inputToken, outputToken, inputAmount } = this.inputs;
+
+        const preview = await proxyStore.previewBatchSwapExactIn(
+            inputToken,
+            outputToken,
+            bnum(inputAmount),
+            tokenStore.getTokenMetadata(chainId, inputToken).decimals
+        );
+
+        if (preview.error) {
+            this.setErrorMessage(preview.error);
+        }
+
+        if (preview.validSwap) {
+            this.setOutputFromPreview(
+                SwapMethods.EXACT_IN,
+                preview,
+                tokenStore.getTokenMetadata(chainId, outputToken).decimals
+            );
+            this.clearErrorMessage();
+            this.setTradeCompositionEAI(preview);
+        } else {
+            this.setValidSwap(false);
+            this.resetTradeComposition();
+        }
+    }
+
+    async refreshExactAmountOutPreview() {
+        const { proxyStore, providerStore, tokenStore } = this.rootStore;
+        const { chainId } = providerStore.getActiveWeb3React();
+        const { inputToken, outputToken, outputAmount } = this.inputs;
+
+        const preview = await proxyStore.previewBatchSwapExactOut(
+            inputToken,
+            outputToken,
+            bnum(outputAmount),
+            tokenStore.getTokenMetadata(chainId, outputToken).decimals
+        );
+
+        if (preview.validSwap) {
+            this.setOutputFromPreview(
+                SwapMethods.EXACT_OUT,
+                preview,
+                tokenStore.getTokenMetadata(chainId, inputToken).decimals
+            );
+            this.clearErrorMessage();
+            this.setTradeCompositionEAO(preview);
+        } else {
+            this.setValidSwap(false);
+            this.resetTradeComposition();
+        }
+    }
+
+    refreshInvalidInputAmount(value, inputStatus) {
+        console.log('[Invalid Input]', inputStatus, value);
+        if (value === this.inputs.inputAmount) {
+            // Clear error messages on updating to empty input
+            if (inputStatus === InputValidationStatus.EMPTY) {
+                this.updateInputsFromObject({
+                    outputAmount: '',
+                });
+                this.clearErrorMessage();
+                this.resetTradeComposition();
+            } else {
+                this.updateInputsFromObject({
+                    outputAmount: '',
+                });
+                this.setErrorMessage(inputStatus);
+                this.resetTradeComposition();
+            }
+        }
+    }
+
+    refreshInvalidOutputAmount(value, inputStatus) {
+        console.log('[Invalid Input]', inputStatus, value);
+        if (value === this.inputs.outputAmount) {
+            // Don't show error message on empty value
+            if (inputStatus === InputValidationStatus.EMPTY) {
+                this.setInputAmount('');
+
+                this.clearErrorMessage();
+                this.resetTradeComposition();
+            } else {
+                //Show error message on other invalid input status
+                this.setInputAmount('');
+                this.setErrorMessage(inputStatus);
+                this.resetTradeComposition();
+            }
+        }
+    }
+
     @action setExtraSlippageAllowance(value: string) {
         this.inputs.extraSlippageAllowance = value;
     }
@@ -415,6 +509,25 @@ export default class SwapFormStore {
             this.getNumberInputValidationStatus(value) ===
             InputValidationStatus.VALID
         );
+    }
+
+    validateSwapValue(
+        value: string,
+        account: string | undefined,
+        normalizedBalance?: string
+    ): InputValidationStatus {
+        let inputStatus = this.getNumberInputValidationStatus(value);
+
+        // Check for insufficient balance if user logged in
+        if (
+            account &&
+            inputStatus === InputValidationStatus.VALID &&
+            parseFloat(value) > parseFloat(normalizedBalance)
+        ) {
+            inputStatus = InputValidationStatus.INSUFFICIENT_BALANCE;
+        }
+
+        return inputStatus;
     }
 
     getNumberInputValidationStatus(

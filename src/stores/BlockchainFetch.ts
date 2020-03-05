@@ -11,7 +11,7 @@ export default class BlockchainFetchStore {
         this.rootStore = rootStore;
     }
 
-    @action setFetchLoop(
+    @action blockchainFetch(
         web3React: Web3ReactContextInterface,
         forceFetch?: boolean
     ) {
