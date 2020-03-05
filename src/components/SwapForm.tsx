@@ -340,20 +340,17 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
 
     const renderMessageBlock = () => {
         if (!isEmpty(errorMessage)) {
-            return (
-                <ErrorDisplay errorText={errorMessage} />
-            )
+            return <ErrorDisplay errorText={errorMessage} />;
         } else {
-            return (
-                <MessageBlock>
-                    Enter Order Details to Continue
-                </MessageBlock>
-            )
+            return <MessageBlock>Enter Order Details to Continue</MessageBlock>;
         }
-    }
+    };
 
     const renderTradeDetails = (inputAmount, outputAmount) => {
-        if (isEmpty(inputAmount) && isEmpty(outputAmount) || !isEmpty(errorMessage)) {
+        if (
+            (isEmpty(inputAmount) && isEmpty(outputAmount)) ||
+            !isEmpty(errorMessage)
+        ) {
             return (
                 <ColumnContainer>
                     <TradeCompositionPlaceholder />

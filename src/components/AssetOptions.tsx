@@ -73,7 +73,7 @@ const TokenBalance = styled.div`
 const NoPool = styled.div`
     margin-left: 5px;
     color: var(--error-color);
-`
+`;
 
 interface Asset {
     address: string;
@@ -206,19 +206,13 @@ const AssetOptions = observer(() => {
         swapFormStore.setAssetModalState({ open: false });
     };
 
-    const TradableToken = ({isTradable}) => {
+    const TradableToken = ({ isTradable }) => {
         if (isTradable) {
-            return(
-                <div />
-            );
+            return <div />;
         } else {
-            return(
-                <NoPool>
-                    No Pool
-                </NoPool>
-            )
+            return <NoPool>No Pool</NoPool>;
         }
-    }
+    };
 
     return (
         <AssetPanelContainer>
