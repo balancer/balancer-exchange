@@ -239,6 +239,10 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         const isPreviewValid =
             swapFormStore.preview && !swapFormStore.preview.error;
 
+        const areInputOutputTokensEqual =
+            swapFormStore.inputs.inputToken ===
+            swapFormStore.inputs.outputToken;
+
         if (
             buttonState === ButtonState.UNLOCK ||
             buttonState === ButtonState.NO_WALLET
@@ -252,6 +256,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                 isExtraSlippageAmountValid &&
                 injectedChainId &&
                 isPreviewValid &&
+                !areInputOutputTokensEqual &&
                 injectedChainId === supportedChainId
             ) {
                 const inputAmountBN = scale(
