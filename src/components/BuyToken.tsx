@@ -25,7 +25,7 @@ const BuyToken = observer(
             root: { providerStore, proxyStore, swapFormStore, tokenStore },
         } = useStores();
 
-        const { chainId } = providerStore.getActiveWeb3React();
+        const { account, chainId } = providerStore.getActiveWeb3React();
 
         const onChange = async event => {
             const { value } = event.target;
@@ -47,7 +47,7 @@ const BuyToken = observer(
             );
 
             if (inputStatus === InputValidationStatus.VALID) {
-                if (parseFloat(value) > parseFloat(tokenBalance)) {
+                if (parseFloat(value) > parseFloat(tokenBalance) && account) {
                     inputStatus = InputValidationStatus.INSUFFICIENT_BALANCE;
                 }
             }
