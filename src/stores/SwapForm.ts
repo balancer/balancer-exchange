@@ -236,16 +236,21 @@ export default class SwapFormStore {
             );
             this.clearErrorMessage();
 
-            const userBalance = tokenStore.normalizeBalance(
-                tokenStore.getBalance(chainId, inputToken, account),
-                inputToken
-            );
-
-            if (account && userBalance) {
-                // If balance loaded (take the balance as an input in the function!
-                this.setSwapObjection(
-                    this.findSwapObjection(inputAmount, account, userBalance)
+            if (account) {
+                const userBalance = tokenStore.normalizeBalance(
+                    tokenStore.getBalance(chainId, inputToken, account),
+                    inputToken
                 );
+
+                if (userBalance) {
+                    this.setSwapObjection(
+                        this.findSwapObjection(
+                            inputAmount,
+                            account,
+                            userBalance
+                        )
+                    );
+                }
             }
             this.setTradeCompositionEAI(preview);
         } else {
@@ -256,7 +261,7 @@ export default class SwapFormStore {
 
     async refreshExactAmountOutPreview() {
         const { proxyStore, providerStore, tokenStore } = this.rootStore;
-        const { chainId } = providerStore.getActiveWeb3React();
+        const { account, chainId } = providerStore.getActiveWeb3React();
         const { inputToken, outputToken, outputAmount } = this.inputs;
 
         const preview = await proxyStore.previewBatchSwapExactOut(
@@ -277,6 +282,29 @@ export default class SwapFormStore {
                 tokenStore.getTokenMetadata(chainId, inputToken).decimals
             );
             this.clearErrorMessage();
+
+            if (account) {
+                const userBalance = tokenStore.normalizeBalance(
+                    tokenStore.getBalance(chainId, inputToken, account),
+                    inputToken
+                );
+
+                const normalizedInput = tokenStore.normalizeBalance(
+                    preview.totalInput,
+                    inputToken
+                );
+
+                if (userBalance) {
+                    this.setSwapObjection(
+                        this.findSwapObjection(
+                            normalizedInput,
+                            account,
+                            userBalance
+                        )
+                    );
+                }
+            }
+
             this.setTradeCompositionEAO(preview);
         } else {
             this.setValidSwap(false);
@@ -540,8 +568,13 @@ export default class SwapFormStore {
     findSwapObjection(
         value: string,
         account: string | undefined,
-        normalizedBalance?: string
+        normalizedBalance: string
     ): SwapObjection {
+        console.log('swapObjection', {
+            value,
+            account,
+            normalizedBalance,
+        });
         // Check for insufficient balance if user logged in
         if (account && parseFloat(value) > parseFloat(normalizedBalance)) {
             return SwapObjection.INSUFFICIENT_BALANCE;

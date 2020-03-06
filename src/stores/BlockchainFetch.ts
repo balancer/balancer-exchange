@@ -116,7 +116,6 @@ export default class BlockchainFetchStore {
             const inputStatus = swapFormStore.validateSwapValue(inputAmount);
             if (inputStatus === InputValidationStatus.VALID) {
                 swapFormStore.refreshExactAmountInPreview();
-                swapFormStore.findSwapObjection(inputAmount, inputBalance);
             } else {
                 swapFormStore.refreshInvalidInputAmount(
                     inputAmount,
@@ -127,7 +126,6 @@ export default class BlockchainFetchStore {
             const inputStatus = swapFormStore.validateSwapValue(outputAmount);
             if (inputStatus === InputValidationStatus.VALID) {
                 swapFormStore.refreshExactAmountOutPreview();
-                swapFormStore.findSwapObjection(outputAmount, outputBalance);
             } else {
                 swapFormStore.refreshInvalidOutputAmount(
                     outputAmount,

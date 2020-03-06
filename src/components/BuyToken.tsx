@@ -43,7 +43,6 @@ const BuyToken = observer(
 
             if (inputStatus === InputValidationStatus.VALID) {
                 await swapFormStore.refreshExactAmountOutPreview();
-                swapFormStore.findSwapObjection(value, tokenBalance);
             } else {
                 swapFormStore.refreshInvalidOutputAmount(value, inputStatus);
             }
