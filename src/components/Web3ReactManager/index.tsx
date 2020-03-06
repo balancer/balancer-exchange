@@ -5,6 +5,7 @@ import { backup, web3ContextNames } from 'provider/connectors';
 import { useEagerConnect, useInactiveListener } from 'provider/providerHooks';
 import { useStores } from 'contexts/storesContext';
 import { useInterval } from 'utils/helperHooks';
+import { InputValidationStatus, SwapMethods } from '../../stores/SwapForm';
 
 const MessageWrapper = styled.div`
     display: flex;
@@ -19,7 +20,7 @@ const Message = styled.h2`
 
 const Web3ReactManager = ({ children }) => {
     const {
-        root: { providerStore, blockchainFetchStore },
+        root: { providerStore, blockchainFetchStore, swapFormStore },
     } = useStores();
 
     const web3ContextInjected = useWeb3React(web3ContextNames.injected);
@@ -126,10 +127,11 @@ const Web3ReactManager = ({ children }) => {
 
     //Fetch user blockchain data on an interval using current params
     useInterval(
-        () => blockchainFetchStore.setFetchLoop(web3React, false),
+        () => blockchainFetchStore.blockchainFetch(web3React, false),
         web3React.account ? 1000 : null
     );
 
+    // Run on Account Switch
     useEffect(() => {
         if (
             web3React.account &&
@@ -139,7 +141,7 @@ const Web3ReactManager = ({ children }) => {
                 account: web3React.account,
                 prevAccount: providerStore.activeAccount,
             });
-            blockchainFetchStore.setFetchLoop(web3React, true);
+            blockchainFetchStore.blockchainFetch(web3React, true);
         }
     }, [web3React, providerStore.activeAccount, blockchainFetchStore]);
 

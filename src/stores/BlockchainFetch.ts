@@ -2,6 +2,7 @@ import { action, observable } from 'mobx';
 import RootStore from 'stores/Root';
 import { Web3ReactContextInterface } from '@web3-react/core/dist/types';
 import { supportedChainId } from '../provider/connectors';
+import { InputValidationStatus, SwapMethods } from './SwapForm';
 
 export default class BlockchainFetchStore {
     @observable activeFetchLoop: any;
@@ -11,9 +12,9 @@ export default class BlockchainFetchStore {
         this.rootStore = rootStore;
     }
 
-    @action setFetchLoop(
+    @action blockchainFetch(
         web3React: Web3ReactContextInterface,
-        forceFetch?: boolean
+        accountSwitchOverride?: boolean
     ) {
         if (
             web3React.active &&
@@ -21,7 +22,7 @@ export default class BlockchainFetchStore {
             web3React.chainId === supportedChainId
         ) {
             const { library, account, chainId } = web3React;
-            const { providerStore } = this.rootStore;
+            const { providerStore, tokenStore, swapFormStore } = this.rootStore;
 
             library
                 .getBlockNumber()
@@ -39,7 +40,8 @@ export default class BlockchainFetchStore {
                     // });
 
                     const doFetch =
-                        blockNumber !== lastCheckedBlock || forceFetch;
+                        blockNumber !== lastCheckedBlock ||
+                        accountSwitchOverride;
 
                     if (doFetch) {
                         console.log('[Fetch Loop] Fetch Blockchain Data', {
@@ -59,11 +61,20 @@ export default class BlockchainFetchStore {
 
                         // Get user-specific blockchain data
                         if (account) {
-                            providerStore.fetchUserBlockchainData(
-                                web3React,
-                                chainId,
-                                account
-                            );
+                            providerStore
+                                .fetchUserBlockchainData(
+                                    web3React,
+                                    chainId,
+                                    account
+                                )
+                                .then(results => {
+                                    // Update preview when account changes
+                                    if (accountSwitchOverride) {
+                                        this.updateSwapPreviewForActiveAccount(
+                                            web3React
+                                        );
+                                    }
+                                });
                         }
                     }
                 })
@@ -71,7 +82,7 @@ export default class BlockchainFetchStore {
                     console.log('[Fetch Loop Failure]', {
                         web3React,
                         providerStore,
-                        forceFetch,
+                        forceFetch: accountSwitchOverride,
                         chainId,
                         account,
                         library,
@@ -79,6 +90,48 @@ export default class BlockchainFetchStore {
                     });
                     providerStore.setCurrentBlockNumber(chainId, undefined);
                 });
+        }
+    }
+
+    updateSwapPreviewForActiveAccount(web3React: Web3ReactContextInterface) {
+        const { account, chainId } = web3React;
+        const { tokenStore, swapFormStore } = this.rootStore;
+
+        const {
+            swapMethod,
+            inputAmount,
+            inputToken,
+            outputAmount,
+            outputToken,
+        } = swapFormStore.inputs;
+        const inputBalance = tokenStore.normalizeBalance(
+            tokenStore.getBalance(chainId, inputToken, account),
+            inputToken
+        );
+        const outputBalance = tokenStore.normalizeBalance(
+            tokenStore.getBalance(chainId, outputToken, account),
+            outputToken
+        );
+        if (swapMethod === SwapMethods.EXACT_IN) {
+            const inputStatus = swapFormStore.validateSwapValue(inputAmount);
+            if (inputStatus === InputValidationStatus.VALID) {
+                swapFormStore.refreshExactAmountInPreview();
+            } else {
+                swapFormStore.refreshInvalidInputAmount(
+                    inputAmount,
+                    inputStatus
+                );
+            }
+        } else if (swapMethod === SwapMethods.EXACT_OUT) {
+            const inputStatus = swapFormStore.validateSwapValue(outputAmount);
+            if (inputStatus === InputValidationStatus.VALID) {
+                swapFormStore.refreshExactAmountOutPreview();
+            } else {
+                swapFormStore.refreshInvalidOutputAmount(
+                    outputAmount,
+                    inputStatus
+                );
+            }
         }
     }
 }

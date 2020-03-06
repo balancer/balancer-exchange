@@ -39,14 +39,17 @@ export enum SwapMethods {
     EXACT_OUT = 'swapExactOut',
 }
 
+export enum SwapObjection {
+    NONE = 'NONE',
+    INSUFFICIENT_BALANCE = 'Insufficient Balance',
+}
+
 export enum InputValidationStatus {
     VALID = 'Valid',
     EMPTY = 'Empty',
     ZERO = 'Zero',
     NOT_FLOAT = 'Not Float',
     NEGATIVE = 'Negative',
-    INSUFFICIENT_BALANCE = 'Insufficient Balance',
-    NO_POOLS = 'There are no Pools with selected tokens',
     MAX_DIGITS_EXCEEDED = 'Maximum Digits Exceeded',
 }
 
@@ -79,7 +82,7 @@ export default class SwapFormStore {
         outputPrecision: 2,
         inputIconAddress: '',
         outputIconAddress: '',
-        type: SwapMethods.EXACT_IN,
+        swapMethod: SwapMethods.EXACT_IN,
         outputLimit: '0',
         inputLimit: '0',
         limitPrice: '0',
@@ -97,6 +100,7 @@ export default class SwapFormStore {
         swaps: [],
         validSwap: false,
         activeErrorMessage: '',
+        swapObjection: '',
     };
     @observable preview: SwapPreview;
     @observable tradeCompositionData: ChartData;
@@ -170,6 +174,10 @@ export default class SwapFormStore {
         }
     }
 
+    @action setSwapObjection(message: string) {
+        this.outputs.swapObjection = message;
+    }
+
     @action setErrorMessage(message: string) {
         this.outputs.activeErrorMessage = message;
     }
@@ -200,6 +208,146 @@ export default class SwapFormStore {
 
     getSlippageSelectorErrorStatus(): InputValidationStatus {
         return this.inputs.extraSlippageAllowanceErrorStatus;
+    }
+
+    async refreshExactAmountInPreview() {
+        const { proxyStore, providerStore, tokenStore } = this.rootStore;
+        const { account, chainId } = providerStore.getActiveWeb3React();
+        const { inputToken, outputToken, inputAmount } = this.inputs;
+
+        const preview = await proxyStore.previewBatchSwapExactIn(
+            inputToken,
+            outputToken,
+            bnum(inputAmount),
+            tokenStore.getTokenMetadata(chainId, inputToken).decimals
+        );
+
+        this.setSwapObjection(SwapObjection.NONE);
+
+        if (preview.error) {
+            this.setErrorMessage(preview.error);
+        }
+
+        if (preview.validSwap) {
+            this.setOutputFromPreview(
+                SwapMethods.EXACT_IN,
+                preview,
+                tokenStore.getTokenMetadata(chainId, outputToken).decimals
+            );
+            this.clearErrorMessage();
+
+            if (account) {
+                const userBalance = tokenStore.normalizeBalance(
+                    tokenStore.getBalance(chainId, inputToken, account),
+                    inputToken
+                );
+
+                if (userBalance) {
+                    this.setSwapObjection(
+                        this.findSwapObjection(
+                            inputAmount,
+                            account,
+                            userBalance
+                        )
+                    );
+                }
+            }
+            this.setTradeCompositionEAI(preview);
+        } else {
+            this.setValidSwap(false);
+            this.resetTradeComposition();
+        }
+    }
+
+    async refreshExactAmountOutPreview() {
+        const { proxyStore, providerStore, tokenStore } = this.rootStore;
+        const { account, chainId } = providerStore.getActiveWeb3React();
+        const { inputToken, outputToken, outputAmount } = this.inputs;
+
+        const preview = await proxyStore.previewBatchSwapExactOut(
+            inputToken,
+            outputToken,
+            bnum(outputAmount),
+            tokenStore.getTokenMetadata(chainId, outputToken).decimals
+        );
+
+        if (preview.error) {
+            this.setErrorMessage(preview.error);
+        }
+
+        if (preview.validSwap) {
+            this.setOutputFromPreview(
+                SwapMethods.EXACT_OUT,
+                preview,
+                tokenStore.getTokenMetadata(chainId, inputToken).decimals
+            );
+            this.clearErrorMessage();
+
+            if (account) {
+                const userBalance = tokenStore.normalizeBalance(
+                    tokenStore.getBalance(chainId, inputToken, account),
+                    inputToken
+                );
+
+                const normalizedInput = tokenStore.normalizeBalance(
+                    preview.totalInput,
+                    inputToken
+                );
+
+                if (userBalance) {
+                    this.setSwapObjection(
+                        this.findSwapObjection(
+                            normalizedInput,
+                            account,
+                            userBalance
+                        )
+                    );
+                }
+            }
+
+            this.setTradeCompositionEAO(preview);
+        } else {
+            this.setValidSwap(false);
+            this.resetTradeComposition();
+        }
+    }
+
+    refreshInvalidInputAmount(value, inputStatus) {
+        console.log('[Invalid Input]', inputStatus, value);
+        if (value === this.inputs.inputAmount) {
+            // Clear error messages on updating to empty input
+            if (inputStatus === InputValidationStatus.EMPTY) {
+                this.updateInputsFromObject({
+                    outputAmount: '',
+                });
+                this.clearErrorMessage();
+                this.resetTradeComposition();
+            } else {
+                this.updateInputsFromObject({
+                    outputAmount: '',
+                });
+                this.setErrorMessage(inputStatus);
+                this.resetTradeComposition();
+            }
+        }
+    }
+
+    refreshInvalidOutputAmount(value, inputStatus) {
+        console.log('[Invalid Input]', inputStatus, value);
+        if (value === this.inputs.outputAmount) {
+            // Don't show error message on empty value
+            if (inputStatus === InputValidationStatus.EMPTY) {
+                this.setInputAmount('');
+
+                this.clearErrorMessage();
+                this.resetTradeComposition();
+            } else {
+                //Show error message on other invalid input status
+                this.setInputAmount('');
+                this.setErrorMessage(inputStatus);
+                this.resetTradeComposition();
+            }
+        }
     }
 
     @action setExtraSlippageAllowance(value: string) {
@@ -415,6 +563,28 @@ export default class SwapFormStore {
             this.getNumberInputValidationStatus(value) ===
             InputValidationStatus.VALID
         );
+    }
+
+    findSwapObjection(
+        value: string,
+        account: string | undefined,
+        normalizedBalance: string
+    ): SwapObjection {
+        console.log('swapObjection', {
+            value,
+            account,
+            normalizedBalance,
+        });
+        // Check for insufficient balance if user logged in
+        if (account && parseFloat(value) > parseFloat(normalizedBalance)) {
+            return SwapObjection.INSUFFICIENT_BALANCE;
+        }
+
+        return SwapObjection.NONE;
+    }
+
+    validateSwapValue(value: string): InputValidationStatus {
+        return this.getNumberInputValidationStatus(value);
     }
 
     getNumberInputValidationStatus(

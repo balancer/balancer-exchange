@@ -12,6 +12,8 @@ import {
     UserAllowanceFetch,
 } from './actions/fetch';
 import { Web3ReactContextInterface } from '@web3-react/core/dist/types';
+import { getSupportedChainId } from '../provider/connectors';
+import { scale } from 'utils/helpers';
 
 export interface ContractMetadata {
     bFactory: string;
@@ -116,6 +118,14 @@ export default class TokenStore {
         });
 
         this.contractMetadata[chainId] = contractMetadata;
+    }
+
+    normalizeBalance(weiBalance: BigNumber, tokenAddress: string): string {
+        const chainId = getSupportedChainId();
+        const decimals = this.contractMetadata[chainId].tokens.find(
+            token => token.address === tokenAddress
+        ).decimals;
+        return scale(weiBalance, -decimals).toString();
     }
 
     getProxyAddress(chainId): string {
@@ -307,7 +317,11 @@ export default class TokenStore {
         this.balances.set(chainId, chainBalances);
     }
 
-    getBalance(chainId, tokenAddress, account): BigNumber | undefined {
+    getBalance(
+        chainId: number,
+        tokenAddress: string,
+        account: string
+    ): BigNumber | undefined {
         const chainBalances = this.balances.get(chainId);
         if (chainBalances) {
             const tokenBalances = chainBalances[tokenAddress];
