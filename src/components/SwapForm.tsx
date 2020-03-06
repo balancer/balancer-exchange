@@ -17,7 +17,7 @@ import {
     formatBalance,
     formatBalanceTruncated,
 } from 'utils/helpers';
-import { SwapMethods } from 'stores/SwapForm';
+import { SwapMethods, SwapObjection } from 'stores/SwapForm';
 import { useStores } from '../contexts/storesContext';
 import { ErrorIds } from '../stores/Error';
 import { BigNumber } from 'utils/bignumber';
@@ -152,7 +152,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
             return;
         }
 
-        if (inputs.type === SwapMethods.EXACT_IN) {
+        if (inputs.swapMethod === SwapMethods.EXACT_IN) {
             const { inputAmount, extraSlippageAllowance } = inputs;
 
             const {
@@ -176,7 +176,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                 bnum(minAmountOut),
                 tokenMetadata.output.decimals
             );
-        } else if (inputs.type === SwapMethods.EXACT_OUT) {
+        } else if (inputs.swapMethod === SwapMethods.EXACT_OUT) {
             const { outputAmount, extraSlippageAllowance } = inputs;
 
             const {
@@ -342,6 +342,8 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         console.error('error', error);
     }
     const errorMessage = outputs.activeErrorMessage;
+    const swapObjection = outputs.swapObjection;
+    console.warn('errorMessage', errorMessage);
 
     const renderMessageBlock = () => {
         if (!isEmpty(errorMessage)) {
@@ -352,6 +354,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     };
 
     const renderTradeDetails = (inputAmount, outputAmount) => {
+        // If we have an error from the input validation or swap preview
         if (
             (isEmpty(inputAmount) && isEmpty(outputAmount)) ||
             !isEmpty(errorMessage)
@@ -377,7 +380,13 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
             return (
                 <ColumnContainer>
                     <TradeComposition />
-                    <ErrorDisplay errorText={errorMessage} />
+                    <ErrorDisplay
+                        errorText={
+                            swapObjection === SwapObjection.NONE
+                                ? ''
+                                : swapObjection
+                        }
+                    />
                     <SlippageSelector />
                     <Button
                         buttonText={getButtonText(buttonState)}

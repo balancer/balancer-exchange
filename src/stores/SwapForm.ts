@@ -39,14 +39,17 @@ export enum SwapMethods {
     EXACT_OUT = 'swapExactOut',
 }
 
+export enum SwapObjection {
+    NONE = 'NONE',
+    INSUFFICIENT_BALANCE = 'Insufficient Balance',
+}
+
 export enum InputValidationStatus {
     VALID = 'Valid',
     EMPTY = 'Empty',
     ZERO = 'Zero',
     NOT_FLOAT = 'Not Float',
     NEGATIVE = 'Negative',
-    INSUFFICIENT_BALANCE = 'Insufficient Balance',
-    NO_POOLS = 'There are no Pools with selected tokens',
     MAX_DIGITS_EXCEEDED = 'Maximum Digits Exceeded',
 }
 
@@ -79,7 +82,7 @@ export default class SwapFormStore {
         outputPrecision: 2,
         inputIconAddress: '',
         outputIconAddress: '',
-        type: SwapMethods.EXACT_IN,
+        swapMethod: SwapMethods.EXACT_IN,
         outputLimit: '0',
         inputLimit: '0',
         limitPrice: '0',
@@ -97,6 +100,7 @@ export default class SwapFormStore {
         swaps: [],
         validSwap: false,
         activeErrorMessage: '',
+        swapObjection: '',
     };
     @observable preview: SwapPreview;
     @observable tradeCompositionData: ChartData;
@@ -170,6 +174,10 @@ export default class SwapFormStore {
         }
     }
 
+    @action setSwapObjection(message: string) {
+        this.outputs.swapObjection = message;
+    }
+
     @action setErrorMessage(message: string) {
         this.outputs.activeErrorMessage = message;
     }
@@ -204,7 +212,7 @@ export default class SwapFormStore {
 
     async refreshExactAmountInPreview() {
         const { proxyStore, providerStore, tokenStore } = this.rootStore;
-        const { chainId } = providerStore.getActiveWeb3React();
+        const { account, chainId } = providerStore.getActiveWeb3React();
         const { inputToken, outputToken, inputAmount } = this.inputs;
 
         const preview = await proxyStore.previewBatchSwapExactIn(
@@ -213,6 +221,8 @@ export default class SwapFormStore {
             bnum(inputAmount),
             tokenStore.getTokenMetadata(chainId, inputToken).decimals
         );
+
+        this.setSwapObjection(SwapObjection.NONE);
 
         if (preview.error) {
             this.setErrorMessage(preview.error);
@@ -225,6 +235,18 @@ export default class SwapFormStore {
                 tokenStore.getTokenMetadata(chainId, outputToken).decimals
             );
             this.clearErrorMessage();
+
+            const userBalance = tokenStore.normalizeBalance(
+                tokenStore.getBalance(chainId, inputToken, account),
+                inputToken
+            );
+
+            if (account && userBalance) {
+                // If balance loaded (take the balance as an input in the function!
+                this.setSwapObjection(
+                    this.findSwapObjection(inputAmount, account, userBalance)
+                );
+            }
             this.setTradeCompositionEAI(preview);
         } else {
             this.setValidSwap(false);
@@ -243,6 +265,10 @@ export default class SwapFormStore {
             bnum(outputAmount),
             tokenStore.getTokenMetadata(chainId, outputToken).decimals
         );
+
+        if (preview.error) {
+            this.setErrorMessage(preview.error);
+        }
 
         if (preview.validSwap) {
             this.setOutputFromPreview(
@@ -511,23 +537,21 @@ export default class SwapFormStore {
         );
     }
 
-    validateSwapValue(
+    findSwapObjection(
         value: string,
         account: string | undefined,
         normalizedBalance?: string
-    ): InputValidationStatus {
-        let inputStatus = this.getNumberInputValidationStatus(value);
-
+    ): SwapObjection {
         // Check for insufficient balance if user logged in
-        if (
-            account &&
-            inputStatus === InputValidationStatus.VALID &&
-            parseFloat(value) > parseFloat(normalizedBalance)
-        ) {
-            inputStatus = InputValidationStatus.INSUFFICIENT_BALANCE;
+        if (account && parseFloat(value) > parseFloat(normalizedBalance)) {
+            return SwapObjection.INSUFFICIENT_BALANCE;
         }
 
-        return inputStatus;
+        return SwapObjection.NONE;
+    }
+
+    validateSwapValue(value: string): InputValidationStatus {
+        return this.getNumberInputValidationStatus(value);
     }
 
     getNumberInputValidationStatus(

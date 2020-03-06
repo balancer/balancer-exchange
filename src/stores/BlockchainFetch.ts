@@ -98,7 +98,7 @@ export default class BlockchainFetchStore {
         const { tokenStore, swapFormStore } = this.rootStore;
 
         const {
-            type,
+            swapMethod,
             inputAmount,
             inputToken,
             outputAmount,
@@ -112,28 +112,22 @@ export default class BlockchainFetchStore {
             tokenStore.getBalance(chainId, outputToken, account),
             outputToken
         );
-        if (type === SwapMethods.EXACT_IN) {
-            const inputStatus = swapFormStore.validateSwapValue(
-                inputAmount,
-                account,
-                inputBalance
-            );
+        if (swapMethod === SwapMethods.EXACT_IN) {
+            const inputStatus = swapFormStore.validateSwapValue(inputAmount);
             if (inputStatus === InputValidationStatus.VALID) {
                 swapFormStore.refreshExactAmountInPreview();
+                swapFormStore.findSwapObjection(inputAmount, inputBalance);
             } else {
                 swapFormStore.refreshInvalidInputAmount(
                     inputAmount,
                     inputStatus
                 );
             }
-        } else if (type === SwapMethods.EXACT_OUT) {
-            const inputStatus = swapFormStore.validateSwapValue(
-                outputAmount,
-                account,
-                outputBalance
-            );
+        } else if (swapMethod === SwapMethods.EXACT_OUT) {
+            const inputStatus = swapFormStore.validateSwapValue(outputAmount);
             if (inputStatus === InputValidationStatus.VALID) {
                 swapFormStore.refreshExactAmountOutPreview();
+                swapFormStore.findSwapObjection(outputAmount, outputBalance);
             } else {
                 swapFormStore.refreshInvalidOutputAmount(
                     outputAmount,
