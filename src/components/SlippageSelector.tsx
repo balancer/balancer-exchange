@@ -193,7 +193,7 @@ const SlippageSelector = observer(() => {
                 <CellGenerator cellIndex="3" slippageValue="1.0">
                     1.0%
                 </CellGenerator>
-                <Arrow 
+                <Arrow
                     onClick={() => {
                         swapFormStore.setSlippageSelectorOpen(false);
                     }}

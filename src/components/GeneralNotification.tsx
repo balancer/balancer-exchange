@@ -10,8 +10,7 @@ const Wrapper = styled.div`
     width: 100%;
 `;
 
-const Header = styled.div`
-`;
+const Header = styled.div``;
 
 const ExitComponent = styled.div`
     color: var(--exit-modal-color);
@@ -33,13 +32,11 @@ const Body = styled.div`
 `;
 
 const GeneralNotification = () => {
-    return(
+    return (
         <Wrapper>
-            <Body>
-                { deployed['kovan'].notification }
-            </Body>
+            <Body>{deployed['kovan'].notification}</Body>
         </Wrapper>
     );
-}
+};
 
 export default GeneralNotification;

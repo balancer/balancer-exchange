@@ -25,12 +25,18 @@ const SlippageInlineDisplay = styled.div`
     width: 50px;
     height: 24px;
     border: 1px solid var(--link-text);
-    border-color: ${ props => props.errorStatus == InputValidationStatus.VALID ? "var(--link-text)" : "var(--error-color)" };
+    border-color: ${props =>
+        props.errorStatus == InputValidationStatus.VALID
+            ? 'var(--link-text)'
+            : 'var(--error-color)'};
     box-sizing: border-box;
     border-radius: 4px;
     margin-left: 10px;
     margin-right: 10px;
-    color: ${ props => props.errorStatus == InputValidationStatus.VALID ? "var(--link-text)" : "var(--error-color)" };
+    color: ${props =>
+        props.errorStatus == InputValidationStatus.VALID
+            ? 'var(--link-text)'
+            : 'var(--error-color)'};
     cursor: pointer;
 `;
 
