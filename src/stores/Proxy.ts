@@ -265,11 +265,7 @@ export default class ProxyStore {
                 ContractTypes.ExchangeProxy,
                 proxyAddress,
                 'batchEthInSwapExactOut',
-                [
-                    swaps,
-                    tokenOut,
-                    scale(tokenAmountOut, decimalsOut).toString(),
-                ],
+                [swaps, tokenOut],
                 { value: ethers.utils.bigNumberify(maxAmountIn.toString()) }
             );
         } else if (tokenOut === EtherKey) {
@@ -278,12 +274,7 @@ export default class ProxyStore {
                 ContractTypes.ExchangeProxy,
                 proxyAddress,
                 'batchEthOutSwapExactOut',
-                [
-                    swaps,
-                    tokenIn,
-                    scale(tokenAmountOut, decimalsOut).toString(),
-                    scale(maxAmountIn, decimalsIn).toString(),
-                ]
+                [swaps, tokenIn, maxAmountIn.toString()]
             );
         } else {
             await providerStore.sendTransaction(
@@ -291,13 +282,7 @@ export default class ProxyStore {
                 ContractTypes.ExchangeProxy,
                 proxyAddress,
                 'batchSwapExactOut',
-                [
-                    swaps,
-                    tokenIn,
-                    tokenOut,
-                    scale(tokenAmountOut, decimalsOut).toString(),
-                    scale(maxAmountIn, decimalsIn).toString(),
-                ]
+                [swaps, tokenIn, tokenOut, maxAmountIn.toString()]
             );
         }
     };
