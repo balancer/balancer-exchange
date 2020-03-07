@@ -11,7 +11,6 @@ export enum ContractTypes {
     BFactory = 'BFactory',
     TestToken = 'TestToken',
     ExchangeProxy = 'ExchangeProxy',
-    ExchangeProxyCallable = 'ExchangeProxyCallable',
 }
 
 export const schema = {
@@ -19,7 +18,6 @@ export const schema = {
     BFactory: require('../abi/BFactory').abi,
     TestToken: require('../abi/TestToken').abi,
     ExchangeProxy: require('../abi/ExchangeProxy').abi,
-    ExchangeProxyCallable: require('../abi/ExchangeProxyCallable').abi,
 };
 
 export interface ChainData {
