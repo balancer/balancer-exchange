@@ -35,6 +35,7 @@ export const web3ContextNames = {
 
 export const backup = new NetworkConnector({
     urls: {
+        1: RPC_URLS[1],
         42: RPC_URLS[42],
     },
     defaultChainId: supportedChainId,

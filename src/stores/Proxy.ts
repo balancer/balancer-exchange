@@ -193,7 +193,6 @@ export default class ProxyStore {
         const proxyAddress = tokenStore.getProxyAddress(chainId);
 
         if (tokenIn === EtherKey) {
-            console.log(`decimalsIn ${decimalsIn}`);
             await providerStore.sendTransaction(
                 web3React,
                 ContractTypes.ExchangeProxy,
