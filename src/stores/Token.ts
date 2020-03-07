@@ -3,7 +3,6 @@ import RootStore from 'stores/Root';
 import { ContractTypes } from 'stores/Provider';
 import * as helpers from 'utils/helpers';
 import { bnum } from 'utils/helpers';
-import * as deployed from 'deployed.json';
 import { FetchCode } from './Transaction';
 import { BigNumber } from 'utils/bignumber';
 import {
@@ -14,6 +13,8 @@ import {
 import { Web3ReactContextInterface } from '@web3-react/core/dist/types';
 import { getSupportedChainId } from '../provider/connectors';
 import { scale } from 'utils/helpers';
+
+const deployed = require('deployed.json');
 
 export interface ContractMetadata {
     bFactory: string;
@@ -97,12 +98,16 @@ export default class TokenStore {
 
     // network -> contrants -> tokens -> tokens[a] = TokenMetadata
     @action loadWhitelistedTokenMetadata(chainId: number) {
-        const tokenMetadata = deployed['kovan'].tokens;
+        const network = Object.keys(deployed).find(
+            item => deployed[item].chainId === chainId
+        );
+
+        const tokenMetadata = deployed[network].tokens;
 
         const contractMetadata = {
-            bFactory: deployed['kovan'].bFactory,
-            proxy: deployed['kovan'].proxy,
-            weth: deployed['kovan'].weth,
+            bFactory: deployed[network].bFactory,
+            proxy: deployed[network].proxy,
+            weth: deployed[network].weth,
             tokens: [] as TokenMetadata[],
         };
 
