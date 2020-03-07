@@ -282,12 +282,7 @@ export default class ProxyStore {
                 ContractTypes.ExchangeProxy,
                 proxyAddress,
                 'batchSwapExactOut',
-                [
-                    swaps,
-                    tokenIn,
-                    tokenOut,
-                    scale(maxAmountIn, decimalsIn).toString(),
-                ]
+                [swaps, tokenIn, tokenOut, maxAmountIn.toString()]
             );
         }
     };
