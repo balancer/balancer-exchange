@@ -126,8 +126,6 @@ export default class TransactionStore {
             this.txRecords[account] = [] as TransactionRecord[];
             this.txRecords[account].push(record);
         }
-
-        console.log('records', records);
     }
 
     private isTxPending(txRecord: TransactionRecord): boolean {
