@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import AssetOptions from './AssetOptions';
 import { observer } from 'mobx-react';
@@ -82,10 +82,46 @@ const InputContainer = styled.div`
     }
 `;
 
+function useOnClickOutside(ref, handler) {
+    useEffect(() => {
+        const handleClick = event => {
+            // Do nothing if clicking ref's element or descendent elements
+            if (!ref.current || ref.current.contains(event.target)) {
+                return;
+            }
+
+            handler(event);
+        };
+
+        const handleKeyUp = event => {
+            if (event.key != 'Escape') {
+                return;
+            }
+            handler(event);
+        };
+
+        document.addEventListener('mousedown', handleClick);
+        window.addEventListener('keydown', handleKeyUp, false);
+        document.addEventListener('touchstart', handleClick);
+
+        return () => {
+            document.removeEventListener('mousedown', handleClick);
+            window.removeEventListener('keydown', handleKeyUp, false);
+            document.removeEventListener('touchstart', handleClick);
+        };
+    }, [ref, handler]);
+}
+
 const AssetSelector = observer(() => {
     const {
         root: { swapFormStore },
     } = useStores();
+
+    const ref = useRef();
+
+    useOnClickOutside(ref, () =>
+        swapFormStore.setAssetModalState({ open: false })
+    );
 
     const { assetModalState } = swapFormStore;
 
@@ -95,7 +131,7 @@ const AssetSelector = observer(() => {
 
     return (
         <Container style={{ display: assetModalState.open ? 'block' : 'none' }}>
-            <ModalContent>
+            <ModalContent ref={ref}>
                 <AssetSelectorHeader>
                     <HeaderContent>Select Token to Sell</HeaderContent>
                     <ExitComponent
