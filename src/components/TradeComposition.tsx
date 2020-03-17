@@ -1,6 +1,10 @@
 import React from 'react';
 import styled from 'styled-components';
-import { normalizePriceValues, toAddressStub } from 'utils/helpers';
+import {
+    normalizePriceValues,
+    toAddressStub,
+    getEtherscanLink,
+} from 'utils/helpers';
 import { observer } from 'mobx-react';
 import { Pie } from 'react-chartjs-2';
 import { ChartData } from '../stores/SwapForm';
@@ -91,6 +95,10 @@ const Address = styled.div`
     margin-left: 16px;
 `;
 
+const AddressLink = styled.a`
+    color: var(--selector-text);
+`;
+
 const Percentage = styled.div`
     color: var(--token-balance-text);
 `;
@@ -178,9 +186,20 @@ const TradeComposition = observer(() => {
                                 color={formatting.borderColor[index]}
                             />
                             <Address>
-                                {swap.isOthers
-                                    ? 'Others'
-                                    : toAddressStub(swap.poolAddress)}
+                                {swap.isOthers ? (
+                                    'Others'
+                                ) : (
+                                    <AddressLink
+                                        href={getEtherscanLink(
+                                            supportedChainId,
+                                            swap.poolAddress,
+                                            'address'
+                                        )}
+                                        target="_blank"
+                                    >
+                                        {toAddressStub(swap.poolAddress)}
+                                    </AddressLink>
+                                )}
                             </Address>
                         </AddressAndBullet>
                         <Percentage>{swap.percentage}%</Percentage>
