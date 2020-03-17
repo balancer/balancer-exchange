@@ -9,7 +9,7 @@ const SlippageInfoContainer = styled.div`
     display: flex;
     flex-direction: row;
     justify-content: center;
-    color: var(--header-text);
+    color: ${props => props.slippageIndicator ? 'var(--error-color)' : 'var(--header-text)'};
     font-family: var(--roboto);
     font-size: 14px;
     line-height: 16px;
@@ -26,7 +26,7 @@ const SlippageInlineDisplay = styled.div`
     height: 24px;
     border: 1px solid var(--link-text);
     border-color: ${props =>
-        props.errorStatus == InputValidationStatus.VALID
+        props.errorStatus == InputValidationStatus.VALID && !props.slippageIndicator
             ? 'var(--link-text)'
             : 'var(--error-color)'};
     box-sizing: border-box;
@@ -34,7 +34,7 @@ const SlippageInlineDisplay = styled.div`
     margin-left: 10px;
     margin-right: 10px;
     color: ${props =>
-        props.errorStatus == InputValidationStatus.VALID
+        props.errorStatus == InputValidationStatus.VALID && !props.slippageIndicator
             ? 'var(--link-text)'
             : 'var(--error-color)'};
     cursor: pointer;
@@ -50,6 +50,13 @@ const InfoPopover = styled.img`
     cursor: pointer;
 `;
 
+const WarningIcon = styled.img`
+    width: 22px;
+    height: 26px;
+    margin-right: 11px;
+    color: var(--error-color);
+`;
+
 const SlippageInfo = observer(() => {
     const {
         root: { swapFormStore },
@@ -59,11 +66,31 @@ const SlippageInfo = observer(() => {
         outputs: { expectedSlippage },
     } = swapFormStore;
 
+    let slippageIndicator = false;
+
+    if (expectedSlippage > '5') {
+        slippageIndicator = true;
+    }
+
+    const Warning = () => {
+        if (slippageIndicator) {
+            return(
+                <WarningIcon src="WarningSign.svg" />
+            )
+        } else {
+            return(
+                <div />
+            )
+        }
+    }
+
     return (
-        <SlippageInfoContainer>
+        <SlippageInfoContainer slippageIndicator={slippageIndicator}>
+            {Warning()}
             <div>Expected price slippage of {expectedSlippage} with</div>
             <SlippageInlineDisplay
                 errorStatus={swapFormStore.getSlippageSelectorErrorStatus()}
+                slippageIndicator={slippageIndicator}
                 onClick={() => {
                     swapFormStore.setSlippageSelectorOpen(true);
                 }}
