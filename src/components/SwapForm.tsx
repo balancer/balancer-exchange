@@ -241,7 +241,13 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
 
         const areInputOutputTokensEqual =
             swapFormStore.inputs.inputToken ===
-            swapFormStore.inputs.outputToken;
+                swapFormStore.inputs.outputToken ||
+            (swapFormStore.inputs.inputToken === 'ether' &&
+                swapFormStore.inputs.outputToken ===
+                    tokenStore.getWethAddress(supportedChainId)) ||
+            (swapFormStore.inputs.inputToken ===
+                tokenStore.getWethAddress(supportedChainId) &&
+                swapFormStore.inputs.outputToken === 'ether');
 
         if (
             buttonState === ButtonState.UNLOCK ||
