@@ -15,7 +15,7 @@ const MessageWrapper = styled.div`
 `;
 
 const Message = styled.h2`
-    color: ${({ theme }) => theme.uniswapPink};
+    color: ${({ theme }) => theme.bodyText};
 `;
 
 const Web3ReactManager = ({ children }) => {
