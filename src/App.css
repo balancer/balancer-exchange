@@ -59,8 +59,6 @@ body {
 .popup-content {
     color: var(--background);
     border-radius: 4px;
-    height: 60px;
-    width: 180px;
     display: flex;
     align-items: center;
     justify-content: center;
