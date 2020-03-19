@@ -120,8 +120,8 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     const { inputToken, outputToken } = inputs;
 
     const tokenMetadata = {
-        input: tokenStore.getTokenMetadata(chainId, inputToken),
-        output: tokenStore.getTokenMetadata(chainId, outputToken),
+        input: tokenStore.getTokenMetadata(getSupportedChainId(), inputToken),
+        output: tokenStore.getTokenMetadata(getSupportedChainId(), outputToken),
     };
 
     const buttonActionHandler = (buttonState: ButtonState) => {
