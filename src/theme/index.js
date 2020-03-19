@@ -107,7 +107,7 @@ const theme = darkMode => ({
     // yellows
     warningYellow: '#FFE270',
     // pink
-    uniswapPink: '#DC6BE5',
+    bodyText: '#90a4ae',
     //green
     connectedGreen: '#27AE60',
 
@@ -115,7 +115,7 @@ const theme = darkMode => ({
     metaMaskOrange: '#E8831D',
 
     //specific
-    textHover: darkMode ? theme.uniswapPink : theme.doveGray,
+    textHover: darkMode ? theme.bodyText : theme.doveGray,
 
     // connect button when loggedout
     buttonFaded: darkMode ? '#DC6BE5' : '#737373',

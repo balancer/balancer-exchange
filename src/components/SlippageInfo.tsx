@@ -107,7 +107,7 @@ const SlippageInfo = observer(() => {
                 on="hover"
             >
                 <div>
-                    <div>Expected effective price</div>
+                    <div>Additional slippage is the most you are willing to pay on top of the expected slippage in case other trades are confirmed before yours. Beyond that the transaction will fail.</div>
                 </div>
             </Popup>
         </SlippageInfoContainer>
