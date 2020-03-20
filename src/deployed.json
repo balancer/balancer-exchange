@@ -2,7 +2,6 @@
     "kovan": {
         "chainId": 42,
         "bFactory": "0x8f7F78080219d4066A8036ccD30D588B416a40DB",
-        "notification": "This project is in beta. Only put small amounts of funds at risk.",
         "proxy": "0xD9c8ae0ecF77D0F7c1C28B4F6991A041963545d6",
         "weth": "0xd0A1E359811322d97991E03f863a0C30C2cF029C",
         "tokens": [
@@ -88,7 +87,6 @@
     "mainnet": {
         "chainId": 1,
         "bFactory": "0x9424B1412450D0f8Fc2255FAf6046b98213B76Bd",
-        "notification": "This project is in beta. Only put small amounts of funds at risk.",
         "proxy": "0x6317C5e82A06E1d8bf200d21F4510Ac2c038AC81",
         "weth": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
         "tokens": [

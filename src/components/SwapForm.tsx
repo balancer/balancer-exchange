@@ -349,7 +349,6 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     }
     const errorMessage = outputs.activeErrorMessage;
     const swapObjection = outputs.swapObjection;
-    console.warn('errorMessage', errorMessage);
 
     const renderMessageBlock = () => {
         if (!isEmpty(errorMessage)) {

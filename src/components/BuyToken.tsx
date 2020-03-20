@@ -7,8 +7,6 @@ import {
     InputValidationStatus,
     SwapMethods,
 } from 'stores/SwapForm';
-import { bnum } from 'utils/helpers';
-import { ExactAmountOutPreview } from '../stores/Proxy';
 
 const BuyToken = observer(
     ({
@@ -22,10 +20,8 @@ const BuyToken = observer(
         showMax,
     }) => {
         const {
-            root: { providerStore, proxyStore, swapFormStore, tokenStore },
+            root: { swapFormStore },
         } = useStores();
-
-        const { account, chainId } = providerStore.getActiveWeb3React();
 
         const onChange = async event => {
             const { value } = event.target;

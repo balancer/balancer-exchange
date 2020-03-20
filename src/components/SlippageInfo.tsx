@@ -9,7 +9,8 @@ const SlippageInfoContainer = styled.div`
     display: flex;
     flex-direction: row;
     justify-content: center;
-    color: ${props => props.slippageIndicator ? 'var(--error-color)' : 'var(--header-text)'};
+    color: ${props =>
+        props.slippageIndicator ? 'var(--error-color)' : 'var(--header-text)'};
     font-family: var(--roboto);
     font-size: 14px;
     line-height: 16px;
@@ -26,7 +27,8 @@ const SlippageInlineDisplay = styled.div`
     height: 24px;
     border: 1px solid var(--link-text);
     border-color: ${props =>
-        props.errorStatus == InputValidationStatus.VALID && !props.slippageIndicator
+        props.errorStatus === InputValidationStatus.VALID &&
+        !props.slippageIndicator
             ? 'var(--link-text)'
             : 'var(--error-color)'};
     box-sizing: border-box;
@@ -34,7 +36,8 @@ const SlippageInlineDisplay = styled.div`
     margin-left: 10px;
     margin-right: 10px;
     color: ${props =>
-        props.errorStatus == InputValidationStatus.VALID && !props.slippageIndicator
+        props.errorStatus === InputValidationStatus.VALID &&
+        !props.slippageIndicator
             ? 'var(--link-text)'
             : 'var(--error-color)'};
     cursor: pointer;
@@ -74,15 +77,11 @@ const SlippageInfo = observer(() => {
 
     const Warning = () => {
         if (slippageIndicator) {
-            return(
-                <WarningIcon src="WarningSign.svg" />
-            )
+            return <WarningIcon src="WarningSign.svg" />;
         } else {
-            return(
-                <div />
-            )
+            return <div />;
         }
-    }
+    };
 
     return (
         <SlippageInfoContainer slippageIndicator={slippageIndicator}>
@@ -107,7 +106,12 @@ const SlippageInfo = observer(() => {
                 on="hover"
             >
                 <div>
-                    <div>Additional slippage is the most you are willing to pay on top of the expected slippage in case other trades are confirmed before yours. Beyond that the transaction will fail.</div>
+                    <div>
+                        Additional slippage is the most you are willing to pay
+                        on top of the expected slippage in case other trades are
+                        confirmed before yours. Beyond that the transaction will
+                        fail.
+                    </div>
                 </div>
             </Popup>
         </SlippageInfoContainer>

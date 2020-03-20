@@ -94,7 +94,7 @@ function useOnClickOutside(ref, handler) {
         };
 
         const handleKeyUp = event => {
-            if (event.key != 'Escape') {
+            if (event.key !== 'Escape') {
                 return;
             }
             handler(event);
