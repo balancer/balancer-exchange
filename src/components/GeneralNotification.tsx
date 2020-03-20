@@ -1,40 +1,60 @@
 import React from 'react';
 import styled from 'styled-components';
-import * as deployed from '../deployed.json';
 
-const Wrapper = styled.div`
+const Wrapper = styled.div``;
+
+const Warning = styled.div`
     display: flex;
-    justify-content: center;
+    flex-direction: row;
     align-items: center;
-    height: 75px;
-    width: 100%;
+    color: var(--warning);
+    height: 67px;
+    width: 50%;
+    margin: 20px auto;
+    border: 1px solid var(--warning);
+    border-radius: 4px;
+    padding-left: 20px;
 `;
 
-const Header = styled.div``;
-
-const ExitComponent = styled.div`
-    color: var(--exit-modal-color);
-    transform: rotate(135deg);
-    font-size: 22px;
-    cursor: pointer;
-`;
-
-const Body = styled.div`
+const Message = styled.div`
+    display: inline;
     font-family: Roboto;
     font-style: normal;
     font-weight: normal;
-    font-size: 20px;
+    font-size: 14px;
     line-height: 16px;
-    letter-spacing: 0.6px;
-    color: var(--body-text);
-    padding: 25px;
-    border: 1px solid var(--panel-border);
+    letter-spacing: 0.2px;
+`;
+
+const WarningIcon = styled.img`
+    width: 22px;
+    height: 26px;
+    margin-right: 20px;
+    color: var(--warning);
+`;
+
+const Link = styled.a`
+    color: color: var(--warning);
 `;
 
 const GeneralNotification = () => {
     return (
         <Wrapper>
-            <Body>{deployed['kovan'].notification}</Body>
+            <Warning>
+                <WarningIcon src="WarningSign.svg" />
+                <Message>
+                    This is still beta software. Use small amounts of funds to
+                    start. Please reach out in our{' '}
+                    <Link
+                        href="https://discord.gg/ARJWaeF"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        Discord
+                    </Link>{' '}
+                    for any questions or issues!
+                </Message>
+            </Warning>
         </Wrapper>
     );
 };

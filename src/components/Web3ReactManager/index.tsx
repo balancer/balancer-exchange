@@ -5,7 +5,6 @@ import { backup, web3ContextNames } from 'provider/connectors';
 import { useEagerConnect, useInactiveListener } from 'provider/providerHooks';
 import { useStores } from 'contexts/storesContext';
 import { useInterval } from 'utils/helperHooks';
-import { InputValidationStatus, SwapMethods } from '../../stores/SwapForm';
 
 const MessageWrapper = styled.div`
     display: flex;
@@ -20,7 +19,7 @@ const Message = styled.h2`
 
 const Web3ReactManager = ({ children }) => {
     const {
-        root: { providerStore, blockchainFetchStore, swapFormStore },
+        root: { providerStore, blockchainFetchStore },
     } = useStores();
 
     const web3ContextInjected = useWeb3React(web3ContextNames.injected);
