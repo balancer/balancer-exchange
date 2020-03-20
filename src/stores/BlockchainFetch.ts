@@ -22,7 +22,7 @@ export default class BlockchainFetchStore {
             web3React.chainId === supportedChainId
         ) {
             const { library, account, chainId } = web3React;
-            const { providerStore, tokenStore, swapFormStore } = this.rootStore;
+            const { providerStore } = this.rootStore;
 
             library
                 .getBlockNumber()
@@ -94,24 +94,10 @@ export default class BlockchainFetchStore {
     }
 
     updateSwapPreviewForActiveAccount(web3React: Web3ReactContextInterface) {
-        const { account, chainId } = web3React;
-        const { tokenStore, swapFormStore } = this.rootStore;
+        const { swapFormStore } = this.rootStore;
 
-        const {
-            swapMethod,
-            inputAmount,
-            inputToken,
-            outputAmount,
-            outputToken,
-        } = swapFormStore.inputs;
-        const inputBalance = tokenStore.normalizeBalance(
-            tokenStore.getBalance(chainId, inputToken, account),
-            inputToken
-        );
-        const outputBalance = tokenStore.normalizeBalance(
-            tokenStore.getBalance(chainId, outputToken, account),
-            outputToken
-        );
+        const { swapMethod, inputAmount, outputAmount } = swapFormStore.inputs;
+
         if (swapMethod === SwapMethods.EXACT_IN) {
             const inputStatus = swapFormStore.validateSwapValue(inputAmount);
             if (inputStatus === InputValidationStatus.VALID) {
