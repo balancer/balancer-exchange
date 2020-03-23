@@ -1,7 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
 import { UnsupportedChainIdError, useWeb3React } from '@web3-react/core';
-import { darken } from 'polished';
 import { Activity } from 'react-feather';
 import { observer } from 'mobx-react';
 import { shortenAddress } from 'utils/helpers';
@@ -22,7 +21,7 @@ const Web3StatusGeneric = styled.button`
     font-size: 0.9rem;
     align-items: center;
     padding: 0.5rem;
-    border-radius: 2rem;
+    border-radius: 4px;
     box-sizing: border-box;
     cursor: pointer;
     user-select: none;
@@ -31,15 +30,18 @@ const Web3StatusGeneric = styled.button`
     }
 `;
 
+const WarningIcon = styled.img`
+    width: 22px;
+    height: 26px;
+    margin-right: 0px;
+    color: var(--warning);
+`;
+
 const Web3StatusError = styled(Web3StatusGeneric)`
-    background-color: ${({ theme }) => theme.salmonRed};
-    border: 1px solid ${({ theme }) => theme.salmonRed};
+    background-color: var(--panel);
+    border: 1px solid var(--warning);
     color: ${({ theme }) => theme.white};
     font-weight: 500;
-    :hover,
-    :focus {
-        background-color: ${({ theme }) => darken(0.1, theme.salmonRed)};
-    }
 `;
 
 const Text = styled.p`
@@ -108,8 +110,8 @@ const Web3ConnectStatus = observer(() => {
         if (account && !isChainIdSupported(injectedChainId)) {
             return (
                 <Web3StatusError onClick={toggleWalletModal}>
-                    <NetworkIcon />
-                    <Text> 'Wrong Network'</Text>
+                    <WarningIcon src="WarningSign.svg" />
+                    <Text>Wrong Network</Text>
                 </Web3StatusError>
             );
         } else if (account) {
