@@ -337,7 +337,7 @@ export default class ProxyStore {
                 this.setPreviewPending(false);
                 return emptyExactAmountInPreview(
                     inputAmount,
-                    'Insufficient Liquidity for this trade'
+                    'Insufficient liquidity on Balancer'
                 );
             }
 
@@ -444,7 +444,7 @@ export default class ProxyStore {
                 this.setPreviewPending(false);
                 return emptyExactAmountOutPreview(
                     outputAmount,
-                    'Insufficient Liquidity for this trade'
+                    'Insufficient liquidity on Balancer'
                 );
             }
 
