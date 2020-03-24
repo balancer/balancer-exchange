@@ -333,6 +333,14 @@ export default class ProxyStore {
                 costOutputToken
             );
 
+            if (sorSwaps.length === 0) {
+                this.setPreviewPending(false);
+                return emptyExactAmountInPreview(
+                    inputAmount,
+                    'Insufficient Liquidity for this trade'
+                );
+            }
+
             const swaps = formatSwapsExactAmountIn(
                 sorSwaps,
                 poolData,
@@ -431,6 +439,14 @@ export default class ProxyStore {
                 20,
                 costOutputToken
             );
+
+            if (sorSwaps.length === 0) {
+                this.setPreviewPending(false);
+                return emptyExactAmountOutPreview(
+                    outputAmount,
+                    'Insufficient Liquidity for this trade'
+                );
+            }
 
             const swaps = formatSwapsExactAmountOut(
                 sorSwaps,
