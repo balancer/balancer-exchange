@@ -2,11 +2,7 @@ import React from 'react';
 import TokenPanel from './TokenPanel';
 import { observer } from 'mobx-react';
 import { useStores } from '../contexts/storesContext';
-import {
-    InputFocus,
-    InputValidationStatus,
-    SwapMethods,
-} from 'stores/SwapForm';
+import { InputFocus } from 'stores/SwapForm';
 
 const SellToken = observer(
     ({
@@ -36,7 +32,7 @@ const SellToken = observer(
         };
 
         const { inputs } = swapFormStore;
-        const { inputAmount, setSellFocus } = inputs;
+        const { inputAmount, focus } = inputs;
 
         return (
             <TokenPanel
@@ -50,7 +46,7 @@ const SellToken = observer(
                 tokenBalance={tokenBalance}
                 truncatedTokenBalance={truncatedTokenBalance}
                 tokenAddress={tokenAddress}
-                setFocus={setSellFocus}
+                setFocus={focus === InputFocus.SELL}
                 errorMessage={errorMessage}
                 showMax={showMax}
             />

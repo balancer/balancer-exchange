@@ -30,6 +30,7 @@ export const labels = {
 };
 
 export enum InputFocus {
+    NONE,
     BUY,
     SELL,
 }
@@ -86,8 +87,7 @@ export default class SwapFormStore {
         outputLimit: '0',
         inputLimit: '0',
         limitPrice: '0',
-        setBuyFocus: false,
-        setSellFocus: false,
+        focus: 0,
         swaps: [],
     };
     @observable outputs = {
@@ -163,13 +163,7 @@ export default class SwapFormStore {
     }
 
     getInputFocus() {
-        if (this.inputs.setSellFocus && !this.inputs.setBuyFocus) {
-            return InputFocus.SELL;
-        } else if (this.inputs.setBuyFocus && !this.inputs.setSellFocus) {
-            return InputFocus.BUY;
-        } else {
-            throw new Error('Invalid input focus state');
-        }
+        return this.inputs.focus;
     }
 
     @action switchInputFocus() {
@@ -193,15 +187,7 @@ export default class SwapFormStore {
     }
 
     @action setInputFocus(element: InputFocus) {
-        if (element === InputFocus.BUY) {
-            this.inputs.setSellFocus = false;
-            this.inputs.setBuyFocus = true;
-        } else if (element === InputFocus.SELL) {
-            this.inputs.setBuyFocus = false;
-            this.inputs.setSellFocus = true;
-        } else {
-            throw new Error('Invalid input focus element specified');
-        }
+        this.inputs.focus = element;
     }
 
     @action setSwapObjection(message: string) {
@@ -460,7 +446,7 @@ export default class SwapFormStore {
         this.inputs.outputAmount = inputAmount;
 
         this.switchSwapMethod();
-        this.switchInputFocus();
+        this.setInputFocus(InputFocus.NONE);
     }
 
     @action clearInputs() {

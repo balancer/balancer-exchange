@@ -36,7 +36,7 @@ const BuyToken = observer(
         };
 
         const { inputs } = swapFormStore;
-        const { outputAmount, setBuyFocus } = inputs;
+        const { outputAmount, focus } = inputs;
 
         return (
             <TokenPanel
@@ -50,7 +50,7 @@ const BuyToken = observer(
                 tokenBalance={tokenBalance}
                 truncatedTokenBalance={truncatedTokenBalance}
                 tokenAddress={tokenAddress}
-                setFocus={setBuyFocus}
+                setFocus={focus === InputFocus.BUY}
                 errorMessage={errorMessage}
                 showMax={showMax}
             />
