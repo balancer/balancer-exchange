@@ -162,6 +162,36 @@ export default class SwapFormStore {
         };
     }
 
+    getInputFocus() {
+        if (this.inputs.setSellFocus && !this.inputs.setBuyFocus) {
+            return InputFocus.SELL;
+        } else if (this.inputs.setBuyFocus && !this.inputs.setSellFocus) {
+            return InputFocus.BUY;
+        } else {
+            throw new Error('Invalid input focus state');
+        }
+    }
+
+    @action switchInputFocus() {
+        const inputFocus = this.getInputFocus();
+        if (inputFocus === InputFocus.BUY) {
+            this.setInputFocus(InputFocus.SELL);
+        } else if (inputFocus === InputFocus.SELL) {
+            this.setInputFocus(InputFocus.BUY);
+        } else {
+            throw new Error('Invalid input focus specified');
+        }
+    }
+
+    @action switchSwapMethod() {
+        const { swapMethod } = this.inputs;
+        if (swapMethod === SwapMethods.EXACT_IN) {
+            this.inputs.swapMethod = SwapMethods.EXACT_OUT;
+        } else {
+            this.inputs.swapMethod = SwapMethods.EXACT_IN;
+        }
+    }
+
     @action setInputFocus(element: InputFocus) {
         if (element === InputFocus.BUY) {
             this.inputs.setSellFocus = false;
@@ -389,27 +419,48 @@ export default class SwapFormStore {
         };
     }
 
+    getActiveInputValue(): string {
+        const { swapMethod, inputAmount, outputAmount } = this.inputs;
+        let inputValue;
+        if (swapMethod === SwapMethods.EXACT_IN) {
+            inputValue = inputAmount;
+        } else {
+            inputValue = outputAmount;
+        }
+        return inputValue;
+    }
+
     @action switchInputOutputValues() {
         const {
             outputToken,
             outputTicker,
             outputIconAddress,
             outputPrecision,
+            outputDecimals,
+            outputAmount,
             inputToken,
             inputTicker,
             inputIconAddress,
             inputDecimals,
             inputPrecision,
+            inputAmount,
         } = this.inputs;
         this.inputs.inputToken = outputToken;
         this.inputs.inputTicker = outputTicker;
         this.inputs.inputIconAddress = outputIconAddress;
-        this.inputs.inputDecimals = inputDecimals;
+        this.inputs.inputDecimals = outputDecimals;
         this.inputs.inputPrecision = outputPrecision;
+        this.inputs.inputAmount = outputAmount;
+
         this.inputs.outputToken = inputToken;
         this.inputs.outputTicker = inputTicker;
         this.inputs.outputIconAddress = inputIconAddress;
+        this.inputs.outputDecimals = inputDecimals;
         this.inputs.outputPrecision = inputPrecision;
+        this.inputs.outputAmount = inputAmount;
+
+        this.switchSwapMethod();
+        this.switchInputFocus();
     }
 
     @action clearInputs() {
@@ -552,6 +603,45 @@ export default class SwapFormStore {
         }
 
         this.tradeCompositionData = result;
+    }
+
+    @action async refreshSwapFormPreviewEAI(amount: string) {
+        this.inputs.swapMethod = SwapMethods.EXACT_IN;
+        this.inputs.inputAmount = amount;
+
+        const inputStatus = this.validateSwapValue(amount);
+
+        if (inputStatus === InputValidationStatus.VALID) {
+            await this.refreshExactAmountInPreview();
+        } else {
+            this.refreshInvalidInputAmount(amount, inputStatus);
+        }
+    }
+
+    @action async refreshSwapFormPreviewEAO(amount: string) {
+        this.inputs.swapMethod = SwapMethods.EXACT_OUT;
+        this.inputs.outputAmount = amount;
+
+        const inputStatus = this.validateSwapValue(amount);
+
+        if (inputStatus === InputValidationStatus.VALID) {
+            await this.refreshExactAmountOutPreview();
+        } else {
+            this.refreshInvalidOutputAmount(amount, inputStatus);
+        }
+    }
+
+    @action async refreshSwapFormPreview(
+        amount: string,
+        swapMethod: SwapMethods
+    ) {
+        if (swapMethod === SwapMethods.EXACT_IN) {
+            this.refreshSwapFormPreviewEAI(amount);
+        } else if (swapMethod === SwapMethods.EXACT_OUT) {
+            this.refreshSwapFormPreviewEAO(amount);
+        } else {
+            throw new Error('Invalid swap method specified');
+        }
     }
 
     @action clearTradeComposition() {

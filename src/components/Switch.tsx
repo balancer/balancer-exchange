@@ -1,6 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import { useStores } from '../contexts/storesContext';
+import { SwapMethods } from '../stores/SwapForm';
 
 const Container = styled.div`
 	display: flex;
@@ -22,8 +23,12 @@ const Switch = () => {
 
     const switchAssets = () => {
         swapFormStore.switchInputOutputValues();
-        swapFormStore.resetTradeComposition();
-        swapFormStore.clearInputs();
+        const inputValue = swapFormStore.getActiveInputValue();
+        swapFormStore.refreshSwapFormPreview(
+            inputValue,
+            swapFormStore.inputs.swapMethod
+        );
+        // swapFormStore.clearInputs();
     };
 
     return (

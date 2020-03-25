@@ -32,16 +32,7 @@ const SellToken = observer(
         for staleness of inputAmount after getting preview and before making updates */
         const updateSwapFormData = async value => {
             swapFormStore.setInputFocus(InputFocus.SELL);
-            swapFormStore.inputs.swapMethod = SwapMethods.EXACT_IN;
-            swapFormStore.inputs.inputAmount = value;
-
-            const inputStatus = swapFormStore.validateSwapValue(value);
-
-            if (inputStatus === InputValidationStatus.VALID) {
-                await swapFormStore.refreshExactAmountInPreview();
-            } else {
-                swapFormStore.refreshInvalidInputAmount(value, inputStatus);
-            }
+            await swapFormStore.refreshSwapFormPreviewEAI(value);
         };
 
         const { inputs } = swapFormStore;
