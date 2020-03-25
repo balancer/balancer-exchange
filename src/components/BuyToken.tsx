@@ -32,20 +32,11 @@ const BuyToken = observer(
         for staleness of inputAmount after getting preview and before making updates */
         const updateSwapFormData = async value => {
             swapFormStore.setInputFocus(InputFocus.BUY);
-            swapFormStore.inputs.swapMethod = SwapMethods.EXACT_OUT;
-            swapFormStore.inputs.outputAmount = value;
-
-            const inputStatus = swapFormStore.validateSwapValue(value);
-
-            if (inputStatus === InputValidationStatus.VALID) {
-                await swapFormStore.refreshExactAmountOutPreview();
-            } else {
-                swapFormStore.refreshInvalidOutputAmount(value, inputStatus);
-            }
+            await swapFormStore.refreshSwapFormPreviewEAO(value);
         };
 
         const { inputs } = swapFormStore;
-        const { outputAmount, setBuyFocus } = inputs;
+        const { outputAmount, focus } = inputs;
 
         return (
             <TokenPanel
@@ -59,7 +50,7 @@ const BuyToken = observer(
                 tokenBalance={tokenBalance}
                 truncatedTokenBalance={truncatedTokenBalance}
                 tokenAddress={tokenAddress}
-                setFocus={setBuyFocus}
+                setFocus={focus === InputFocus.BUY}
                 errorMessage={errorMessage}
                 showMax={showMax}
             />

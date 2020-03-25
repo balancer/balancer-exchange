@@ -2,11 +2,7 @@ import React from 'react';
 import TokenPanel from './TokenPanel';
 import { observer } from 'mobx-react';
 import { useStores } from '../contexts/storesContext';
-import {
-    InputFocus,
-    InputValidationStatus,
-    SwapMethods,
-} from 'stores/SwapForm';
+import { InputFocus } from 'stores/SwapForm';
 
 const SellToken = observer(
     ({
@@ -32,20 +28,11 @@ const SellToken = observer(
         for staleness of inputAmount after getting preview and before making updates */
         const updateSwapFormData = async value => {
             swapFormStore.setInputFocus(InputFocus.SELL);
-            swapFormStore.inputs.swapMethod = SwapMethods.EXACT_IN;
-            swapFormStore.inputs.inputAmount = value;
-
-            const inputStatus = swapFormStore.validateSwapValue(value);
-
-            if (inputStatus === InputValidationStatus.VALID) {
-                await swapFormStore.refreshExactAmountInPreview();
-            } else {
-                swapFormStore.refreshInvalidInputAmount(value, inputStatus);
-            }
+            await swapFormStore.refreshSwapFormPreviewEAI(value);
         };
 
         const { inputs } = swapFormStore;
-        const { inputAmount, setSellFocus } = inputs;
+        const { inputAmount, focus } = inputs;
 
         return (
             <TokenPanel
@@ -59,7 +46,7 @@ const SellToken = observer(
                 tokenBalance={tokenBalance}
                 truncatedTokenBalance={truncatedTokenBalance}
                 tokenAddress={tokenAddress}
-                setFocus={setSellFocus}
+                setFocus={focus === InputFocus.SELL}
                 errorMessage={errorMessage}
                 showMax={showMax}
             />
