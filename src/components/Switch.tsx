@@ -1,7 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
 import { useStores } from '../contexts/storesContext';
-import { SwapMethods } from '../stores/SwapForm';
 
 const Container = styled.div`
 	display: flex;

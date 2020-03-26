@@ -2,11 +2,7 @@ import React from 'react';
 import TokenPanel from './TokenPanel';
 import { observer } from 'mobx-react';
 import { useStores } from '../contexts/storesContext';
-import {
-    InputFocus,
-    InputValidationStatus,
-    SwapMethods,
-} from 'stores/SwapForm';
+import { InputFocus } from 'stores/SwapForm';
 
 const BuyToken = observer(
     ({
