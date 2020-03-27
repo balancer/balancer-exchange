@@ -133,7 +133,12 @@ const AssetSelector = observer(() => {
         <Container style={{ display: assetModalState.open ? 'block' : 'none' }}>
             <ModalContent ref={ref}>
                 <AssetSelectorHeader>
-                    <HeaderContent>Select Token to Sell</HeaderContent>
+                    <HeaderContent>
+                        Select Token to{' '}
+                        {assetModalState.input === 'inputAmount'
+                            ? 'Sell'
+                            : 'Buy'}
+                    </HeaderContent>
                     <ExitComponent
                         onClick={() => {
                             swapFormStore.setAssetModalState({ open: false });

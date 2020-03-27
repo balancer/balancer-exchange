@@ -560,7 +560,7 @@ export default class SwapFormStore {
         let totalPercentage = 0;
 
         tempChartSwaps.forEach((value, index) => {
-            if (index === 0 || index === 1) {
+            if (index === 0 || index === 1 || index === 2) {
                 result.swaps.push(value);
             } else {
                 others.percentage += value.percentage;
