@@ -67,6 +67,7 @@ const SlippageInfo = observer(() => {
     const {
         inputs: { extraSlippageAllowance },
         outputs: { expectedSlippage },
+        slippageSelectorOpen,
     } = swapFormStore;
 
     let slippageIndicator = false;
@@ -83,6 +84,14 @@ const SlippageInfo = observer(() => {
         }
     };
 
+    const toggleDropDown = () => {
+        if (slippageSelectorOpen) {
+            return swapFormStore.setSlippageSelectorOpen(false);
+        } else {
+            return swapFormStore.setSlippageSelectorOpen(true);
+        }
+    };
+
     return (
         <SlippageInfoContainer slippageIndicator={slippageIndicator}>
             {Warning()}
@@ -91,7 +100,7 @@ const SlippageInfo = observer(() => {
                 errorStatus={swapFormStore.getSlippageSelectorErrorStatus()}
                 slippageIndicator={slippageIndicator}
                 onClick={() => {
-                    swapFormStore.setSlippageSelectorOpen(true);
+                    toggleDropDown();
                 }}
             >
                 {swapFormStore.getSlippageSelectorErrorStatus() ===
