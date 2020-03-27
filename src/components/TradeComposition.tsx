@@ -51,12 +51,22 @@ const CompositionDropDown = styled.div`
     width: 508px;
     height: 150px;
     display: flex;
-    flex-direction: row;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: center;
     border: 1px solid var(--highlighted-selector-background);
     margin-top: 18px;
     border-radius: 6px;
+`;
+
+const CompositionTitle = styled.div`
+    width: 315px;
+    display: flex;
+    color: var(--token-balance-text);
+    font-size: 12px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
 `;
 
 const PoolLineContainer = styled.div`
@@ -273,6 +283,10 @@ const TradeComposition = observer(() => {
             <CompositionDropDown
                 style={{ display: tradeCompositionOpen ? 'flex' : 'none' }}
             >
+                <CompositionTitle>
+                    Your order has been optimized using {chartData.swaps.length}{' '}
+                    Balancer pool{chartData.swaps.length > 1 ? 's' : ''} 🎉
+                </CompositionTitle>
                 <PoolLineContainer>
                     {renderChartRows(chartData, formatting)}
                 </PoolLineContainer>
