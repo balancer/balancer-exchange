@@ -67,6 +67,13 @@ const Arrow = styled.div`
     cursor: pointer;
 `;
 
+const NumberInput = styled.input`
+    &::-webkit-inner-spin-button {
+        display: none;
+    }
+    -moz-appearance: textfield;
+`;
+
 const InputWrapper = styled.div`
     font-family: Roboto;
     font-weight: 500;
@@ -154,7 +161,8 @@ const SlippageSelector = observer(() => {
             return (
                 <ActiveSelectorDropDownCell>
                     <InputWrapper>
-                        <input
+                        <NumberInput
+                            type="number"
                             placeholder="0"
                             defaultValue={
                                 swapFormStore.inputs.extraSlippageAllowance
