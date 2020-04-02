@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import { observer } from 'mobx-react';
 import { useStores } from '../contexts/storesContext';
 import { InputValidationStatus } from '../stores/SwapForm';
+import { formatPctString, bnum } from '../utils/helpers';
 
 const SlippageInfoContainer = styled.div`
     display: flex;
@@ -95,7 +96,10 @@ const SlippageInfo = observer(() => {
     return (
         <SlippageInfoContainer slippageIndicator={slippageIndicator}>
             {Warning()}
-            <div>Expected price slippage of {expectedSlippage} with</div>
+            <div>
+                Expected price slippage of{' '}
+                {formatPctString(bnum(expectedSlippage))} with
+            </div>
             <SlippageInlineDisplay
                 errorStatus={swapFormStore.getSlippageSelectorErrorStatus()}
                 slippageIndicator={slippageIndicator}
