@@ -173,6 +173,20 @@
                 "decimals": 18,
                 "iconAddress": "0x514910771AF9Ca656af840dff83E8264EcF986CA",
                 "precision": 2
+            },
+            {
+                "symbol": "cUSDC",
+                "address": "0x39AA39c021dfbaE8faC545936693aC917d5E7563",
+                "decimals": 8,
+                "iconAddress": "0x39AA39c021dfbaE8faC545936693aC917d5E7563",
+                "precision": 2
+            },
+            {
+                "symbol": "cDAI",
+                "address": "0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643",
+                "decimals": 8,
+                "iconAddress": "0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643",
+                "precision": 2
             }
         ]
     }
