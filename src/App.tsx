@@ -1,10 +1,22 @@
 import React from 'react';
 import { HashRouter, Redirect, Route, Switch } from 'react-router-dom';
+import styled from 'styled-components';
 import Web3ReactManager from 'components/Web3ReactManager';
 import Header from 'components/Header';
 import GeneralNotification from 'components/GeneralNotification';
 import SwapForm from 'components/SwapForm';
 import './App.css';
+
+const BuildVersion = styled.div`
+    display: flex;
+    flex-direction: row;
+    text-align: center;
+    margin: 20px;
+    font-size: 10px;
+    color: var(--body-text);
+    position: fixed;
+    bottom: 0px;
+`;
 
 const App = () => {
     const PoolSwapView = props => {
@@ -33,6 +45,9 @@ const App = () => {
                 <Header />
                 <GeneralNotification />
                 {renderViews()}
+                <BuildVersion>
+                    BUILD ID: {process.env.REACT_APP_COMMIT_REF}
+                </BuildVersion>
             </HashRouter>
         </Web3ReactManager>
     );

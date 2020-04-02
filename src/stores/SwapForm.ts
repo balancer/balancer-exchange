@@ -8,7 +8,7 @@ import {
     SwapPreview,
 } from './Proxy';
 import { BigNumber } from 'utils/bignumber';
-import { bnum, scale, formatPctString, isEmpty, str } from '../utils/helpers';
+import { bnum, scale, isEmpty, str } from '../utils/helpers';
 
 export const formNames = {
     INPUT_FORM: 'inputs',
@@ -156,7 +156,7 @@ export default class SwapFormStore {
             ...this.outputs,
             effectivePrice: str(preview.effectivePrice),
             spotPrice: str(preview.spotPrice),
-            expectedSlippage: formatPctString(preview.expectedSlippage),
+            expectedSlippage: str(preview.expectedSlippage),
             swaps: preview.swaps,
             validSwap: true,
         };
