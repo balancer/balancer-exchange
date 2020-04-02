@@ -48,7 +48,7 @@ const BuyToken = observer(
                 tokenAddress={tokenAddress}
                 setFocus={focus === InputFocus.BUY}
                 errorMessage={errorMessage}
-                showMax={showMax}
+                showMax={false}
             />
         );
     }
