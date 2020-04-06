@@ -10,13 +10,7 @@ import TradeComposition from './TradeComposition';
 import AssetSelector from './AssetSelector';
 
 import { observer } from 'mobx-react';
-import {
-    bnum,
-    scale,
-    isEmpty,
-    formatBalance,
-    formatBalanceTruncated,
-} from 'utils/helpers';
+import { bnum, scale, isEmpty, formatBalanceTruncated } from 'utils/helpers';
 import { SwapMethods, SwapObjection } from 'stores/SwapForm';
 import { useStores } from '../contexts/storesContext';
 import { ErrorIds } from '../stores/Error';
@@ -314,11 +308,10 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         outputUserBalanceBN = bnum(0);
     }
 
-    inputUserBalance = formatBalance(
+    inputUserBalance = scale(
         inputUserBalanceBN,
-        tokenMetadata.input.decimals,
-        tokenMetadata.input.precision
-    );
+        -tokenMetadata.input.decimals
+    ).toString();
 
     truncatedInputUserBalance = formatBalanceTruncated(
         inputUserBalanceBN,
@@ -327,11 +320,10 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         20
     );
 
-    outputUserBalance = formatBalance(
+    outputUserBalance = scale(
         outputUserBalanceBN,
-        tokenMetadata.output.decimals,
-        tokenMetadata.output.precision
-    );
+        -tokenMetadata.output.decimals
+    ).toString();
 
     truncatedOutputUserBalance = formatBalanceTruncated(
         outputUserBalanceBN,
