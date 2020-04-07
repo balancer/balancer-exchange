@@ -187,6 +187,30 @@
                 "decimals": 8,
                 "iconAddress": "0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643",
                 "precision": 2
+            },
+            {
+                "symbol": "imBTC",
+                "address": "0x3212b29E33587A00FB1C83346f5dBFA69A458923",
+                "decimals": 8,
+                "iconAddress": "0x3212b29E33587A00FB1C83346f5dBFA69A458923",
+                "precision": 4,
+                "chartColor": "#99ddf1"
+            },
+            {
+                "symbol": "pBTC",
+                "address": "0x5228a22e72ccC52d415EcFd199F99D0665E7733b",
+                "decimals": 18,
+                "iconAddress": "unknown",
+                "precision": 2,
+                "chartColor": "#efcef3"
+            },
+            {
+                "symbol": "sBTC",
+                "address": "0xfE18be6b3Bd88A2D2A7f928d00292E7a9963CfC6",
+                "decimals": 18,
+                "iconAddress": "unknown",
+                "precision": 2,
+                "chartColor": "#1dcec0"
             }
         ]
     }
