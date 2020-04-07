@@ -54,6 +54,8 @@ const IconAndNameContainer = styled.div`
 export const TokenIconAddress = address => {
     if (address === 'ether') {
         return `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/info/logo.png`;
+    } else if (address === 'unknown') {
+        return './empty-token.png';
     } else {
         return `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/${isAddress(
             address
