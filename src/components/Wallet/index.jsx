@@ -11,7 +11,7 @@ import { useStores } from '../../contexts/storesContext';
 import Dropdown from '../../assets/images/dropdown.svg';
 import Dropup from '../../assets/images/dropup.svg';
 
-const Button = styled.button``;
+import Button from '../Button';
 
 const WarningIcon = styled.img`
     width: 22px;
