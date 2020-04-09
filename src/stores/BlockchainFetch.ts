@@ -1,6 +1,5 @@
 import { action, observable } from 'mobx';
 import RootStore from 'stores/Root';
-import { Web3ReactContextInterface } from '@web3-react/core/dist/types';
 import { supportedChainId } from '../provider/connectors';
 import { InputValidationStatus, SwapMethods } from './SwapForm';
 
@@ -12,24 +11,21 @@ export default class BlockchainFetchStore {
         this.rootStore = rootStore;
     }
 
-    @action blockchainFetch(
-        web3React: Web3ReactContextInterface,
-        accountSwitchOverride?: boolean
-    ) {
-        if (
-            web3React.active &&
-            web3React.account &&
-            web3React.chainId === supportedChainId
-        ) {
-            const { library, account, chainId } = web3React;
-            const { providerStore } = this.rootStore;
+    @action blockchainFetch(accountSwitchOverride?: boolean) {
+        const { providerStore } = this.rootStore;
+
+        const active = providerStore.providerStatus.active;
+        const chainId = providerStore.providerStatus.activeChainId;
+        const library = providerStore.providerStatus.library;
+        const account = providerStore.providerStatus.account;
+
+        if (active && chainId === supportedChainId) {
+            const { poolStore, appSettingsStore } = this.rootStore;
 
             library
                 .getBlockNumber()
                 .then(blockNumber => {
-                    const lastCheckedBlock = providerStore.getCurrentBlockNumber(
-                        web3React.chainId
-                    );
+                    const lastCheckedBlock = providerStore.getCurrentBlockNumber();
 
                     const doFetch =
                         blockNumber !== lastCheckedBlock ||
@@ -43,10 +39,7 @@ export default class BlockchainFetchStore {
                         });
 
                         // Set block number
-                        providerStore.setCurrentBlockNumber(
-                            chainId,
-                            blockNumber
-                        );
+                        providerStore.setCurrentBlockNumber(blockNumber);
 
                         // Get global blockchain data
                         // None
@@ -54,25 +47,21 @@ export default class BlockchainFetchStore {
                         // Get user-specific blockchain data
                         if (account) {
                             providerStore
-                                .fetchUserBlockchainData(
-                                    web3React,
-                                    chainId,
-                                    account
-                                )
+                                .fetchUserBlockchainData(account)
                                 .then(results => {
                                     // Update preview when account changes
                                     if (accountSwitchOverride) {
-                                        this.updateSwapPreviewForActiveAccount(
-                                            web3React
-                                        );
+                                        this.updateSwapPreviewForActiveAccount();
                                     }
+                                })
+                                .catch(e => {
+                                    console.log(e);
                                 });
                         }
                     }
                 })
                 .catch(error => {
                     console.log('[Fetch Loop Failure]', {
-                        web3React,
                         providerStore,
                         forceFetch: accountSwitchOverride,
                         chainId,
@@ -80,12 +69,16 @@ export default class BlockchainFetchStore {
                         library,
                         error,
                     });
-                    providerStore.setCurrentBlockNumber(chainId, undefined);
+                    providerStore.setCurrentBlockNumber(undefined);
                 });
+        } else {
+            console.log(active);
+            console.log(chainId);
+            console.log(supportedChainId);
         }
     }
 
-    updateSwapPreviewForActiveAccount(web3React: Web3ReactContextInterface) {
+    updateSwapPreviewForActiveAccount() {
         const { swapFormStore } = this.rootStore;
 
         const { swapMethod, inputAmount, outputAmount } = swapFormStore.inputs;

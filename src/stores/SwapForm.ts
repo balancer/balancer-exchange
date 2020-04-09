@@ -227,15 +227,21 @@ export default class SwapFormStore {
     }
 
     async refreshExactAmountInPreview() {
-        const { proxyStore, providerStore, tokenStore } = this.rootStore;
-        const { account, chainId } = providerStore.getActiveWeb3React();
+        const {
+            proxyStore,
+            providerStore,
+            tokenStore,
+            contractMetadataStore,
+        } = this.rootStore;
+        const account = providerStore.providerStatus.account;
+        const activeChainId = providerStore.providerStatus.activeChainId;
         const { inputToken, outputToken, inputAmount } = this.inputs;
 
         const preview = await proxyStore.previewBatchSwapExactIn(
             inputToken,
             outputToken,
             bnum(inputAmount),
-            tokenStore.getTokenMetadata(chainId, inputToken).decimals
+            contractMetadataStore.getTokenMetadata(inputToken).decimals
         );
 
         this.setSwapObjection(SwapObjection.NONE);
@@ -248,20 +254,20 @@ export default class SwapFormStore {
             this.setOutputFromPreview(
                 SwapMethods.EXACT_IN,
                 preview,
-                tokenStore.getTokenMetadata(chainId, outputToken).decimals
+                contractMetadataStore.getTokenMetadata(outputToken).decimals
             );
             this.clearErrorMessage();
 
             if (account) {
                 const userBalance = tokenStore.normalizeBalance(
-                    tokenStore.getBalance(chainId, inputToken, account),
+                    tokenStore.getBalance(inputToken, account),
                     inputToken
                 );
 
                 if (userBalance) {
                     this.setSwapObjection(
                         this.findSwapObjection(
-                            inputAmount,
+                            bnum(inputAmount),
                             account,
                             userBalance
                         )
@@ -276,15 +282,21 @@ export default class SwapFormStore {
     }
 
     async refreshExactAmountOutPreview() {
-        const { proxyStore, providerStore, tokenStore } = this.rootStore;
-        const { account, chainId } = providerStore.getActiveWeb3React();
+        const {
+            proxyStore,
+            providerStore,
+            tokenStore,
+            contractMetadataStore,
+        } = this.rootStore;
+        const account = providerStore.providerStatus.account;
+        const chainId = providerStore.providerStatus.activeChainId;
         const { inputToken, outputToken, outputAmount } = this.inputs;
 
         const preview = await proxyStore.previewBatchSwapExactOut(
             inputToken,
             outputToken,
             bnum(outputAmount),
-            tokenStore.getTokenMetadata(chainId, outputToken).decimals
+            contractMetadataStore.getTokenMetadata(outputToken).decimals
         );
 
         if (preview.error) {
@@ -295,13 +307,13 @@ export default class SwapFormStore {
             this.setOutputFromPreview(
                 SwapMethods.EXACT_OUT,
                 preview,
-                tokenStore.getTokenMetadata(chainId, inputToken).decimals
+                contractMetadataStore.getTokenMetadata(inputToken).decimals
             );
             this.clearErrorMessage();
 
             if (account) {
                 const userBalance = tokenStore.normalizeBalance(
-                    tokenStore.getBalance(chainId, inputToken, account),
+                    tokenStore.getBalance(inputToken, account),
                     inputToken
                 );
 
@@ -642,9 +654,9 @@ export default class SwapFormStore {
     }
 
     findSwapObjection(
-        value: string,
+        value: BigNumber,
         account: string | undefined,
-        normalizedBalance: string
+        normalizedBalance: BigNumber
     ): SwapObjection {
         console.log('swapObjection', {
             value,
@@ -652,7 +664,7 @@ export default class SwapFormStore {
             normalizedBalance,
         });
         // Check for insufficient balance if user logged in
-        if (account && parseFloat(value) > parseFloat(normalizedBalance)) {
+        if (account && value.gte(normalizedBalance)) {
             return SwapObjection.INSUFFICIENT_BALANCE;
         }
 

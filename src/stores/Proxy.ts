@@ -27,7 +27,6 @@ import {
 } from '../utils/sorWrapper';
 import { ethers } from 'ethers';
 import { EtherKey } from './Token';
-import { Web3ReactContextInterface } from '@web3-react/core/dist/types';
 import { supportedChainId } from '../provider/connectors';
 
 export type SwapPreview = ExactAmountInPreview | ExactAmountOutPreview;
@@ -170,7 +169,6 @@ export default class ProxyStore {
         Swap Methods - Action
     */
     @action batchSwapExactIn = async (
-        web3React: Web3ReactContextInterface,
         swaps: Swap[],
         tokenIn: string,
         tokenAmountIn: BigNumber,
@@ -179,22 +177,16 @@ export default class ProxyStore {
         minAmountOut: BigNumber,
         decimalsOut: number
     ) => {
-        const { tokenStore, providerStore } = this.rootStore;
-        const { chainId } = web3React;
-
-        console.log('[BatchSwapExactIn]', {
-            swaps,
-            tokenIn,
-            tokenOut,
-            tokenAmountIn: tokenAmountIn.toString(),
-            minAmountOut: minAmountOut.toString(),
-        });
-
-        const proxyAddress = tokenStore.getProxyAddress(chainId);
+        const {
+            tokenStore,
+            providerStore,
+            contractMetadataStore,
+        } = this.rootStore;
+        const chainId = providerStore.providerStatus.activeChainId;
+        const proxyAddress = contractMetadataStore.getProxyAddress();
 
         if (tokenIn === EtherKey) {
             await providerStore.sendTransaction(
-                web3React,
                 ContractTypes.ExchangeProxy,
                 proxyAddress,
                 'batchEthInSwapExactIn',
@@ -207,7 +199,6 @@ export default class ProxyStore {
             );
         } else if (tokenOut === EtherKey) {
             await providerStore.sendTransaction(
-                web3React,
                 ContractTypes.ExchangeProxy,
                 proxyAddress,
                 'batchEthOutSwapExactIn',
@@ -220,7 +211,6 @@ export default class ProxyStore {
             );
         } else {
             await providerStore.sendTransaction(
-                web3React,
                 ContractTypes.ExchangeProxy,
                 proxyAddress,
                 'batchSwapExactIn',
@@ -236,7 +226,6 @@ export default class ProxyStore {
     };
 
     @action batchSwapExactOut = async (
-        web3React: Web3ReactContextInterface,
         swaps: Swap[],
         tokenIn: string,
         maxAmountIn: BigNumber,
@@ -245,22 +234,16 @@ export default class ProxyStore {
         tokenAmountOut: BigNumber,
         decimalsOut: number
     ) => {
-        const { tokenStore, providerStore } = this.rootStore;
-        const { chainId } = web3React;
-
-        console.log('[BatchSwapExactOut]', {
-            swaps,
-            tokenIn,
-            tokenOut,
-            tokenAmountOut: tokenAmountOut.toString(),
-            maxAmountIn: maxAmountIn.toString(),
-        });
-
-        const proxyAddress = tokenStore.getProxyAddress(chainId);
+        const {
+            tokenStore,
+            providerStore,
+            contractMetadataStore,
+        } = this.rootStore;
+        const chainId = providerStore.providerStatus.activeChainId;
+        const proxyAddress = contractMetadataStore.getProxyAddress();
 
         if (tokenIn === EtherKey) {
             await providerStore.sendTransaction(
-                web3React,
                 ContractTypes.ExchangeProxy,
                 proxyAddress,
                 'batchEthInSwapExactOut',
@@ -269,7 +252,6 @@ export default class ProxyStore {
             );
         } else if (tokenOut === EtherKey) {
             await providerStore.sendTransaction(
-                web3React,
                 ContractTypes.ExchangeProxy,
                 proxyAddress,
                 'batchEthOutSwapExactOut',
@@ -277,7 +259,6 @@ export default class ProxyStore {
             );
         } else {
             await providerStore.sendTransaction(
-                web3React,
                 ContractTypes.ExchangeProxy,
                 proxyAddress,
                 'batchSwapExactOut',
@@ -301,7 +282,7 @@ export default class ProxyStore {
     ): Promise<ExactAmountInPreview> => {
         try {
             this.setPreviewPending(true);
-            const { tokenStore } = this.rootStore;
+            const { tokenStore, contractMetadataStore } = this.rootStore;
 
             const tokenAmountIn = scale(bnum(inputAmount), inputDecimals);
 
@@ -311,11 +292,11 @@ export default class ProxyStore {
             // Use WETH address for Ether
             const tokenInToFind =
                 tokenIn === EtherKey
-                    ? tokenStore.getWethAddress(supportedChainId)
+                    ? contractMetadataStore.getWethAddress()
                     : tokenIn;
             const tokenOutToFind =
                 tokenOut === EtherKey
-                    ? tokenStore.getWethAddress(supportedChainId)
+                    ? contractMetadataStore.getWethAddress()
                     : tokenOut;
 
             const poolData = await findPoolsWithTokens(
@@ -409,7 +390,7 @@ export default class ProxyStore {
     ): Promise<ExactAmountOutPreview> => {
         try {
             this.setPreviewPending(true);
-            const { tokenStore } = this.rootStore;
+            const { tokenStore, contractMetadataStore } = this.rootStore;
 
             const tokenAmountOut = scale(bnum(outputAmount), outputDecimals);
 
@@ -419,11 +400,11 @@ export default class ProxyStore {
             // Use WETH address for Ether
             const tokenInToFind =
                 tokenIn === EtherKey
-                    ? tokenStore.getWethAddress(supportedChainId)
+                    ? contractMetadataStore.getWethAddress()
                     : tokenIn;
             const tokenOutToFind =
                 tokenOut === EtherKey
-                    ? tokenStore.getWethAddress(supportedChainId)
+                    ? contractMetadataStore.getWethAddress()
                     : tokenOut;
 
             const poolData = await findPoolsWithTokens(
