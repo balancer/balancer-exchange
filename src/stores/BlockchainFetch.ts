@@ -31,14 +31,6 @@ export default class BlockchainFetchStore {
                         web3React.chainId
                     );
 
-                    // console.debug('[Fetch Loop] Staleness Evaluation', {
-                    //     blockNumber,
-                    //     lastCheckedBlock,
-                    //     forceFetch,
-                    //     account: web3React.account,
-                    //     doFetch: blockNumber !== lastCheckedBlock || forceFetch,
-                    // });
-
                     const doFetch =
                         blockNumber !== lastCheckedBlock ||
                         accountSwitchOverride;
