@@ -20,7 +20,7 @@ export default class PoolStore {
     @observable tokenPairs: TokenPairsMap;
     rootStore: RootStore;
 
-    constructor(rootStore, supportedNetworks: number[]) {
+    constructor(rootStore) {
         this.rootStore = rootStore;
         this.tokenPairs = {};
     }
@@ -39,10 +39,12 @@ export default class PoolStore {
     }
 
     @action async fetchTokenPairs(tokenAddress: string) {
-        const { tokenStore, providerStore } = this.rootStore;
-        const fetchBlock = providerStore.getCurrentBlockNumber(
-            supportedChainId
-        );
+        const {
+            tokenStore,
+            providerStore,
+            contractMetadataStore,
+        } = this.rootStore;
+        const fetchBlock = providerStore.getCurrentBlockNumber();
 
         //Pre-fetch stale check
         const stale =
@@ -57,12 +59,12 @@ export default class PoolStore {
         if (!stale) {
             const tokenAddressToFind =
                 tokenAddress === EtherKey
-                    ? tokenStore.getWethAddress(supportedChainId)
+                    ? contractMetadataStore.getWethAddress()
                     : tokenAddress;
 
             const tokenPairs = await sorTokenPairs(
                 tokenAddressToFind,
-                tokenStore.getWethAddress(supportedChainId)
+                contractMetadataStore.getWethAddress()
             );
 
             console.log('[Token Pairs Fetch] - Success', {

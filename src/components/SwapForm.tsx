@@ -15,7 +15,7 @@ import { SwapMethods, SwapObjection } from 'stores/SwapForm';
 import { useStores } from '../contexts/storesContext';
 import { ErrorIds } from '../stores/Error';
 import { BigNumber } from 'utils/bignumber';
-import { getSupportedChainId, web3ContextNames } from '../provider/connectors';
+import { getSupportedChainId } from '../provider/connectors';
 import { calcMaxAmountIn, calcMinAmountOut } from '../utils/sorWrapper';
 import { ExactAmountInPreview, ExactAmountOutPreview } from '../stores/Proxy';
 
@@ -67,22 +67,19 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     const {
         root: {
             proxyStore,
+            contractMetadataStore,
             swapFormStore,
             providerStore,
             tokenStore,
             errorStore,
-            modalStore,
+            dropdownStore,
             poolStore,
         },
     } = useStores();
 
     const supportedChainId = getSupportedChainId();
-
-    const web3React = providerStore.getActiveWeb3React();
-    const { chainId, account } = web3React;
-    const { chainId: injectedChainId } = providerStore.getWeb3React(
-        web3ContextNames.injected
-    );
+    const account = providerStore.providerStatus.account;
+    const chainId = getSupportedChainId();
 
     if (!chainId) {
         // Review error message
@@ -90,7 +87,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     }
 
     const { inputs, outputs } = swapFormStore;
-    const tokenList = tokenStore.getWhitelistedTokenMetadata(supportedChainId);
+    const tokenList = contractMetadataStore.getWhitelistedTokenMetadata();
 
     // Set default token pair to first two in config file - currently ETH and DAI
     if (isEmpty(swapFormStore.inputs.inputToken)) {
@@ -114,14 +111,14 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     const { inputToken, outputToken } = inputs;
 
     const tokenMetadata = {
-        input: tokenStore.getTokenMetadata(getSupportedChainId(), inputToken),
-        output: tokenStore.getTokenMetadata(getSupportedChainId(), outputToken),
+        input: contractMetadataStore.getTokenMetadata(inputToken),
+        output: contractMetadataStore.getTokenMetadata(outputToken),
     };
 
     const buttonActionHandler = (buttonState: ButtonState) => {
         switch (buttonState) {
             case ButtonState.NO_WALLET:
-                modalStore.toggleWalletModal();
+                dropdownStore.toggleWalletDropdown();
                 break;
             case ButtonState.SWAP:
                 swapHandler();
@@ -136,8 +133,8 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
 
     const unlockHandler = async () => {
         const tokenToUnlock = inputs.inputToken;
-        const proxyAddress = tokenStore.getProxyAddress(supportedChainId);
-        await tokenStore.approveMax(web3React, tokenToUnlock, proxyAddress);
+        const proxyAddress = contractMetadataStore.getProxyAddress();
+        await tokenStore.approveMax(tokenToUnlock, proxyAddress);
     };
 
     const swapHandler = async () => {
@@ -161,7 +158,6 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
             );
 
             await proxyStore.batchSwapExactIn(
-                web3React,
                 swaps,
                 inputToken,
                 bnum(inputAmount),
@@ -185,7 +181,6 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
             );
 
             await proxyStore.batchSwapExactOut(
-                web3React,
                 swaps,
                 inputToken,
                 maxAmountIn,
@@ -202,8 +197,8 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         userAllowance: BigNumber | undefined
     ): ButtonState => {
         const sufficientAllowance = userAllowance && userAllowance.gt(0);
-
-        if (injectedChainId && injectedChainId !== supportedChainId) {
+        const chainId = providerStore.providerStatus.activeChainId;
+        if (chainId && chainId !== supportedChainId) {
             return ButtonState.SWAP;
         }
 
@@ -238,9 +233,9 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                 swapFormStore.inputs.outputToken ||
             (swapFormStore.inputs.inputToken === 'ether' &&
                 swapFormStore.inputs.outputToken ===
-                    tokenStore.getWethAddress(supportedChainId)) ||
+                    contractMetadataStore.getWethAddress()) ||
             (swapFormStore.inputs.inputToken ===
-                tokenStore.getWethAddress(supportedChainId) &&
+                contractMetadataStore.getWethAddress() &&
                 swapFormStore.inputs.outputToken === 'ether');
 
         if (
@@ -254,10 +249,10 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
             if (
                 isInputValid &&
                 isExtraSlippageAmountValid &&
-                injectedChainId &&
+                chainId &&
                 isPreviewValid &&
                 !areInputOutputTokensEqual &&
-                injectedChainId === supportedChainId
+                chainId === supportedChainId
             ) {
                 const inputAmountBN = scale(
                     bnum(inputs.inputAmount),
@@ -279,21 +274,12 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     let userAllowance;
 
     if (account) {
-        inputUserBalanceBN = tokenStore.getBalance(
-            chainId,
-            inputToken,
-            account
-        );
+        inputUserBalanceBN = tokenStore.getBalance(inputToken, account);
 
-        outputUserBalanceBN = tokenStore.getBalance(
-            chainId,
-            outputToken,
-            account
-        );
+        outputUserBalanceBN = tokenStore.getBalance(outputToken, account);
 
-        const proxyAddress = tokenStore.getProxyAddress(supportedChainId);
+        const proxyAddress = contractMetadataStore.getProxyAddress();
         userAllowance = tokenStore.getAllowance(
-            chainId,
             inputToken,
             account,
             proxyAddress
