@@ -11,6 +11,7 @@ export enum ContractTypes {
     BFactory = 'BFactory',
     TestToken = 'TestToken',
     ExchangeProxy = 'ExchangeProxy',
+    Multicall = 'Multicall',
 }
 
 export const schema = {
@@ -18,6 +19,7 @@ export const schema = {
     BFactory: require('../abi/BFactory').abi,
     TestToken: require('../abi/TestToken').abi,
     ExchangeProxy: require('../abi/ExchangeProxy').abi,
+    Multicall: require('../abi/Multicall').abi,
 };
 
 export interface ChainData {

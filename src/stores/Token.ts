@@ -5,6 +5,7 @@ import * as helpers from 'utils/helpers';
 import { bnum } from 'utils/helpers';
 import { FetchCode } from './Transaction';
 import { BigNumber } from 'utils/bignumber';
+import { Interface } from 'ethers/utils';
 import {
     AsyncStatus,
     TokenBalanceFetch,
@@ -14,12 +15,14 @@ import { Web3ReactContextInterface } from '@web3-react/core/dist/types';
 import { getSupportedChainId } from '../provider/connectors';
 import { scale } from 'utils/helpers';
 
+const tokenAbi = require('../abi/TestToken').abi;
 const deployed = require('deployed.json');
 
 export interface ContractMetadata {
     bFactory: string;
     proxy: string;
     weth: string;
+    multicall: string;
     tokens: TokenMetadata[];
 }
 
@@ -108,6 +111,7 @@ export default class TokenStore {
             bFactory: deployed[network].bFactory,
             proxy: deployed[network].proxy,
             weth: deployed[network].weth,
+            multicall: deployed[network].multicall,
             tokens: [] as TokenMetadata[],
         };
 
@@ -131,6 +135,16 @@ export default class TokenStore {
             token => token.address === tokenAddress
         ).decimals;
         return scale(weiBalance, -decimals).toString();
+    }
+
+    getMultiAddress(chainId): string {
+        const multiAddress = this.contractMetadata[chainId].multicall;
+        if (!multiAddress) {
+            throw new Error(
+                '[Invariant] Trying to get non-loaded static address'
+            );
+        }
+        return multiAddress;
     }
 
     getProxyAddress(chainId): string {
@@ -296,30 +310,140 @@ export default class TokenStore {
         this.allowances.set(chainId, chainApprovals);
     }
 
-    private setBalanceProperty(
-        chainId: number,
+    isAllowanceFetched(
+        chainId,
+        tokenAddress: string,
+        owner: string,
+        spender: string
+    ) {
+        const chainApprovals = this.allowances.get(chainId);
+        return (
+            !!chainApprovals[tokenAddress] &&
+            !!chainApprovals[tokenAddress][owner][spender]
+        );
+    }
+
+    isAllowanceStale(
+        chainId,
+        tokenAddress: string,
+        owner: string,
+        spender: string,
+        blockNumber: number
+    ) {
+        const chainApprovals = this.allowances.get(chainId);
+        return (
+            chainApprovals[tokenAddress][owner][spender].lastFetched <
+            blockNumber
+        );
+    }
+
+    private setAllowances(
+        chainId,
+        tokens: string[],
+        owner: string,
+        spender: string,
+        approvals: BigNumber[],
+        fetchBlock: number
+    ) {
+        const chainApprovals = this.allowances.get(chainId);
+
+        approvals.forEach((approval, index) => {
+            const tokenAddress = tokens[index];
+
+            if (
+                (this.isAllowanceFetched(
+                    chainId,
+                    tokenAddress,
+                    owner,
+                    spender
+                ) &&
+                    this.isAllowanceStale(
+                        chainId,
+                        tokenAddress,
+                        owner,
+                        spender,
+                        fetchBlock
+                    )) ||
+                !this.isAllowanceFetched(chainId, tokenAddress, owner, spender)
+            ) {
+                if (!chainApprovals[tokenAddress]) {
+                    chainApprovals[tokenAddress] = {};
+                }
+
+                if (!chainApprovals[tokenAddress][owner]) {
+                    chainApprovals[tokenAddress][owner] = {};
+                }
+
+                chainApprovals[tokenAddress][owner][spender] = {
+                    allowance: approval,
+                    lastFetched: fetchBlock,
+                };
+            }
+        });
+
+        this.allowances.set(chainId, {
+            ...this.allowances.get(chainId),
+            ...chainApprovals,
+        });
+    }
+
+    isBalanceFetched(chainId, tokenAddress: string, account: string) {
+        const chainBalances = this.balances.get(chainId);
+        return (
+            !!chainBalances[tokenAddress] &&
+            !!chainBalances[tokenAddress][account]
+        );
+    }
+
+    isBalanceStale(
+        chainId,
         tokenAddress: string,
         account: string,
-        balance: BigNumber,
-        blockFetched: number
-    ): void {
+        blockNumber: number
+    ) {
         const chainBalances = this.balances.get(chainId);
-        if (!chainBalances) {
-            throw new Error(
-                'Attempt to set balance property for untracked chainId'
-            );
-        }
+        return chainBalances[tokenAddress][account].lastFetched < blockNumber;
+    }
 
-        if (!chainBalances[tokenAddress]) {
-            chainBalances[tokenAddress] = {};
-        }
+    private setBalances(
+        chainId,
+        tokens: string[],
+        balances: BigNumber[],
+        account: string,
+        fetchBlock: number
+    ) {
+        const fetchedBalances: TokenBalanceMap = {};
 
-        chainBalances[tokenAddress][account] = {
-            balance: balance,
-            lastFetched: blockFetched,
-        };
+        balances.forEach((balance, index) => {
+            const tokenAddress = tokens[index];
 
-        this.balances.set(chainId, chainBalances);
+            if (
+                (this.isBalanceFetched(chainId, tokenAddress, account) &&
+                    this.isBalanceStale(
+                        chainId,
+                        tokenAddress,
+                        account,
+                        fetchBlock
+                    )) ||
+                !this.isBalanceFetched(chainId, tokenAddress, account)
+            ) {
+                if (this.balances[tokenAddress]) {
+                    fetchedBalances[tokenAddress] = this.balances[tokenAddress];
+                } else {
+                    fetchedBalances[tokenAddress] = {};
+                }
+
+                fetchedBalances[tokenAddress][account] = {
+                    balance: balance,
+                    lastFetched: fetchBlock,
+                };
+            }
+        });
+
+        this.balances.set(chainId, {
+            ...this.balances.get(chainId),
+            ...fetchedBalances,
+        });
     }
 
     getBalance(
@@ -391,74 +515,74 @@ export default class TokenStore {
     ): Promise<FetchCode> => {
         const { providerStore } = this.rootStore;
         const tokensToTrack = this.getWhitelistedTokenMetadata(chainId);
-
         const promises: Promise<any>[] = [];
-        const fetchBlock = providerStore.getCurrentBlockNumber(chainId);
-        tokensToTrack.forEach((value, index) => {
-            promises.push(
-                this.fetchBalanceOf(
-                    web3React,
-                    chainId,
+        const balanceCalls = [];
+        const allowanceCalls = [];
+        const tokenList = [];
+
+        const multiAddress = this.getMultiAddress(chainId);
+
+        const multi = providerStore.getContract(
+            web3React,
+            ContractTypes.Multicall,
+            multiAddress
+        );
+
+        const iface = new Interface(tokenAbi);
+
+        tokensToTrack.forEach(value => {
+            tokenList.push(value.address);
+            if (value.address !== EtherKey) {
+                balanceCalls.push([
                     value.address,
-                    account,
-                    fetchBlock
-                )
-            );
-            promises.push(
-                this.fetchAllowance(
-                    web3React,
-                    chainId,
+                    iface.functions.balanceOf.encode([account]),
+                ]);
+                allowanceCalls.push([
                     value.address,
-                    account,
-                    this.contractMetadata[chainId].proxy,
-                    fetchBlock
-                )
-            );
+                    iface.functions.allowance.encode([
+                        account,
+                        this.contractMetadata[chainId].proxy,
+                    ]),
+                ]);
+            }
         });
 
-        let allFetchesSuccess = true;
+        promises.push(multi.aggregate(balanceCalls));
+        promises.push(multi.aggregate(allowanceCalls));
+        promises.push(multi.getEthBalance(account));
 
         try {
             const responses = await Promise.all(promises);
-            responses.forEach(response => {
-                if (response instanceof TokenBalanceFetch) {
-                    const { status, request, payload } = response;
-                    if (status === AsyncStatus.SUCCESS) {
-                        this.setBalanceProperty(
-                            request.chainId,
-                            request.tokenAddress,
-                            request.account,
-                            payload.balance,
-                            payload.lastFetched
-                        );
-                    } else {
-                        allFetchesSuccess = false;
-                    }
-                } else if (response instanceof UserAllowanceFetch) {
-                    const { status, request, payload } = response;
-                    if (status === AsyncStatus.SUCCESS) {
-                        this.setAllowanceProperty(
-                            request.chainId,
-                            request.tokenAddress,
-                            request.owner,
-                            request.spender,
-                            payload.allowance,
-                            payload.lastFetched
-                        );
-                    } else {
-                        allFetchesSuccess = false;
-                    }
-                }
-            });
+            const balances = responses[0][1].map(value =>
+                bnum(iface.functions.balanceOf.decode(value))
+            );
 
-            if (allFetchesSuccess) {
-                console.log('[All Fetches Success]');
-                this.setUserBalancerDataLastFetched(
-                    chainId,
-                    account,
-                    fetchBlock
-                );
-            }
+            const allowances = responses[1][1].map(value =>
+                bnum(iface.functions.allowance.decode(value))
+            );
+
+            const ethBalance = bnum(responses[2]);
+            balances.unshift(ethBalance);
+            allowances.unshift(bnum(helpers.setPropertyToMaxUintIfEmpty()));
+
+            this.setBalances(
+                chainId,
+                tokenList,
+                balances,
+                account,
+                responses[0][0].toNumber()
+            );
+
+            this.setAllowances(
+                chainId,
+                tokenList,
+                account,
+                this.contractMetadata[chainId].proxy,
+                allowances,
+                responses[1][0].toNumber()
+            );
+
+            console.debug('[All Fetches Success]');
         } catch (e) {
             console.error('[Fetch] Balancer Token Data', { error: e });
             return FetchCode.FAILURE;
