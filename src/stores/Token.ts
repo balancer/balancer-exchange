@@ -552,16 +552,20 @@ export default class TokenStore {
         promises.push(multi.getEthBalance(account));
 
         try {
-            const responses = await Promise.all(promises);
-            const balances = responses[0][1].map(value =>
+            const [
+                [balBlock, mulBalance],
+                [allBlock, mulAllowance],
+                mulEth,
+            ] = await Promise.all(promises);
+            const balances = mulBalance.map(value =>
                 bnum(iface.functions.balanceOf.decode(value))
             );
 
-            const allowances = responses[1][1].map(value =>
+            const allowances = mulAllowance.map(value =>
                 bnum(iface.functions.allowance.decode(value))
             );
 
-            const ethBalance = bnum(responses[2]);
+            const ethBalance = bnum(mulEth);
             balances.unshift(ethBalance);
             allowances.unshift(bnum(helpers.setPropertyToMaxUintIfEmpty()));
 
@@ -570,7 +574,7 @@ export default class TokenStore {
                 tokenList,
                 balances,
                 account,
-                responses[0][0].toNumber()
+                balBlock.toNumber()
             );
 
             this.setAllowances(
@@ -579,7 +583,7 @@ export default class TokenStore {
                 account,
                 this.contractMetadata[chainId].proxy,
                 allowances,
-                responses[1][0].toNumber()
+                allBlock.toNumber()
             );
 
             console.debug('[All Fetches Success]');
