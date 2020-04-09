@@ -72,9 +72,11 @@ export default class BlockchainFetchStore {
                     providerStore.setCurrentBlockNumber(undefined);
                 });
         } else {
-            console.log(active);
-            console.log(chainId);
-            console.log(supportedChainId);
+            console.log(`[BlockchainFetch] Aborting fetch. `, {
+                active,
+                chainId,
+                supportedChainId,
+            });
         }
     }
 

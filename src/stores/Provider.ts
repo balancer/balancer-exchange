@@ -345,7 +345,8 @@ export default class ProviderStore {
             this.providerStatus.library = this.providerStatus.injectedWeb3;
             this.providerStatus.activeChainId = this.providerStatus.injectedChainId;
             this.providerStatus.injectedActive = true;
-            this.fetchUserBlockchainData(this.providerStatus.account);
+            if (this.providerStatus.account)
+                this.fetchUserBlockchainData(this.providerStatus.account);
         }
 
         this.providerStatus.active = true;
