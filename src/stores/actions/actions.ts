@@ -9,7 +9,7 @@ interface ActionRequest {
     overrides: any;
 }
 
-interface ActionResponse {
+export interface ActionResponse {
     contract: Contract;
     action: string;
     sender: string;

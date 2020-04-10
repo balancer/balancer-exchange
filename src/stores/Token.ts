@@ -5,21 +5,24 @@ import * as helpers from 'utils/helpers';
 import { bnum } from 'utils/helpers';
 import { FetchCode } from './Transaction';
 import { BigNumber } from 'utils/bignumber';
+import { Interface } from 'ethers/utils';
 import {
     AsyncStatus,
     TokenBalanceFetch,
     UserAllowanceFetch,
 } from './actions/fetch';
-import { Web3ReactContextInterface } from '@web3-react/core/dist/types';
+
 import { getSupportedChainId } from '../provider/connectors';
 import { scale } from 'utils/helpers';
 
+const tokenAbi = require('../abi/TestToken').abi;
 const deployed = require('deployed.json');
 
 export interface ContractMetadata {
     bFactory: string;
     proxy: string;
     weth: string;
+    multicall: string;
     tokens: TokenMetadata[];
 }
 
@@ -73,142 +76,40 @@ export const EtherKey = 'ether';
 
 export default class TokenStore {
     @observable symbols = {};
-    @observable balances: ObservableMap<number, TokenBalanceMap>;
-    @observable allowances: ObservableMap<number, UserAllowanceMap>;
+    @observable balances: TokenBalanceMap;
+    @observable allowances: UserAllowanceMap;
     @observable contractMetadata: ContractMetadataMap;
     @observable userBalancerDataLastFetched: BlockNumberMap;
     rootStore: RootStore;
 
-    constructor(rootStore, networkIds) {
+    constructor(rootStore) {
         this.rootStore = rootStore;
-        this.balances = new ObservableMap<number, TokenBalanceMap>();
-        this.allowances = new ObservableMap<number, UserAllowanceMap>();
+        this.balances = {} as TokenBalanceMap;
+        this.allowances = {} as UserAllowanceMap;
         this.contractMetadata = {} as ContractMetadataMap;
         this.userBalancerDataLastFetched = {} as BlockNumberMap;
-
-        networkIds.forEach(networkId => {
-            this.balances.set(networkId, {});
-            this.allowances.set(networkId, {});
-            this.userBalancerDataLastFetched[networkId] = {};
-            this.loadWhitelistedTokenMetadata(networkId);
-        });
     }
 
-    // Take the data from the JSON and get it into the store, so we access it just like other data
-
-    // network -> contrants -> tokens -> tokens[a] = TokenMetadata
-    @action loadWhitelistedTokenMetadata(chainId: number) {
-        const network = Object.keys(deployed).find(
-            item => deployed[item].chainId === chainId
+    // Wei Scale -> Token Scale
+    normalizeBalance(amount: BigNumber, tokenAddress: string): BigNumber {
+        const { contractMetadataStore } = this.rootStore;
+        return scale(
+            bnum(amount),
+            -contractMetadataStore.getTokenMetadata(tokenAddress).decimals
         );
-
-        const tokenMetadata = deployed[network].tokens;
-
-        const contractMetadata = {
-            bFactory: deployed[network].bFactory,
-            proxy: deployed[network].proxy,
-            weth: deployed[network].weth,
-            tokens: [] as TokenMetadata[],
-        };
-
-        tokenMetadata.forEach(token => {
-            const { address, symbol, decimals, iconAddress, precision } = token;
-            contractMetadata.tokens.push({
-                address,
-                symbol,
-                decimals,
-                iconAddress,
-                precision,
-            });
-        });
-
-        this.contractMetadata[chainId] = contractMetadata;
     }
 
-    normalizeBalance(weiBalance: BigNumber, tokenAddress: string): string {
-        const chainId = getSupportedChainId();
-        const decimals = this.contractMetadata[chainId].tokens.find(
-            token => token.address === tokenAddress
-        ).decimals;
-        return scale(weiBalance, -decimals).toString();
-    }
-
-    getProxyAddress(chainId): string {
-        const proxyAddress = this.contractMetadata[chainId].proxy;
-        if (!proxyAddress) {
-            throw new Error(
-                '[Invariant] Trying to get non-loaded static address'
-            );
-        }
-        return proxyAddress;
-    }
-
-    getWethAddress(chainId): string {
-        const address = this.contractMetadata[chainId].weth;
-        if (!address) {
-            throw new Error(
-                '[Invariant] Trying to get non-loaded static address'
-            );
-        }
-        return address;
-    }
-
-    getTokenMetadata(chainId: number, address: string): TokenMetadata {
-        const contractMetadata = this.contractMetadata[chainId];
-
-        if (!contractMetadata) {
-            throw new Error(
-                'Attempting to get whitelisted tokens for untracked chainId'
-            );
-        }
-
-        const tokenMetadata = contractMetadata.tokens.find(
-            element => element.address === address
+    // Token Scale -> Wei Scale
+    denormalizeBalance(amount: BigNumber, tokenAddress: string): BigNumber {
+        const { contractMetadataStore } = this.rootStore;
+        return scale(
+            bnum(amount),
+            contractMetadataStore.getTokenMetadata(tokenAddress).decimals
         );
-
-        if (!tokenMetadata) {
-            throw new Error(
-                'Attempting to get metadata for untracked token address'
-            );
-        }
-
-        return tokenMetadata;
     }
 
-    getFilteredTokenMetadata(chainId: number, filter: string): TokenMetadata[] {
-        const tokens = this.contractMetadata[chainId].tokens || undefined;
-
-        if (!tokens) {
-            throw new Error(
-                'Attempting to get user balances for untracked chainId'
-            );
-        }
-
-        let filteredMetadata: TokenMetadata[] = [];
-
-        if (filter.indexOf('0x') === 0) {
-            //Search by address
-            filteredMetadata = tokens.filter(value => {
-                return value.address === filter;
-            });
-        } else {
-            //Search by symbol
-            filteredMetadata = tokens.filter(value => {
-                const valueString = value.symbol.toLowerCase();
-                filter = filter.toLowerCase();
-                return valueString.includes(filter);
-            });
-        }
-
-        return filteredMetadata;
-    }
-
-    getAccountBalances(
-        chainId: number,
-        tokens: TokenMetadata[],
-        account: string
-    ): BigNumberMap {
-        const userBalances = this.balances.get(chainId);
+    getAccountBalances(tokens: TokenMetadata[], account: string): BigNumberMap {
+        const userBalances = this.balances;
         if (!userBalances) {
             throw new Error(
                 'Attempting to get user balances for untracked chainId'
@@ -229,51 +130,34 @@ export default class TokenStore {
         return result;
     }
 
-    getWhitelistedTokenMetadata(chainId): TokenMetadata[] {
-        const contractMetadata = this.contractMetadata[chainId];
-
-        if (!contractMetadata) {
-            throw new Error(
-                'Attempting to get whitelisted tokens for untracked chainId'
-            );
-        }
-
-        return contractMetadata.tokens;
-    }
-
-    getUserBalancerDataLastFetched(chainId: number, account: string): number {
+    getUserBalancerDataLastFetched(account: string): number {
         try {
-            return this.userBalancerDataLastFetched[chainId][account];
+            return this.userBalancerDataLastFetched[account];
         } catch (e) {
             console.error(e);
             return -1;
         }
     }
 
-    setUserBalancerDataLastFetched(
-        chainId: number,
-        account: string,
-        blockNumber: number
-    ) {
-        if (!this.userBalancerDataLastFetched[chainId]) {
+    setUserBalancerDataLastFetched(account: string, blockNumber: number) {
+        if (!this.userBalancerDataLastFetched) {
             throw new Error(
                 'Attempt to set user balancer data for untracked chainId'
             );
         }
-        if (!this.userBalancerDataLastFetched[chainId][account]) {
-            this.userBalancerDataLastFetched[chainId][account] = blockNumber;
+        if (!this.userBalancerDataLastFetched[account]) {
+            this.userBalancerDataLastFetched[account] = blockNumber;
         }
     }
 
     private setAllowanceProperty(
-        chainId: number,
         tokenAddress: string,
         owner: string,
         spender: string,
         approval: BigNumber,
         blockFetched: number
     ): void {
-        const chainApprovals = this.allowances.get(chainId);
+        const chainApprovals = this.allowances;
         if (!chainApprovals) {
             throw new Error(
                 'Attempt to set balance property for untracked chainId'
@@ -293,41 +177,124 @@ export default class TokenStore {
             lastFetched: blockFetched,
         };
 
-        this.allowances.set(chainId, chainApprovals);
+        this.allowances = chainApprovals;
     }
 
-    private setBalanceProperty(
-        chainId: number,
+    isAllowanceFetched(tokenAddress: string, owner: string, spender: string) {
+        const chainApprovals = this.allowances;
+        return (
+            !!chainApprovals[tokenAddress] &&
+            !!chainApprovals[tokenAddress][owner] &&
+            !!chainApprovals[tokenAddress][owner][spender]
+        );
+    }
+
+    isAllowanceStale(
         tokenAddress: string,
-        account: string,
-        balance: BigNumber,
-        blockFetched: number
-    ): void {
-        const chainBalances = this.balances.get(chainId);
-        if (!chainBalances) {
-            throw new Error(
-                'Attempt to set balance property for untracked chainId'
-            );
-        }
+        owner: string,
+        spender: string,
+        blockNumber: number
+    ) {
+        const chainApprovals = this.allowances;
+        return (
+            chainApprovals[tokenAddress][owner][spender].lastFetched <
+            blockNumber
+        );
+    }
 
-        if (!chainBalances[tokenAddress]) {
-            chainBalances[tokenAddress] = {};
-        }
+    private setAllowances(
+        tokens: string[],
+        owner: string,
+        spender: string,
+        approvals: BigNumber[],
+        fetchBlock: number
+    ) {
+        const chainApprovals = this.allowances;
 
-        chainBalances[tokenAddress][account] = {
-            balance: balance,
-            lastFetched: blockFetched,
+        approvals.forEach((approval, index) => {
+            const tokenAddress = tokens[index];
+
+            if (
+                (this.isAllowanceFetched(tokenAddress, owner, spender) &&
+                    this.isAllowanceStale(
+                        tokenAddress,
+                        owner,
+                        spender,
+                        fetchBlock
+                    )) ||
+                !this.isAllowanceFetched(tokenAddress, owner, spender)
+            ) {
+                if (!chainApprovals[tokenAddress]) {
+                    chainApprovals[tokenAddress] = {};
+                }
+
+                if (!chainApprovals[tokenAddress][owner]) {
+                    chainApprovals[tokenAddress][owner] = {};
+                }
+
+                chainApprovals[tokenAddress][owner][spender] = {
+                    allowance: approval,
+                    lastFetched: fetchBlock,
+                };
+            }
+        });
+
+        this.allowances = {
+            ...this.allowances,
+            ...chainApprovals,
         };
-
-        this.balances.set(chainId, chainBalances);
     }
 
-    getBalance(
-        chainId: number,
-        tokenAddress: string,
-        account: string
-    ): BigNumber | undefined {
-        const chainBalances = this.balances.get(chainId);
+    isBalanceFetched(tokenAddress: string, account: string) {
+        const chainBalances = this.balances;
+        return (
+            !!chainBalances[tokenAddress] &&
+            !!chainBalances[tokenAddress][account]
+        );
+    }
+
+    isBalanceStale(tokenAddress: string, account: string, blockNumber: number) {
+        const chainBalances = this.balances;
+        return chainBalances[tokenAddress][account].lastFetched < blockNumber;
+    }
+
+    private setBalances(
+        tokens: string[],
+        balances: BigNumber[],
+        account: string,
+        fetchBlock: number
+    ) {
+        const fetchedBalances: TokenBalanceMap = {};
+
+        balances.forEach((balance, index) => {
+            const tokenAddress = tokens[index];
+
+            if (
+                (this.isBalanceFetched(tokenAddress, account) &&
+                    this.isBalanceStale(tokenAddress, account, fetchBlock)) ||
+                !this.isBalanceFetched(tokenAddress, account)
+            ) {
+                if (this.balances[tokenAddress]) {
+                    fetchedBalances[tokenAddress] = this.balances[tokenAddress];
+                } else {
+                    fetchedBalances[tokenAddress] = {};
+                }
+
+                fetchedBalances[tokenAddress][account] = {
+                    balance: balance,
+                    lastFetched: fetchBlock,
+                };
+            }
+        });
+
+        this.balances = {
+            ...this.balances,
+            ...fetchedBalances,
+        };
+    }
+
+    getBalance(tokenAddress: string, account: string): BigNumber | undefined {
+        const chainBalances = this.balances;
         if (chainBalances) {
             const tokenBalances = chainBalances[tokenAddress];
             if (tokenBalances) {
@@ -342,12 +309,8 @@ export default class TokenStore {
         return undefined;
     }
 
-    private getBalanceLastFetched(
-        chainId,
-        tokenAddress,
-        account
-    ): number | undefined {
-        const chainBalances = this.balances.get(chainId);
+    private getBalanceLastFetched(tokenAddress, account): number | undefined {
+        const chainBalances = this.balances;
         if (chainBalances) {
             const tokenBalances = chainBalances[tokenAddress];
             if (tokenBalances) {
@@ -362,10 +325,9 @@ export default class TokenStore {
         return undefined;
     }
 
-    @action approveMax = async (web3React, tokenAddress, spender) => {
+    @action approveMax = async (tokenAddress, spender) => {
         const { providerStore } = this.rootStore;
         await providerStore.sendTransaction(
-            web3React,
             ContractTypes.TestToken,
             tokenAddress,
             'approve',
@@ -373,10 +335,9 @@ export default class TokenStore {
         );
     };
 
-    @action revokeApproval = async (web3React, tokenAddress, spender) => {
+    @action revokeApproval = async (tokenAddress, spender) => {
         const { providerStore } = this.rootStore;
         await providerStore.sendTransaction(
-            web3React,
             ContractTypes.TestToken,
             tokenAddress,
             'approve',
@@ -385,80 +346,73 @@ export default class TokenStore {
     };
 
     @action fetchBalancerTokenData = async (
-        web3React,
         account,
-        chainId
+        tokensToTrack: string[]
     ): Promise<FetchCode> => {
-        const { providerStore } = this.rootStore;
-        const tokensToTrack = this.getWhitelistedTokenMetadata(chainId);
-
+        const { providerStore, contractMetadataStore } = this.rootStore;
         const promises: Promise<any>[] = [];
-        const fetchBlock = providerStore.getCurrentBlockNumber(chainId);
-        tokensToTrack.forEach((value, index) => {
-            promises.push(
-                this.fetchBalanceOf(
-                    web3React,
-                    chainId,
-                    value.address,
-                    account,
-                    fetchBlock
-                )
-            );
-            promises.push(
-                this.fetchAllowance(
-                    web3React,
-                    chainId,
-                    value.address,
-                    account,
-                    this.contractMetadata[chainId].proxy,
-                    fetchBlock
-                )
-            );
+        const balanceCalls = [];
+        const allowanceCalls = [];
+        const tokenList = [];
+
+        const multiAddress = contractMetadataStore.getMultiAddress();
+        const multi = providerStore.getContract(
+            ContractTypes.Multicall,
+            multiAddress
+        );
+
+        const iface = new Interface(tokenAbi);
+
+        tokensToTrack.forEach(address => {
+            tokenList.push(address);
+            if (address !== EtherKey) {
+                balanceCalls.push([
+                    address,
+                    iface.functions.balanceOf.encode([account]),
+                ]);
+                allowanceCalls.push([
+                    address,
+                    iface.functions.allowance.encode([
+                        account,
+                        contractMetadataStore.getProxyAddress(),
+                    ]),
+                ]);
+            }
         });
 
-        let allFetchesSuccess = true;
+        promises.push(multi.aggregate(balanceCalls));
+        promises.push(multi.aggregate(allowanceCalls));
+        promises.push(multi.getEthBalance(account));
 
         try {
-            const responses = await Promise.all(promises);
-            responses.forEach(response => {
-                if (response instanceof TokenBalanceFetch) {
-                    const { status, request, payload } = response;
-                    if (status === AsyncStatus.SUCCESS) {
-                        this.setBalanceProperty(
-                            request.chainId,
-                            request.tokenAddress,
-                            request.account,
-                            payload.balance,
-                            payload.lastFetched
-                        );
-                    } else {
-                        allFetchesSuccess = false;
-                    }
-                } else if (response instanceof UserAllowanceFetch) {
-                    const { status, request, payload } = response;
-                    if (status === AsyncStatus.SUCCESS) {
-                        this.setAllowanceProperty(
-                            request.chainId,
-                            request.tokenAddress,
-                            request.owner,
-                            request.spender,
-                            payload.allowance,
-                            payload.lastFetched
-                        );
-                    } else {
-                        allFetchesSuccess = false;
-                    }
-                }
-            });
+            const [
+                [balBlock, mulBalance],
+                [allBlock, mulAllowance],
+                mulEth,
+            ] = await Promise.all(promises);
+            const balances = mulBalance.map(value =>
+                bnum(iface.functions.balanceOf.decode(value))
+            );
 
-            if (allFetchesSuccess) {
-                console.log('[All Fetches Success]');
-                this.setUserBalancerDataLastFetched(
-                    chainId,
-                    account,
-                    fetchBlock
-                );
-            }
+            const allowances = mulAllowance.map(value =>
+                bnum(iface.functions.allowance.decode(value))
+            );
+
+            const ethBalance = bnum(mulEth);
+            balances.unshift(ethBalance);
+            allowances.unshift(bnum(helpers.setPropertyToMaxUintIfEmpty()));
+
+            this.setBalances(tokenList, balances, account, balBlock.toNumber());
+
+            this.setAllowances(
+                tokenList,
+                account,
+                contractMetadataStore.getProxyAddress(),
+                allowances,
+                allBlock.toNumber()
+            );
+
+            console.debug('[All Fetches Success]');
         } catch (e) {
             console.error('[Fetch] Balancer Token Data', { error: e });
             return FetchCode.FAILURE;
@@ -466,13 +420,9 @@ export default class TokenStore {
         return FetchCode.SUCCESS;
     };
 
-    @action fetchSymbol = async (
-        web3React: Web3ReactContextInterface,
-        tokenAddress
-    ) => {
+    @action fetchSymbol = async tokenAddress => {
         const { providerStore } = this.rootStore;
         const token = providerStore.getContract(
-            web3React,
             ContractTypes.TestToken,
             tokenAddress
         );
@@ -480,8 +430,6 @@ export default class TokenStore {
     };
 
     @action fetchBalanceOf = async (
-        web3React: Web3ReactContextInterface,
-        chainId: number,
         tokenAddress: string,
         account: string,
         fetchBlock: number
@@ -493,17 +441,15 @@ export default class TokenStore {
             If the fetch is stale after network call, don't set DB variable
         */
         const stale =
-            fetchBlock <=
-            this.getBalanceLastFetched(chainId, tokenAddress, account);
+            fetchBlock <= this.getBalanceLastFetched(tokenAddress, account);
         if (!stale) {
             let balance;
 
             if (tokenAddress === EtherKey) {
-                const { library } = web3React;
+                const { library } = providerStore.providerStatus.library;
                 balance = bnum(await library.getBalance(account));
             } else {
                 const token = providerStore.getContract(
-                    web3React,
                     ContractTypes.TestToken,
                     tokenAddress
                 );
@@ -511,8 +457,7 @@ export default class TokenStore {
             }
 
             const stale =
-                fetchBlock <=
-                this.getBalanceLastFetched(chainId, tokenAddress, account);
+                fetchBlock <= this.getBalanceLastFetched(tokenAddress, account);
             if (!stale) {
                 console.debug('[Balance Fetch]', {
                     tokenAddress,
@@ -523,7 +468,6 @@ export default class TokenStore {
                 return new TokenBalanceFetch({
                     status: AsyncStatus.SUCCESS,
                     request: {
-                        chainId,
                         tokenAddress,
                         account,
                         fetchBlock,
@@ -543,7 +487,6 @@ export default class TokenStore {
             return new TokenBalanceFetch({
                 status: AsyncStatus.STALE,
                 request: {
-                    chainId,
                     tokenAddress,
                     account,
                     fetchBlock,
@@ -554,8 +497,6 @@ export default class TokenStore {
     };
 
     @action fetchAllowance = async (
-        web3React: Web3ReactContextInterface,
-        chainId: number,
         tokenAddress: string,
         owner: string,
         spender: string,
@@ -568,7 +509,6 @@ export default class TokenStore {
             return new UserAllowanceFetch({
                 status: AsyncStatus.SUCCESS,
                 request: {
-                    chainId,
                     tokenAddress,
                     owner,
                     spender,
@@ -582,7 +522,6 @@ export default class TokenStore {
         }
 
         const token = providerStore.getContract(
-            web3React,
             ContractTypes.TestToken,
             tokenAddress
         );
@@ -593,17 +532,12 @@ export default class TokenStore {
         */
         const stale =
             fetchBlock <=
-            this.getAllowanceLastFetched(chainId, tokenAddress, owner, spender);
+            this.getAllowanceLastFetched(tokenAddress, owner, spender);
         if (!stale) {
             const allowance = bnum(await token.allowance(owner, spender));
             const stale =
                 fetchBlock <=
-                this.getAllowanceLastFetched(
-                    chainId,
-                    tokenAddress,
-                    owner,
-                    spender
-                );
+                this.getAllowanceLastFetched(tokenAddress, owner, spender);
             if (!stale) {
                 console.debug('[Allowance Fetch]', {
                     tokenAddress,
@@ -615,7 +549,6 @@ export default class TokenStore {
                 return new UserAllowanceFetch({
                     status: AsyncStatus.SUCCESS,
                     request: {
-                        chainId,
                         tokenAddress,
                         owner,
                         spender,
@@ -637,7 +570,6 @@ export default class TokenStore {
             return new UserAllowanceFetch({
                 status: AsyncStatus.STALE,
                 request: {
-                    chainId,
                     tokenAddress,
                     owner,
                     spender,
@@ -648,13 +580,8 @@ export default class TokenStore {
         }
     };
 
-    getAllowance = (
-        chainId,
-        tokenAddress,
-        account,
-        spender
-    ): BigNumber | undefined => {
-        const chainApprovals = this.allowances.get(chainId);
+    getAllowance = (tokenAddress, account, spender): BigNumber | undefined => {
+        const chainApprovals = this.allowances;
         if (chainApprovals) {
             const tokenApprovals = chainApprovals[tokenAddress];
             if (tokenApprovals) {
@@ -670,12 +597,11 @@ export default class TokenStore {
     };
 
     getAllowanceLastFetched = (
-        chainId,
         tokenAddress,
         account,
         spender
     ): number | undefined => {
-        const chainApprovals = this.allowances.get(chainId);
+        const chainApprovals = this.allowances;
         if (chainApprovals) {
             const tokenApprovals = chainApprovals[tokenAddress];
             if (tokenApprovals) {

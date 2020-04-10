@@ -87,17 +87,23 @@ const AssetOptions = observer(() => {
     // TODO do math and pass props into AssetPanel css to make border-bottom none for bottom row of assets
 
     const {
-        root: { providerStore, swapFormStore, tokenStore, poolStore },
+        root: {
+            providerStore,
+            contractMetadataStore,
+            swapFormStore,
+            tokenStore,
+            poolStore,
+        },
     } = useStores();
 
     const supportedChainId = getSupportedChainId();
-    const { chainId, account } = providerStore.getActiveWeb3React();
+    const account = providerStore.providerStatus.account;
+    const chainId = providerStore.providerStatus.activeChainId;
 
     const { assetSelectFilter, assetModalState } = swapFormStore;
 
-    const getAssetOptions = (filter, chainId, account): Asset[] => {
-        const filteredWhitelistedTokens = tokenStore.getFilteredTokenMetadata(
-            supportedChainId,
+    const getAssetOptions = (filter, account): Asset[] => {
+        const filteredWhitelistedTokens = contractMetadataStore.getFilteredTokenMetadata(
             filter
         );
 
@@ -117,7 +123,6 @@ const AssetOptions = observer(() => {
 
         if (account && isChainIdSupported(chainId)) {
             userBalances = tokenStore.getAccountBalances(
-                chainId,
                 filteredWhitelistedTokens,
                 account
             );
@@ -179,7 +184,7 @@ const AssetOptions = observer(() => {
     };
 
     const assets = sortAssetOptions(
-        getAssetOptions(assetSelectFilter, chainId, account),
+        getAssetOptions(assetSelectFilter, account),
         account
     );
 
