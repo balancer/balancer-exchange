@@ -234,7 +234,6 @@ export default class SwapFormStore {
             contractMetadataStore,
         } = this.rootStore;
         const account = providerStore.providerStatus.account;
-        const activeChainId = providerStore.providerStatus.activeChainId;
         const { inputToken, outputToken, inputAmount } = this.inputs;
 
         const preview = await proxyStore.previewBatchSwapExactIn(
@@ -289,7 +288,6 @@ export default class SwapFormStore {
             contractMetadataStore,
         } = this.rootStore;
         const account = providerStore.providerStatus.account;
-        const chainId = providerStore.providerStatus.activeChainId;
         const { inputToken, outputToken, outputAmount } = this.inputs;
 
         const preview = await proxyStore.previewBatchSwapExactOut(

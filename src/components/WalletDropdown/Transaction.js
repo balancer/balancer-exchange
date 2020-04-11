@@ -3,7 +3,6 @@ import styled, { keyframes } from 'styled-components';
 import { Check } from 'react-feather';
 import { getEtherscanLink } from 'utils/helpers';
 import Circle from '../../assets/images/circle.svg';
-import { transparentize } from 'polished';
 import { useStores } from '../../contexts/storesContext';
 
 const TransactionStatusWrapper = styled.div`

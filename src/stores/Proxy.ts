@@ -27,7 +27,6 @@ import {
 } from '../utils/sorWrapper';
 import { ethers } from 'ethers';
 import { EtherKey } from './Token';
-import { supportedChainId } from '../provider/connectors';
 
 export type SwapPreview = ExactAmountInPreview | ExactAmountOutPreview;
 
@@ -177,12 +176,7 @@ export default class ProxyStore {
         minAmountOut: BigNumber,
         decimalsOut: number
     ) => {
-        const {
-            tokenStore,
-            providerStore,
-            contractMetadataStore,
-        } = this.rootStore;
-        const chainId = providerStore.providerStatus.activeChainId;
+        const { providerStore, contractMetadataStore } = this.rootStore;
         const proxyAddress = contractMetadataStore.getProxyAddress();
 
         if (tokenIn === EtherKey) {
@@ -234,12 +228,7 @@ export default class ProxyStore {
         tokenAmountOut: BigNumber,
         decimalsOut: number
     ) => {
-        const {
-            tokenStore,
-            providerStore,
-            contractMetadataStore,
-        } = this.rootStore;
-        const chainId = providerStore.providerStatus.activeChainId;
+        const { providerStore, contractMetadataStore } = this.rootStore;
         const proxyAddress = contractMetadataStore.getProxyAddress();
 
         if (tokenIn === EtherKey) {
@@ -282,7 +271,7 @@ export default class ProxyStore {
     ): Promise<ExactAmountInPreview> => {
         try {
             this.setPreviewPending(true);
-            const { tokenStore, contractMetadataStore } = this.rootStore;
+            const { contractMetadataStore } = this.rootStore;
 
             const tokenAmountIn = scale(bnum(inputAmount), inputDecimals);
 
@@ -390,7 +379,7 @@ export default class ProxyStore {
     ): Promise<ExactAmountOutPreview> => {
         try {
             this.setPreviewPending(true);
-            const { tokenStore, contractMetadataStore } = this.rootStore;
+            const { contractMetadataStore } = this.rootStore;
 
             const tokenAmountOut = scale(bnum(outputAmount), outputDecimals);
 

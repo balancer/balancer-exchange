@@ -112,8 +112,6 @@ const Wallet = observer(() => {
         throw new Error(`No chain ID specified ${activeChainId}`);
     }
 
-    let pending = undefined;
-    let confirmed = undefined;
     let hasPendingTransactions = transactionStore.hasPendingTransactions(
         account
     );

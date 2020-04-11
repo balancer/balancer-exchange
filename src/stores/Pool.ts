@@ -39,11 +39,7 @@ export default class PoolStore {
     }
 
     @action async fetchTokenPairs(tokenAddress: string) {
-        const {
-            tokenStore,
-            providerStore,
-            contractMetadataStore,
-        } = this.rootStore;
+        const { providerStore, contractMetadataStore } = this.rootStore;
         const fetchBlock = providerStore.getCurrentBlockNumber();
 
         //Pre-fetch stale check
