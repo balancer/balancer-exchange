@@ -3,10 +3,7 @@ import styled from 'styled-components';
 import { TokenIconAddress } from './TokenPanel';
 import { useStores } from '../contexts/storesContext';
 import { bnum, formatBalanceTruncated } from 'utils/helpers';
-import {
-    getSupportedChainId,
-    isChainIdSupported,
-} from '../provider/connectors';
+import { isChainIdSupported } from '../provider/connectors';
 import { observer } from 'mobx-react';
 
 const AssetPanelContainer = styled.div`
@@ -96,7 +93,6 @@ const AssetOptions = observer(() => {
         },
     } = useStores();
 
-    const supportedChainId = getSupportedChainId();
     const account = providerStore.providerStatus.account;
     const chainId = providerStore.providerStatus.activeChainId;
 

@@ -1,4 +1,4 @@
-import { action, observable, ObservableMap } from 'mobx';
+import { action, observable } from 'mobx';
 import RootStore from 'stores/Root';
 import { ContractTypes } from 'stores/Provider';
 import * as helpers from 'utils/helpers';
@@ -12,11 +12,9 @@ import {
     UserAllowanceFetch,
 } from './actions/fetch';
 
-import { getSupportedChainId } from '../provider/connectors';
 import { scale } from 'utils/helpers';
 
 const tokenAbi = require('../abi/TestToken').abi;
-const deployed = require('deployed.json');
 
 export interface ContractMetadata {
     bFactory: string;

@@ -120,7 +120,7 @@ const PieChartWrapper = styled.div`
 
 const TradeComposition = observer(() => {
     const {
-        root: { swapFormStore, contractMetadataStore, tokenStore },
+        root: { swapFormStore, contractMetadataStore },
     } = useStores();
 
     const supportedChainId = getSupportedChainId();
