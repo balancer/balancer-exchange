@@ -89,8 +89,17 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     const { inputs, outputs } = swapFormStore;
     const tokenList = contractMetadataStore.getWhitelistedTokenMetadata();
 
-    // Set default token pair to first two in config file - currently ETH and DAI
-    if (isEmpty(swapFormStore.inputs.inputToken)) {
+    if (tokenIn && isEmpty(swapFormStore.inputs.inputToken)) {
+        const tokenInUrl = tokenList.find(t => t.address === tokenIn);
+        if (tokenInUrl) {
+            swapFormStore.inputs.inputToken = tokenInUrl.address;
+            swapFormStore.inputs.inputTicker = tokenInUrl.symbol;
+            swapFormStore.inputs.inputIconAddress = tokenInUrl.iconAddress;
+            poolStore.fetchAndSetTokenPairs(tokenInUrl.address);
+            swapFormStore.inputs.inputDecimals = tokenInUrl.decimals;
+            swapFormStore.inputs.inputPrecision = tokenInUrl.precision;
+        }
+    } else if (isEmpty(swapFormStore.inputs.inputToken)) {
         swapFormStore.inputs.inputToken = tokenList[0].address;
         swapFormStore.inputs.inputTicker = tokenList[0].symbol;
         swapFormStore.inputs.inputIconAddress = tokenList[0].iconAddress;
@@ -99,7 +108,17 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         swapFormStore.inputs.inputPrecision = tokenList[0].precision;
     }
 
-    if (isEmpty(swapFormStore.inputs.outputToken)) {
+    if (tokenOut && isEmpty(swapFormStore.inputs.outputToken)) {
+        const tokenOutUrl = tokenList.find(t => t.address === tokenOut);
+        if (tokenOutUrl) {
+            swapFormStore.inputs.outputToken = tokenOutUrl.address;
+            swapFormStore.inputs.outputTicker = tokenOutUrl.symbol;
+            swapFormStore.inputs.outputIconAddress = tokenOutUrl.iconAddress;
+            poolStore.fetchAndSetTokenPairs(tokenOutUrl.address);
+            swapFormStore.inputs.outputDecimals = tokenOutUrl.decimals;
+            swapFormStore.inputs.outputPrecision = tokenOutUrl.precision;
+        }
+    } else if (isEmpty(swapFormStore.inputs.outputToken)) {
         swapFormStore.inputs.outputToken = tokenList[1].address;
         swapFormStore.inputs.outputTicker = tokenList[1].symbol;
         swapFormStore.inputs.outputIconAddress = tokenList[1].iconAddress;
