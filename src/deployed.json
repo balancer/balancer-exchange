@@ -151,6 +151,15 @@
                 "precision": 4
             },
             {
+                "symbol": "BTC++",
+                "address": "0x0327112423F3A68efdF1fcF402F6c5CB9f7C33fd",
+                "decimals": 18,
+                "ticker": "BTC",
+                "precision": 6,
+                "iconAddress": "0x0327112423F3A68efdF1fcF402F6c5CB9f7C33fd",
+                "chartColor": "#34cbf8"
+            },
+            {
                 "symbol": "WBTC",
                 "address": "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
                 "decimals": 8,

@@ -20,8 +20,6 @@ export default class BlockchainFetchStore {
         const account = providerStore.providerStatus.account;
 
         if (active && chainId === supportedChainId) {
-            const { poolStore, appSettingsStore } = this.rootStore;
-
             library
                 .getBlockNumber()
                 .then(blockNumber => {
