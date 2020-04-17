@@ -1,7 +1,8 @@
 import React from 'react';
 import styled from 'styled-components';
 import {
-    normalizePriceValues,
+    normalizePriceValuesInput,
+    normalizePriceValuesOutput,
     toAddressStub,
     getEtherscanLink,
 } from 'utils/helpers';
@@ -39,6 +40,12 @@ const DropDownArrow = styled.div`
     cursor: pointer;
 `;
 
+const OppositeArrows = styled.img`
+    height: 20px;
+    cursor: pointer;
+    transform: rotate(90deg);
+`;
+
 const UpCarretIcon = styled.img`
     height: 20px;
 `;
@@ -49,7 +56,7 @@ const DownCarretIcon = styled.img`
 
 const CompositionDropDown = styled.div`
     width: 508px;
-    height: 150px;
+    height: 170px;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -125,7 +132,7 @@ const TradeComposition = observer(() => {
 
     const supportedChainId = getSupportedChainId();
     const chartData = swapFormStore.tradeCompositionData;
-    const { tradeCompositionOpen } = swapFormStore;
+    const { tradeCompositionOpen, exchangeRateInput } = swapFormStore;
 
     const options = {
         maintainAspectRatio: false,
@@ -184,6 +191,14 @@ const TradeComposition = observer(() => {
         }
     };
 
+    const toggleExchangeRate = () => {
+        if (exchangeRateInput) {
+            return swapFormStore.setExchangeRateInput(false);
+        } else {
+            return swapFormStore.setExchangeRateInput(true);
+        }
+    };
+
     const { inputToken, outputToken } = swapFormStore.inputs;
 
     const renderChartRows = (chartData: ChartData, formatting) => {
@@ -237,19 +252,43 @@ const TradeComposition = observer(() => {
         );
 
         if (chartData.validSwap) {
-            const { normalizedInput, normalizedOutput } = normalizePriceValues(
-                chartData.inputPriceValue,
-                inputTokenData.decimals,
-                chartData.outputPriceValue,
-                outputTokenData.decimals
-            );
+            if (exchangeRateInput) {
+                const {
+                    normalizedInput,
+                    normalizedOutput,
+                } = normalizePriceValuesInput(
+                    chartData.inputPriceValue,
+                    inputTokenData.decimals,
+                    chartData.outputPriceValue,
+                    outputTokenData.decimals
+                );
 
-            return (
-                <div>
-                    {normalizedInput.toString()} {inputTokenData.symbol} ={' '}
-                    {normalizedOutput.toPrecision(6)} {outputTokenData.symbol}
-                </div>
-            );
+                return (
+                    <div>
+                        {normalizedInput.toString()} {inputTokenData.symbol} ={' '}
+                        {normalizedOutput.toPrecision(6)}{' '}
+                        {outputTokenData.symbol}
+                    </div>
+                );
+            } else {
+                const {
+                    normalizedInput,
+                    normalizedOutput,
+                } = normalizePriceValuesOutput(
+                    chartData.inputPriceValue,
+                    inputTokenData.decimals,
+                    chartData.outputPriceValue,
+                    outputTokenData.decimals
+                );
+
+                return (
+                    <div>
+                        {normalizedInput.toString()} {outputTokenData.symbol} ={' '}
+                        {normalizedOutput.toPrecision(6)}{' '}
+                        {inputTokenData.symbol}
+                    </div>
+                );
+            }
         } else {
             return <div>Input swap parameters</div>;
         }
@@ -258,6 +297,12 @@ const TradeComposition = observer(() => {
     return (
         <Container>
             <Info>
+                <OppositeArrows
+                    src="swap.svg"
+                    onClick={() => {
+                        toggleExchangeRate();
+                    }}
+                />
                 {renderExchangeRate(chartData)}
                 <DropDownArrow
                     onClick={() => {
