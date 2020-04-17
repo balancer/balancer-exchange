@@ -16,6 +16,9 @@ const BuildVersion = styled.div`
     color: var(--body-text);
     position: fixed;
     bottom: 0px;
+    @media screen and (max-width: 1024px) {
+        display: none;
+    }
 `;
 
 const App = () => {
