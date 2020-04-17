@@ -8,12 +8,14 @@ const Warning = styled.div`
     flex-direction: row;
     align-items: center;
     color: var(--warning);
-    height: 67px;
     width: 50%;
     margin: 20px auto;
     border: 1px solid var(--warning);
     border-radius: 4px;
-    padding-left: 20px;
+    padding: 20px;
+    @media screen and (max-width: 1024px) {
+        width: 80%;
+    }
 `;
 
 const Message = styled.div`
