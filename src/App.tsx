@@ -21,12 +21,21 @@ const BuildVersion = styled.div`
     }
 `;
 
+const BuildLink = styled.a`
+    font-size: 10px;
+    color: var(--body-text);
+    text-decoration: none;
+    margin-left: 5px;
+`;
+
 const App = () => {
     const PoolSwapView = props => {
         const { tokenIn, tokenOut } = props.match.params;
 
         return <SwapForm tokenIn={tokenIn} tokenOut={tokenOut} />;
     };
+
+    const buildId = process.env.REACT_APP_COMMIT_REF || '';
 
     const renderViews = () => {
         return (
@@ -49,7 +58,13 @@ const App = () => {
                 <GeneralNotification />
                 {renderViews()}
                 <BuildVersion>
-                    BUILD ID: {process.env.REACT_APP_COMMIT_REF}
+                    BUILD ID:{' '}
+                    <BuildLink
+                        href={`https://github.com/balancer-labs/pool-management/tree/${buildId}`}
+                        target="_blank"
+                    >
+                        {buildId.substring(0, 12)}
+                    </BuildLink>
                 </BuildVersion>
             </HashRouter>
         </Web3ReactManager>
