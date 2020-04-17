@@ -105,6 +105,7 @@ export default class SwapFormStore {
     @observable preview: SwapPreview;
     @observable tradeCompositionData: ChartData;
     @observable tradeCompositionOpen: boolean;
+    @observable exchangeRateInput: boolean = true;
     @observable slippageSelectorOpen: boolean;
     @observable assetModalState = {
         open: false,
@@ -402,6 +403,10 @@ export default class SwapFormStore {
 
     @action setTradeCompositionOpen(value) {
         this.tradeCompositionOpen = value;
+    }
+
+    @action setExchangeRateInput(value) {
+        this.exchangeRateInput = value;
     }
 
     @action setSlippageSelectorOpen(value) {

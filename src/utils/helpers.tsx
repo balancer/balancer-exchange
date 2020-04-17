@@ -212,7 +212,7 @@ export const generateIcon = address => {
     return jazzicon(28, address.substr(0, 10));
 };
 
-export const normalizePriceValues = (
+export const normalizePriceValuesInput = (
     inputValue: BigNumber,
     inputDecimals: number,
     outputValue: BigNumber,
@@ -225,6 +225,22 @@ export const normalizePriceValues = (
     return {
         normalizedInput: bnum(1),
         normalizedOutput: scale(outputValue.times(multiplier), -outputDecimals),
+    };
+};
+
+export const normalizePriceValuesOutput = (
+    inputValue: BigNumber,
+    inputDecimals: number,
+    outputValue: BigNumber,
+    outputDecimals: number
+): {
+    normalizedInput: BigNumber;
+    normalizedOutput: BigNumber;
+} => {
+    const multiplier = scale(bnum(1), outputDecimals).div(outputValue);
+    return {
+        normalizedInput: bnum(1),
+        normalizedOutput: scale(inputValue.times(multiplier), -inputDecimals),
     };
 };
 
