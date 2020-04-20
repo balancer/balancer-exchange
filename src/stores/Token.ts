@@ -613,4 +613,19 @@ export default class TokenStore {
         }
         return undefined;
     };
+
+    fetchOnChainTokenMetadata(address: string): TokenMetadata {
+        // !!!!!!! Add on-chain query here
+        console.log(`[Token] fetchOnChainTokenMetadata: ${address}`);
+
+        const tokenMetadata: TokenMetadata = {
+            address: 'testAddress',
+            symbol: 'testSym',
+            decimals: 77,
+            iconAddress: 'testIconAddress',
+            precision: 7,
+        };
+
+        return tokenMetadata;
+    }
 }
