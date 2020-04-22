@@ -5,6 +5,7 @@ import * as helpers from 'utils/helpers';
 import { bnum } from 'utils/helpers';
 import { FetchCode } from './Transaction';
 import { BigNumber } from 'utils/bignumber';
+import { isAddress } from 'utils/helpers';
 import { Interface } from 'ethers/utils';
 import {
     AsyncStatus,
@@ -13,6 +14,7 @@ import {
 } from './actions/fetch';
 
 import { scale } from 'utils/helpers';
+import { getSupportedChainName } from '../provider/connectors';
 
 const tokenAbi = require('../abi/TestToken').abi;
 
@@ -78,6 +80,8 @@ export default class TokenStore {
     @observable allowances: UserAllowanceMap;
     @observable contractMetadata: ContractMetadataMap;
     @observable userBalancerDataLastFetched: BlockNumberMap;
+    @observable inputToken: TokenMetadata;
+    @observable outputToken: TokenMetadata;
     rootStore: RootStore;
 
     constructor(rootStore) {
@@ -86,6 +90,21 @@ export default class TokenStore {
         this.allowances = {} as UserAllowanceMap;
         this.contractMetadata = {} as ContractMetadataMap;
         this.userBalancerDataLastFetched = {} as BlockNumberMap;
+        this.inputToken = {
+            address: 'unknown',
+            symbol: 'unknown',
+            decimals: 18,
+            iconAddress: 'unknown',
+            precision: 4, //!!!!!! What should this be if no config??
+        };
+
+        this.outputToken = {
+            address: 'unknown',
+            symbol: 'unknown',
+            decimals: 18,
+            iconAddress: 'unknown',
+            precision: 4, //!!!!!! What should this be if no config??
+        };
     }
 
     // Wei Scale -> Token Scale
@@ -614,18 +633,76 @@ export default class TokenStore {
         return undefined;
     };
 
-    fetchOnChainTokenMetadata(address: string): TokenMetadata {
-        // !!!!!!! Add on-chain query here
+    fetchTokenIconAddress = (address): string => {
+        if (address === 'ether') return 'ether';
+
+        // Checksum addr needed for retrieval of icon from trustwallet asset repo
+        const checkSumAddr = isAddress(address);
+        // ??????? What should the UX be like here?
+        if (!checkSumAddr) throw new Error(`Token address in wrong format.`);
+
+        const chainName = getSupportedChainName();
+
+        // kovan icons still retrieved from meta data.
+        // trustwallet asset repo used for mainnet token addresses.
+        if (chainName == 'kovan') {
+            const { contractMetadataStore } = this.rootStore;
+            const tokenList = contractMetadataStore.getWhitelistedTokenMetadata();
+            const tokenUrl = tokenList.find(t => t.address === address);
+            if (tokenUrl) {
+                console.log(`kovan iconAddress: ${tokenUrl.iconAddress}`);
+                return tokenUrl.iconAddress;
+            }
+        } else {
+            return checkSumAddr;
+        }
+
+        return 'unknown';
+    };
+
+    // Called by SwapForm.tsx
+    @action fetchOnChainTokenMetadata = async (
+        isInputToken: boolean,
+        address: string
+    ) => {
+        // ?????? move this to SwapFrom Store?
         console.log(`[Token] fetchOnChainTokenMetadata: ${address}`);
 
-        const tokenMetadata: TokenMetadata = {
-            address: 'testAddress',
-            symbol: 'testSym',
-            decimals: 77,
-            iconAddress: 'testIconAddress',
-            precision: 7,
-        };
+        const iconAddress = this.fetchTokenIconAddress(address);
 
-        return tokenMetadata;
-    }
+        if (address === 'ether') {
+            const { contractMetadataStore } = this.rootStore;
+            address = contractMetadataStore.getWethAddress(); // Will get correct address for active network
+        }
+
+        try {
+            // symbol/decimal call will fail if not an actual token.
+
+            const { providerStore } = this.rootStore;
+
+            const tokenContract = providerStore.getContract(
+                ContractTypes.TestToken,
+                address
+            );
+
+            const tokenSymbol = await tokenContract.symbol();
+            const tokenDecimals = await tokenContract.decimals();
+
+            const tokenMetadata: TokenMetadata = {
+                address: address,
+                symbol: tokenSymbol,
+                decimals: tokenDecimals,
+                iconAddress: iconAddress,
+                precision: 4, //??????? What should this be if no config??
+            };
+
+            if (isInputToken) {
+                this.inputToken = tokenMetadata;
+            } else {
+                this.outputToken = tokenMetadata;
+            }
+        } catch (error) {
+            throw new Error(`Attempting to get untracked token address.`);
+        }
+    };
 }

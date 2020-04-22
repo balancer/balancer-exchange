@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import styled from 'styled-components';
 import BuyToken from './BuyToken';
 import SellToken from './SellToken';
@@ -86,54 +86,45 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         throw new Error('ChainId not loaded in TestPanel');
     }
 
-    const { inputs, outputs } = swapFormStore;
     const tokenList = contractMetadataStore.getWhitelistedTokenMetadata();
 
     if (tokenIn && isEmpty(swapFormStore.inputs.inputToken)) {
-        const tokenInUrl = tokenList.find(t => t.address === tokenIn);
-        if (tokenInUrl) {
-            swapFormStore.inputs.inputToken = tokenInUrl.address;
-            swapFormStore.inputs.inputTicker = tokenInUrl.symbol;
-            swapFormStore.inputs.inputIconAddress = tokenInUrl.iconAddress;
-            poolStore.fetchAndSetTokenPairs(tokenInUrl.address);
-            swapFormStore.inputs.inputDecimals = tokenInUrl.decimals;
-            swapFormStore.inputs.inputPrecision = tokenInUrl.precision;
-        }
+        // swapFormStore is empty and has URL param - direct URL token query
+        console.log(`[SwapForm] Using Input Token URL.`);
+        swapFormStore.inputs.inputToken = tokenIn;
     } else if (isEmpty(swapFormStore.inputs.inputToken)) {
+        // No URL and no asset selected. Sets default to Eth
+        console.log(`[SwapForm] No Input Token Selected, Defaulting to Eth.`);
         swapFormStore.inputs.inputToken = tokenList[0].address;
-        swapFormStore.inputs.inputTicker = tokenList[0].symbol;
-        swapFormStore.inputs.inputIconAddress = tokenList[0].iconAddress;
-        poolStore.fetchAndSetTokenPairs(tokenList[0].address);
-        swapFormStore.inputs.inputDecimals = tokenList[0].decimals;
-        swapFormStore.inputs.inputPrecision = tokenList[0].precision;
+        // ??????? poolStore.fetchAndSetTokenPairs(tokenList[0].address);
     }
 
     if (tokenOut && isEmpty(swapFormStore.inputs.outputToken)) {
-        const tokenOutUrl = tokenList.find(t => t.address === tokenOut);
-        if (tokenOutUrl) {
-            swapFormStore.inputs.outputToken = tokenOutUrl.address;
-            swapFormStore.inputs.outputTicker = tokenOutUrl.symbol;
-            swapFormStore.inputs.outputIconAddress = tokenOutUrl.iconAddress;
-            poolStore.fetchAndSetTokenPairs(tokenOutUrl.address);
-            swapFormStore.inputs.outputDecimals = tokenOutUrl.decimals;
-            swapFormStore.inputs.outputPrecision = tokenOutUrl.precision;
-        }
+        // swapFormStore is empty and has URL param - direct URL token query
+        console.log(`[SwapForm] Using Output Token URL.`);
+        swapFormStore.inputs.outputToken = tokenOut;
     } else if (isEmpty(swapFormStore.inputs.outputToken)) {
+        // No URL and no asset selected. Sets default to DAI
+        console.log(`[SwapForm] No Output Token Selected, Defaulting to DAI.`);
         swapFormStore.inputs.outputToken = tokenList[1].address;
-        swapFormStore.inputs.outputTicker = tokenList[1].symbol;
-        swapFormStore.inputs.outputIconAddress = tokenList[1].iconAddress;
-        poolStore.fetchAndSetTokenPairs(tokenList[1].address);
-        swapFormStore.inputs.outputDecimals = tokenList[1].decimals;
-        swapFormStore.inputs.outputPrecision = tokenList[1].precision;
+        // poolStore.fetchAndSetTokenPairs(tokenList[1].address);
     }
 
+    const { inputs, outputs } = swapFormStore;
     const { inputToken, outputToken } = inputs;
 
+    useEffect(() => {
+        // If input/output token have changed then query on-chain info for symbol, etc
+        console.log(
+            `[SwapForm] Token Change - Fetching On Chain Meta Data ${inputToken} ${outputToken}`
+        );
+        tokenStore.fetchOnChainTokenMetadata(true, inputToken);
+        tokenStore.fetchOnChainTokenMetadata(false, outputToken);
+    }, [inputToken, outputToken, tokenStore]); // Only re-run the effect on token address change
+
     const tokenMetadata = {
-        // input: contractMetadataStore.getTokenMetadata(inputToken),
-        input: tokenStore.fetchOnChainTokenMetadata(inputToken),
-        // output: contractMetadataStore.getTokenMetadata(outputToken),
-        output: tokenStore.fetchOnChainTokenMetadata(outputToken),
+        input: tokenStore.inputToken,
+        output: tokenStore.outputToken,
     };
 
     const buttonActionHandler = (buttonState: ButtonState) => {
