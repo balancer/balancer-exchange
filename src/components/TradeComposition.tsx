@@ -127,7 +127,7 @@ const PieChartWrapper = styled.div`
 
 const TradeComposition = observer(() => {
     const {
-        root: { swapFormStore, contractMetadataStore },
+        root: { swapFormStore, tokenStore },
     } = useStores();
 
     const supportedChainId = getSupportedChainId();
@@ -244,12 +244,8 @@ const TradeComposition = observer(() => {
     };
 
     const renderExchangeRate = (chartData: ChartData) => {
-        const inputTokenData = contractMetadataStore.getTokenMetadata(
-            inputToken
-        );
-        const outputTokenData = contractMetadataStore.getTokenMetadata(
-            outputToken
-        );
+        const inputTokenData = tokenStore.inputToken;
+        const outputTokenData = tokenStore.outputToken;
 
         if (chartData.validSwap) {
             if (exchangeRateInput) {

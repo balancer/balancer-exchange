@@ -86,8 +86,6 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         throw new Error('ChainId not loaded in TestPanel');
     }
 
-    const tokenList = contractMetadataStore.getWhitelistedTokenMetadata();
-
     if (tokenIn && isEmpty(swapFormStore.inputs.inputToken)) {
         // swapFormStore is empty and has URL param - direct URL token query
         console.log(`[SwapForm] Using Input Token URL.`);
@@ -95,8 +93,8 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     } else if (isEmpty(swapFormStore.inputs.inputToken)) {
         // No URL and no asset selected. Sets default to Eth
         console.log(`[SwapForm] No Input Token Selected, Defaulting to Eth.`);
-        swapFormStore.inputs.inputToken = tokenList[0].address;
-        // ??????? poolStore.fetchAndSetTokenPairs(tokenList[0].address);
+        swapFormStore.inputs.inputToken = 'ether';
+        poolStore.fetchAndSetTokenPairs('ether');
     }
 
     if (tokenOut && isEmpty(swapFormStore.inputs.outputToken)) {
@@ -106,8 +104,9 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     } else if (isEmpty(swapFormStore.inputs.outputToken)) {
         // No URL and no asset selected. Sets default to DAI
         console.log(`[SwapForm] No Output Token Selected, Defaulting to DAI.`);
-        swapFormStore.inputs.outputToken = tokenList[1].address;
-        // poolStore.fetchAndSetTokenPairs(tokenList[1].address);
+        const daiAddr = contractMetadataStore.getDaiAddress();
+        swapFormStore.inputs.outputToken = daiAddr;
+        poolStore.fetchAndSetTokenPairs(daiAddr);
     }
 
     const { inputs, outputs } = swapFormStore;

@@ -241,7 +241,7 @@ export default class SwapFormStore {
             inputToken,
             outputToken,
             bnum(inputAmount),
-            contractMetadataStore.getTokenMetadata(inputToken).decimals
+            tokenStore.inputToken.decimals
         );
 
         this.setSwapObjection(SwapObjection.NONE);
@@ -254,14 +254,14 @@ export default class SwapFormStore {
             this.setOutputFromPreview(
                 SwapMethods.EXACT_IN,
                 preview,
-                contractMetadataStore.getTokenMetadata(outputToken).decimals
+                tokenStore.outputToken.decimals
             );
             this.clearErrorMessage();
 
             if (account) {
-                const userBalance = tokenStore.normalizeBalance(
-                    tokenStore.getBalance(inputToken, account),
-                    inputToken
+                const userBalance = scale(
+                    bnum(tokenStore.getBalance(inputToken, account)),
+                    -tokenStore.inputToken.decimals
                 );
 
                 if (userBalance) {
@@ -295,7 +295,7 @@ export default class SwapFormStore {
             inputToken,
             outputToken,
             bnum(outputAmount),
-            contractMetadataStore.getTokenMetadata(outputToken).decimals
+            tokenStore.outputToken.decimals
         );
 
         if (preview.error) {
@@ -306,19 +306,19 @@ export default class SwapFormStore {
             this.setOutputFromPreview(
                 SwapMethods.EXACT_OUT,
                 preview,
-                contractMetadataStore.getTokenMetadata(inputToken).decimals
+                tokenStore.inputToken.decimals
             );
             this.clearErrorMessage();
 
             if (account) {
-                const userBalance = tokenStore.normalizeBalance(
-                    tokenStore.getBalance(inputToken, account),
-                    inputToken
+                const userBalance = scale(
+                    bnum(tokenStore.getBalance(inputToken, account)),
+                    -tokenStore.inputToken.decimals
                 );
 
-                const normalizedInput = tokenStore.normalizeBalance(
-                    preview.totalInput,
-                    inputToken
+                const normalizedInput = scale(
+                    bnum(preview.totalInput),
+                    -tokenStore.inputToken.decimals
                 );
 
                 if (userBalance) {

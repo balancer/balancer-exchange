@@ -107,24 +107,6 @@ export default class TokenStore {
         };
     }
 
-    // Wei Scale -> Token Scale
-    normalizeBalance(amount: BigNumber, tokenAddress: string): BigNumber {
-        const { contractMetadataStore } = this.rootStore;
-        return scale(
-            bnum(amount),
-            -contractMetadataStore.getTokenMetadata(tokenAddress).decimals
-        );
-    }
-
-    // Token Scale -> Wei Scale
-    denormalizeBalance(amount: BigNumber, tokenAddress: string): BigNumber {
-        const { contractMetadataStore } = this.rootStore;
-        return scale(
-            bnum(amount),
-            contractMetadataStore.getTokenMetadata(tokenAddress).decimals
-        );
-    }
-
     getAccountBalances(tokens: TokenMetadata[], account: string): BigNumberMap {
         const userBalances = this.balances;
         if (!userBalances) {
@@ -647,12 +629,7 @@ export default class TokenStore {
         // trustwallet asset repo used for mainnet token addresses.
         if (chainName == 'kovan') {
             const { contractMetadataStore } = this.rootStore;
-            const tokenList = contractMetadataStore.getWhitelistedTokenMetadata();
-            const tokenUrl = tokenList.find(t => t.address === address);
-            if (tokenUrl) {
-                console.log(`kovan iconAddress: ${tokenUrl.iconAddress}`);
-                return tokenUrl.iconAddress;
-            }
+            return contractMetadataStore.getWhiteListedTokenIcon(address);
         } else {
             return checkSumAddr;
         }
