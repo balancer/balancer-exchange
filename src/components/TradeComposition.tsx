@@ -199,8 +199,6 @@ const TradeComposition = observer(() => {
         }
     };
 
-    const { inputToken, outputToken } = swapFormStore.inputs;
-
     const renderChartRows = (chartData: ChartData, formatting) => {
         if (chartData.validSwap) {
             return chartData.swaps.map((swap, index) => {

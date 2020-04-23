@@ -135,6 +135,15 @@ export default class ContractMetadataStore {
         else return 'unknown';
     }
 
+    getWhiteListedTokenPrecision(address: string): number {
+        const tokenList = this.contractMetadata.tokens.filter(
+            token => token.isSupported
+        );
+        const tokenUrl = tokenList.find(t => t.address === address);
+        if (tokenUrl) return tokenUrl.precision;
+        else return 4;
+    }
+
     getDaiAddress(): string {
         return this.contractMetadata.tokens.filter(
             token => token.isSupported

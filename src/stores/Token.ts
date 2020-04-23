@@ -13,7 +13,6 @@ import {
     UserAllowanceFetch,
 } from './actions/fetch';
 
-import { scale } from 'utils/helpers';
 import { getSupportedChainName } from '../provider/connectors';
 
 const tokenAbi = require('../abi/TestToken').abi;
@@ -627,14 +626,12 @@ export default class TokenStore {
 
         // kovan icons still retrieved from meta data.
         // trustwallet asset repo used for mainnet token addresses.
-        if (chainName == 'kovan') {
+        if (chainName === 'kovan') {
             const { contractMetadataStore } = this.rootStore;
             return contractMetadataStore.getWhiteListedTokenIcon(address);
         } else {
             return checkSumAddr;
         }
-
-        return 'unknown';
     };
 
     // Called by SwapForm.tsx
@@ -654,8 +651,7 @@ export default class TokenStore {
 
         try {
             // symbol/decimal call will fail if not an actual token.
-
-            const { providerStore } = this.rootStore;
+            const { providerStore, contractMetadataStore } = this.rootStore;
 
             const tokenContract = providerStore.getContract(
                 ContractTypes.TestToken,
@@ -665,12 +661,15 @@ export default class TokenStore {
             const tokenSymbol = await tokenContract.symbol();
             const tokenDecimals = await tokenContract.decimals();
 
+            const precision = contractMetadataStore.getWhiteListedTokenPrecision(
+                address
+            );
             const tokenMetadata: TokenMetadata = {
                 address: address,
                 symbol: tokenSymbol,
                 decimals: tokenDecimals,
                 iconAddress: iconAddress,
-                precision: 4, //??????? What should this be if no config??
+                precision: precision,
             };
 
             if (isInputToken) {
@@ -679,6 +678,7 @@ export default class TokenStore {
                 this.outputToken = tokenMetadata;
             }
         } catch (error) {
+            console.log(error);
             throw new Error(`Attempting to get untracked token address.`);
         }
     };

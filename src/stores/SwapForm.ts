@@ -228,12 +228,7 @@ export default class SwapFormStore {
     }
 
     async refreshExactAmountInPreview() {
-        const {
-            proxyStore,
-            providerStore,
-            tokenStore,
-            contractMetadataStore,
-        } = this.rootStore;
+        const { proxyStore, providerStore, tokenStore } = this.rootStore;
         const account = providerStore.providerStatus.account;
         const { inputToken, outputToken, inputAmount } = this.inputs;
 
@@ -282,12 +277,7 @@ export default class SwapFormStore {
     }
 
     async refreshExactAmountOutPreview() {
-        const {
-            proxyStore,
-            providerStore,
-            tokenStore,
-            contractMetadataStore,
-        } = this.rootStore;
+        const { proxyStore, providerStore, tokenStore } = this.rootStore;
         const account = providerStore.providerStatus.account;
         const { inputToken, outputToken, outputAmount } = this.inputs;
 
