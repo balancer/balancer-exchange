@@ -621,7 +621,9 @@ export default class TokenStore {
         // Checksum addr needed for retrieval of icon from trustwallet asset repo
         const checkSumAddr = isAddress(address);
         // ??????? What should the UX be like here?
-        if (!checkSumAddr) throw new Error(`Token address in wrong format.`);
+        if (!checkSumAddr) {
+            throw new Error(`Token address in wrong format.`);
+        }
 
         const chainName = getSupportedChainName();
 
@@ -642,7 +644,16 @@ export default class TokenStore {
     ) => {
         console.log(`[Token] fetchOnChainTokenMetadata: ${address}`);
 
-        const iconAddress = this.fetchTokenIconAddress(address);
+        let iconAddress;
+
+        try {
+            iconAddress = this.fetchTokenIconAddress(address);
+        } catch (err) {
+            const { swapFormStore } = this.rootStore;
+            swapFormStore.setErrorMessage('Incorrect Address Format');
+            return;
+        }
+
         let tokenMetadata;
 
         if (address === EtherKey) {
@@ -655,8 +666,6 @@ export default class TokenStore {
                 iconAddress: 'ether',
                 precision: 4,
             };
-
-            // address = contractMetadataStore.getEthAddress(); // Will get correct address for active network
         } else {
             try {
                 // symbol/decimal call will fail if not an actual token.
@@ -697,8 +706,9 @@ export default class TokenStore {
                     precision: precision,
                 };
             } catch (error) {
-                console.log(error);
-                throw new Error(`Attempting to get untracked token address.`);
+                const { swapFormStore } = this.rootStore;
+                swapFormStore.setErrorMessage('Non-Supported Token Address');
+                return;
             }
         }
 
