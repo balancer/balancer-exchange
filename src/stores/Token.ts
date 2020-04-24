@@ -14,6 +14,7 @@ import {
 } from './actions/fetch';
 
 import { getSupportedChainName } from '../provider/connectors';
+import * as ethers from 'ethers';
 
 const tokenAbi = require('../abi/TestToken').abi;
 
@@ -639,47 +640,72 @@ export default class TokenStore {
         isInputToken: boolean,
         address: string
     ) => {
-        // ?????? move this to SwapFrom Store?
         console.log(`[Token] fetchOnChainTokenMetadata: ${address}`);
 
         const iconAddress = this.fetchTokenIconAddress(address);
+        let tokenMetadata;
 
-        if (address === 'ether') {
+        if (address === EtherKey) {
             const { contractMetadataStore } = this.rootStore;
-            address = contractMetadataStore.getWethAddress(); // Will get correct address for active network
-        }
 
-        try {
-            // symbol/decimal call will fail if not an actual token.
-            const { providerStore, contractMetadataStore } = this.rootStore;
-
-            const tokenContract = providerStore.getContract(
-                ContractTypes.TestToken,
-                address
-            );
-
-            const tokenSymbol = await tokenContract.symbol();
-            const tokenDecimals = await tokenContract.decimals();
-
-            const precision = contractMetadataStore.getWhiteListedTokenPrecision(
-                address
-            );
-            const tokenMetadata: TokenMetadata = {
+            tokenMetadata = {
                 address: address,
-                symbol: tokenSymbol,
-                decimals: tokenDecimals,
-                iconAddress: iconAddress,
-                precision: precision,
+                symbol: 'ETH',
+                decimals: 18,
+                iconAddress: 'ether',
+                precision: 4,
             };
 
-            if (isInputToken) {
-                this.inputToken = tokenMetadata;
-            } else {
-                this.outputToken = tokenMetadata;
+            // address = contractMetadataStore.getEthAddress(); // Will get correct address for active network
+        } else {
+            try {
+                // symbol/decimal call will fail if not an actual token.
+                const { providerStore, contractMetadataStore } = this.rootStore;
+
+                const tokenContract = providerStore.getContract(
+                    ContractTypes.TestToken,
+                    address
+                );
+
+                const tokenDecimals = await tokenContract.decimals();
+
+                let tokenSymbol;
+                try {
+                    tokenSymbol = await tokenContract.symbol();
+                } catch (err) {
+                    console.log('[Token] Trying TokenBytes');
+                    const tokenContractBytes = providerStore.getContract(
+                        ContractTypes.TestTokenBytes,
+                        address
+                    );
+
+                    const tokenSymbolBytes = await tokenContractBytes.symbol();
+                    tokenSymbol = ethers.utils.parseBytes32String(
+                        tokenSymbolBytes
+                    );
+                }
+
+                const precision = contractMetadataStore.getWhiteListedTokenPrecision(
+                    address
+                );
+
+                tokenMetadata = {
+                    address: address,
+                    symbol: tokenSymbol,
+                    decimals: tokenDecimals,
+                    iconAddress: iconAddress,
+                    precision: precision,
+                };
+            } catch (error) {
+                console.log(error);
+                throw new Error(`Attempting to get untracked token address.`);
             }
-        } catch (error) {
-            console.log(error);
-            throw new Error(`Attempting to get untracked token address.`);
+        }
+
+        if (isInputToken) {
+            this.inputToken = tokenMetadata;
+        } else {
+            this.outputToken = tokenMetadata;
         }
     };
 }

@@ -75,21 +75,27 @@ export const findPoolsWithTokens = async (
         let tO: any = p.tokens.find(
             t => helpers.toChecksum(t.address) === helpers.toChecksum(tokenOut)
         );
-        let obj: Pool = {
-            id: helpers.toChecksum(p.id),
-            decimalsIn: tI.decimals,
-            decimalsOut: tO.decimals,
-            balanceIn: scale(bnum(tI.balance), tI.decimals),
-            balanceOut: scale(bnum(tO.balance), tO.decimals),
-            weightIn: scale(bnum(tI.denormWeight).div(bnum(p.totalWeight)), 18),
-            weightOut: scale(
-                bnum(tO.denormWeight).div(bnum(p.totalWeight)),
-                18
-            ),
-            swapFee: scale(bnum(p.swapFee), 18),
-        };
 
-        poolData.push(obj);
+        if (tI.balance > 0 && tO.balance > 0) {
+            let obj: Pool = {
+                id: helpers.toChecksum(p.id),
+                decimalsIn: tI.decimals,
+                decimalsOut: tO.decimals,
+                balanceIn: scale(bnum(tI.balance), tI.decimals),
+                balanceOut: scale(bnum(tO.balance), tO.decimals),
+                weightIn: scale(
+                    bnum(tI.denormWeight).div(bnum(p.totalWeight)),
+                    18
+                ),
+                weightOut: scale(
+                    bnum(tO.denormWeight).div(bnum(p.totalWeight)),
+                    18
+                ),
+                swapFee: scale(bnum(p.swapFee), 18),
+            };
+
+            poolData.push(obj);
+        }
     });
     return poolData;
 };

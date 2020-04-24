@@ -149,4 +149,10 @@ export default class ContractMetadataStore {
             token => token.isSupported
         )[1].address;
     }
+
+    getEthAddress(): string {
+        return this.contractMetadata.tokens.filter(
+            token => token.isSupported
+        )[0].address;
+    }
 }
