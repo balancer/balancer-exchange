@@ -5,6 +5,7 @@ import * as helpers from 'utils/helpers';
 import { bnum } from 'utils/helpers';
 import { FetchCode } from './Transaction';
 import { BigNumber } from 'utils/bignumber';
+import { isAddress } from 'utils/helpers';
 import { Interface } from 'ethers/utils';
 import {
     AsyncStatus,
@@ -12,7 +13,8 @@ import {
     UserAllowanceFetch,
 } from './actions/fetch';
 
-import { scale } from 'utils/helpers';
+import { getSupportedChainName } from '../provider/connectors';
+import * as ethers from 'ethers';
 
 const tokenAbi = require('../abi/TestToken').abi;
 
@@ -78,6 +80,8 @@ export default class TokenStore {
     @observable allowances: UserAllowanceMap;
     @observable contractMetadata: ContractMetadataMap;
     @observable userBalancerDataLastFetched: BlockNumberMap;
+    @observable inputToken: TokenMetadata;
+    @observable outputToken: TokenMetadata;
     rootStore: RootStore;
 
     constructor(rootStore) {
@@ -86,24 +90,21 @@ export default class TokenStore {
         this.allowances = {} as UserAllowanceMap;
         this.contractMetadata = {} as ContractMetadataMap;
         this.userBalancerDataLastFetched = {} as BlockNumberMap;
-    }
+        this.inputToken = {
+            address: 'unknown',
+            symbol: 'unknown',
+            decimals: 18,
+            iconAddress: 'unknown',
+            precision: 4, //!!!!!! What should this be if no config??
+        };
 
-    // Wei Scale -> Token Scale
-    normalizeBalance(amount: BigNumber, tokenAddress: string): BigNumber {
-        const { contractMetadataStore } = this.rootStore;
-        return scale(
-            bnum(amount),
-            -contractMetadataStore.getTokenMetadata(tokenAddress).decimals
-        );
-    }
-
-    // Token Scale -> Wei Scale
-    denormalizeBalance(amount: BigNumber, tokenAddress: string): BigNumber {
-        const { contractMetadataStore } = this.rootStore;
-        return scale(
-            bnum(amount),
-            contractMetadataStore.getTokenMetadata(tokenAddress).decimals
-        );
+        this.outputToken = {
+            address: 'unknown',
+            symbol: 'unknown',
+            decimals: 18,
+            iconAddress: 'unknown',
+            precision: 4, //!!!!!! What should this be if no config??
+        };
     }
 
     getAccountBalances(tokens: TokenMetadata[], account: string): BigNumberMap {
@@ -612,5 +613,109 @@ export default class TokenStore {
             }
         }
         return undefined;
+    };
+
+    fetchTokenIconAddress = (address): string => {
+        if (address === 'ether') return 'ether';
+
+        // Checksum addr needed for retrieval of icon from trustwallet asset repo
+        const checkSumAddr = isAddress(address);
+        // ??????? What should the UX be like here?
+        if (!checkSumAddr) {
+            throw new Error(`Token address in wrong format.`);
+        }
+
+        const chainName = getSupportedChainName();
+
+        // kovan icons still retrieved from meta data.
+        // trustwallet asset repo used for mainnet token addresses.
+        if (chainName === 'kovan') {
+            const { contractMetadataStore } = this.rootStore;
+            return contractMetadataStore.getWhiteListedTokenIcon(address);
+        } else {
+            return checkSumAddr;
+        }
+    };
+
+    // Called by SwapForm.tsx
+    @action fetchOnChainTokenMetadata = async (
+        isInputToken: boolean,
+        address: string
+    ) => {
+        console.log(`[Token] fetchOnChainTokenMetadata: ${address}`);
+
+        let iconAddress;
+
+        try {
+            iconAddress = this.fetchTokenIconAddress(address);
+        } catch (err) {
+            const { swapFormStore } = this.rootStore;
+            swapFormStore.setErrorMessage('Incorrect Address Format');
+            return;
+        }
+
+        let tokenMetadata;
+
+        if (address === EtherKey) {
+            const { contractMetadataStore } = this.rootStore;
+
+            tokenMetadata = {
+                address: address,
+                symbol: 'ETH',
+                decimals: 18,
+                iconAddress: 'ether',
+                precision: 4,
+            };
+        } else {
+            try {
+                // symbol/decimal call will fail if not an actual token.
+                const { providerStore, contractMetadataStore } = this.rootStore;
+
+                const tokenContract = providerStore.getContract(
+                    ContractTypes.TestToken,
+                    address
+                );
+
+                const tokenDecimals = await tokenContract.decimals();
+
+                let tokenSymbol;
+                try {
+                    tokenSymbol = await tokenContract.symbol();
+                } catch (err) {
+                    console.log('[Token] Trying TokenBytes');
+                    const tokenContractBytes = providerStore.getContract(
+                        ContractTypes.TestTokenBytes,
+                        address
+                    );
+
+                    const tokenSymbolBytes = await tokenContractBytes.symbol();
+                    tokenSymbol = ethers.utils.parseBytes32String(
+                        tokenSymbolBytes
+                    );
+                }
+
+                const precision = contractMetadataStore.getWhiteListedTokenPrecision(
+                    address
+                );
+
+                tokenMetadata = {
+                    address: address,
+                    symbol: tokenSymbol,
+                    decimals: tokenDecimals,
+                    iconAddress: iconAddress,
+                    precision: precision,
+                };
+            } catch (error) {
+                const { swapFormStore } = this.rootStore;
+                swapFormStore.setErrorMessage('Non-Supported Token Address');
+                return;
+            }
+        }
+
+        if (isInputToken) {
+            this.inputToken = tokenMetadata;
+        } else {
+            this.outputToken = tokenMetadata;
+        }
     };
 }

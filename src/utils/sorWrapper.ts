@@ -75,6 +75,7 @@ export const findPoolsWithTokens = async (
         let tO: any = p.tokens.find(
             t => helpers.toChecksum(t.address) === helpers.toChecksum(tokenOut)
         );
+
         if (tI.balance > 0 && tO.balance > 0) {
             let obj: Pool = {
                 id: helpers.toChecksum(p.id),
