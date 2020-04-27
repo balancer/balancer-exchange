@@ -2,7 +2,7 @@ import { action, observable } from 'mobx';
 import RootStore from 'stores/Root';
 import { ContractTypes } from 'stores/Provider';
 import * as helpers from 'utils/helpers';
-import { bnum } from 'utils/helpers';
+import { bnum, formatBalanceTruncated } from 'utils/helpers';
 import { FetchCode } from './Transaction';
 import { BigNumber } from 'utils/bignumber';
 import { isAddress } from 'utils/helpers';
@@ -12,7 +12,6 @@ import {
     TokenBalanceFetch,
     UserAllowanceFetch,
 } from './actions/fetch';
-
 import { getSupportedChainName } from '../provider/connectors';
 import * as ethers from 'ethers';
 
@@ -56,6 +55,8 @@ export interface TokenMetadata {
     decimals: number;
     iconAddress: string;
     precision: number;
+    balanceFormatted?: string;
+    balanceBn?: BigNumber;
 }
 
 interface BlockNumberMap {
@@ -637,11 +638,54 @@ export default class TokenStore {
         }
     };
 
-    // Called by SwapForm.tsx
-    @action fetchOnChainTokenMetadata = async (
-        isInputToken: boolean,
-        address: string
-    ) => {
+    async getTokenBalance(
+        tokenAddr,
+        account,
+        tokenContract,
+        decimals,
+        precision
+    ) {
+        // Try whitelisted pre-loaded balances first to avoid another call
+
+        const whiteListedBalanceBn = this.getBalance(tokenAddr, account);
+
+        if (whiteListedBalanceBn) {
+            console.log(
+                `[Token] Using whitelisted Balance: `,
+                whiteListedBalanceBn.toString()
+            );
+
+            const balanceFormatted = formatBalanceTruncated(
+                whiteListedBalanceBn,
+                decimals,
+                precision,
+                20
+            );
+
+            return {
+                balanceBn: whiteListedBalanceBn,
+                balanceFormatted: balanceFormatted,
+            };
+        } else if (account) {
+            console.log(`[Token] Getting On-Chain Balance: ${tokenAddr}`);
+            const balanceWei = await tokenContract.balanceOf(account);
+            const balanceFormatted = formatBalanceTruncated(
+                bnum(balanceWei),
+                decimals,
+                precision,
+                20
+            );
+
+            return {
+                balanceBn: bnum(balanceWei),
+                balanceFormatted: balanceFormatted,
+            };
+        } else {
+            return { balanceBn: bnum(0), balanceFormatted: '0.00' };
+        }
+    }
+
+    fetchOnChainTokenMetadata = async (address: string, account: string) => {
         console.log(`[Token] fetchOnChainTokenMetadata: ${address}`);
 
         let iconAddress;
@@ -649,15 +693,13 @@ export default class TokenStore {
         try {
             iconAddress = this.fetchTokenIconAddress(address);
         } catch (err) {
-            const { swapFormStore } = this.rootStore;
-            swapFormStore.setErrorMessage('Incorrect Address Format');
-            return;
+            throw new Error('Incorrect Address Format');
         }
 
         let tokenMetadata;
 
         if (address === EtherKey) {
-            const { contractMetadataStore } = this.rootStore;
+            const { providerStore } = this.rootStore;
 
             tokenMetadata = {
                 address: address,
@@ -665,7 +707,31 @@ export default class TokenStore {
                 decimals: 18,
                 iconAddress: 'ether',
                 precision: 4,
+                balanceBn: bnum(0),
+                balanceFormatted: '0.00',
             };
+
+            if (account) {
+                const library = providerStore.providerStatus.library;
+
+                const balanceWei = await library.getBalance(account);
+                const balanceFormatted = formatBalanceTruncated(
+                    bnum(balanceWei),
+                    18,
+                    4,
+                    20
+                );
+
+                tokenMetadata = {
+                    address: address,
+                    symbol: 'ETH',
+                    decimals: 18,
+                    iconAddress: 'ether',
+                    precision: 4,
+                    balanceBn: bnum(balanceWei),
+                    balanceFormatted: balanceFormatted,
+                };
+            }
         } else {
             try {
                 // symbol/decimal call will fail if not an actual token.
@@ -698,24 +764,54 @@ export default class TokenStore {
                     address
                 );
 
+                const balance = await this.getTokenBalance(
+                    address,
+                    account,
+                    tokenContract,
+                    tokenDecimals,
+                    precision
+                );
+
                 tokenMetadata = {
                     address: address,
                     symbol: tokenSymbol,
                     decimals: tokenDecimals,
                     iconAddress: iconAddress,
                     precision: precision,
+                    balanceBn: balance.balanceBn,
+                    balanceFormatted: balance.balanceFormatted,
                 };
             } catch (error) {
-                const { swapFormStore } = this.rootStore;
-                swapFormStore.setErrorMessage('Non-Supported Token Address');
-                return;
+                throw new Error('Non-Supported Token Address');
             }
         }
 
-        if (isInputToken) {
-            this.inputToken = tokenMetadata;
-        } else {
-            this.outputToken = tokenMetadata;
+        return tokenMetadata;
+    };
+
+    // Called by SwapForm.tsx
+    @action setSelectedTokenMetadata = async (
+        isInputToken: boolean,
+        address: string,
+        account: string
+    ) => {
+        console.log(`[Token] setSelectedTokenMetadata: ${address}`);
+
+        try {
+            const tokenMetadata = await this.fetchOnChainTokenMetadata(
+                address,
+                account
+            );
+
+            if (isInputToken) {
+                this.inputToken = tokenMetadata;
+            } else {
+                this.outputToken = tokenMetadata;
+            }
+        } catch (err) {
+            // console.log(err);
+            const { swapFormStore } = this.rootStore;
+            swapFormStore.setErrorMessage(err.message);
         }
     };
 }
