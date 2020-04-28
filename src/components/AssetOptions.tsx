@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import styled from 'styled-components';
 import { TokenIconAddress } from './TokenPanel';
 import { useStores } from '../contexts/storesContext';
@@ -90,6 +90,7 @@ const AssetOptions = observer(() => {
             swapFormStore,
             tokenStore,
             poolStore,
+            assetOptionsStore,
         },
     } = useStores();
 
@@ -97,6 +98,10 @@ const AssetOptions = observer(() => {
     const chainId = providerStore.providerStatus.activeChainId;
 
     const { assetSelectFilter, assetModalState } = swapFormStore;
+
+    useEffect(() => {
+        assetOptionsStore.fetchTokenAssetData(assetSelectFilter, account);
+    }, [assetSelectFilter, account, assetOptionsStore]); // Only re-run the effect on token address change
 
     const getAssetOptions = (filter, account): Asset[] => {
         const filteredWhitelistedTokens = contractMetadataStore.getFilteredTokenMetadata(
@@ -149,6 +154,9 @@ const AssetOptions = observer(() => {
     };
 
     const sortAssetOptions = (assets: Asset[], account) => {
+        const manualToken = assetOptionsStore.tokenAssetData;
+        if (manualToken) assets.push(manualToken);
+
         const buckets = {
             tradableWithBalance: [] as Asset[],
             tradableWithoutBalance: [] as Asset[],

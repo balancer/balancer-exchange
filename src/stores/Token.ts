@@ -2,17 +2,11 @@ import { action, observable } from 'mobx';
 import RootStore from 'stores/Root';
 import { ContractTypes } from 'stores/Provider';
 import * as helpers from 'utils/helpers';
-import { bnum } from 'utils/helpers';
+import { bnum, formatBalanceTruncated } from 'utils/helpers';
 import { FetchCode } from './Transaction';
 import { BigNumber } from 'utils/bignumber';
 import { isAddress } from 'utils/helpers';
 import { Interface } from 'ethers/utils';
-import {
-    AsyncStatus,
-    TokenBalanceFetch,
-    UserAllowanceFetch,
-} from './actions/fetch';
-
 import { getSupportedChainName } from '../provider/connectors';
 import * as ethers from 'ethers';
 
@@ -56,12 +50,8 @@ export interface TokenMetadata {
     decimals: number;
     iconAddress: string;
     precision: number;
-}
-
-interface BlockNumberMap {
-    [index: number]: {
-        [index: string]: number;
-    };
+    balanceFormatted?: string;
+    balanceBn?: BigNumber;
 }
 
 interface UserAllowanceMap {
@@ -75,11 +65,9 @@ interface UserAllowanceMap {
 export const EtherKey = 'ether';
 
 export default class TokenStore {
-    @observable symbols = {};
     @observable balances: TokenBalanceMap;
     @observable allowances: UserAllowanceMap;
     @observable contractMetadata: ContractMetadataMap;
-    @observable userBalancerDataLastFetched: BlockNumberMap;
     @observable inputToken: TokenMetadata;
     @observable outputToken: TokenMetadata;
     rootStore: RootStore;
@@ -89,13 +77,14 @@ export default class TokenStore {
         this.balances = {} as TokenBalanceMap;
         this.allowances = {} as UserAllowanceMap;
         this.contractMetadata = {} as ContractMetadataMap;
-        this.userBalancerDataLastFetched = {} as BlockNumberMap;
         this.inputToken = {
             address: 'unknown',
             symbol: 'unknown',
             decimals: 18,
             iconAddress: 'unknown',
-            precision: 4, //!!!!!! What should this be if no config??
+            precision: 4,
+            balanceFormatted: '0.0000',
+            balanceBn: bnum(0),
         };
 
         this.outputToken = {
@@ -103,7 +92,9 @@ export default class TokenStore {
             symbol: 'unknown',
             decimals: 18,
             iconAddress: 'unknown',
-            precision: 4, //!!!!!! What should this be if no config??
+            precision: 4,
+            balanceFormatted: '0.0000',
+            balanceBn: bnum(0),
         };
     }
 
@@ -127,56 +118,6 @@ export default class TokenStore {
         });
 
         return result;
-    }
-
-    getUserBalancerDataLastFetched(account: string): number {
-        try {
-            return this.userBalancerDataLastFetched[account];
-        } catch (e) {
-            console.error(e);
-            return -1;
-        }
-    }
-
-    setUserBalancerDataLastFetched(account: string, blockNumber: number) {
-        if (!this.userBalancerDataLastFetched) {
-            throw new Error(
-                'Attempt to set user balancer data for untracked chainId'
-            );
-        }
-        if (!this.userBalancerDataLastFetched[account]) {
-            this.userBalancerDataLastFetched[account] = blockNumber;
-        }
-    }
-
-    private setAllowanceProperty(
-        tokenAddress: string,
-        owner: string,
-        spender: string,
-        approval: BigNumber,
-        blockFetched: number
-    ): void {
-        const chainApprovals = this.allowances;
-        if (!chainApprovals) {
-            throw new Error(
-                'Attempt to set balance property for untracked chainId'
-            );
-        }
-
-        if (!chainApprovals[tokenAddress]) {
-            chainApprovals[tokenAddress] = {};
-        }
-
-        if (!chainApprovals[tokenAddress][owner]) {
-            chainApprovals[tokenAddress][owner] = {};
-        }
-
-        chainApprovals[tokenAddress][owner][spender] = {
-            allowance: approval,
-            lastFetched: blockFetched,
-        };
-
-        this.allowances = chainApprovals;
     }
 
     isAllowanceFetched(tokenAddress: string, owner: string, spender: string) {
@@ -419,166 +360,6 @@ export default class TokenStore {
         return FetchCode.SUCCESS;
     };
 
-    @action fetchSymbol = async tokenAddress => {
-        const { providerStore } = this.rootStore;
-        const token = providerStore.getContract(
-            ContractTypes.TestToken,
-            tokenAddress
-        );
-        this.symbols[tokenAddress] = await token.symbol().call();
-    };
-
-    @action fetchBalanceOf = async (
-        tokenAddress: string,
-        account: string,
-        fetchBlock: number
-    ): Promise<TokenBalanceFetch> => {
-        const { providerStore } = this.rootStore;
-
-        /* Before and after the network operation, check for staleness
-            If the fetch is stale, don't do network call
-            If the fetch is stale after network call, don't set DB variable
-        */
-        const stale =
-            fetchBlock <= this.getBalanceLastFetched(tokenAddress, account);
-        if (!stale) {
-            let balance;
-
-            if (tokenAddress === EtherKey) {
-                const { library } = providerStore.providerStatus.library;
-                balance = bnum(await library.getBalance(account));
-            } else {
-                const token = providerStore.getContract(
-                    ContractTypes.TestToken,
-                    tokenAddress
-                );
-                balance = bnum(await token.balanceOf(account));
-            }
-
-            const stale =
-                fetchBlock <= this.getBalanceLastFetched(tokenAddress, account);
-            if (!stale) {
-                console.debug('[Balance Fetch]', {
-                    tokenAddress,
-                    account,
-                    balance: balance.toString(),
-                    fetchBlock,
-                });
-                return new TokenBalanceFetch({
-                    status: AsyncStatus.SUCCESS,
-                    request: {
-                        tokenAddress,
-                        account,
-                        fetchBlock,
-                    },
-                    payload: {
-                        balance,
-                        lastFetched: fetchBlock,
-                    },
-                });
-            }
-        } else {
-            console.debug('[Balance Fetch] - Stale', {
-                tokenAddress,
-                account,
-                fetchBlock,
-            });
-            return new TokenBalanceFetch({
-                status: AsyncStatus.STALE,
-                request: {
-                    tokenAddress,
-                    account,
-                    fetchBlock,
-                },
-                payload: undefined,
-            });
-        }
-    };
-
-    @action fetchAllowance = async (
-        tokenAddress: string,
-        owner: string,
-        spender: string,
-        fetchBlock: number
-    ): Promise<UserAllowanceFetch> => {
-        const { providerStore } = this.rootStore;
-
-        // Always max allowance for Ether
-        if (tokenAddress === EtherKey) {
-            return new UserAllowanceFetch({
-                status: AsyncStatus.SUCCESS,
-                request: {
-                    tokenAddress,
-                    owner,
-                    spender,
-                    fetchBlock,
-                },
-                payload: {
-                    allowance: bnum(helpers.setPropertyToMaxUintIfEmpty()),
-                    lastFetched: fetchBlock,
-                },
-            });
-        }
-
-        const token = providerStore.getContract(
-            ContractTypes.TestToken,
-            tokenAddress
-        );
-
-        /* Before and after the network operation, check for staleness
-            If the fetch is stale, don't do network call
-            If the fetch is stale after network call, don't set DB variable
-        */
-        const stale =
-            fetchBlock <=
-            this.getAllowanceLastFetched(tokenAddress, owner, spender);
-        if (!stale) {
-            const allowance = bnum(await token.allowance(owner, spender));
-            const stale =
-                fetchBlock <=
-                this.getAllowanceLastFetched(tokenAddress, owner, spender);
-            if (!stale) {
-                console.debug('[Allowance Fetch]', {
-                    tokenAddress,
-                    owner,
-                    spender,
-                    allowance: allowance.toString(),
-                    fetchBlock,
-                });
-                return new UserAllowanceFetch({
-                    status: AsyncStatus.SUCCESS,
-                    request: {
-                        tokenAddress,
-                        owner,
-                        spender,
-                        fetchBlock,
-                    },
-                    payload: {
-                        allowance,
-                        lastFetched: fetchBlock,
-                    },
-                });
-            }
-        } else {
-            console.debug('[Allowance Fetch] - Stale', {
-                tokenAddress,
-                owner,
-                spender,
-                fetchBlock,
-            });
-            return new UserAllowanceFetch({
-                status: AsyncStatus.STALE,
-                request: {
-                    tokenAddress,
-                    owner,
-                    spender,
-                    fetchBlock,
-                },
-                payload: undefined,
-            });
-        }
-    };
-
     getAllowance = (tokenAddress, account, spender): BigNumber | undefined => {
         const chainApprovals = this.allowances;
         if (chainApprovals) {
@@ -595,32 +376,12 @@ export default class TokenStore {
         return undefined;
     };
 
-    getAllowanceLastFetched = (
-        tokenAddress,
-        account,
-        spender
-    ): number | undefined => {
-        const chainApprovals = this.allowances;
-        if (chainApprovals) {
-            const tokenApprovals = chainApprovals[tokenAddress];
-            if (tokenApprovals) {
-                const userApprovals = tokenApprovals[account];
-                if (userApprovals) {
-                    if (userApprovals[spender]) {
-                        return userApprovals[spender].lastFetched;
-                    }
-                }
-            }
-        }
-        return undefined;
-    };
-
     fetchTokenIconAddress = (address): string => {
         if (address === 'ether') return 'ether';
 
         // Checksum addr needed for retrieval of icon from trustwallet asset repo
         const checkSumAddr = isAddress(address);
-        // ??????? What should the UX be like here?
+
         if (!checkSumAddr) {
             throw new Error(`Token address in wrong format.`);
         }
@@ -637,11 +398,54 @@ export default class TokenStore {
         }
     };
 
-    // Called by SwapForm.tsx
-    @action fetchOnChainTokenMetadata = async (
-        isInputToken: boolean,
-        address: string
-    ) => {
+    async getTokenBalance(
+        tokenAddr,
+        account,
+        tokenContract,
+        decimals,
+        precision
+    ) {
+        // Try whitelisted pre-loaded balances first to avoid another call
+
+        const whiteListedBalanceBn = this.getBalance(tokenAddr, account);
+
+        if (whiteListedBalanceBn) {
+            console.log(
+                `[Token] Using whitelisted Balance: `,
+                whiteListedBalanceBn.toString()
+            );
+
+            const balanceFormatted = formatBalanceTruncated(
+                whiteListedBalanceBn,
+                decimals,
+                precision,
+                20
+            );
+
+            return {
+                balanceBn: whiteListedBalanceBn,
+                balanceFormatted: balanceFormatted,
+            };
+        } else if (account) {
+            console.log(`[Token] Getting On-Chain Balance: ${tokenAddr}`);
+            const balanceWei = await tokenContract.balanceOf(account);
+            const balanceFormatted = formatBalanceTruncated(
+                bnum(balanceWei),
+                decimals,
+                precision,
+                20
+            );
+
+            return {
+                balanceBn: bnum(balanceWei),
+                balanceFormatted: balanceFormatted,
+            };
+        } else {
+            return { balanceBn: bnum(0), balanceFormatted: '0.00' };
+        }
+    }
+
+    fetchOnChainTokenMetadata = async (address: string, account: string) => {
         console.log(`[Token] fetchOnChainTokenMetadata: ${address}`);
 
         let iconAddress;
@@ -649,15 +453,13 @@ export default class TokenStore {
         try {
             iconAddress = this.fetchTokenIconAddress(address);
         } catch (err) {
-            const { swapFormStore } = this.rootStore;
-            swapFormStore.setErrorMessage('Incorrect Address Format');
-            return;
+            throw new Error('Incorrect Address Format');
         }
 
         let tokenMetadata;
 
         if (address === EtherKey) {
-            const { contractMetadataStore } = this.rootStore;
+            const { providerStore } = this.rootStore;
 
             tokenMetadata = {
                 address: address,
@@ -665,7 +467,31 @@ export default class TokenStore {
                 decimals: 18,
                 iconAddress: 'ether',
                 precision: 4,
+                balanceBn: bnum(0),
+                balanceFormatted: '0.00',
             };
+
+            if (account) {
+                const library = providerStore.providerStatus.library;
+
+                const balanceWei = await library.getBalance(account);
+                const balanceFormatted = formatBalanceTruncated(
+                    bnum(balanceWei),
+                    18,
+                    4,
+                    20
+                );
+
+                tokenMetadata = {
+                    address: address,
+                    symbol: 'ETH',
+                    decimals: 18,
+                    iconAddress: 'ether',
+                    precision: 4,
+                    balanceBn: bnum(balanceWei),
+                    balanceFormatted: balanceFormatted,
+                };
+            }
         } else {
             try {
                 // symbol/decimal call will fail if not an actual token.
@@ -698,24 +524,53 @@ export default class TokenStore {
                     address
                 );
 
+                const balance = await this.getTokenBalance(
+                    address,
+                    account,
+                    tokenContract,
+                    tokenDecimals,
+                    precision
+                );
+
                 tokenMetadata = {
                     address: address,
                     symbol: tokenSymbol,
                     decimals: tokenDecimals,
                     iconAddress: iconAddress,
                     precision: precision,
+                    balanceBn: balance.balanceBn,
+                    balanceFormatted: balance.balanceFormatted,
                 };
             } catch (error) {
-                const { swapFormStore } = this.rootStore;
-                swapFormStore.setErrorMessage('Non-Supported Token Address');
-                return;
+                throw new Error('Non-Supported Token Address');
             }
         }
+        return tokenMetadata;
+    };
 
-        if (isInputToken) {
-            this.inputToken = tokenMetadata;
-        } else {
-            this.outputToken = tokenMetadata;
+    // Called by SwapForm.tsx
+    @action setSelectedTokenMetadata = async (
+        isInputToken: boolean,
+        address: string,
+        account: string
+    ) => {
+        console.log(`[Token] setSelectedTokenMetadata: ${address}`);
+
+        try {
+            const tokenMetadata = await this.fetchOnChainTokenMetadata(
+                address,
+                account
+            );
+
+            if (isInputToken) {
+                this.inputToken = tokenMetadata;
+            } else {
+                this.outputToken = tokenMetadata;
+            }
+        } catch (err) {
+            // console.log(err);
+            const { swapFormStore } = this.rootStore;
+            swapFormStore.setErrorMessage(err.message);
         }
     };
 }

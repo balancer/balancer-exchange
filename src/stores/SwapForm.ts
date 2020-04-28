@@ -8,26 +8,7 @@ import {
     SwapPreview,
 } from './Proxy';
 import { BigNumber } from 'utils/bignumber';
-import { bnum, scale, isEmpty, str } from '../utils/helpers';
-
-export const formNames = {
-    INPUT_FORM: 'inputs',
-};
-
-export const labels = {
-    inputs: {
-        INPUT_TOKEN: 'Input Token',
-        OUTPUT_TOKEN: 'Output Token',
-        INPUT_AMOUNT: 'Input Amount',
-        OUTPUT_AMOUNT: 'Output Amount',
-    },
-    outputs: {
-        INPUT_AMOUNT: 'Input Amount',
-        OUTPUT_AMOUNT: 'Output Amount',
-        EFFECTIVE_PRICE: 'Effective Price',
-        MARGINAL_PRICE: 'Marginal Price',
-    },
-};
+import { bnum, scale, str } from '../utils/helpers';
 
 export enum InputFocus {
     NONE,
@@ -116,13 +97,6 @@ export default class SwapFormStore {
 
     rootStore: RootStore;
 
-    @action updateOutputsFromObject(output) {
-        this.outputs = {
-            ...this.outputs,
-            ...output,
-        };
-    }
-
     @action updateInputsFromObject(output) {
         this.inputs = {
             ...this.inputs,
@@ -163,21 +137,6 @@ export default class SwapFormStore {
         };
     }
 
-    getInputFocus() {
-        return this.inputs.focus;
-    }
-
-    @action switchInputFocus() {
-        const inputFocus = this.getInputFocus();
-        if (inputFocus === InputFocus.BUY) {
-            this.setInputFocus(InputFocus.SELL);
-        } else if (inputFocus === InputFocus.SELL) {
-            this.setInputFocus(InputFocus.BUY);
-        } else {
-            throw new Error('Invalid input focus specified');
-        }
-    }
-
     @action switchSwapMethod() {
         const { swapMethod } = this.inputs;
         if (swapMethod === SwapMethods.EXACT_IN) {
@@ -199,28 +158,12 @@ export default class SwapFormStore {
         this.outputs.activeErrorMessage = message;
     }
 
-    hasErrorMessage(): boolean {
-        return !isEmpty(this.outputs.activeErrorMessage);
-    }
-
-    getErrorMessage(): string {
-        return this.outputs.activeErrorMessage;
-    }
-
     isValidStatus(value: InputValidationStatus) {
         return value === InputValidationStatus.VALID;
     }
 
-    getSlippageCell() {
-        return this.slippageCell;
-    }
-
     @action setSlippageCell(value: number) {
         this.slippageCell = value;
-    }
-
-    getExtraSlippageAllowance(): string {
-        return this.inputs.extraSlippageAllowance;
     }
 
     getSlippageSelectorErrorStatus(): InputValidationStatus {
@@ -230,11 +173,11 @@ export default class SwapFormStore {
     async refreshExactAmountInPreview() {
         const { proxyStore, providerStore, tokenStore } = this.rootStore;
         const account = providerStore.providerStatus.account;
-        const { inputToken, outputToken, inputAmount } = this.inputs;
+        const { inputAmount } = this.inputs;
 
         const preview = await proxyStore.previewBatchSwapExactIn(
-            inputToken,
-            outputToken,
+            tokenStore.inputToken.address,
+            tokenStore.outputToken.address,
             bnum(inputAmount),
             tokenStore.inputToken.decimals
         );
@@ -255,7 +198,7 @@ export default class SwapFormStore {
 
             if (account) {
                 const userBalance = scale(
-                    bnum(tokenStore.getBalance(inputToken, account)),
+                    tokenStore.inputToken.balanceBn,
                     -tokenStore.inputToken.decimals
                 );
 
@@ -279,11 +222,11 @@ export default class SwapFormStore {
     async refreshExactAmountOutPreview() {
         const { proxyStore, providerStore, tokenStore } = this.rootStore;
         const account = providerStore.providerStatus.account;
-        const { inputToken, outputToken, outputAmount } = this.inputs;
+        const { outputAmount } = this.inputs;
 
         const preview = await proxyStore.previewBatchSwapExactOut(
-            inputToken,
-            outputToken,
+            tokenStore.inputToken.address,
+            tokenStore.outputToken.address,
             bnum(outputAmount),
             tokenStore.outputToken.decimals
         );
@@ -302,7 +245,7 @@ export default class SwapFormStore {
 
             if (account) {
                 const userBalance = scale(
-                    bnum(tokenStore.getBalance(inputToken, account)),
+                    tokenStore.inputToken.balanceBn,
                     -tokenStore.inputToken.decimals
                 );
 
@@ -462,22 +405,6 @@ export default class SwapFormStore {
 
     @action setAssetSelectFilter(value: string) {
         this.assetSelectFilter = value;
-    }
-
-    isInputAmountStale(inputAmount: string | BigNumber) {
-        let storedAmount = this.inputs.inputAmount;
-        if (storedAmount.substr(0, 1) === '.') {
-            storedAmount = '0' + storedAmount;
-        }
-        return inputAmount.toString() !== storedAmount;
-    }
-
-    isOutputAmountStale(outputAmount: string | BigNumber) {
-        let storedAmount = this.inputs.outputAmount;
-        if (storedAmount.substr(0, 1) === '.') {
-            storedAmount = '0' + storedAmount;
-        }
-        return outputAmount.toString() !== storedAmount;
     }
 
     /* Assume swaps are in order of biggest to smallest value */

@@ -10,7 +10,7 @@ import TradeComposition from './TradeComposition';
 import AssetSelector from './AssetSelector';
 
 import { observer } from 'mobx-react';
-import { bnum, scale, isEmpty, formatBalanceTruncated } from 'utils/helpers';
+import { bnum, scale, isEmpty } from 'utils/helpers';
 import { SwapMethods, SwapObjection } from 'stores/SwapForm';
 import { useStores } from '../contexts/storesContext';
 import { ErrorIds } from '../stores/Error';
@@ -90,6 +90,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         // swapFormStore is empty and has URL param - direct URL token query
         console.log(`[SwapForm] Using Input Token URL.`);
         swapFormStore.inputs.inputToken = tokenIn;
+        poolStore.fetchAndSetTokenPairs(tokenIn);
     } else if (isEmpty(swapFormStore.inputs.inputToken)) {
         // No URL and no asset selected. Sets default to Eth
         console.log(`[SwapForm] No Input Token Selected, Defaulting to Eth.`);
@@ -101,6 +102,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         // swapFormStore is empty and has URL param - direct URL token query
         console.log(`[SwapForm] Using Output Token URL.`);
         swapFormStore.inputs.outputToken = tokenOut;
+        poolStore.fetchAndSetTokenPairs(tokenOut);
     } else if (isEmpty(swapFormStore.inputs.outputToken)) {
         // No URL and no asset selected. Sets default to DAI
         console.log(`[SwapForm] No Output Token Selected, Defaulting to DAI.`);
@@ -117,9 +119,9 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         console.log(
             `[SwapForm] Token Change - Fetching On Chain Meta Data ${inputToken} ${outputToken}`
         );
-        tokenStore.fetchOnChainTokenMetadata(true, inputToken);
-        tokenStore.fetchOnChainTokenMetadata(false, outputToken);
-    }, [inputToken, outputToken, tokenStore]); // Only re-run the effect on token address change
+        tokenStore.setSelectedTokenMetadata(true, inputToken, account);
+        tokenStore.setSelectedTokenMetadata(false, outputToken, account);
+    }, [inputToken, outputToken, tokenStore, account]); // Only re-run the effect on token address change
 
     const tokenMetadata = {
         input: tokenStore.inputToken,
@@ -276,19 +278,9 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         return false;
     };
 
-    let inputUserBalanceBN;
-    let inputUserBalance;
-    let truncatedInputUserBalance;
-    let outputUserBalanceBN;
-    let outputUserBalance;
-    let truncatedOutputUserBalance;
     let userAllowance;
 
     if (account) {
-        inputUserBalanceBN = tokenStore.getBalance(inputToken, account);
-
-        outputUserBalanceBN = tokenStore.getBalance(outputToken, account);
-
         const proxyAddress = contractMetadataStore.getProxyAddress();
         userAllowance = tokenStore.getAllowance(
             inputToken,
@@ -296,38 +288,6 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
             proxyAddress
         );
     }
-
-    if (!inputUserBalanceBN) {
-        inputUserBalanceBN = bnum(0);
-    }
-
-    if (!outputUserBalanceBN) {
-        outputUserBalanceBN = bnum(0);
-    }
-
-    inputUserBalance = scale(
-        inputUserBalanceBN,
-        -tokenMetadata.input.decimals
-    ).toString();
-
-    truncatedInputUserBalance = formatBalanceTruncated(
-        inputUserBalanceBN,
-        tokenMetadata.input.decimals,
-        tokenMetadata.input.precision,
-        20
-    );
-
-    outputUserBalance = scale(
-        outputUserBalanceBN,
-        -tokenMetadata.output.decimals
-    ).toString();
-
-    truncatedOutputUserBalance = formatBalanceTruncated(
-        outputUserBalanceBN,
-        tokenMetadata.output.decimals,
-        tokenMetadata.output.precision,
-        20
-    );
 
     const buttonState = getButtonState(account, userAllowance);
 
@@ -362,7 +322,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                         buttonText={getButtonText(buttonState)}
                         active={getButtonActive(
                             buttonState,
-                            inputUserBalanceBN
+                            tokenMetadata.input.balanceBn
                         )}
                         onClick={() => {
                             buttonActionHandler(buttonState);
@@ -386,7 +346,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                         buttonText={getButtonText(buttonState)}
                         active={getButtonActive(
                             buttonState,
-                            inputUserBalanceBN
+                            tokenMetadata.input.balanceBn
                         )}
                         onClick={() => {
                             buttonActionHandler(buttonState);
@@ -406,11 +366,11 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                     inputID="amount-in"
                     inputName="inputAmount"
                     tokenName={tokenMetadata.input.symbol}
-                    tokenBalance={inputUserBalance}
-                    truncatedTokenBalance={truncatedInputUserBalance}
+                    tokenBalance={tokenMetadata.input.balanceFormatted}
+                    truncatedTokenBalance={tokenMetadata.input.balanceFormatted}
                     tokenAddress={tokenMetadata.input.iconAddress}
                     errorMessage={errorMessage}
-                    showMax={!!account && !!inputUserBalanceBN}
+                    showMax={!!account && !!tokenMetadata.input.balanceBn}
                 />
                 <Switch />
                 <BuyToken
@@ -418,11 +378,13 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                     inputID="amount-out"
                     inputName="outputAmount"
                     tokenName={tokenMetadata.output.symbol}
-                    tokenBalance={outputUserBalance}
-                    truncatedTokenBalance={truncatedOutputUserBalance}
+                    tokenBalance={tokenMetadata.output.balanceFormatted}
+                    truncatedTokenBalance={
+                        tokenMetadata.output.balanceFormatted
+                    }
                     tokenAddress={tokenMetadata.output.iconAddress}
                     errorMessage={errorMessage}
-                    showMax={!!account && !!outputUserBalanceBN}
+                    showMax={!!account && !!tokenMetadata.output.balanceBn}
                 />
             </RowContainer>
             {renderTradeDetails(inputs.inputAmount, inputs.outputAmount)}
