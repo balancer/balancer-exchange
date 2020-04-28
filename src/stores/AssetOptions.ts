@@ -32,7 +32,7 @@ export default class AssetOptions {
             this.tokenAssetData = {
                 address: tokenMetadata.address,
                 iconAddress: tokenMetadata.iconAddress,
-                symbol: tokenMetadata.tokenSymbol,
+                symbol: tokenMetadata.symbol,
                 userBalance: tokenMetadata.balanceFormatted,
                 isTradable: true,
             };

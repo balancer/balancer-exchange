@@ -90,6 +90,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         // swapFormStore is empty and has URL param - direct URL token query
         console.log(`[SwapForm] Using Input Token URL.`);
         swapFormStore.inputs.inputToken = tokenIn;
+        poolStore.fetchAndSetTokenPairs(tokenIn);
     } else if (isEmpty(swapFormStore.inputs.inputToken)) {
         // No URL and no asset selected. Sets default to Eth
         console.log(`[SwapForm] No Input Token Selected, Defaulting to Eth.`);
@@ -101,6 +102,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         // swapFormStore is empty and has URL param - direct URL token query
         console.log(`[SwapForm] Using Output Token URL.`);
         swapFormStore.inputs.outputToken = tokenOut;
+        poolStore.fetchAndSetTokenPairs(tokenOut);
     } else if (isEmpty(swapFormStore.inputs.outputToken)) {
         // No URL and no asset selected. Sets default to DAI
         console.log(`[SwapForm] No Output Token Selected, Defaulting to DAI.`);
