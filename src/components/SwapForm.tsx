@@ -278,16 +278,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         return false;
     };
 
-    let userAllowance;
-
-    if (account) {
-        const proxyAddress = contractMetadataStore.getProxyAddress();
-        userAllowance = tokenStore.getAllowance(
-            inputToken,
-            account,
-            proxyAddress
-        );
-    }
+    let userAllowance = tokenMetadata.input.allowance;
 
     const buttonState = getButtonState(account, userAllowance);
 

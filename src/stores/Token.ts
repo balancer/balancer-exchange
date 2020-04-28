@@ -52,6 +52,7 @@ export interface TokenMetadata {
     precision: number;
     balanceFormatted?: string;
     balanceBn?: BigNumber;
+    allowance?: BigNumber;
 }
 
 interface UserAllowanceMap {
@@ -85,6 +86,7 @@ export default class TokenStore {
             precision: 4,
             balanceFormatted: '0.0000',
             balanceBn: bnum(0),
+            allowance: undefined,
         };
 
         this.outputToken = {
@@ -95,6 +97,7 @@ export default class TokenStore {
             precision: 4,
             balanceFormatted: '0.0000',
             balanceBn: bnum(0),
+            allowance: undefined,
         };
     }
 
@@ -456,11 +459,12 @@ export default class TokenStore {
             throw new Error('Incorrect Address Format');
         }
 
+        const { providerStore, contractMetadataStore } = this.rootStore;
+
         let tokenMetadata;
+        const proxyAddress = contractMetadataStore.getProxyAddress();
 
         if (address === EtherKey) {
-            const { providerStore } = this.rootStore;
-
             tokenMetadata = {
                 address: address,
                 symbol: 'ETH',
@@ -482,6 +486,12 @@ export default class TokenStore {
                     20
                 );
 
+                let allowance = this.getAllowance(
+                    address,
+                    account,
+                    proxyAddress
+                );
+
                 tokenMetadata = {
                     address: address,
                     symbol: 'ETH',
@@ -490,13 +500,12 @@ export default class TokenStore {
                     precision: 4,
                     balanceBn: bnum(balanceWei),
                     balanceFormatted: balanceFormatted,
+                    allowance: allowance,
                 };
             }
         } else {
             try {
                 // symbol/decimal call will fail if not an actual token.
-                const { providerStore, contractMetadataStore } = this.rootStore;
-
                 const tokenContract = providerStore.getContract(
                     ContractTypes.TestToken,
                     address
@@ -532,6 +541,29 @@ export default class TokenStore {
                     precision
                 );
 
+                let allowance;
+                if (account) {
+                    allowance = this.getAllowance(
+                        address,
+                        account,
+                        proxyAddress
+                    );
+                    if (!allowance) {
+                        console.log(
+                            `[Token] Checking on-chain allowance ${tokenSymbol}`
+                        );
+                        const allowanceOnChain = await tokenContract.allowance(
+                            account,
+                            proxyAddress
+                        );
+                        allowance = bnum(allowanceOnChain.toString());
+                    }
+                    console.log(
+                        `[Token] Allowance ${tokenSymbol}: `,
+                        allowance.toString()
+                    );
+                }
+
                 tokenMetadata = {
                     address: address,
                     symbol: tokenSymbol,
@@ -540,6 +572,7 @@ export default class TokenStore {
                     precision: precision,
                     balanceBn: balance.balanceBn,
                     balanceFormatted: balance.balanceFormatted,
+                    allowance: allowance,
                 };
             } catch (error) {
                 throw new Error('Non-Supported Token Address');
