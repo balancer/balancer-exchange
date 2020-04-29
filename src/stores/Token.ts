@@ -5,7 +5,7 @@ import * as helpers from 'utils/helpers';
 import { bnum, formatBalanceTruncated } from 'utils/helpers';
 import { FetchCode } from './Transaction';
 import { BigNumber } from 'utils/bignumber';
-import { isAddress } from 'utils/helpers';
+import { isAddress, MAX_UINT } from 'utils/helpers';
 import { Interface } from 'ethers/utils';
 import { getSupportedChainName } from '../provider/connectors';
 import * as ethers from 'ethers';
@@ -367,6 +367,7 @@ export default class TokenStore {
         const chainApprovals = this.allowances;
         if (chainApprovals) {
             const tokenApprovals = chainApprovals[tokenAddress];
+
             if (tokenApprovals) {
                 const userApprovals = tokenApprovals[account];
                 if (userApprovals) {
@@ -449,7 +450,7 @@ export default class TokenStore {
     }
 
     fetchOnChainTokenMetadata = async (address: string, account: string) => {
-        console.log(`[Token] fetchOnChainTokenMetadata: ${address}`);
+        console.log(`[Token] fetchOnChainTokenMetadata: ${address} ${account}`);
 
         let iconAddress;
 
@@ -486,12 +487,6 @@ export default class TokenStore {
                     20
                 );
 
-                let allowance = this.getAllowance(
-                    address,
-                    account,
-                    proxyAddress
-                );
-
                 tokenMetadata = {
                     address: address,
                     symbol: 'ETH',
@@ -500,7 +495,7 @@ export default class TokenStore {
                     precision: 4,
                     balanceBn: bnum(balanceWei),
                     balanceFormatted: balanceFormatted,
-                    allowance: allowance,
+                    allowance: MAX_UINT,
                 };
             }
         } else {
