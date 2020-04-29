@@ -106,6 +106,19 @@ export default class ProviderStore {
             account,
             contractMetadataStore.getTrackedTokenAddresses()
         );
+
+        if (tokenStore.inputToken.address !== 'unknown')
+            tokenStore.setSelectedTokenMetadata(
+                true,
+                tokenStore.inputToken.address,
+                account
+            );
+        if (tokenStore.outputToken.address !== 'unknown')
+            tokenStore.setSelectedTokenMetadata(
+                false,
+                tokenStore.outputToken.address,
+                account
+            );
     };
 
     // account is optional
