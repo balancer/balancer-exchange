@@ -434,6 +434,7 @@ export default class TokenStore {
         try {
             iconAddress = this.fetchTokenIconAddress(address);
         } catch (err) {
+            console.log(`[Token] Error. ${address}`);
             throw new Error('Incorrect Address Format');
         }
 

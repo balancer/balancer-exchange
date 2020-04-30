@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import styled from 'styled-components';
 import { TokenIconAddress } from './TokenPanel';
 import { useStores } from '../contexts/storesContext';
-import { bnum, formatBalanceTruncated } from 'utils/helpers';
+import { bnum, formatBalanceTruncated, isEmpty } from 'utils/helpers';
 import { isChainIdSupported } from '../provider/connectors';
 import { observer } from 'mobx-react';
 
@@ -100,7 +100,8 @@ const AssetOptions = observer(() => {
     const { assetSelectFilter, assetModalState } = swapFormStore;
 
     useEffect(() => {
-        assetOptionsStore.fetchTokenAssetData(assetSelectFilter, account);
+        if (!isEmpty(assetSelectFilter))
+            assetOptionsStore.fetchTokenAssetData(assetSelectFilter, account);
     }, [assetSelectFilter, account, assetOptionsStore]); // Only re-run the effect on token address change
 
     const getAssetOptions = (filter, account): Asset[] => {
@@ -114,11 +115,11 @@ const AssetOptions = observer(() => {
 
         if (assetModalState.input === 'inputAmount') {
             tradableTokens = poolStore.getTokenPairs(
-                swapFormStore.inputs.outputToken
+                swapFormStore.outputToken.address
             );
         } else if (assetModalState.input === 'outputAmount') {
             tradableTokens = poolStore.getTokenPairs(
-                swapFormStore.inputs.inputToken
+                swapFormStore.inputToken.address
             );
         }
 

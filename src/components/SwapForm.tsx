@@ -85,18 +85,18 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         throw new Error('ChainId not loaded in TestPanel');
     }
 
-    if (tokenIn && isEmpty(swapFormStore.inputs.inputToken)) {
-        console.log(`[SwapForm] Using Input Token URL.`);
+    if (tokenIn && isEmpty(swapFormStore.inputToken.address)) {
+        console.log(`[SwapForm] Using Input Token From URL: ${tokenIn}`);
         swapFormStore.setSelectedInputToken(tokenIn, account);
-    } else if (isEmpty(swapFormStore.inputs.inputToken)) {
+    } else if (isEmpty(swapFormStore.inputToken.address)) {
         console.log(`[SwapForm] No Input Token Selected, Defaulting to Eth.`);
         swapFormStore.setSelectedInputToken('ether', account);
     }
 
-    if (tokenOut && isEmpty(swapFormStore.inputs.outputToken)) {
-        console.log(`[SwapForm] Using Output Token URL.`);
+    if (tokenOut && isEmpty(swapFormStore.outputToken.address)) {
+        console.log(`[SwapForm] Using Output Token From URL: ${tokenOut}`);
         swapFormStore.setSelectedOutputToken(tokenOut, account);
-    } else if (isEmpty(swapFormStore.inputs.outputToken)) {
+    } else if (isEmpty(swapFormStore.outputToken.address)) {
         console.log(`[SwapForm] No Output Token Selected, Defaulting to DAI.`);
         const daiAddr = contractMetadataStore.getDaiAddress();
         swapFormStore.setSelectedOutputToken(daiAddr, account);
@@ -119,7 +119,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     };
 
     const unlockHandler = async () => {
-        const tokenToUnlock = swapFormStore.inputs.inputToken;
+        const tokenToUnlock = swapFormStore.inputToken.address;
         const proxyAddress = contractMetadataStore.getProxyAddress();
         await tokenStore.approveMax(tokenToUnlock, proxyAddress);
     };
@@ -149,10 +149,10 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
 
             await proxyStore.batchSwapExactIn(
                 swaps,
-                swapFormStore.inputs.inputToken,
+                swapFormStore.inputToken.address,
                 bnum(inputAmount),
                 swapFormStore.inputToken.decimals,
-                swapFormStore.inputs.outputToken,
+                swapFormStore.outputToken.address,
                 bnum(minAmountOut),
                 swapFormStore.outputToken.decimals
             );
@@ -175,10 +175,10 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
 
             await proxyStore.batchSwapExactOut(
                 swaps,
-                swapFormStore.inputs.inputToken,
+                swapFormStore.inputToken.address,
                 maxAmountIn,
                 swapFormStore.inputToken.decimals,
-                swapFormStore.inputs.outputToken,
+                swapFormStore.outputToken.address,
                 bnum(outputAmount),
                 swapFormStore.outputToken.decimals
             );
@@ -224,14 +224,14 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
             swapFormStore.preview && !swapFormStore.preview.error;
 
         const areInputOutputTokensEqual =
-            swapFormStore.inputs.inputToken ===
-                swapFormStore.inputs.outputToken ||
-            (swapFormStore.inputs.inputToken === 'ether' &&
-                swapFormStore.inputs.outputToken ===
+            swapFormStore.inputToken.address ===
+                swapFormStore.outputToken.address ||
+            (swapFormStore.inputToken.address === 'ether' &&
+                swapFormStore.outputToken.address ===
                     contractMetadataStore.getWethAddress()) ||
-            (swapFormStore.inputs.inputToken ===
+            (swapFormStore.inputToken.address ===
                 contractMetadataStore.getWethAddress() &&
-                swapFormStore.inputs.outputToken === 'ether');
+                swapFormStore.outputToken.address === 'ether');
 
         if (
             buttonState === ButtonState.UNLOCK ||

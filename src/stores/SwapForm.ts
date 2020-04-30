@@ -8,7 +8,7 @@ import {
     SwapPreview,
 } from './Proxy';
 import { BigNumber } from 'utils/bignumber';
-import { bnum, scale, str } from '../utils/helpers';
+import { bnum, scale, str, isEmpty } from '../utils/helpers';
 import { TokenMetadata } from './Token';
 
 export enum InputFocus {
@@ -51,8 +51,6 @@ export interface ChartSwap {
 
 export default class SwapFormStore {
     @observable inputs = {
-        inputToken: '',
-        outputToken: '',
         inputAmount: '',
         outputAmount: '',
         extraSlippageAllowance: '1.0',
@@ -91,7 +89,7 @@ export default class SwapFormStore {
         this.rootStore = rootStore;
         this.resetTradeComposition();
         this.inputToken = {
-            address: 'unknown',
+            address: '',
             symbol: 'unknown',
             decimals: 18,
             iconAddress: 'unknown',
@@ -102,7 +100,7 @@ export default class SwapFormStore {
         };
 
         this.outputToken = {
-            address: 'unknown',
+            address: '',
             symbol: 'unknown',
             decimals: 18,
             iconAddress: 'unknown',
@@ -378,16 +376,11 @@ export default class SwapFormStore {
     }
 
     @action switchInputOutputValues() {
-        // !!!!!!
-        const { outputToken, inputToken } = this.inputs;
-        this.inputs.inputToken = outputToken;
-        this.inputs.outputToken = inputToken;
-
         const { providerStore } = this.rootStore;
         const account = providerStore.providerStatus.account;
 
-        this.setSelectedInputToken(this.inputs.inputToken, account);
-        this.setSelectedOutputToken(this.inputs.outputToken, account);
+        this.setSelectedInputToken(this.outputToken.address, account);
+        this.setSelectedOutputToken(this.inputToken.address, account);
         this.switchSwapMethod();
         this.setInputFocus(InputFocus.NONE);
     }
@@ -638,10 +631,17 @@ export default class SwapFormStore {
     }
 
     @action updateSelectedTokenMetaData(account) {
-        if (this.inputToken.address !== 'unknown')
+        console.log(`[SwapFormStore] updateSelectedTokenMetaData()`);
+        if (
+            this.inputToken.address !== 'unknown' &&
+            !isEmpty(this.inputToken.address)
+        )
             this.setSelectedInputToken(this.inputToken.address, account);
 
-        if (this.outputToken.address !== 'unknown')
+        if (
+            this.outputToken.address !== 'unknown' &&
+            !isEmpty(this.outputToken.address)
+        )
             this.setSelectedOutputToken(this.outputToken.address, account);
     }
 
@@ -658,8 +658,6 @@ export default class SwapFormStore {
 
         try {
             const { tokenStore, poolStore } = this.rootStore;
-
-            this.inputs.inputToken = inputTokenAddress;
 
             const inputTokenMetadata = await tokenStore.fetchOnChainTokenMetadata(
                 inputTokenAddress,
@@ -687,8 +685,6 @@ export default class SwapFormStore {
 
         try {
             const { tokenStore, poolStore } = this.rootStore;
-
-            this.inputs.outputToken = outputTokenAddress;
 
             const outputTokenMetadata = await tokenStore.fetchOnChainTokenMetadata(
                 outputTokenAddress,
