@@ -57,10 +57,6 @@ export default class SwapFormStore {
         outputAmount: '',
         extraSlippageAllowance: '1.0',
         extraSlippageAllowanceErrorStatus: InputValidationStatus.VALID,
-        inputTicker: '',
-        outputTicker: '',
-        inputIconAddress: '',
-        outputIconAddress: '',
         swapMethod: SwapMethods.EXACT_IN,
         outputLimit: '0',
         inputLimit: '0',
@@ -382,26 +378,16 @@ export default class SwapFormStore {
     }
 
     @action switchInputOutputValues() {
-        const {
-            outputToken,
-            outputTicker,
-            outputIconAddress,
-            outputAmount,
-            inputToken,
-            inputTicker,
-            inputIconAddress,
-            inputAmount,
-        } = this.inputs;
+        // !!!!!!
+        const { outputToken, inputToken } = this.inputs;
         this.inputs.inputToken = outputToken;
-        this.inputs.inputTicker = outputTicker;
-        this.inputs.inputIconAddress = outputIconAddress;
-        this.inputs.inputAmount = outputAmount;
-
         this.inputs.outputToken = inputToken;
-        this.inputs.outputTicker = inputTicker;
-        this.inputs.outputIconAddress = inputIconAddress;
-        this.inputs.outputAmount = inputAmount;
 
+        const { providerStore } = this.rootStore;
+        const account = providerStore.providerStatus.account;
+
+        this.setSelectedInputToken(this.inputs.inputToken, account);
+        this.setSelectedOutputToken(this.inputs.outputToken, account);
         this.switchSwapMethod();
         this.setInputFocus(InputFocus.NONE);
     }
@@ -651,17 +637,29 @@ export default class SwapFormStore {
         };
     }
 
-    @action setSelectedTokenMetadata = async (
+    @action updateSelectedTokenMetaData(account) {
+        if (this.inputToken.address !== 'unknown')
+            this.setSelectedInputToken(this.inputToken.address, account);
+
+        if (this.outputToken.address !== 'unknown')
+            this.setSelectedOutputToken(this.outputToken.address, account);
+    }
+
+    // Fetches and sets the input token metaData.
+    // Fetch will try stored whitelisted info and revert to on-chain if not available
+    // Also loads pool info for token
+    @action setSelectedInputToken = async (
         inputTokenAddress: string,
-        outputTokenAddress: string,
         account: string
     ) => {
         console.log(
-            `[SwapFormStore] setSelectedTokenMetadata: ${account} ${inputTokenAddress} ${outputTokenAddress}`
+            `[SwapFormStore] setSelectedInputToken: ${account} ${inputTokenAddress}`
         );
 
         try {
-            const { tokenStore } = this.rootStore;
+            const { tokenStore, poolStore } = this.rootStore;
+
+            this.inputs.inputToken = inputTokenAddress;
 
             const inputTokenMetadata = await tokenStore.fetchOnChainTokenMetadata(
                 inputTokenAddress,
@@ -670,26 +668,38 @@ export default class SwapFormStore {
 
             this.inputToken = inputTokenMetadata;
 
+            poolStore.fetchAndSetTokenPairs(inputTokenAddress);
+        } catch (err) {
+            this.setErrorMessage(err.message);
+        }
+    };
+
+    // Fetches and sets the output token metaData.
+    // Fetch will try stored whitelisted info and revert to on-chain if not available
+    // Also loads pool info for token
+    @action setSelectedOutputToken = async (
+        outputTokenAddress: string,
+        account: string
+    ) => {
+        console.log(
+            `[SwapFormStore] setSelectedOutputToken: ${account} ${outputTokenAddress}`
+        );
+
+        try {
+            const { tokenStore, poolStore } = this.rootStore;
+
+            this.inputs.outputToken = outputTokenAddress;
+
             const outputTokenMetadata = await tokenStore.fetchOnChainTokenMetadata(
                 outputTokenAddress,
                 account
             );
 
             this.outputToken = outputTokenMetadata;
+
+            poolStore.fetchAndSetTokenPairs(outputTokenAddress);
         } catch (err) {
             this.setErrorMessage(err.message);
         }
     };
-
-    @action updateSelectedTokenMetaData(account) {
-        if (
-            this.inputToken.address !== 'unknown' &&
-            this.outputToken.address !== 'unknown'
-        )
-            this.setSelectedTokenMetadata(
-                this.inputToken.address,
-                this.outputToken.address,
-                account
-            );
-    }
 }

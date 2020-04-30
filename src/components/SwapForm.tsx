@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import styled from 'styled-components';
 import BuyToken from './BuyToken';
 import SellToken from './SellToken';
@@ -73,7 +73,6 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
             tokenStore,
             errorStore,
             dropdownStore,
-            poolStore,
         },
     } = useStores();
 
@@ -87,49 +86,21 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     }
 
     if (tokenIn && isEmpty(swapFormStore.inputs.inputToken)) {
-        // swapFormStore is empty and has URL param - direct URL token query
         console.log(`[SwapForm] Using Input Token URL.`);
-        swapFormStore.inputs.inputToken = tokenIn;
-        poolStore.fetchAndSetTokenPairs(tokenIn);
+        swapFormStore.setSelectedInputToken(tokenIn, account);
     } else if (isEmpty(swapFormStore.inputs.inputToken)) {
-        // No URL and no asset selected. Sets default to Eth
         console.log(`[SwapForm] No Input Token Selected, Defaulting to Eth.`);
-        swapFormStore.inputs.inputToken = 'ether';
-        poolStore.fetchAndSetTokenPairs('ether');
+        swapFormStore.setSelectedInputToken('ether', account);
     }
 
     if (tokenOut && isEmpty(swapFormStore.inputs.outputToken)) {
-        // swapFormStore is empty and has URL param - direct URL token query
         console.log(`[SwapForm] Using Output Token URL.`);
-        swapFormStore.inputs.outputToken = tokenOut;
-        poolStore.fetchAndSetTokenPairs(tokenOut);
+        swapFormStore.setSelectedOutputToken(tokenOut, account);
     } else if (isEmpty(swapFormStore.inputs.outputToken)) {
-        // No URL and no asset selected. Sets default to DAI
         console.log(`[SwapForm] No Output Token Selected, Defaulting to DAI.`);
         const daiAddr = contractMetadataStore.getDaiAddress();
-        swapFormStore.inputs.outputToken = daiAddr;
-        poolStore.fetchAndSetTokenPairs(daiAddr);
+        swapFormStore.setSelectedOutputToken(daiAddr, account);
     }
-
-    const { inputs, outputs } = swapFormStore;
-    const { inputToken, outputToken } = inputs; // swapFormStore.inputs.inputToken
-
-    useEffect(() => {
-        // If input/output token have changed then query on-chain info for symbol, etc
-        console.log(
-            `[SwapForm] Token Change - Fetching On Chain Meta Data ${inputToken} ${outputToken}`
-        );
-        swapFormStore.setSelectedTokenMetadata(
-            inputToken,
-            outputToken,
-            account
-        );
-    }, [inputToken, outputToken, swapFormStore, account]); // Only re-run the effect on token address change
-
-    const tokenMetadata = {
-        input: swapFormStore.inputToken,
-        output: swapFormStore.outputToken,
-    };
 
     const buttonActionHandler = (buttonState: ButtonState) => {
         switch (buttonState) {
@@ -148,7 +119,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     };
 
     const unlockHandler = async () => {
-        const tokenToUnlock = inputs.inputToken;
+        const tokenToUnlock = swapFormStore.inputs.inputToken;
         const proxyAddress = contractMetadataStore.getProxyAddress();
         await tokenStore.approveMax(tokenToUnlock, proxyAddress);
     };
@@ -159,8 +130,11 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
             return;
         }
 
-        if (inputs.swapMethod === SwapMethods.EXACT_IN) {
-            const { inputAmount, extraSlippageAllowance } = inputs;
+        if (swapFormStore.inputs.swapMethod === SwapMethods.EXACT_IN) {
+            const {
+                inputAmount,
+                extraSlippageAllowance,
+            } = swapFormStore.inputs;
 
             const {
                 spotOutput,
@@ -175,15 +149,18 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
 
             await proxyStore.batchSwapExactIn(
                 swaps,
-                inputToken,
+                swapFormStore.inputs.inputToken,
                 bnum(inputAmount),
-                tokenMetadata.input.decimals,
-                outputToken,
+                swapFormStore.inputToken.decimals,
+                swapFormStore.inputs.outputToken,
                 bnum(minAmountOut),
-                tokenMetadata.output.decimals
+                swapFormStore.outputToken.decimals
             );
-        } else if (inputs.swapMethod === SwapMethods.EXACT_OUT) {
-            const { outputAmount, extraSlippageAllowance } = inputs;
+        } else if (swapFormStore.inputs.swapMethod === SwapMethods.EXACT_OUT) {
+            const {
+                outputAmount,
+                extraSlippageAllowance,
+            } = swapFormStore.inputs;
 
             const {
                 spotInput,
@@ -198,12 +175,12 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
 
             await proxyStore.batchSwapExactOut(
                 swaps,
-                inputToken,
+                swapFormStore.inputs.inputToken,
                 maxAmountIn,
-                tokenMetadata.input.decimals,
-                outputToken,
+                swapFormStore.inputToken.decimals,
+                swapFormStore.inputs.outputToken,
                 bnum(outputAmount),
-                tokenMetadata.output.decimals
+                swapFormStore.outputToken.decimals
             );
         }
     };
@@ -236,9 +213,11 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         buttonState: ButtonState,
         inputBalance: BigNumber | undefined
     ): boolean => {
-        const isInputValid = swapFormStore.isValidInput(inputs.inputAmount);
+        const isInputValid = swapFormStore.isValidInput(
+            swapFormStore.inputs.inputAmount
+        );
         const isExtraSlippageAmountValid = swapFormStore.isValidStatus(
-            inputs.extraSlippageAllowanceErrorStatus
+            swapFormStore.inputs.extraSlippageAllowanceErrorStatus
         );
 
         const isPreviewValid =
@@ -271,8 +250,8 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                 chainId === supportedChainId
             ) {
                 const inputAmountBN = scale(
-                    bnum(inputs.inputAmount),
-                    tokenMetadata.input.decimals
+                    bnum(swapFormStore.inputs.inputAmount),
+                    swapFormStore.inputToken.decimals
                 );
                 return inputBalance && inputBalance.gte(inputAmountBN);
             }
@@ -281,7 +260,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         return false;
     };
 
-    let userAllowance = tokenMetadata.input.allowance;
+    let userAllowance = swapFormStore.inputToken.allowance;
 
     const buttonState = getButtonState(account, userAllowance);
 
@@ -290,8 +269,8 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     if (error) {
         console.error('error', error);
     }
-    const errorMessage = outputs.activeErrorMessage;
-    const swapObjection = outputs.swapObjection;
+    const errorMessage = swapFormStore.outputs.activeErrorMessage;
+    const swapObjection = swapFormStore.outputs.swapObjection;
 
     const renderMessageBlock = () => {
         if (!isEmpty(errorMessage)) {
@@ -316,7 +295,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                         buttonText={getButtonText(buttonState)}
                         active={getButtonActive(
                             buttonState,
-                            tokenMetadata.input.balanceBn
+                            swapFormStore.inputToken.balanceBn
                         )}
                         onClick={() => {
                             buttonActionHandler(buttonState);
@@ -340,7 +319,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                         buttonText={getButtonText(buttonState)}
                         active={getButtonActive(
                             buttonState,
-                            tokenMetadata.input.balanceBn
+                            swapFormStore.inputToken.balanceBn
                         )}
                         onClick={() => {
                             buttonActionHandler(buttonState);
@@ -359,29 +338,34 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                     key="122"
                     inputID="amount-in"
                     inputName="inputAmount"
-                    tokenName={tokenMetadata.input.symbol}
-                    tokenBalance={tokenMetadata.input.balanceFormatted}
-                    truncatedTokenBalance={tokenMetadata.input.balanceFormatted}
-                    tokenAddress={tokenMetadata.input.iconAddress}
+                    tokenName={swapFormStore.inputToken.symbol}
+                    tokenBalance={swapFormStore.inputToken.balanceFormatted}
+                    truncatedTokenBalance={
+                        swapFormStore.inputToken.balanceFormatted
+                    }
+                    tokenAddress={swapFormStore.inputToken.iconAddress}
                     errorMessage={errorMessage}
-                    showMax={!!account && !!tokenMetadata.input.balanceBn}
+                    showMax={!!account && !!swapFormStore.inputToken.balanceBn}
                 />
                 <Switch />
                 <BuyToken
                     key="123"
                     inputID="amount-out"
                     inputName="outputAmount"
-                    tokenName={tokenMetadata.output.symbol}
-                    tokenBalance={tokenMetadata.output.balanceFormatted}
+                    tokenName={swapFormStore.outputToken.symbol}
+                    tokenBalance={swapFormStore.outputToken.balanceFormatted}
                     truncatedTokenBalance={
-                        tokenMetadata.output.balanceFormatted
+                        swapFormStore.outputToken.balanceFormatted
                     }
-                    tokenAddress={tokenMetadata.output.iconAddress}
+                    tokenAddress={swapFormStore.outputToken.iconAddress}
                     errorMessage={errorMessage}
-                    showMax={!!account && !!tokenMetadata.output.balanceBn}
+                    showMax={!!account && !!swapFormStore.outputToken.balanceBn}
                 />
             </RowContainer>
-            {renderTradeDetails(inputs.inputAmount, inputs.outputAmount)}
+            {renderTradeDetails(
+                swapFormStore.inputs.inputAmount,
+                swapFormStore.inputs.outputAmount
+            )}
         </div>
     );
 });

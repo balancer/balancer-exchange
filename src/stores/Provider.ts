@@ -108,6 +108,7 @@ export default class ProviderStore {
             contractMetadataStore.getTrackedTokenAddresses()
         );
 
+        // Makes sure the Input/Output token data is up to date
         swapFormStore.updateSelectedTokenMetaData(account);
     };
 

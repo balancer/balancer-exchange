@@ -201,16 +201,10 @@ const AssetOptions = observer(() => {
 
     const selectAsset = token => {
         if (assetModalState.input === 'inputAmount') {
-            swapFormStore.inputs.inputToken = token.address;
-            swapFormStore.inputs.inputTicker = token.symbol;
-            swapFormStore.inputs.inputIconAddress = token.iconAddress;
+            swapFormStore.setSelectedInputToken(token.address, account);
         } else {
-            swapFormStore.inputs.outputToken = token.address;
-            swapFormStore.inputs.outputTicker = token.symbol;
-            swapFormStore.inputs.outputIconAddress = token.iconAddress;
+            swapFormStore.setSelectedOutputToken(token.address, account);
         }
-
-        poolStore.fetchAndSetTokenPairs(token.address);
         clearInputs();
         swapFormStore.setAssetModalState({ open: false });
     };
