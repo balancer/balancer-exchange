@@ -9,6 +9,7 @@ import {
 } from './Proxy';
 import { BigNumber } from 'utils/bignumber';
 import { bnum, scale, str } from '../utils/helpers';
+import { TokenMetadata } from './Token';
 
 export enum InputFocus {
     NONE,
@@ -58,10 +59,6 @@ export default class SwapFormStore {
         extraSlippageAllowanceErrorStatus: InputValidationStatus.VALID,
         inputTicker: '',
         outputTicker: '',
-        inputDecimals: 18,
-        inputPrecision: 2,
-        outputDecimals: 18,
-        outputPrecision: 2,
         inputIconAddress: '',
         outputIconAddress: '',
         swapMethod: SwapMethods.EXACT_IN,
@@ -71,14 +68,11 @@ export default class SwapFormStore {
         focus: 0,
         swaps: [],
     };
+    @observable inputToken: TokenMetadata;
+    @observable outputToken: TokenMetadata;
+    // These are for outputs TO the user
     @observable outputs = {
-        inputAmount: '',
-        outputAmount: '',
-        effectivePrice: '',
-        spotPrice: '',
         expectedSlippage: '0',
-        outputLimit: '',
-        swaps: [],
         validSwap: false,
         activeErrorMessage: '',
         swapObjection: '',
@@ -96,6 +90,32 @@ export default class SwapFormStore {
     @observable slippageCell: number = 3;
 
     rootStore: RootStore;
+
+    constructor(rootStore) {
+        this.rootStore = rootStore;
+        this.resetTradeComposition();
+        this.inputToken = {
+            address: 'unknown',
+            symbol: 'unknown',
+            decimals: 18,
+            iconAddress: 'unknown',
+            precision: 4,
+            balanceFormatted: '0.0000',
+            balanceBn: bnum(0),
+            allowance: undefined,
+        };
+
+        this.outputToken = {
+            address: 'unknown',
+            symbol: 'unknown',
+            decimals: 18,
+            iconAddress: 'unknown',
+            precision: 4,
+            balanceFormatted: '0.0000',
+            balanceBn: bnum(0),
+            allowance: undefined,
+        };
+    }
 
     @action updateInputsFromObject(output) {
         this.inputs = {
@@ -129,10 +149,7 @@ export default class SwapFormStore {
 
         this.outputs = {
             ...this.outputs,
-            effectivePrice: str(preview.effectivePrice),
-            spotPrice: str(preview.spotPrice),
             expectedSlippage: str(preview.expectedSlippage),
-            swaps: preview.swaps,
             validSwap: true,
         };
     }
@@ -171,15 +188,15 @@ export default class SwapFormStore {
     }
 
     async refreshExactAmountInPreview() {
-        const { proxyStore, providerStore, tokenStore } = this.rootStore;
+        const { proxyStore, providerStore } = this.rootStore;
         const account = providerStore.providerStatus.account;
         const { inputAmount } = this.inputs;
 
         const preview = await proxyStore.previewBatchSwapExactIn(
-            tokenStore.inputToken.address,
-            tokenStore.outputToken.address,
+            this.inputToken.address,
+            this.outputToken.address,
             bnum(inputAmount),
-            tokenStore.inputToken.decimals
+            this.inputToken.decimals
         );
 
         this.setSwapObjection(SwapObjection.NONE);
@@ -192,14 +209,14 @@ export default class SwapFormStore {
             this.setOutputFromPreview(
                 SwapMethods.EXACT_IN,
                 preview,
-                tokenStore.outputToken.decimals
+                this.outputToken.decimals
             );
             this.clearErrorMessage();
 
             if (account) {
                 const userBalance = scale(
-                    tokenStore.inputToken.balanceBn,
-                    -tokenStore.inputToken.decimals
+                    this.inputToken.balanceBn,
+                    -this.inputToken.decimals
                 );
 
                 if (userBalance) {
@@ -220,15 +237,15 @@ export default class SwapFormStore {
     }
 
     async refreshExactAmountOutPreview() {
-        const { proxyStore, providerStore, tokenStore } = this.rootStore;
+        const { proxyStore, providerStore } = this.rootStore;
         const account = providerStore.providerStatus.account;
         const { outputAmount } = this.inputs;
 
         const preview = await proxyStore.previewBatchSwapExactOut(
-            tokenStore.inputToken.address,
-            tokenStore.outputToken.address,
+            this.inputToken.address,
+            this.outputToken.address,
             bnum(outputAmount),
-            tokenStore.outputToken.decimals
+            this.outputToken.decimals
         );
 
         if (preview.error) {
@@ -239,19 +256,19 @@ export default class SwapFormStore {
             this.setOutputFromPreview(
                 SwapMethods.EXACT_OUT,
                 preview,
-                tokenStore.inputToken.decimals
+                this.inputToken.decimals
             );
             this.clearErrorMessage();
 
             if (account) {
                 const userBalance = scale(
-                    tokenStore.inputToken.balanceBn,
-                    -tokenStore.inputToken.decimals
+                    this.inputToken.balanceBn,
+                    -this.inputToken.decimals
                 );
 
                 const normalizedInput = scale(
                     bnum(preview.totalInput),
-                    -tokenStore.inputToken.decimals
+                    -this.inputToken.decimals
                 );
 
                 if (userBalance) {
@@ -369,28 +386,20 @@ export default class SwapFormStore {
             outputToken,
             outputTicker,
             outputIconAddress,
-            outputPrecision,
-            outputDecimals,
             outputAmount,
             inputToken,
             inputTicker,
             inputIconAddress,
-            inputDecimals,
-            inputPrecision,
             inputAmount,
         } = this.inputs;
         this.inputs.inputToken = outputToken;
         this.inputs.inputTicker = outputTicker;
         this.inputs.inputIconAddress = outputIconAddress;
-        this.inputs.inputDecimals = outputDecimals;
-        this.inputs.inputPrecision = outputPrecision;
         this.inputs.inputAmount = outputAmount;
 
         this.inputs.outputToken = inputToken;
         this.inputs.outputTicker = inputTicker;
         this.inputs.outputIconAddress = inputIconAddress;
-        this.inputs.outputDecimals = inputDecimals;
-        this.inputs.outputPrecision = inputPrecision;
         this.inputs.outputAmount = inputAmount;
 
         this.switchSwapMethod();
@@ -642,8 +651,45 @@ export default class SwapFormStore {
         };
     }
 
-    constructor(rootStore) {
-        this.rootStore = rootStore;
-        this.resetTradeComposition();
+    @action setSelectedTokenMetadata = async (
+        inputTokenAddress: string,
+        outputTokenAddress: string,
+        account: string
+    ) => {
+        console.log(
+            `[SwapFormStore] setSelectedTokenMetadata: ${account} ${inputTokenAddress} ${outputTokenAddress}`
+        );
+
+        try {
+            const { tokenStore } = this.rootStore;
+
+            const inputTokenMetadata = await tokenStore.fetchOnChainTokenMetadata(
+                inputTokenAddress,
+                account
+            );
+
+            this.inputToken = inputTokenMetadata;
+
+            const outputTokenMetadata = await tokenStore.fetchOnChainTokenMetadata(
+                outputTokenAddress,
+                account
+            );
+
+            this.outputToken = outputTokenMetadata;
+        } catch (err) {
+            this.setErrorMessage(err.message);
+        }
+    };
+
+    @action updateSelectedTokenMetaData(account) {
+        if (
+            this.inputToken.address !== 'unknown' &&
+            this.outputToken.address !== 'unknown'
+        )
+            this.setSelectedTokenMetadata(
+                this.inputToken.address,
+                this.outputToken.address,
+                account
+            );
     }
 }

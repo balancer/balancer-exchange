@@ -112,20 +112,23 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     }
 
     const { inputs, outputs } = swapFormStore;
-    const { inputToken, outputToken } = inputs;
+    const { inputToken, outputToken } = inputs; // swapFormStore.inputs.inputToken
 
     useEffect(() => {
         // If input/output token have changed then query on-chain info for symbol, etc
         console.log(
             `[SwapForm] Token Change - Fetching On Chain Meta Data ${inputToken} ${outputToken}`
         );
-        tokenStore.setSelectedTokenMetadata(true, inputToken, account);
-        tokenStore.setSelectedTokenMetadata(false, outputToken, account);
-    }, [inputToken, outputToken, tokenStore, account]); // Only re-run the effect on token address change
+        swapFormStore.setSelectedTokenMetadata(
+            inputToken,
+            outputToken,
+            account
+        );
+    }, [inputToken, outputToken, swapFormStore, account]); // Only re-run the effect on token address change
 
     const tokenMetadata = {
-        input: tokenStore.inputToken,
-        output: tokenStore.outputToken,
+        input: swapFormStore.inputToken,
+        output: swapFormStore.outputToken,
     };
 
     const buttonActionHandler = (buttonState: ButtonState) => {

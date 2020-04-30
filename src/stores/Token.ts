@@ -69,8 +69,6 @@ export default class TokenStore {
     @observable balances: TokenBalanceMap;
     @observable allowances: UserAllowanceMap;
     @observable contractMetadata: ContractMetadataMap;
-    @observable inputToken: TokenMetadata;
-    @observable outputToken: TokenMetadata;
     rootStore: RootStore;
 
     constructor(rootStore) {
@@ -78,27 +76,6 @@ export default class TokenStore {
         this.balances = {} as TokenBalanceMap;
         this.allowances = {} as UserAllowanceMap;
         this.contractMetadata = {} as ContractMetadataMap;
-        this.inputToken = {
-            address: 'unknown',
-            symbol: 'unknown',
-            decimals: 18,
-            iconAddress: 'unknown',
-            precision: 4,
-            balanceFormatted: '0.0000',
-            balanceBn: bnum(0),
-            allowance: undefined,
-        };
-
-        this.outputToken = {
-            address: 'unknown',
-            symbol: 'unknown',
-            decimals: 18,
-            iconAddress: 'unknown',
-            precision: 4,
-            balanceFormatted: '0.0000',
-            balanceBn: bnum(0),
-            allowance: undefined,
-        };
     }
 
     getAccountBalances(tokens: TokenMetadata[], account: string): BigNumberMap {
@@ -574,31 +551,5 @@ export default class TokenStore {
             }
         }
         return tokenMetadata;
-    };
-
-    // Called by SwapForm.tsx
-    @action setSelectedTokenMetadata = async (
-        isInputToken: boolean,
-        address: string,
-        account: string
-    ) => {
-        console.log(`[Token] setSelectedTokenMetadata: ${address}`);
-
-        try {
-            const tokenMetadata = await this.fetchOnChainTokenMetadata(
-                address,
-                account
-            );
-
-            if (isInputToken) {
-                this.inputToken = tokenMetadata;
-            } else {
-                this.outputToken = tokenMetadata;
-            }
-        } catch (err) {
-            // console.log(err);
-            const { swapFormStore } = this.rootStore;
-            swapFormStore.setErrorMessage(err.message);
-        }
     };
 }

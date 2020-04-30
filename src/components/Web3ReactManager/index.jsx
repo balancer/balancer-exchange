@@ -47,7 +47,7 @@ const Web3Manager = observer(({ children }) => {
     }, []);
 
     //Fetch user blockchain data on an interval using current params
-    useInterval(() => blockchainFetchStore.blockchainFetch(false), 1000);
+    // !!!!!!! useInterval(() => blockchainFetchStore.blockchainFetch(false), 1000);
     // blockchainFetchStore.blockchainFetch(true);
 
     // This means no injected web3 and infura backup has failed
