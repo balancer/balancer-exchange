@@ -95,6 +95,7 @@ export default class ProviderStore {
             transactionStore,
             tokenStore,
             contractMetadataStore,
+            swapFormStore,
         } = this.rootStore;
 
         console.debug('[Provider] fetchUserBlockchainData', {
@@ -107,18 +108,8 @@ export default class ProviderStore {
             contractMetadataStore.getTrackedTokenAddresses()
         );
 
-        if (tokenStore.inputToken.address !== 'unknown')
-            tokenStore.setSelectedTokenMetadata(
-                true,
-                tokenStore.inputToken.address,
-                account
-            );
-        if (tokenStore.outputToken.address !== 'unknown')
-            tokenStore.setSelectedTokenMetadata(
-                false,
-                tokenStore.outputToken.address,
-                account
-            );
+        // Makes sure the Input/Output token data is up to date
+        swapFormStore.updateSelectedTokenMetaData(account);
     };
 
     // account is optional
