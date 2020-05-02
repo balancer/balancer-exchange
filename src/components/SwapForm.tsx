@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import styled from 'styled-components';
 import BuyToken from './BuyToken';
 import SellToken from './SellToken';
@@ -85,22 +85,25 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         throw new Error('ChainId not loaded in TestPanel');
     }
 
-    if (tokenIn && isEmpty(swapFormStore.inputToken.address)) {
-        console.log(`[SwapForm] Using Input Token From URL: ${tokenIn}`);
-        swapFormStore.setSelectedInputToken(tokenIn, account);
-    } else if (isEmpty(swapFormStore.inputToken.address)) {
-        console.log(`[SwapForm] No Input Token Selected, Defaulting to Eth.`);
-        swapFormStore.setSelectedInputToken('ether', account);
-    }
+    useEffect(() => {
+        if (tokenIn && isEmpty(swapFormStore.inputToken.address)) {
+            console.log(`[SwapForm] Using Input Token From URL: ${tokenIn}`);
+            swapFormStore.setSelectedInputToken(tokenIn, account);
+        } else if (isEmpty(swapFormStore.inputToken.address)) {
+            console.log(`[SwapForm] No Input Token Selected, Loading Default.`);
+            swapFormStore.loadDefaultInputToken(account);
+        }
 
-    if (tokenOut && isEmpty(swapFormStore.outputToken.address)) {
-        console.log(`[SwapForm] Using Output Token From URL: ${tokenOut}`);
-        swapFormStore.setSelectedOutputToken(tokenOut, account);
-    } else if (isEmpty(swapFormStore.outputToken.address)) {
-        console.log(`[SwapForm] No Output Token Selected, Defaulting to DAI.`);
-        const daiAddr = contractMetadataStore.getDaiAddress();
-        swapFormStore.setSelectedOutputToken(daiAddr, account);
-    }
+        if (tokenOut && isEmpty(swapFormStore.outputToken.address)) {
+            console.log(`[SwapForm] Using Output Token From URL: ${tokenOut}`);
+            swapFormStore.setSelectedOutputToken(tokenOut, account);
+        } else if (isEmpty(swapFormStore.outputToken.address)) {
+            console.log(
+                `[SwapForm] No Output Token Selected, Loading Default.`
+            );
+            swapFormStore.loadDefaultOutputToken(account);
+        }
+    }, [tokenIn, tokenOut, swapFormStore, account]); // Only re-run the effect on token address change
 
     const buttonActionHandler = (buttonState: ButtonState) => {
         switch (buttonState) {
