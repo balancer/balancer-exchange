@@ -1,7 +1,6 @@
 import { action, observable } from 'mobx';
 import RootStore from 'stores/Root';
 import * as deployed from 'deployed.json';
-import { NumberMap, StringMap } from '../types';
 import { getSupportedChainName } from '../provider/connectors';
 
 export interface ContractMetadata {
@@ -19,40 +18,17 @@ export interface TokenMetadata {
     decimals: number;
     iconAddress: string;
     precision: number;
-    chartColor: string;
     isSupported: boolean;
 }
 
 export default class ContractMetadataStore {
     @observable contractMetadata: ContractMetadata;
-    @observable tokenSymbols: string[];
-    @observable tokenIndex: NumberMap;
-    @observable symbolToAddressMap: StringMap;
-    @observable addressToSymbolMap: StringMap;
     rootStore: RootStore;
 
     constructor(rootStore) {
         this.rootStore = rootStore;
         this.contractMetadata = {} as ContractMetadata;
         this.loadWhitelistedTokenMetadata();
-
-        this.tokenSymbols = this.getWhitelistedTokenMetadata().map(value => {
-            return value.symbol;
-        });
-
-        this.tokenIndex = {} as NumberMap;
-        this.symbolToAddressMap = {} as StringMap;
-        this.addressToSymbolMap = {} as StringMap;
-
-        this.getWhitelistedTokenMetadata().forEach((value, index) => {
-            this.symbolToAddressMap[value.symbol] = value.address;
-            this.addressToSymbolMap[value.address] = value.symbol;
-            this.tokenIndex[value.symbol] = index;
-        });
-    }
-
-    getTokenIndex(symbol: string) {
-        return this.tokenIndex[symbol] ? this.tokenIndex[symbol] : -1;
     }
 
     // Take the data from the JSON and get it into the store, so we access it just like other data
@@ -71,39 +47,18 @@ export default class ContractMetadataStore {
         };
 
         tokenMetadata.forEach(token => {
-            const {
-                address,
-                symbol,
-                decimals,
-                iconAddress,
-                precision,
-                chartColor,
-            } = token;
+            const { address, symbol, decimals, iconAddress, precision } = token;
             contractMetadata.tokens.push({
                 address,
                 symbol,
                 decimals,
                 iconAddress,
                 precision,
-                chartColor,
                 isSupported: true,
             });
         });
 
         this.contractMetadata = contractMetadata;
-    }
-
-    getTokenColor(tokenAddress: string): string {
-        return this.getTokenMetadata(tokenAddress).chartColor;
-    }
-
-    getDefaultPrecision(): number {
-        return this.contractMetadata.defaultPrecision;
-    }
-
-    isSupported(tokenAddress: string): boolean {
-        const metadata = this.getTokenMetadata(tokenAddress);
-        return metadata.isSupported;
     }
 
     getProxyAddress(): string {
@@ -136,32 +91,7 @@ export default class ContractMetadataStore {
         return multiAddress;
     }
 
-    getTokenMetadataIndex(address: string): number | undefined {
-        const index = this.contractMetadata.tokens.findIndex(
-            element => element.address === address
-        );
-
-        if (index !== -1) {
-            return index;
-        } else {
-            return undefined;
-        }
-    }
-
-    getTokenMetadata(address: string): TokenMetadata {
-        const tokenMetadata = this.contractMetadata.tokens.find(
-            element => element.address === address
-        );
-
-        if (!tokenMetadata) {
-            throw new Error(
-                'Attempting to get metadata for untracked token address'
-            );
-        }
-
-        return tokenMetadata;
-    }
-
+    // Used for asset options
     getFilteredTokenMetadata(filter: string): TokenMetadata[] {
         const tokens = this.contractMetadata.tokens || undefined;
 
@@ -190,45 +120,39 @@ export default class ContractMetadataStore {
         return filteredMetadata;
     }
 
-    getWhiteListedTokenAddresses(): string[] {
-        const whitelisted = this.getWhitelistedTokenMetadata();
-        return whitelisted.map(token => token.address);
-    }
-
+    // Provider uses this to get balances
     getTrackedTokenAddresses(): string[] {
-        const tokens = this.getTrackedTokenMetadata();
+        const tokens = this.contractMetadata.tokens;
         return tokens.map(token => token.address);
     }
 
-    getTrackedTokenMetadata(): TokenMetadata[] {
-        return this.contractMetadata.tokens;
-    }
-
-    getWhitelistedTokenMetadata(): TokenMetadata[] {
-        return this.contractMetadata.tokens.filter(token => token.isSupported);
-    }
-
-    getTokenPrecision(address: string): number {
-        const tokenMetadata = this.contractMetadata.tokens.find(
-            element => element.address === address
+    getWhiteListedTokenIcon(address: string): string {
+        const tokenList = this.contractMetadata.tokens.filter(
+            token => token.isSupported
         );
-
-        return tokenMetadata.precision;
+        const tokenUrl = tokenList.find(t => t.address === address);
+        if (tokenUrl) return tokenUrl.iconAddress;
+        else return 'unknown';
     }
 
-    hasTokenMetadata(address: string): boolean {
-        const tokenMetadata = this.contractMetadata.tokens.find(
-            element => element.address === address
+    getWhiteListedTokenPrecision(address: string): number {
+        const tokenList = this.contractMetadata.tokens.filter(
+            token => token.isSupported
         );
-
-        return !!tokenMetadata;
+        const tokenUrl = tokenList.find(t => t.address === address);
+        if (tokenUrl) return tokenUrl.precision;
+        else return 4;
     }
 
-    @action addTokenMetadata(address: string, metadata: TokenMetadata) {
-        const existingIndex = this.getTokenMetadataIndex(address);
-        if (existingIndex) {
-            throw new Error('Attempting to add metadata for existing token');
-        }
-        this.contractMetadata.tokens.push(metadata);
+    getDaiAddress(): string {
+        return this.contractMetadata.tokens.filter(
+            token => token.isSupported
+        )[1].address;
+    }
+
+    getEthAddress(): string {
+        return this.contractMetadata.tokens.filter(
+            token => token.isSupported
+        )[0].address;
     }
 }

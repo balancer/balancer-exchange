@@ -12,6 +12,7 @@ export enum ContractTypes {
     TestToken = 'TestToken',
     ExchangeProxy = 'ExchangeProxy',
     Multicall = 'Multicall',
+    TestTokenBytes = 'TestTokenBytes',
 }
 
 export const schema = {
@@ -20,6 +21,7 @@ export const schema = {
     TestToken: require('../abi/TestToken').abi,
     ExchangeProxy: require('../abi/ExchangeProxy').abi,
     Multicall: require('../abi/Multicall').abi,
+    TestTokenBytes: require('../abi/BTokenBytes32').abi,
 };
 
 export interface ChainData {
@@ -93,6 +95,7 @@ export default class ProviderStore {
             transactionStore,
             tokenStore,
             contractMetadataStore,
+            swapFormStore,
         } = this.rootStore;
 
         console.debug('[Provider] fetchUserBlockchainData', {
@@ -104,6 +107,9 @@ export default class ProviderStore {
             account,
             contractMetadataStore.getTrackedTokenAddresses()
         );
+
+        // Makes sure the Input/Output token data is up to date
+        swapFormStore.updateSelectedTokenMetaData(account);
     };
 
     // account is optional
