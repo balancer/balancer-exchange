@@ -111,6 +111,26 @@ export default class SwapFormStore {
         };
     }
 
+    @action loadDefaultInputToken(account) {
+        const localInputTokenAddr = localStorage.getItem('inputToken');
+
+        if (localInputTokenAddr && account)
+            this.setSelectedInputToken(localInputTokenAddr, account);
+        else this.setSelectedInputToken('ether', account);
+    }
+
+    @action loadDefaultOutputToken(account) {
+        const localOutputTokenAddr = localStorage.getItem('outputToken');
+
+        if (localOutputTokenAddr && account)
+            this.setSelectedOutputToken(localOutputTokenAddr, account);
+        else {
+            const { contractMetadataStore } = this.rootStore;
+            const daiAddr = contractMetadataStore.getDaiAddress();
+            this.setSelectedOutputToken(daiAddr, account);
+        }
+    }
+
     @action updateInputsFromObject(output) {
         this.inputs = {
             ...this.inputs,
@@ -667,6 +687,7 @@ export default class SwapFormStore {
             this.inputToken = inputTokenMetadata;
 
             poolStore.fetchAndSetTokenPairs(inputTokenAddress);
+            localStorage.setItem('inputToken', inputTokenAddress);
         } catch (err) {
             this.setErrorMessage(err.message);
         }
@@ -694,6 +715,7 @@ export default class SwapFormStore {
             this.outputToken = outputTokenMetadata;
 
             poolStore.fetchAndSetTokenPairs(outputTokenAddress);
+            localStorage.setItem('outputToken', outputTokenAddress);
         } catch (err) {
             this.setErrorMessage(err.message);
         }
