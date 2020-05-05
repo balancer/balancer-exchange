@@ -90,22 +90,22 @@ export default class SwapFormStore {
         this.resetTradeComposition();
         this.inputToken = {
             address: '',
-            symbol: 'unknown',
+            symbol: '',
             decimals: 18,
             iconAddress: 'unknown',
             precision: 4,
-            balanceFormatted: '0.0000',
+            balanceFormatted: '0.00',
             balanceBn: bnum(0),
             allowance: undefined,
         };
 
         this.outputToken = {
             address: '',
-            symbol: 'unknown',
+            symbol: '',
             decimals: 18,
             iconAddress: 'unknown',
             precision: 4,
-            balanceFormatted: '0.0000',
+            balanceFormatted: '0.00',
             balanceBn: bnum(0),
             allowance: undefined,
         };
@@ -689,6 +689,16 @@ export default class SwapFormStore {
             poolStore.fetchAndSetTokenPairs(inputTokenAddress);
             localStorage.setItem('inputToken', inputTokenAddress);
         } catch (err) {
+            this.inputToken = {
+                address: inputTokenAddress,
+                symbol: 'unknown',
+                decimals: 18,
+                iconAddress: 'unknown',
+                precision: 4,
+                balanceFormatted: '0.00',
+                balanceBn: bnum(0),
+                allowance: undefined,
+            };
             this.setErrorMessage(err.message);
         }
     };
@@ -717,6 +727,17 @@ export default class SwapFormStore {
             poolStore.fetchAndSetTokenPairs(outputTokenAddress);
             localStorage.setItem('outputToken', outputTokenAddress);
         } catch (err) {
+            this.outputToken = {
+                address: outputTokenAddress,
+                symbol: 'unknown',
+                decimals: 18,
+                iconAddress: 'unknown',
+                precision: 4,
+                balanceFormatted: '0.00',
+                balanceBn: bnum(0),
+                allowance: undefined,
+            };
+
             this.setErrorMessage(err.message);
         }
     };
