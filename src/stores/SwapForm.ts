@@ -689,6 +689,16 @@ export default class SwapFormStore {
             poolStore.fetchAndSetTokenPairs(inputTokenAddress);
             localStorage.setItem('inputToken', inputTokenAddress);
         } catch (err) {
+            this.inputToken = {
+                address: inputTokenAddress,
+                symbol: 'unknown',
+                decimals: 18,
+                iconAddress: 'unknown',
+                precision: 4,
+                balanceFormatted: '0.00',
+                balanceBn: bnum(0),
+                allowance: undefined,
+            };
             this.setErrorMessage(err.message);
         }
     };
@@ -717,6 +727,17 @@ export default class SwapFormStore {
             poolStore.fetchAndSetTokenPairs(outputTokenAddress);
             localStorage.setItem('outputToken', outputTokenAddress);
         } catch (err) {
+            this.outputToken = {
+                address: outputTokenAddress,
+                symbol: 'unknown',
+                decimals: 18,
+                iconAddress: 'unknown',
+                precision: 4,
+                balanceFormatted: '0.00',
+                balanceBn: bnum(0),
+                allowance: undefined,
+            };
+
             this.setErrorMessage(err.message);
         }
     };
