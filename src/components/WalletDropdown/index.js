@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import styled from 'styled-components';
 import { observer } from 'mobx-react';
 import { web3Window as window } from 'provider/Web3Window';
@@ -47,6 +47,36 @@ const WALLET_VIEWS = {
     PENDING: 'pending',
 };
 
+function useOnClickOutside(ref, handler) {
+    useEffect(() => {
+        const handleClick = event => {
+            // Do nothing if clicking ref's element or descendent elements
+            if (!ref.current || ref.current.contains(event.target)) {
+                return;
+            }
+
+            handler(event);
+        };
+
+        const handleKeyUp = event => {
+            if (event.key !== 'Escape') {
+                return;
+            }
+            handler(event);
+        };
+
+        document.addEventListener('mousedown', handleClick);
+        window.addEventListener('keydown', handleKeyUp, false);
+        document.addEventListener('touchstart', handleClick);
+
+        return () => {
+            document.removeEventListener('mousedown', handleClick);
+            window.removeEventListener('keydown', handleKeyUp, false);
+            document.removeEventListener('touchstart', handleClick);
+        };
+    }, [ref, handler]);
+}
+
 const WalletDropdown = observer(() => {
     const {
         root: { dropdownStore, providerStore },
@@ -70,6 +100,9 @@ const WalletDropdown = observer(() => {
             setWalletView(WALLET_VIEWS.ACCOUNT);
         }
     }, [walletDropdownOpen]);
+
+    const ref = useRef();
+    useOnClickOutside(ref, () => dropdownStore.toggleWalletDropdown());
 
     // close modal when a connection is successful
     const activePrevious = usePrevious(active);
@@ -116,7 +149,7 @@ const WalletDropdown = observer(() => {
     if (walletDropdownOpen) {
         return (
             <Lightbox>
-                <Wrapper>{getDropdownContent()}</Wrapper>
+                <Wrapper ref={ref}>{getDropdownContent()}</Wrapper>
             </Lightbox>
         );
     }
