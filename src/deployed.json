@@ -181,9 +181,9 @@
             },
             {
                 "symbol": "SNX",
-                "address": "0xC011A72400E58ecD99Ee497CF89E3775d4bd732F",
+                "address": "0xC011a73ee8576Fb46F5E1c5751cA3B9Fe0af2a6F",
                 "decimals": 18,
-                "iconAddress": "0xc011a72400e58ecd99ee497cf89e3775d4bd732f",
+                "iconAddress": "0xC011a73ee8576Fb46F5E1c5751cA3B9Fe0af2a6F",
                 "precision": 2
             },
             {
@@ -240,6 +240,27 @@
                 "address": "0xfE18be6b3Bd88A2D2A7f928d00292E7a9963CfC6",
                 "decimals": 18,
                 "iconAddress": "unknown",
+                "precision": 2
+            },
+            {
+                "symbol": "sUSD",
+                "address": "0x57Ab1ec28D129707052df4dF418D58a2D46d5f51",
+                "decimals": 18,
+                "iconAddress": "0x57Ab1ec28D129707052df4dF418D58a2D46d5f51",
+                "precision": 2
+            },
+            {
+                "symbol": "DZAR",
+                "address": "0x9Cb2f26A23b8d89973F08c957C4d7cdf75CD341c",
+                "decimals": 6,
+                "iconAddress": "0x9Cb2f26A23b8d89973F08c957C4d7cdf75CD341c",
+                "precision": 2
+            },
+            {
+                "symbol": "UMA",
+                "address": "0x04Fa0d235C4abf4BcF4787aF4CF447DE572eF828",
+                "decimals": 18,
+                "iconAddress": "0x04Fa0d235C4abf4BcF4787aF4CF447DE572eF828",
                 "precision": 2
             }
         ]
