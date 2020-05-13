@@ -9,10 +9,12 @@ import {
 import * as helpers from './helpers';
 import { bnum, scale, printPoolData } from './helpers';
 import {
+    getPoolsWithToken,
     getPoolsWithTokens,
-    getTokenPairs,
-    smartOrderRouter,
-} from '@balancer-labs/sor';
+    smartOrderRouterMultiHop,
+    getMultihopPoolsWithTokens,
+    parsePoolData,
+} from '../../node_modules/@balancer-labs/sor/src';
 import { SwapMethods } from '../stores/SwapForm';
 import { Pool, SorSwap, Swap } from '../stores/Proxy';
 import { TokenPairs } from '../stores/Pool';
@@ -100,6 +102,77 @@ export const findPoolsWithTokens = async (
     return poolData;
 };
 
+export interface PoolPairData {
+    id: string;
+    tokenIn: string;
+    tokenOut: string;
+    balanceIn: BigNumber;
+    balanceOut: BigNumber;
+    weightIn: BigNumber;
+    weightOut: BigNumber;
+    swapFee: BigNumber;
+}
+
+interface Path {
+    id: string;
+    poolPairDataList: PoolPairData[];
+    spotPrice?: BigNumber;
+    slippage?: BigNumber;
+    limitAmount?: BigNumber;
+}
+
+export const findBestSwapsMulti = async (
+    tokenIn: string,
+    tokenOut: string,
+    swapType: SwapMethods,
+    swapAmount: BigNumber,
+    maxPools: number,
+    returnTokenCostPerPool: BigNumber
+): Promise<[SorSwap[], BigNumber]> => {
+    let swaps: SorSwap[] = [
+        {
+            pool: '0x31670617b85451E5E3813E50442Eed3ce3B68d19',
+            amount: bnum(10),
+        },
+        { pool: '0x36742c4DD90179c296E206D3Fdb34EFD74168A7d', amount: bnum(5) },
+    ];
+
+    const data = await getPoolsWithTokens(tokenIn, tokenOut);
+    const directPools = data.pools;
+
+    let mostLiquidPoolsFirstHop, mostLiquidPoolsSecondHop, hopTokens;
+    [
+        mostLiquidPoolsFirstHop,
+        mostLiquidPoolsSecondHop,
+        hopTokens,
+    ] = await getMultihopPoolsWithTokens(tokenIn, tokenOut);
+
+    const pathData = parsePoolData(
+        directPools,
+        tokenIn,
+        tokenOut,
+        mostLiquidPoolsFirstHop,
+        mostLiquidPoolsSecondHop,
+        hopTokens
+    );
+
+    const [sorSwaps, totalReturn] = smartOrderRouterMultiHop(
+        pathData,
+        swapType,
+        swapAmount,
+        maxPools,
+        returnTokenCostPerPool
+    );
+    // sorSwaps will return a nested array of swaps that can be passed to proxy
+    console.log('!!!!!!! SOR swaps WITH multi-hop');
+    console.log(sorSwaps);
+    console.log('!!!!!!! Total return WITH multi-hop');
+    console.log(totalReturn.toString());
+
+    return [swaps, totalReturn];
+};
+
+// !!!!!!!
 export const findBestSwaps = (
     balancers: Pool[],
     swapMethod: SwapMethods,
@@ -108,13 +181,24 @@ export const findBestSwaps = (
     costOutputToken: BigNumber
 ): SorSwap[] => {
     printPoolData(balancers);
-    return smartOrderRouter(
+    let swaps: SorSwap[] = [
+        {
+            pool: '0x31670617b85451E5E3813E50442Eed3ce3B68d19',
+            amount: bnum(10),
+        },
+        { pool: '0x36742c4DD90179c296E206D3Fdb34EFD74168A7d', amount: bnum(5) },
+    ];
+
+    return swaps;
+    /*
+    return smartOrderRouterMultiHop(
         balancers,
         swapMethod,
         inputAmount,
         maxBalancers,
         costOutputToken
     );
+    */
 };
 
 /* Go through selected swaps and determine the total output */
@@ -152,7 +236,8 @@ export const sorTokenPairs = async (
     tokenAddress: string,
     wethAddress: string
 ): Promise<TokenPairs> => {
-    const pools = await getTokenPairs(tokenAddress);
+    // !!!!!!! const pools = await getTokenPairs(tokenAddress);
+    const pools = await getPoolsWithToken(tokenAddress); // getPoolsWithToken replaced getTokenPairs
 
     let tokenPairs: TokenPairs = new Set<string>();
     if (pools.pools.length === 0) return tokenPairs;
