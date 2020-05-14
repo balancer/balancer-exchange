@@ -4,8 +4,8 @@ import { ValidationRules } from 'react-form-validator-core';
 import {
     ExactAmountInPreview,
     ExactAmountOutPreview,
-    Swap,
     SwapPreview,
+    SorMultiSwap,
 } from './Proxy';
 import { BigNumber } from 'utils/bignumber';
 import { bnum, scale, str, isEmpty } from '../utils/helpers';
@@ -455,7 +455,7 @@ export default class SwapFormStore {
 
     @action private setTradeComposition(
         method: SwapMethods,
-        swaps: Swap[],
+        swaps: SorMultiSwap[],
         inputValue: BigNumber,
         totalValue: BigNumber,
         effectivePrice: BigNumber,
@@ -480,21 +480,40 @@ export default class SwapFormStore {
 
         const tempChartSwaps: ChartSwap[] = [];
         // Convert all Swaps to ChartSwaps
-        swaps.forEach(value => {
-            const swapValue =
-                method === SwapMethods.EXACT_IN
-                    ? value.tokenInParam
-                    : value.tokenOutParam;
+        // !!!!!!!
+        swaps.forEach(sorMultiSwap => {
+            if (sorMultiSwap.sequence.length === 1) {
+                const swap = sorMultiSwap.sequence[0];
 
-            tempChartSwaps.push({
-                isOthers: false,
-                poolAddress: value.pool,
-                percentage: bnum(swapValue)
-                    .div(inputValue)
-                    .times(100)
-                    .dp(2, BigNumber.ROUND_HALF_EVEN)
-                    .toNumber(),
-            });
+                tempChartSwaps.push({
+                    isOthers: false,
+                    poolAddress: swap.pool,
+                    percentage: bnum(swap.swapAmount)
+                        .div(inputValue)
+                        .times(100)
+                        .dp(2, BigNumber.ROUND_HALF_EVEN)
+                        .toNumber(),
+                });
+            } else if (sorMultiSwap.sequence.length > 1) {
+                const swapFirst = sorMultiSwap.sequence[0];
+                const swapSecond = sorMultiSwap.sequence[1];
+
+                const swapValue =
+                    method === SwapMethods.EXACT_IN
+                        ? swapFirst.swapAmount
+                        : swapSecond.swapAmount;
+
+                // !!!!!!! how to handle pool????
+                tempChartSwaps.push({
+                    isOthers: false,
+                    poolAddress: swapFirst.pool,
+                    percentage: bnum(swapValue)
+                        .div(inputValue)
+                        .times(100)
+                        .dp(2, BigNumber.ROUND_HALF_EVEN)
+                        .toNumber(),
+                });
+            }
         });
 
         let totalPercentage = 0;

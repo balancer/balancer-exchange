@@ -1,13 +1,7 @@
 import { BigNumber } from './bignumber';
-import {
-    calcInGivenOut,
-    calcOutGivenIn,
-    calcSpotPrice,
-    bmul,
-    bdiv,
-} from './balancerCalcs';
+import { calcInGivenOut, calcSpotPrice, bmul, bdiv } from './balancerCalcs';
 import * as helpers from './helpers';
-import { bnum, scale, printPoolData } from './helpers';
+import { bnum, scale } from './helpers';
 import {
     getPoolsWithToken,
     getPoolsWithTokens,
@@ -16,29 +10,9 @@ import {
     parsePoolData,
 } from '../../node_modules/@balancer-labs/sor/src';
 import { SwapMethods } from '../stores/SwapForm';
-import { Pool, SorSwap, Swap } from '../stores/Proxy';
+import { Pool, SorSwap, Swap, SorMultiSwap, MultiSwap } from '../stores/Proxy';
 import { TokenPairs } from '../stores/Pool';
 import { EtherKey } from '../stores/Token';
-
-export const formatSwapsExactAmountIn = (
-    sorSwaps: SorSwap[],
-    poolData: Pool[],
-    maxPrice: BigNumber,
-    minAmountOut: BigNumber
-): Swap[] => {
-    const swaps: Swap[] = [];
-    for (let i = 0; i < sorSwaps.length; i++) {
-        let swapAmount = sorSwaps[i].amount;
-        let swap: Swap = {
-            pool: sorSwaps[i].pool,
-            tokenInParam: swapAmount.toString(),
-            tokenOutParam: minAmountOut.toString(),
-            maxPrice: maxPrice.toString(),
-        };
-        swaps.push(swap);
-    }
-    return swaps;
-};
 
 export const formatSwapsExactAmountOut = (
     sorSwaps: SorSwap[],
@@ -102,24 +76,59 @@ export const findPoolsWithTokens = async (
     return poolData;
 };
 
-export interface PoolPairData {
-    id: string;
-    tokenIn: string;
-    tokenOut: string;
-    balanceIn: BigNumber;
-    balanceOut: BigNumber;
-    weightIn: BigNumber;
-    weightOut: BigNumber;
-    swapFee: BigNumber;
-}
+const formatPoolsWithTokens = async (
+    tokenIn,
+    tokenOut,
+    pools
+): Promise<Pool[]> => {
+    if (pools.length === 0)
+        throw Error('There are no pools with selected tokens');
 
-interface Path {
-    id: string;
-    poolPairDataList: PoolPairData[];
-    spotPrice?: BigNumber;
-    slippage?: BigNumber;
-    limitAmount?: BigNumber;
-}
+    let poolData: Pool[] = [];
+    pools.forEach(p => {
+        let tI: any = p.tokens.find(
+            t => helpers.toChecksum(t.address) === helpers.toChecksum(tokenIn)
+        );
+
+        if (!tI) {
+            tI = {
+                balance: 0,
+                decimals: 0,
+                denormWeight: 0,
+            };
+        }
+
+        let tO: any = p.tokens.find(
+            t => helpers.toChecksum(t.address) === helpers.toChecksum(tokenOut)
+        );
+
+        if (!tO) {
+            tO = {
+                balance: 0,
+                decimals: 0,
+                denormWeight: 0,
+            };
+        }
+
+        let obj: Pool = {
+            id: helpers.toChecksum(p.id),
+            decimalsIn: tI.decimals,
+            decimalsOut: tO.decimals,
+            balanceIn: scale(bnum(tI.balance), tI.decimals),
+            balanceOut: scale(bnum(tO.balance), tO.decimals),
+            weightIn: scale(bnum(tI.denormWeight).div(bnum(p.totalWeight)), 18),
+            weightOut: scale(
+                bnum(tO.denormWeight).div(bnum(p.totalWeight)),
+                18
+            ),
+            swapFee: scale(bnum(p.swapFee), 18),
+        };
+
+        poolData.push(obj);
+    });
+
+    return poolData;
+};
 
 export const findBestSwapsMulti = async (
     tokenIn: string,
@@ -128,15 +137,7 @@ export const findBestSwapsMulti = async (
     swapAmount: BigNumber,
     maxPools: number,
     returnTokenCostPerPool: BigNumber
-): Promise<[SorSwap[], BigNumber]> => {
-    let swaps: SorSwap[] = [
-        {
-            pool: '0x31670617b85451E5E3813E50442Eed3ce3B68d19',
-            amount: bnum(10),
-        },
-        { pool: '0x36742c4DD90179c296E206D3Fdb34EFD74168A7d', amount: bnum(5) },
-    ];
-
+): Promise<[SorMultiSwap[], BigNumber]> => {
     const data = await getPoolsWithTokens(tokenIn, tokenOut);
     const directPools = data.pools;
 
@@ -156,6 +157,7 @@ export const findBestSwapsMulti = async (
         hopTokens
     );
 
+    // sorSwaps will return a nested array of swaps that can be passed to proxy
     const [sorSwaps, totalReturn] = smartOrderRouterMultiHop(
         pathData,
         swapType,
@@ -163,80 +165,47 @@ export const findBestSwapsMulti = async (
         maxPools,
         returnTokenCostPerPool
     );
-    // sorSwaps will return a nested array of swaps that can be passed to proxy
-    console.log('!!!!!!! SOR swaps WITH multi-hop');
-    console.log(sorSwaps);
-    console.log('!!!!!!! Total return WITH multi-hop');
-    console.log(totalReturn.toString());
 
-    return [swaps, totalReturn];
-};
+    let formattedSorSwaps: SorMultiSwap[] = [];
 
-// !!!!!!!
-export const findBestSwaps = (
-    balancers: Pool[],
-    swapMethod: SwapMethods,
-    inputAmount: BigNumber,
-    maxBalancers: number,
-    costOutputToken: BigNumber
-): SorSwap[] => {
-    printPoolData(balancers);
-    let swaps: SorSwap[] = [
-        {
-            pool: '0x31670617b85451E5E3813E50442Eed3ce3B68d19',
-            amount: bnum(10),
-        },
-        { pool: '0x36742c4DD90179c296E206D3Fdb34EFD74168A7d', amount: bnum(5) },
-    ];
+    if (swapType === SwapMethods.EXACT_IN)
+        console.log(
+            `SwapExactIn: ${swapAmount}->${totalReturn.toString()}, Multi-Swap Sequences:`
+        );
+    else
+        console.log(
+            `SwapExactOut: ${totalReturn.toString()}->${swapAmount}, Multi-Swap Sequences:`
+        );
 
-    return swaps;
-    /*
-    return smartOrderRouterMultiHop(
-        balancers,
-        swapMethod,
-        inputAmount,
-        maxBalancers,
-        costOutputToken
-    );
-    */
-};
-
-/* Go through selected swaps and determine the total output */
-export const calcTotalOutput = (swaps: Swap[], poolData: Pool[]): BigNumber => {
-    try {
-        let totalAmountOut = bnum(0);
-        swaps.forEach(swap => {
-            const swapAmount = swap.tokenInParam;
-
-            const pool = poolData.find(p => p.id === swap.pool);
-            if (!pool) {
-                throw new Error(
-                    '[Invariant] No pool found for selected balancer index'
-                );
-            }
-
-            const preview = calcOutGivenIn(
-                pool.balanceIn,
-                pool.weightIn,
-                pool.balanceOut,
-                pool.weightOut,
-                bnum(swapAmount),
-                pool.swapFee
+    sorSwaps.forEach((sequence, i) => {
+        let sorMultiSwap: SorMultiSwap = { sequence: [] };
+        sequence.forEach((swap, j) => {
+            console.log(
+                `Swap:${i} Sequence:${j}, ${swap.pool}: ${swap.tokenIn}->${swap.tokenOut} Amount:${swap.swapAmount}`
             );
 
-            totalAmountOut = totalAmountOut.plus(preview);
+            let multiSwap: MultiSwap = {
+                pool: swap.pool,
+                tokenInParam: swap.tokenIn,
+                tokenOutParam: swap.tokenOut,
+                maxPrice: swap.maxPrice,
+                swapAmount: swap.swapAmount,
+                limitReturnAmount: swap.limitReturnAmount,
+            };
+
+            sorMultiSwap.sequence.push(multiSwap);
         });
-        return totalAmountOut;
-    } catch (e) {
-        throw new Error(e);
-    }
+
+        formattedSorSwaps.push(sorMultiSwap);
+    });
+
+    return [formattedSorSwaps, totalReturn];
 };
 
 export const sorTokenPairs = async (
     tokenAddress: string,
     wethAddress: string
 ): Promise<TokenPairs> => {
-    // !!!!!!! const pools = await getTokenPairs(tokenAddress);
     const pools = await getPoolsWithToken(tokenAddress); // getPoolsWithToken replaced getTokenPairs
 
     let tokenPairs: TokenPairs = new Set<string>();
@@ -286,39 +255,67 @@ export const calcExpectedSlippage = (
     return bnum(100).minus(spotPercentage);
 };
 
-export const calcTotalSpotValue = (
+export const calcTotalSpotValue = async (
     method: SwapMethods,
-    swaps: Swap[],
-    poolData: Pool[]
-) => {
+    swaps: SorMultiSwap[]
+): Promise<BigNumber> => {
     let totalValue = bnum(0);
-    swaps.forEach(swap => {
-        const swapAmount =
-            method === SwapMethods.EXACT_IN
-                ? swap.tokenInParam
-                : swap.tokenOutParam;
-        const pool = poolData.find(p => p.id === swap.pool);
-        if (!pool) {
-            throw new Error(
-                '[Invariant] No pool found for selected balancer index'
+    console.log(`!!!!!!! calcTotalSpotValue. ${swaps.length} Swaps.`);
+    for (let i = 0; i < swaps.length; i++) {
+        let sorMultiSwap = swaps[i];
+
+        let spotPrices = [];
+        const swapAmount = sorMultiSwap.sequence[0].swapAmount;
+        // for each swap in sequence calculate spot price. spot price of sequence is product of all spot prices.
+        for (let j = 0; j < sorMultiSwap.sequence.length; j++) {
+            let swap = sorMultiSwap.sequence[j];
+            console.log(
+                `!!!!!! Checking Swap:${i} Sequence:${j}, ${swap.pool}: ${swap.tokenInParam}->${swap.tokenOutParam} Amount:${swap.swapAmount}`
             );
+
+            const poolData = await findPoolsWithTokens(
+                swap.tokenInParam,
+                swap.tokenOutParam
+            );
+
+            const pool = poolData.find(
+                p => helpers.toChecksum(p.id) === helpers.toChecksum(swap.pool)
+            );
+            if (!pool) {
+                throw new Error(
+                    '[Invariant] No pool found for selected balancer index'
+                );
+            }
+
+            console.log(
+                `!!!!!!! swap pool ${
+                    pool.id
+                }, BalIn: ${pool.balanceIn.toString()}, WeightIn: ${pool.weightIn.toString()}, BalOut: ${pool.balanceOut.toString()}, WeightOut: ${pool.weightOut.toString()}`
+            );
+
+            const spotPrice = calcSpotPrice(
+                pool.balanceIn,
+                pool.weightIn,
+                pool.balanceOut,
+                pool.weightOut,
+                pool.swapFee
+            );
+            console.log(`!!!!!!! pool spotPrice:`, spotPrice.toString());
+
+            spotPrices.push(spotPrice);
         }
 
-        const spotPrice = calcSpotPrice(
-            pool.balanceIn,
-            pool.weightIn,
-            pool.balanceOut,
-            pool.weightOut,
-            pool.swapFee
-        );
+        console.log(`!!!!!!! Sequence SpotPrices: ${spotPrices}`);
+        const spotPrice = spotPrices.reduce((a, b) => bmul(a, b));
+        console.log(`!!!!!!! Sequence SpotPrice Product: ${spotPrice}`);
 
         if (method === SwapMethods.EXACT_IN) {
             totalValue = totalValue.plus(bdiv(bnum(swapAmount), spotPrice));
         } else if (method === SwapMethods.EXACT_OUT) {
             totalValue = totalValue.plus(bmul(bnum(swapAmount), spotPrice));
         }
-    });
-
+    }
+    console.log(`!!!!!!! totalValue: ${totalValue}`);
     return totalValue;
 };
 
