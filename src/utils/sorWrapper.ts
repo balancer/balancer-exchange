@@ -8,7 +8,7 @@ import {
     smartOrderRouterMultiHop,
     getMultihopPoolsWithTokens,
     parsePoolData,
-} from '../../node_modules/@balancer-labs/sor/src';
+} from '@balancer-labs/sor';
 import { SwapMethods } from '../stores/SwapForm';
 import { Pool, SorSwap, Swap, SorMultiSwap, MultiSwap } from '../stores/Proxy';
 import { TokenPairs } from '../stores/Pool';
