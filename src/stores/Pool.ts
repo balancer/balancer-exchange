@@ -60,7 +60,7 @@ export default class PoolStore {
 
             const tokenPairs = await sorTokenPairs(
                 tokenAddressToFind,
-                contractMetadataStore.getWethAddress()
+                contractMetadataStore
             );
 
             console.log('[Token Pairs Fetch] - Success', {

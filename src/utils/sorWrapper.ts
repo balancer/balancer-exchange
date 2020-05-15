@@ -8,11 +8,13 @@ import {
     smartOrderRouterMultiHop,
     getMultihopPoolsWithTokens,
     parsePoolData,
+    getTokenPairsMultiHop,
 } from '@balancer-labs/sor';
 import { SwapMethods } from '../stores/SwapForm';
 import { Pool, SorSwap, Swap, SorMultiSwap, MultiSwap } from '../stores/Proxy';
 import { TokenPairs } from '../stores/Pool';
 import { EtherKey } from '../stores/Token';
+import ContractMetadataStore from '../stores/ContractMetadata';
 
 export const formatSwapsExactAmountOut = (
     sorSwaps: SorSwap[],
@@ -205,28 +207,27 @@ export const findBestSwapsMulti = async (
 
 export const sorTokenPairs = async (
     tokenAddress: string,
-    wethAddress: string
+    contractMetadataStore: ContractMetadataStore
 ): Promise<TokenPairs> => {
-    const pools = await getPoolsWithToken(tokenAddress); // getPoolsWithToken replaced getTokenPairs
+    let [, allTokenPairs] = await getTokenPairsMultiHop(tokenAddress);
 
     let tokenPairs: TokenPairs = new Set<string>();
-    if (pools.pools.length === 0) return tokenPairs;
+    const sanitizedWeth = helpers.toChecksum(
+        contractMetadataStore.getWethAddress()
+    );
+    allTokenPairs.forEach(token => {
+        const sanitizedToken = helpers.toChecksum(token);
 
-    pools.pools.forEach(p => {
-        p.tokensList.forEach(token => {
-            const sanitizedToken = helpers.toChecksum(token);
-            const sanitizedWeth = helpers.toChecksum(wethAddress);
+        if (!tokenPairs.has(sanitizedToken)) {
+            tokenPairs.add(sanitizedToken);
+        }
 
-            if (!tokenPairs.has(sanitizedToken)) {
-                tokenPairs.add(sanitizedToken);
-            }
-
-            // Add Ether along with WETH
-            if (sanitizedToken === sanitizedWeth && !tokenPairs.has(EtherKey)) {
-                tokenPairs.add(EtherKey);
-            }
-        });
+        // Add Ether along with WETH
+        if (sanitizedToken === sanitizedWeth && !tokenPairs.has(EtherKey)) {
+            tokenPairs.add(EtherKey);
+        }
     });
+
     return tokenPairs;
 };
 
