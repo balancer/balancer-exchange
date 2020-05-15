@@ -1,0 +1,405 @@
+{
+    "compiler": {
+        "version": "0.5.12+commit.7709ece9"
+    },
+    "language": "Solidity",
+    "abi": [
+        {
+            "inputs": [
+                {
+                    "internalType": "address",
+                    "name": "_weth",
+                    "type": "address"
+                }
+            ],
+            "payable": false,
+            "stateMutability": "nonpayable",
+            "type": "constructor"
+        },
+        {
+            "anonymous": true,
+            "inputs": [
+                {
+                    "indexed": true,
+                    "internalType": "bytes4",
+                    "name": "sig",
+                    "type": "bytes4"
+                },
+                {
+                    "indexed": true,
+                    "internalType": "address",
+                    "name": "caller",
+                    "type": "address"
+                },
+                {
+                    "indexed": false,
+                    "internalType": "bytes",
+                    "name": "data",
+                    "type": "bytes"
+                }
+            ],
+            "name": "LOG_CALL",
+            "type": "event"
+        },
+        {
+            "payable": true,
+            "stateMutability": "payable",
+            "type": "fallback"
+        },
+        {
+            "constant": false,
+            "inputs": [
+                {
+                    "components": [
+                        {
+                            "internalType": "address",
+                            "name": "pool",
+                            "type": "address"
+                        },
+                        {
+                            "internalType": "uint256",
+                            "name": "tokenInParam",
+                            "type": "uint256"
+                        },
+                        {
+                            "internalType": "uint256",
+                            "name": "tokenOutParam",
+                            "type": "uint256"
+                        },
+                        {
+                            "internalType": "uint256",
+                            "name": "maxPrice",
+                            "type": "uint256"
+                        }
+                    ],
+                    "internalType": "struct ExchangeProxy.Swap[]",
+                    "name": "swaps",
+                    "type": "tuple[]"
+                },
+                {
+                    "internalType": "address",
+                    "name": "tokenOut",
+                    "type": "address"
+                },
+                {
+                    "internalType": "uint256",
+                    "name": "minTotalAmountOut",
+                    "type": "uint256"
+                }
+            ],
+            "name": "batchEthInSwapExactIn",
+            "outputs": [
+                {
+                    "internalType": "uint256",
+                    "name": "totalAmountOut",
+                    "type": "uint256"
+                }
+            ],
+            "payable": true,
+            "stateMutability": "payable",
+            "type": "function"
+        },
+        {
+            "constant": false,
+            "inputs": [
+                {
+                    "components": [
+                        {
+                            "internalType": "address",
+                            "name": "pool",
+                            "type": "address"
+                        },
+                        {
+                            "internalType": "uint256",
+                            "name": "tokenInParam",
+                            "type": "uint256"
+                        },
+                        {
+                            "internalType": "uint256",
+                            "name": "tokenOutParam",
+                            "type": "uint256"
+                        },
+                        {
+                            "internalType": "uint256",
+                            "name": "maxPrice",
+                            "type": "uint256"
+                        }
+                    ],
+                    "internalType": "struct ExchangeProxy.Swap[]",
+                    "name": "swaps",
+                    "type": "tuple[]"
+                },
+                {
+                    "internalType": "address",
+                    "name": "tokenOut",
+                    "type": "address"
+                }
+            ],
+            "name": "batchEthInSwapExactOut",
+            "outputs": [
+                {
+                    "internalType": "uint256",
+                    "name": "totalAmountIn",
+                    "type": "uint256"
+                }
+            ],
+            "payable": true,
+            "stateMutability": "payable",
+            "type": "function"
+        },
+        {
+            "constant": false,
+            "inputs": [
+                {
+                    "components": [
+                        {
+                            "internalType": "address",
+                            "name": "pool",
+                            "type": "address"
+                        },
+                        {
+                            "internalType": "uint256",
+                            "name": "tokenInParam",
+                            "type": "uint256"
+                        },
+                        {
+                            "internalType": "uint256",
+                            "name": "tokenOutParam",
+                            "type": "uint256"
+                        },
+                        {
+                            "internalType": "uint256",
+                            "name": "maxPrice",
+                            "type": "uint256"
+                        }
+                    ],
+                    "internalType": "struct ExchangeProxy.Swap[]",
+                    "name": "swaps",
+                    "type": "tuple[]"
+                },
+                {
+                    "internalType": "address",
+                    "name": "tokenIn",
+                    "type": "address"
+                },
+                {
+                    "internalType": "uint256",
+                    "name": "totalAmountIn",
+                    "type": "uint256"
+                },
+                {
+                    "internalType": "uint256",
+                    "name": "minTotalAmountOut",
+                    "type": "uint256"
+                }
+            ],
+            "name": "batchEthOutSwapExactIn",
+            "outputs": [
+                {
+                    "internalType": "uint256",
+                    "name": "totalAmountOut",
+                    "type": "uint256"
+                }
+            ],
+            "payable": false,
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "constant": false,
+            "inputs": [
+                {
+                    "components": [
+                        {
+                            "internalType": "address",
+                            "name": "pool",
+                            "type": "address"
+                        },
+                        {
+                            "internalType": "uint256",
+                            "name": "tokenInParam",
+                            "type": "uint256"
+                        },
+                        {
+                            "internalType": "uint256",
+                            "name": "tokenOutParam",
+                            "type": "uint256"
+                        },
+                        {
+                            "internalType": "uint256",
+                            "name": "maxPrice",
+                            "type": "uint256"
+                        }
+                    ],
+                    "internalType": "struct ExchangeProxy.Swap[]",
+                    "name": "swaps",
+                    "type": "tuple[]"
+                },
+                {
+                    "internalType": "address",
+                    "name": "tokenIn",
+                    "type": "address"
+                },
+                {
+                    "internalType": "uint256",
+                    "name": "maxTotalAmountIn",
+                    "type": "uint256"
+                }
+            ],
+            "name": "batchEthOutSwapExactOut",
+            "outputs": [
+                {
+                    "internalType": "uint256",
+                    "name": "totalAmountIn",
+                    "type": "uint256"
+                }
+            ],
+            "payable": false,
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "constant": false,
+            "inputs": [
+                {
+                    "components": [
+                        {
+                            "internalType": "address",
+                            "name": "pool",
+                            "type": "address"
+                        },
+                        {
+                            "internalType": "uint256",
+                            "name": "tokenInParam",
+                            "type": "uint256"
+                        },
+                        {
+                            "internalType": "uint256",
+                            "name": "tokenOutParam",
+                            "type": "uint256"
+                        },
+                        {
+                            "internalType": "uint256",
+                            "name": "maxPrice",
+                            "type": "uint256"
+                        }
+                    ],
+                    "internalType": "struct ExchangeProxy.Swap[]",
+                    "name": "swaps",
+                    "type": "tuple[]"
+                },
+                {
+                    "internalType": "address",
+                    "name": "tokenIn",
+                    "type": "address"
+                },
+                {
+                    "internalType": "address",
+                    "name": "tokenOut",
+                    "type": "address"
+                },
+                {
+                    "internalType": "uint256",
+                    "name": "totalAmountIn",
+                    "type": "uint256"
+                },
+                {
+                    "internalType": "uint256",
+                    "name": "minTotalAmountOut",
+                    "type": "uint256"
+                }
+            ],
+            "name": "batchSwapExactIn",
+            "outputs": [
+                {
+                    "internalType": "uint256",
+                    "name": "totalAmountOut",
+                    "type": "uint256"
+                }
+            ],
+            "payable": false,
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "constant": false,
+            "inputs": [
+                {
+                    "components": [
+                        {
+                            "internalType": "address",
+                            "name": "pool",
+                            "type": "address"
+                        },
+                        {
+                            "internalType": "uint256",
+                            "name": "tokenInParam",
+                            "type": "uint256"
+                        },
+                        {
+                            "internalType": "uint256",
+                            "name": "tokenOutParam",
+                            "type": "uint256"
+                        },
+                        {
+                            "internalType": "uint256",
+                            "name": "maxPrice",
+                            "type": "uint256"
+                        }
+                    ],
+                    "internalType": "struct ExchangeProxy.Swap[]",
+                    "name": "swaps",
+                    "type": "tuple[]"
+                },
+                {
+                    "internalType": "address",
+                    "name": "tokenIn",
+                    "type": "address"
+                },
+                {
+                    "internalType": "address",
+                    "name": "tokenOut",
+                    "type": "address"
+                },
+                {
+                    "internalType": "uint256",
+                    "name": "maxTotalAmountIn",
+                    "type": "uint256"
+                }
+            ],
+            "name": "batchSwapExactOut",
+            "outputs": [
+                {
+                    "internalType": "uint256",
+                    "name": "totalAmountIn",
+                    "type": "uint256"
+                }
+            ],
+            "payable": false,
+            "stateMutability": "nonpayable",
+            "type": "function"
+        }
+    ],
+    "settings": {
+        "compilationTarget": {
+            "contracts/ExchangeProxy.sol": "ExchangeProxy"
+        },
+        "evmVersion": "petersburg",
+        "libraries": {},
+        "optimizer": {
+            "enabled": true,
+            "runs": 10000
+        },
+        "remappings": []
+    },
+    "sources": {
+        "contracts/ExchangeProxy.sol": {
+            "keccak256": "0xfe08bfb07fc064a79d852dcaf2c83aee207d5e2b3e13a30f913250d8fb821ceb",
+            "urls": [
+                "bzz-raw://42174756a8b453c534f56a1dcd7303b09d3d156ff1f4252d97a3144895c152f9",
+                "dweb:/ipfs/QmX8AWirTAPsaFbYe375p9WhC7m61JDM1xP2ciqssxDENB"
+            ]
+        }
+    },
+    "version": 1
+}

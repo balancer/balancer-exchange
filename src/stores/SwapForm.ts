@@ -41,12 +41,15 @@ export interface ChartData {
     swaps: ChartSwap[];
     inputPriceValue: BigNumber;
     outputPriceValue: BigNumber;
+    noPools?: number;
 }
 
 export interface ChartSwap {
     isOthers: boolean;
-    poolAddress?: string;
+    firstPoolAddress?: string;
+    secondPoolAddress?: string;
     percentage: number;
+    noPools?: number;
 }
 
 export default class SwapFormStore {
@@ -420,13 +423,14 @@ export default class SwapFormStore {
         const {
             tokenAmountIn,
             swaps,
+            sorSwapsFormatted,
             totalOutput,
             effectivePrice,
             validSwap,
         } = preview;
         this.setTradeComposition(
             SwapMethods.EXACT_IN,
-            swaps,
+            sorSwapsFormatted,
             tokenAmountIn,
             totalOutput,
             effectivePrice,
@@ -439,13 +443,14 @@ export default class SwapFormStore {
         const {
             tokenAmountOut,
             swaps,
+            sorSwapsFormatted,
             totalInput,
             effectivePrice,
             validSwap,
         } = preview;
         this.setTradeComposition(
             SwapMethods.EXACT_OUT,
-            swaps,
+            sorSwapsFormatted,
             tokenAmountOut,
             totalInput,
             effectivePrice,
@@ -466,6 +471,7 @@ export default class SwapFormStore {
             inputPriceValue: bnum(0),
             outputPriceValue: bnum(0),
             swaps: [],
+            noPools: 0,
         };
 
         if (!validSwap) {
@@ -480,19 +486,20 @@ export default class SwapFormStore {
 
         const tempChartSwaps: ChartSwap[] = [];
         // Convert all Swaps to ChartSwaps
-        // !!!!!!!
         swaps.forEach(sorMultiSwap => {
             if (sorMultiSwap.sequence.length === 1) {
                 const swap = sorMultiSwap.sequence[0];
 
                 tempChartSwaps.push({
                     isOthers: false,
-                    poolAddress: swap.pool,
+                    firstPoolAddress: swap.pool,
+                    secondPoolAddress: null,
                     percentage: bnum(swap.swapAmount)
                         .div(inputValue)
                         .times(100)
                         .dp(2, BigNumber.ROUND_HALF_EVEN)
                         .toNumber(),
+                    noPools: 1,
                 });
             } else if (sorMultiSwap.sequence.length > 1) {
                 const swapFirst = sorMultiSwap.sequence[0];
@@ -503,15 +510,16 @@ export default class SwapFormStore {
                         ? swapFirst.swapAmount
                         : swapSecond.swapAmount;
 
-                // !!!!!!! how to handle pool????
                 tempChartSwaps.push({
                     isOthers: false,
-                    poolAddress: swapFirst.pool,
+                    firstPoolAddress: swapFirst.pool,
+                    secondPoolAddress: swapSecond.pool,
                     percentage: bnum(swapValue)
                         .div(inputValue)
                         .times(100)
                         .dp(2, BigNumber.ROUND_HALF_EVEN)
                         .toNumber(),
+                    noPools: 2,
                 });
             }
         });
@@ -521,8 +529,10 @@ export default class SwapFormStore {
         tempChartSwaps.forEach((value, index) => {
             if (index === 0 || index === 1 || index === 2) {
                 result.swaps.push(value);
+                result.noPools += value.noPools;
             } else {
                 others.percentage += value.percentage;
+                result.noPools += 1;
             }
 
             totalPercentage += value.percentage;

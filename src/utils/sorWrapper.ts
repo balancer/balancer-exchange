@@ -39,6 +39,7 @@ export const findPoolsWithTokens = async (
     tokenOut: string
 ): Promise<Pool[]> => {
     let pools = await getPoolsWithTokens(tokenIn, tokenOut);
+    console.log(`!!!!!!! getPoolsWithTokens`, pools);
 
     if (pools.pools.length === 0)
         throw Error('There are no pools with selected tokens');
@@ -137,7 +138,7 @@ export const findBestSwapsMulti = async (
     swapAmount: BigNumber,
     maxPools: number,
     returnTokenCostPerPool: BigNumber
-): Promise<[SorMultiSwap[], BigNumber]> => {
+): Promise<[SorMultiSwap[], BigNumber, any[][]]> => {
     const data = await getPoolsWithTokens(tokenIn, tokenOut);
     const directPools = data.pools;
 
@@ -199,7 +200,7 @@ export const findBestSwapsMulti = async (
         formattedSorSwaps.push(sorMultiSwap);
     });
 
-    return [formattedSorSwaps, totalReturn];
+    return [formattedSorSwaps, totalReturn, sorSwaps];
 };
 
 export const sorTokenPairs = async (
@@ -277,6 +278,8 @@ export const calcTotalSpotValue = async (
                 swap.tokenInParam,
                 swap.tokenOutParam
             );
+
+            console.log(`!!!!!!! poolData: `, poolData);
 
             const pool = poolData.find(
                 p => helpers.toChecksum(p.id) === helpers.toChecksum(swap.pool)
