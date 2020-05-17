@@ -269,6 +269,13 @@
                 "decimals": 18,
                 "iconAddress": "0x04Fa0d235C4abf4BcF4787aF4CF447DE572eF828",
                 "precision": 2
+            },
+            {
+                "symbol": "PNK",
+                "address": "0x93ed3fbe21207ec2e8f2d3c3de6e058cb73bc04d",
+                "decimals": 18,
+                "iconAddress": "0x93ed3fbe21207ec2e8f2d3c3de6e058cb73bc04d",
+                "precision": 2
             }
         ]
     }
