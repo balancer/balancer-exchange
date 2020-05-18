@@ -41,7 +41,7 @@ export const findPoolsWithTokens = async (
     tokenOut: string
 ): Promise<Pool[]> => {
     let pools = await getPoolsWithTokens(tokenIn, tokenOut);
-    console.log(`!!!!!!! getPoolsWithTokens`, pools);
+    // console.log(`!!!!!!! getPoolsWithTokens`, pools);
 
     if (pools.pools.length === 0)
         throw Error('There are no pools with selected tokens');
@@ -267,7 +267,6 @@ export const calcTotalSpotValue = async (
         let sorMultiSwap = swaps[i];
 
         let spotPrices = [];
-        const swapAmount = sorMultiSwap.sequence[0].swapAmount;
         // for each swap in sequence calculate spot price. spot price of sequence is product of all spot prices.
         for (let j = 0; j < sorMultiSwap.sequence.length; j++) {
             let swap = sorMultiSwap.sequence[j];
@@ -280,7 +279,7 @@ export const calcTotalSpotValue = async (
                 swap.tokenOutParam
             );
 
-            console.log(`!!!!!!! poolData: `, poolData);
+            // console.log(`!!!!!!! poolData: `, poolData);
 
             const pool = poolData.find(
                 p => helpers.toChecksum(p.id) === helpers.toChecksum(swap.pool)
@@ -314,8 +313,10 @@ export const calcTotalSpotValue = async (
         console.log(`!!!!!!! Sequence SpotPrice Product: ${spotPrice}`);
 
         if (method === SwapMethods.EXACT_IN) {
+            const swapAmount = sorMultiSwap.sequence[0].swapAmount;
             totalValue = totalValue.plus(bdiv(bnum(swapAmount), spotPrice));
         } else if (method === SwapMethods.EXACT_OUT) {
+            const swapAmount = sorMultiSwap.sequence[1].swapAmount;
             totalValue = totalValue.plus(bmul(bnum(swapAmount), spotPrice));
         }
     }

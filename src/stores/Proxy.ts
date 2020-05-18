@@ -7,6 +7,7 @@ import {
     printSwapInput,
     printSwaps,
     scale,
+    MAX_UINT,
 } from 'utils/helpers';
 import RootStore from 'stores/Root';
 import { BigNumber } from 'utils/bignumber';
@@ -205,7 +206,8 @@ export default class ProxyStore {
                     }, Amt:${sequence.swapAmount.toString()} Limit:${sequence.limitReturnAmount.toString()} MaxPrice:${sequence.maxPrice.toString()}`
                 );
                 // !!!!!!! changed to fix
-                sequence.maxPrice = '1000000000000000000000';
+                sequence.maxPrice = MAX_UINT.toString();
+                sequence.limitReturnAmount = '0';
             });
         });
 
@@ -275,7 +277,8 @@ export default class ProxyStore {
                     }, Amt:${sequence.swapAmount.toString()} Limit:${sequence.limitReturnAmount.toString()} MaxPrice:${sequence.maxPrice.toString()}`
                 );
                 // !!!!!!! changed to fix
-                sequence.maxPrice = '1000000000000000000000';
+                sequence.maxPrice = MAX_UINT.toString();
+                sequence.limitReturnAmount = MAX_UINT.toString();
             });
         });
 
@@ -283,7 +286,7 @@ export default class ProxyStore {
             await providerStore.sendTransaction(
                 ContractTypes.ExchangeProxy,
                 proxyAddress,
-                'batchEthInSwapExactOut',
+                'multihopBatchEthInSwapExactOut',
                 [swaps, tokenOut],
                 { value: ethers.utils.bigNumberify(maxAmountIn.toString()) }
             );
@@ -291,14 +294,14 @@ export default class ProxyStore {
             await providerStore.sendTransaction(
                 ContractTypes.ExchangeProxy,
                 proxyAddress,
-                'batchEthOutSwapExactOut',
+                'multihopBatchEthOutSwapExactOut',
                 [swaps, tokenIn, maxAmountIn.toString()]
             );
         } else {
             await providerStore.sendTransaction(
                 ContractTypes.ExchangeProxy,
                 proxyAddress,
-                'batchSwapExactOut',
+                'multihopBatchSwapExactOut',
                 [swaps, tokenIn, tokenOut, maxAmountIn.toString()]
             );
         }
@@ -422,6 +425,9 @@ export default class ProxyStore {
         outputDecimals: number
     ): Promise<ExactAmountOutPreview> => {
         try {
+            console.log(
+                `!!!!!!! ExactAmountOutPreview: ${tokenIn}->${tokenOut}`
+            );
             this.setPreviewPending(true);
             const { contractMetadataStore } = this.rootStore;
 
@@ -463,7 +469,6 @@ export default class ProxyStore {
                 );
             }
 
-            console.log(`!!!!!!! ExactAmountOutPreview`);
             console.log(`!!!!!!! ${totalInput.toString()}`);
 
             const spotInput = await calcTotalSpotValue(
@@ -471,12 +476,11 @@ export default class ProxyStore {
                 sorSwapsFormatted
             );
 
-            const spotPrice = calcPrice(tokenAmountOut, spotInput);
-
             console.log('[Spot Price Calc]', {
                 tokenAmountOut: tokenAmountOut.toString(),
                 totalInputSpot: spotInput.toString(),
             });
+            const spotPrice = calcPrice(tokenAmountOut, spotInput);
 
             const effectivePrice = this.calcEffectivePrice(
                 tokenAmountOut,
