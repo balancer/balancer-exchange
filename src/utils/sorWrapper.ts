@@ -184,7 +184,7 @@ export const findBestSwapsMulti = async (
         let sorMultiSwap: SorMultiSwap = { sequence: [] };
         sequence.forEach((swap, j) => {
             console.log(
-                `Swap:${i} Sequence:${j}, ${swap.pool}: ${swap.tokenIn}->${swap.tokenOut} Amount:${swap.swapAmount}`
+                `Swap:${i} Sequence:${j}, ${swap.pool}: ${swap.tokenIn}->${swap.tokenOut} Amt:${swap.swapAmount} maxPrice:${swap.maxPrice} limitReturn:${swap.limitReturnAmount}`
             );
 
             let multiSwap: MultiSwap = {

@@ -191,36 +191,23 @@ export default class ProxyStore {
         const { providerStore, contractMetadataStore } = this.rootStore;
         const proxyAddress = contractMetadataStore.getProxyAddress();
 
-        console.log(`!!!!!!! calling contract ExactIn ${proxyAddress}`);
-        console.log(`Token Info: ${tokenIn}->${tokenOut}`);
-        swaps.forEach(swap => {
-            console.log(swap);
-        });
-        console.log(swaps);
+        console.log(`batchSwapExactIn Swapping: ${tokenIn}->${tokenOut}`);
         console.log(`Amt In: ${tokenAmountIn.toString()}`);
-        console.log(`Decimals In: ${decimalsIn}`);
         console.log(`Min Amt Out: ${minAmountOut.toString()}`);
-        console.log(`Decimals Out: ${decimalsOut}`);
-        /*
-        swaps = [
-                [ { pool: '0x9302470B18A65D0073E08C79345d8312e2fBE253',
-                    tokenIn: '0xd0A1E359811322d97991E03f863a0C30C2cF029C',
-                    tokenOut: '0xef13C0c8abcaf5767160018d268f9697aE4f5375',
-                    swapAmount: '45188110727152342',
-                    limitReturnAmount:
-                     '10000000000000000000',
-                    maxPrice:
-                     '10000000000000000000' } ] ]
-                     */
-        /*
-       swaps = [
-               ['0x9302470B18A65D0073E08C79345d8312e2fBE253',
-                '0xd0A1E359811322d97991E03f863a0C30C2cF029C',
-                '0xef13C0c8abcaf5767160018d268f9697aE4f5375',
-                '45188110727152342',
-                '115792089237316200000000000000000000000000000000000000000000000000000000000000',
-                '115792089237316200000000000000000000000000000000000000000000000000000000000000'] ]
-                */
+        // console.log(`Decimals In: ${decimalsIn}`);
+        // console.log(`Decimals Out: ${decimalsOut}`);
+
+        swaps.forEach(swap => {
+            swap.forEach(sequence => {
+                console.log(
+                    `${sequence.pool}: ${sequence.tokenIn}->${
+                        sequence.tokenOut
+                    }, Amt:${sequence.swapAmount.toString()} Limit:${sequence.limitReturnAmount.toString()} MaxPrice:${sequence.maxPrice.toString()}`
+                );
+                // !!!!!!! changed to fix
+                sequence.maxPrice = '1000000000000000000000';
+            });
+        });
 
         if (tokenIn === EtherKey) {
             await providerStore.sendTransaction(
@@ -274,14 +261,24 @@ export default class ProxyStore {
         const { providerStore, contractMetadataStore } = this.rootStore;
         const proxyAddress = contractMetadataStore.getProxyAddress();
 
-        console.log(`!!!!!!! calling contract ExactOut`);
-        console.log(`Token Info: ${tokenIn}->${tokenOut}`);
-        console.log(swaps);
+        console.log(`batchSwapExactOut Swapping: ${tokenIn}->${tokenOut}`);
         console.log(`Max In: ${maxAmountIn.toString()}`);
-        console.log(`Decimals In: ${decimalsIn}`);
         console.log(`Amt Out: ${tokenAmountOut.toString()}`);
-        console.log(`Decimals Out: ${decimalsOut}`);
-        /*
+        // console.log(`Decimals In: ${decimalsIn}`);
+        // console.log(`Decimals Out: ${decimalsOut}`);
+
+        swaps.forEach(swap => {
+            swap.forEach(sequence => {
+                console.log(
+                    `${sequence.pool}: ${sequence.tokenIn}->${
+                        sequence.tokenOut
+                    }, Amt:${sequence.swapAmount.toString()} Limit:${sequence.limitReturnAmount.toString()} MaxPrice:${sequence.maxPrice.toString()}`
+                );
+                // !!!!!!! changed to fix
+                sequence.maxPrice = '1000000000000000000000';
+            });
+        });
+
         if (tokenIn === EtherKey) {
             await providerStore.sendTransaction(
                 ContractTypes.ExchangeProxy,
@@ -305,7 +302,6 @@ export default class ProxyStore {
                 [swaps, tokenIn, tokenOut, maxAmountIn.toString()]
             );
         }
-        */
     };
 
     calcEffectivePrice(amountIn: BigNumber, amountOut: BigNumber): BigNumber {
@@ -324,7 +320,6 @@ export default class ProxyStore {
         try {
             this.setPreviewPending(true);
             const { contractMetadataStore } = this.rootStore;
-            console.log(`!!!!!!! ${inputDecimals}`);
             const tokenAmountIn = scale(bnum(inputAmount), inputDecimals);
 
             let maxPrice = helpers.setPropertyToMaxUintIfEmpty();
