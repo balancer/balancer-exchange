@@ -1,5 +1,5 @@
 import { action, observable } from 'mobx';
-import { bnum, scale, MAX_UINT, fromWei } from 'utils/helpers';
+import { bnum, scale, fromWei } from 'utils/helpers';
 import RootStore from 'stores/Root';
 import { BigNumber } from 'utils/bignumber';
 import * as log from 'loglevel';
@@ -173,10 +173,6 @@ export default class ProxyStore {
 
         swaps.forEach(swap => {
             swap.forEach(sequence => {
-                // !!!!!!! changed to fix error in SOR return
-                sequence.maxPrice = MAX_UINT.toString();
-                sequence.limitReturnAmount = '0';
-
                 console.log(
                     `${sequence.pool}: ${sequence.tokenIn}->${
                         sequence.tokenOut
@@ -248,10 +244,6 @@ export default class ProxyStore {
 
         swaps.forEach(swap => {
             swap.forEach(sequence => {
-                // !!!!!!! changed to fix error in SOR return
-                sequence.maxPrice = MAX_UINT.toString();
-                sequence.limitReturnAmount = MAX_UINT.toString();
-
                 console.log(
                     `${sequence.pool}: ${sequence.tokenIn}->${
                         sequence.tokenOut
@@ -318,6 +310,8 @@ export default class ProxyStore {
             // returns 0
             const costOutputToken = this.costCalculator.getCostOutputToken();
 
+            // TODO: Combine sorSwapsFormatted/sorSwaps
+            // sorSwaps is the unchanged info from SOR that can be directly passed to proxy transaction
             const [
                 sorSwapsFormatted,
                 totalOutput,
