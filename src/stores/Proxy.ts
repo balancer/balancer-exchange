@@ -1,14 +1,5 @@
 import { action, observable } from 'mobx';
-import * as helpers from 'utils/helpers';
-import {
-    bnum,
-    printPoolData,
-    printSorSwaps,
-    printSwapInput,
-    printSwaps,
-    scale,
-    MAX_UINT,
-} from 'utils/helpers';
+import { bnum, scale, MAX_UINT, fromWei } from 'utils/helpers';
 import RootStore from 'stores/Root';
 import { BigNumber } from 'utils/bignumber';
 import * as log from 'loglevel';
@@ -99,25 +90,6 @@ export type Swap = {
     maxPrice: string;
 };
 
-function printDebugInfo(
-    input: SwapInput,
-    swaps: Swap[],
-    sorSwaps: SorSwap[],
-    poolData: Pool[],
-    result: BigNumber,
-    effectivePrice: BigNumber
-) {
-    console.log('[Swap Preview]');
-    printSwapInput(input);
-    printPoolData(poolData);
-    printSorSwaps(sorSwaps);
-    printSwaps(input.method, swaps);
-    console.log('[Result]', {
-        result: result.toString(),
-        effectivePrice: effectivePrice.toString(),
-    });
-}
-
 export function emptyExactAmountInPreview(
     inputAmount,
     e?: string
@@ -194,20 +166,24 @@ export default class ProxyStore {
 
         console.log(`batchSwapExactIn Swapping: ${tokenIn}->${tokenOut}`);
         console.log(`Amt In: ${tokenAmountIn.toString()}`);
-        console.log(`Min Amt Out: ${minAmountOut.toString()}`);
+        console.log(`Min Amt Out: ${fromWei(minAmountOut)}`);
+        console.log(`Swap sequences:`);
         // console.log(`Decimals In: ${decimalsIn}`);
         // console.log(`Decimals Out: ${decimalsOut}`);
 
         swaps.forEach(swap => {
             swap.forEach(sequence => {
+                // !!!!!!! changed to fix error in SOR return
+                sequence.maxPrice = MAX_UINT.toString();
+                sequence.limitReturnAmount = '0';
+
                 console.log(
                     `${sequence.pool}: ${sequence.tokenIn}->${
                         sequence.tokenOut
-                    }, Amt:${sequence.swapAmount.toString()} Limit:${sequence.limitReturnAmount.toString()} MaxPrice:${sequence.maxPrice.toString()}`
+                    }, Amt:${fromWei(sequence.swapAmount)} Limit:${fromWei(
+                        sequence.limitReturnAmount
+                    )} MaxPrice:${fromWei(sequence.maxPrice)}`
                 );
-                // !!!!!!! changed to fix
-                sequence.maxPrice = MAX_UINT.toString();
-                sequence.limitReturnAmount = '0';
             });
         });
 
@@ -264,21 +240,25 @@ export default class ProxyStore {
         const proxyAddress = contractMetadataStore.getProxyAddress();
 
         console.log(`batchSwapExactOut Swapping: ${tokenIn}->${tokenOut}`);
-        console.log(`Max In: ${maxAmountIn.toString()}`);
+        console.log(`Max In: ${fromWei(maxAmountIn)}`);
         console.log(`Amt Out: ${tokenAmountOut.toString()}`);
+        console.log(`Swap sequences:`);
         // console.log(`Decimals In: ${decimalsIn}`);
         // console.log(`Decimals Out: ${decimalsOut}`);
 
         swaps.forEach(swap => {
             swap.forEach(sequence => {
+                // !!!!!!! changed to fix error in SOR return
+                sequence.maxPrice = MAX_UINT.toString();
+                sequence.limitReturnAmount = MAX_UINT.toString();
+
                 console.log(
                     `${sequence.pool}: ${sequence.tokenIn}->${
                         sequence.tokenOut
-                    }, Amt:${sequence.swapAmount.toString()} Limit:${sequence.limitReturnAmount.toString()} MaxPrice:${sequence.maxPrice.toString()}`
+                    }, Amt:${fromWei(sequence.swapAmount)} Limit:${fromWei(
+                        sequence.limitReturnAmount
+                    )} MaxPrice:${fromWei(sequence.maxPrice)}`
                 );
-                // !!!!!!! changed to fix
-                sequence.maxPrice = MAX_UINT.toString();
-                sequence.limitReturnAmount = MAX_UINT.toString();
             });
         });
 
@@ -324,9 +304,6 @@ export default class ProxyStore {
             this.setPreviewPending(true);
             const { contractMetadataStore } = this.rootStore;
             const tokenAmountIn = scale(bnum(inputAmount), inputDecimals);
-
-            let maxPrice = helpers.setPropertyToMaxUintIfEmpty();
-            let minAmountOut = helpers.setPropertyToZeroIfEmpty();
 
             // Use WETH address for Ether
             const tokenInToFind =
@@ -383,22 +360,7 @@ export default class ProxyStore {
                 spotPrice,
                 effectivePrice
             );
-            /*
-            printDebugInfo(
-                {
-                    method: SwapMethods.EXACT_IN,
-                    tokenIn,
-                    tokenOut,
-                    tokenAmountIn,
-                    maxPrice: bnum(0),
-                },
-                swaps,
-                sorSwaps,
-                poolData,
-                totalOutput,
-                effectivePrice
-            );
-            */
+
             this.setPreviewPending(false);
             return {
                 tokenAmountIn,
@@ -425,16 +387,10 @@ export default class ProxyStore {
         outputDecimals: number
     ): Promise<ExactAmountOutPreview> => {
         try {
-            console.log(
-                `!!!!!!! ExactAmountOutPreview: ${tokenIn}->${tokenOut}`
-            );
             this.setPreviewPending(true);
             const { contractMetadataStore } = this.rootStore;
 
             const tokenAmountOut = scale(bnum(outputAmount), outputDecimals);
-
-            let maxPrice = helpers.setPropertyToMaxUintIfEmpty();
-            let maxAmountIn = helpers.setPropertyToMaxUintIfEmpty();
 
             // Use WETH address for Ether
             const tokenInToFind =
@@ -446,6 +402,7 @@ export default class ProxyStore {
                     ? contractMetadataStore.getWethAddress()
                     : tokenOut;
 
+            // Returns 0
             const costOutputToken = this.costCalculator.getCostOutputToken();
 
             const [
@@ -469,8 +426,6 @@ export default class ProxyStore {
                 );
             }
 
-            console.log(`!!!!!!! ${totalInput.toString()}`);
-
             const spotInput = await calcTotalSpotValue(
                 SwapMethods.EXACT_OUT,
                 sorSwapsFormatted
@@ -491,22 +446,6 @@ export default class ProxyStore {
                 effectivePrice,
                 spotPrice
             );
-            /*
-            printDebugInfo(
-                {
-                    method: SwapMethods.EXACT_OUT,
-                    tokenIn,
-                    tokenOut,
-                    tokenAmountOut,
-                    maxPrice: bnum(0),
-                },
-                swaps,
-                sorSwaps,
-                poolData,
-                totalInput,
-                effectivePrice
-            );
-            */
 
             if (totalInput.isNaN()) {
                 throw new Error('NaN total calculated input');

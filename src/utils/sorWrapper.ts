@@ -316,7 +316,11 @@ export const calcTotalSpotValue = async (
             const swapAmount = sorMultiSwap.sequence[0].swapAmount;
             totalValue = totalValue.plus(bdiv(bnum(swapAmount), spotPrice));
         } else if (method === SwapMethods.EXACT_OUT) {
-            const swapAmount = sorMultiSwap.sequence[1].swapAmount;
+            let swapAmount = sorMultiSwap.sequence[0].swapAmount;
+
+            if (sorMultiSwap.sequence.length > 1)
+                swapAmount = sorMultiSwap.sequence[1].swapAmount;
+
             totalValue = totalValue.plus(bmul(bnum(swapAmount), spotPrice));
         }
     }
