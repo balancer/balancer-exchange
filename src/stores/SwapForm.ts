@@ -422,7 +422,6 @@ export default class SwapFormStore {
     @action setTradeCompositionEAI(preview: ExactAmountInPreview) {
         const {
             tokenAmountIn,
-            swaps,
             sorSwapsFormatted,
             totalOutput,
             effectivePrice,
@@ -442,7 +441,6 @@ export default class SwapFormStore {
     @action setTradeCompositionEAO(preview: ExactAmountOutPreview) {
         const {
             tokenAmountOut,
-            swaps,
             sorSwapsFormatted,
             totalInput,
             effectivePrice,

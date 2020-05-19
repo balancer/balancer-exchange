@@ -211,7 +211,7 @@ const TradeComposition = observer(() => {
         if (swap.isOthers) {
             return <Address>Others</Address>;
         }
-        if (swap.noPools == 1) {
+        if (swap.noPools === 1) {
             return (
                 <Address>
                     <AddressLink
@@ -226,7 +226,7 @@ const TradeComposition = observer(() => {
                     </AddressLink>
                 </Address>
             );
-        } else if (swap.noPools == 2) {
+        } else if (swap.noPools === 2) {
             return (
                 <>
                     <Address>
