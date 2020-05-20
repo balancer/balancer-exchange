@@ -16,47 +16,66 @@ import { EtherKey } from '../stores/Token';
 import ContractMetadataStore from '../stores/ContractMetadata';
 
 // Finds pools with tokens & loads the balance/weight info for those
-export const findPoolsWithTokens = async (
+export const findPoolSpotPrice = async (
+    allPools: any[],
+    poolId: string,
     tokenIn: string,
     tokenOut: string
-): Promise<Pool[]> => {
-    let pools = await getPoolsWithTokens(tokenIn, tokenOut);
-
-    if (pools.pools.length === 0)
-        throw Error('There are no pools with selected tokens');
-
-    let poolData: Pool[] = [];
-    pools.pools.forEach(p => {
-        let tI: any = p.tokens.find(
-            t => helpers.toChecksum(t.address) === helpers.toChecksum(tokenIn)
+): Promise<BigNumber> => {
+    const pool = allPools.find(
+        p => helpers.toChecksum(p.id) === helpers.toChecksum(poolId)
+    );
+    if (!pool) {
+        throw new Error(
+            '[Invariant] No pool found for selected balancer index'
         );
-        let tO: any = p.tokens.find(
-            t => helpers.toChecksum(t.address) === helpers.toChecksum(tokenOut)
-        );
+    }
 
-        if (tI.balance > 0 && tO.balance > 0) {
-            let obj: Pool = {
-                id: helpers.toChecksum(p.id),
-                decimalsIn: tI.decimals,
-                decimalsOut: tO.decimals,
-                balanceIn: scale(bnum(tI.balance), tI.decimals),
-                balanceOut: scale(bnum(tO.balance), tO.decimals),
-                weightIn: scale(
-                    bnum(tI.denormWeight).div(bnum(p.totalWeight)),
-                    18
-                ),
-                weightOut: scale(
-                    bnum(tO.denormWeight).div(bnum(p.totalWeight)),
-                    18
-                ),
-                swapFee: scale(bnum(p.swapFee), 18),
-            };
+    let tI: any = pool.tokens.find(
+        t => helpers.toChecksum(t.address) === helpers.toChecksum(tokenIn)
+    );
+    let tO: any = pool.tokens.find(
+        t => helpers.toChecksum(t.address) === helpers.toChecksum(tokenOut)
+    );
 
-            poolData.push(obj);
-        }
-    });
+    let obj: Pool;
 
-    return poolData;
+    if (tI.balance > 0 && tO.balance > 0) {
+        obj = {
+            id: helpers.toChecksum(pool.id),
+            decimalsIn: tI.decimals,
+            decimalsOut: tO.decimals,
+            balanceIn: scale(bnum(tI.balance), tI.decimals),
+            balanceOut: scale(bnum(tO.balance), tO.decimals),
+            weightIn: scale(
+                bnum(tI.denormWeight).div(bnum(pool.totalWeight)),
+                18
+            ),
+            weightOut: scale(
+                bnum(tO.denormWeight).div(bnum(pool.totalWeight)),
+                18
+            ),
+            swapFee: scale(bnum(pool.swapFee), 18),
+        };
+    }
+
+    console.log(
+        `!!!!!!! swap pool ${obj.id}, BalIn: ${fromWei(
+            obj.balanceIn
+        )}, WeightIn: ${fromWei(obj.weightIn)}, BalOut: ${fromWei(
+            obj.balanceOut
+        )}, WeightOut: ${fromWei(obj.weightOut)}`
+    );
+
+    const spotPrice = calcSpotPrice(
+        obj.balanceIn,
+        obj.weightIn,
+        obj.balanceOut,
+        obj.weightOut,
+        obj.swapFee
+    );
+
+    return spotPrice;
 };
 
 // User SOR to find all swaps including multi-hop
@@ -68,16 +87,26 @@ export const findBestSwapsMulti = async (
     maxPools: number,
     returnTokenCostPerPool: BigNumber
 ): Promise<[SorMultiSwap[], BigNumber, any[][]]> => {
+    console.log(
+        `!!!!!!! findBestSwapsMulti: ${tokenIn} ${tokenOut} ${swapType} ${fromWei(
+            swapAmount
+        )} ${maxPools} ${fromWei(returnTokenCostPerPool)}`
+    );
+    console.time('getPoolsWithTokens');
     const data = await getPoolsWithTokens(tokenIn, tokenOut);
     const directPools = data.pools;
+    console.timeEnd('getPoolsWithTokens');
 
+    console.time('getMultihopPoolsWithTokens');
     let mostLiquidPoolsFirstHop, mostLiquidPoolsSecondHop, hopTokens;
     [
         mostLiquidPoolsFirstHop,
         mostLiquidPoolsSecondHop,
         hopTokens,
     ] = await getMultihopPoolsWithTokens(tokenIn, tokenOut);
+    console.timeEnd('getMultihopPoolsWithTokens');
 
+    console.time('parsePoolData');
     const pathData = parsePoolData(
         directPools,
         tokenIn,
@@ -86,8 +115,10 @@ export const findBestSwapsMulti = async (
         mostLiquidPoolsSecondHop,
         hopTokens
     );
+    console.timeEnd('parsePoolData');
 
     // sorSwaps will return a nested array of swaps that can be passed to proxy
+    console.time('smartOrderRouterMultiHopEx');
     const [sorSwaps, totalReturn] = smartOrderRouterMultiHop(
         pathData,
         swapType,
@@ -95,6 +126,7 @@ export const findBestSwapsMulti = async (
         maxPools,
         returnTokenCostPerPool
     );
+    console.timeEnd('smartOrderRouterMultiHopEx');
 
     let formattedSorSwaps: SorMultiSwap[] = [];
 
@@ -117,6 +149,7 @@ export const findBestSwapsMulti = async (
         );
     }
 
+    console.time('loop');
     sorSwaps.forEach((sequence, i) => {
         let sorMultiSwap: SorMultiSwap = { sequence: [] };
         sequence.forEach((swap, j) => {
@@ -144,6 +177,7 @@ export const findBestSwapsMulti = async (
 
         formattedSorSwaps.push(sorMultiSwap);
     });
+    console.timeEnd('loop');
 
     return [formattedSorSwaps, totalReturn, sorSwaps];
 };
@@ -202,10 +236,12 @@ export const calcExpectedSlippage = (
 
 export const calcTotalSpotValue = async (
     method: SwapMethods,
-    swaps: SorMultiSwap[]
+    swaps: SorMultiSwap[],
+    allPools: any[]
 ): Promise<BigNumber> => {
     let totalValue = bnum(0);
     console.log(`!!!!!!! calcTotalSpotValue(). ${swaps.length} Swaps.`);
+
     for (let i = 0; i < swaps.length; i++) {
         let sorMultiSwap = swaps[i];
 
@@ -219,37 +255,15 @@ export const calcTotalSpotValue = async (
                 }->${swap.tokenOutParam} Amount:${fromWei(swap.swapAmount)}`
             );
 
-            const poolData = await findPoolsWithTokens(
+            console.time(`findPoolSpotPrice`);
+            const spotPrice = await findPoolSpotPrice(
+                allPools,
+                swap.pool,
                 swap.tokenInParam,
                 swap.tokenOutParam
             );
-
-            const pool = poolData.find(
-                p => helpers.toChecksum(p.id) === helpers.toChecksum(swap.pool)
-            );
-            if (!pool) {
-                throw new Error(
-                    '[Invariant] No pool found for selected balancer index'
-                );
-            }
-
-            console.log(
-                `!!!!!!! swap pool ${pool.id}, BalIn: ${fromWei(
-                    pool.balanceIn
-                )}, WeightIn: ${pool.weightIn.toString()}, BalOut: ${fromWei(
-                    pool.balanceOut
-                )}, WeightOut: ${fromWei(pool.weightOut)}`
-            );
-
-            const spotPrice = calcSpotPrice(
-                pool.balanceIn,
-                pool.weightIn,
-                pool.balanceOut,
-                pool.weightOut,
-                pool.swapFee
-            );
+            console.timeEnd(`findPoolSpotPrice`);
             console.log(`!!!!!!! pool spotPrice:`, fromWei(spotPrice));
-
             spotPrices.push(spotPrice);
         }
 
@@ -259,7 +273,6 @@ export const calcTotalSpotValue = async (
             `!!!!!!! Sequence SpotPrice Product: ${fromWei(spotPrice)}`
         );
 
-        // ??????? Not sure if this is correct?
         if (method === SwapMethods.EXACT_IN) {
             const swapAmount = sorMultiSwap.sequence[0].swapAmount;
             totalValue = totalValue.plus(bdiv(bnum(swapAmount), spotPrice));

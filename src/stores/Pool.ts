@@ -4,6 +4,7 @@ import { EtherKey } from './Token';
 import { sorTokenPairs } from '../utils/sorWrapper';
 import { supportedChainId } from '../provider/connectors';
 import { AsyncStatus, TokenPairsFetch } from './actions/fetch';
+import { getPools } from '@balancer-labs/sor';
 
 export type TokenPairs = Set<string>;
 
@@ -18,11 +19,18 @@ interface TokenPairsMap {
 
 export default class PoolStore {
     @observable tokenPairs: TokenPairsMap;
+    @observable allPools: [];
     rootStore: RootStore;
 
     constructor(rootStore) {
         this.rootStore = rootStore;
         this.tokenPairs = {};
+        this.fetchAllPools();
+    }
+
+    @action async fetchAllPools() {
+        const allPools = await getPools();
+        this.allPools = allPools.pools;
     }
 
     @action fetchAndSetTokenPairs(tokenAddress): void {
@@ -41,6 +49,8 @@ export default class PoolStore {
     @action async fetchTokenPairs(tokenAddress: string) {
         const { providerStore, contractMetadataStore } = this.rootStore;
         const fetchBlock = providerStore.getCurrentBlockNumber();
+
+        this.fetchAllPools();
 
         //Pre-fetch stale check
         const stale =
