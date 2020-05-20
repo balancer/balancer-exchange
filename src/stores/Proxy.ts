@@ -5,7 +5,6 @@ import { BigNumber } from 'utils/bignumber';
 import * as log from 'loglevel';
 import { ContractTypes } from './Provider';
 import { SwapMethods } from './SwapForm';
-import CostCalculator from '../utils/CostCalculator';
 import {
     calcExpectedSlippage,
     calcPrice,
@@ -128,17 +127,11 @@ export function emptyExactAmountOutPreview(
 
 export default class ProxyStore {
     @observable previewPending: boolean;
-    costCalculator: CostCalculator;
     rootStore: RootStore;
 
     constructor(rootStore) {
         this.rootStore = rootStore;
         this.previewPending = false;
-        this.costCalculator = new CostCalculator({
-            gasPrice: bnum(0),
-            gasPerTrade: bnum(0),
-            outTokenEthPrice: bnum(0),
-        });
     }
 
     isPreviewPending() {
@@ -295,7 +288,11 @@ export default class ProxyStore {
         try {
             console.time('previewBatchSwapExactIn');
             this.setPreviewPending(true);
-            const { contractMetadataStore, poolStore } = this.rootStore;
+            const {
+                contractMetadataStore,
+                poolStore,
+                sorStore,
+            } = this.rootStore;
             const tokenAmountIn = scale(bnum(inputAmount), inputDecimals);
 
             // Use WETH address for Ether
@@ -308,9 +305,6 @@ export default class ProxyStore {
                     ? contractMetadataStore.getWethAddress()
                     : tokenOut;
 
-            // returns 0
-            const costOutputToken = this.costCalculator.getCostOutputToken();
-
             console.time('findBestSwapsMulti');
             // TODO: Combine sorSwapsFormatted/sorSwaps
             // sorSwaps is the unchanged info from SOR that can be directly passed to proxy transaction
@@ -319,12 +313,13 @@ export default class ProxyStore {
                 totalOutput,
                 sorSwaps,
             ] = await findBestSwapsMulti(
+                sorStore.pathData.swapin,
                 tokenInToFind,
                 tokenOutToFind,
                 SwapMethods.EXACT_IN,
                 tokenAmountIn,
                 4,
-                costOutputToken
+                sorStore.costCalculator.getCostOutputToken()
             );
 
             console.timeEnd('findBestSwapsMulti');
@@ -397,7 +392,11 @@ export default class ProxyStore {
     ): Promise<ExactAmountOutPreview> => {
         try {
             this.setPreviewPending(true);
-            const { contractMetadataStore, poolStore } = this.rootStore;
+            const {
+                contractMetadataStore,
+                poolStore,
+                sorStore,
+            } = this.rootStore;
 
             const tokenAmountOut = scale(bnum(outputAmount), outputDecimals);
 
@@ -411,20 +410,18 @@ export default class ProxyStore {
                     ? contractMetadataStore.getWethAddress()
                     : tokenOut;
 
-            // Returns 0
-            const costOutputToken = this.costCalculator.getCostOutputToken();
-
             const [
                 sorSwapsFormatted,
                 totalInput,
                 sorSwaps,
             ] = await findBestSwapsMulti(
+                sorStore.pathData.swapout,
                 tokenInToFind,
                 tokenOutToFind,
                 SwapMethods.EXACT_OUT,
                 tokenAmountOut,
                 4,
-                costOutputToken
+                sorStore.costCalculator.getCostOutputToken()
             );
 
             if (sorSwapsFormatted.length === 0) {

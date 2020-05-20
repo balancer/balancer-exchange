@@ -704,7 +704,7 @@ export default class SwapFormStore {
         );
 
         try {
-            const { tokenStore, poolStore } = this.rootStore;
+            const { tokenStore, poolStore, sorStore } = this.rootStore;
 
             const inputTokenMetadata = await tokenStore.fetchOnChainTokenMetadata(
                 inputTokenAddress,
@@ -712,7 +712,7 @@ export default class SwapFormStore {
             );
 
             this.inputToken = inputTokenMetadata;
-
+            sorStore.fetchPathData();
             poolStore.fetchAndSetTokenPairs(inputTokenAddress);
             localStorage.setItem('inputToken', inputTokenAddress);
         } catch (err) {
@@ -742,7 +742,7 @@ export default class SwapFormStore {
         );
 
         try {
-            const { tokenStore, poolStore } = this.rootStore;
+            const { tokenStore, poolStore, sorStore } = this.rootStore;
 
             const outputTokenMetadata = await tokenStore.fetchOnChainTokenMetadata(
                 outputTokenAddress,
@@ -750,7 +750,7 @@ export default class SwapFormStore {
             );
 
             this.outputToken = outputTokenMetadata;
-
+            sorStore.fetchPathData();
             poolStore.fetchAndSetTokenPairs(outputTokenAddress);
             localStorage.setItem('outputToken', outputTokenAddress);
         } catch (err) {

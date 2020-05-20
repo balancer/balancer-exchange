@@ -11,6 +11,7 @@ import TransactionStore from './Transaction';
 import AppSettingsStore from './AppSettings';
 import PoolStore from './Pool';
 import AssetOptionsStore from './AssetOptions';
+import SorStore from './Sor';
 
 export default class RootStore {
     proxyStore: ProxyStore;
@@ -24,6 +25,7 @@ export default class RootStore {
     transactionStore: TransactionStore;
     appSettingsStore: AppSettingsStore;
     assetOptionsStore: AssetOptionsStore;
+    sorStore: SorStore;
     errorStore: ErrorStore;
 
     constructor() {
@@ -38,6 +40,7 @@ export default class RootStore {
         this.transactionStore = new TransactionStore(this);
         this.appSettingsStore = new AppSettingsStore(this);
         this.assetOptionsStore = new AssetOptionsStore(this);
+        this.sorStore = new SorStore(this);
         this.errorStore = new ErrorStore(this);
 
         this.asyncSetup().catch(e => {

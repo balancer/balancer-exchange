@@ -80,6 +80,87 @@ export const findPoolSpotPrice = async (
 
 // User SOR to find all swaps including multi-hop
 export const findBestSwapsMulti = async (
+    pathData: any,
+    tokenIn: string,
+    tokenOut: string,
+    swapType: SwapMethods,
+    swapAmount: BigNumber,
+    maxPools: number,
+    returnTokenCostPerPool: BigNumber
+): Promise<[SorMultiSwap[], BigNumber, any[][]]> => {
+    console.log(
+        `!!!!!!! findBestSwapsMulti: ${tokenIn} ${tokenOut} ${swapType} ${fromWei(
+            swapAmount
+        )} ${maxPools} ${fromWei(returnTokenCostPerPool)}`
+    );
+
+    // sorSwaps will return a nested array of swaps that can be passed to proxy
+    console.time('smartOrderRouterMultiHopEx');
+    const [sorSwaps, totalReturn] = smartOrderRouterMultiHop(
+        pathData,
+        swapType,
+        swapAmount,
+        maxPools,
+        returnTokenCostPerPool
+    );
+    console.timeEnd('smartOrderRouterMultiHopEx');
+
+    let formattedSorSwaps: SorMultiSwap[] = [];
+
+    // !!!!!!! changed to fix error in SOR return
+    let maxPrice = MAX_UINT.toString();
+    let limitReturnAmount = '0';
+
+    if (swapType === SwapMethods.EXACT_IN) {
+        console.log(
+            `${fromWei(swapAmount)} ${tokenIn} -> ${fromWei(
+                totalReturn
+            )} ${tokenOut} Sequences:`
+        );
+    } else {
+        limitReturnAmount = MAX_UINT.toString();
+        console.log(
+            `${fromWei(totalReturn)} ${tokenIn} -> ${fromWei(
+                swapAmount
+            )} ${tokenOut} Sequences:`
+        );
+    }
+
+    console.time('loop');
+    sorSwaps.forEach((sequence, i) => {
+        let sorMultiSwap: SorMultiSwap = { sequence: [] };
+        sequence.forEach((swap, j) => {
+            swap.maxPrice = maxPrice;
+            swap.limitReturnAmount = limitReturnAmount;
+            console.log(
+                `Swap:${i} Sequence:${j}, ${swap.pool}: ${swap.tokenIn}->${
+                    swap.tokenOut
+                } Amt:${fromWei(swap.swapAmount)} maxPrice:${
+                    swap.maxPrice
+                } limitReturn:${swap.limitReturnAmount}`
+            );
+
+            let multiSwap: MultiSwap = {
+                pool: swap.pool,
+                tokenInParam: swap.tokenIn,
+                tokenOutParam: swap.tokenOut,
+                maxPrice: swap.maxPrice,
+                swapAmount: swap.swapAmount,
+                limitReturnAmount: swap.limitReturnAmount,
+            };
+
+            sorMultiSwap.sequence.push(multiSwap);
+        });
+
+        formattedSorSwaps.push(sorMultiSwap);
+    });
+    console.timeEnd('loop');
+
+    return [formattedSorSwaps, totalReturn, sorSwaps];
+};
+
+// User SOR to find all swaps including multi-hop
+export const findBestSwapsMultiOld = async (
     tokenIn: string,
     tokenOut: string,
     swapType: SwapMethods,
@@ -180,6 +261,35 @@ export const findBestSwapsMulti = async (
     console.timeEnd('loop');
 
     return [formattedSorSwaps, totalReturn, sorSwaps];
+};
+
+export const getPathData = async (
+    tokenIn: string,
+    tokenOut: string,
+    swapType: SwapMethods
+): Promise<any> => {
+    console.log(`!!!!!!! getPathData: ${tokenIn} ${tokenOut} ${swapType}`);
+
+    const data = await getPoolsWithTokens(tokenIn, tokenOut);
+    const directPools = data.pools;
+
+    let mostLiquidPoolsFirstHop, mostLiquidPoolsSecondHop, hopTokens;
+    [
+        mostLiquidPoolsFirstHop,
+        mostLiquidPoolsSecondHop,
+        hopTokens,
+    ] = await getMultihopPoolsWithTokens(tokenIn, tokenOut);
+
+    const pathData = parsePoolData(
+        directPools,
+        tokenIn,
+        tokenOut,
+        mostLiquidPoolsFirstHop,
+        mostLiquidPoolsSecondHop,
+        hopTokens
+    );
+
+    return pathData;
 };
 
 export const sorTokenPairs = async (
