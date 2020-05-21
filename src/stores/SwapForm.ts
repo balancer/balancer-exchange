@@ -706,14 +706,15 @@ export default class SwapFormStore {
         try {
             const { tokenStore, poolStore, sorStore } = this.rootStore;
 
+            poolStore.fetchAndSetTokenPairs(inputTokenAddress);
+            sorStore.fetchPathData(inputTokenAddress, this.outputToken.address);
+
             const inputTokenMetadata = await tokenStore.fetchOnChainTokenMetadata(
                 inputTokenAddress,
                 account
             );
 
             this.inputToken = inputTokenMetadata;
-            sorStore.fetchPathData();
-            poolStore.fetchAndSetTokenPairs(inputTokenAddress);
             localStorage.setItem('inputToken', inputTokenAddress);
         } catch (err) {
             this.inputToken = {
@@ -744,14 +745,15 @@ export default class SwapFormStore {
         try {
             const { tokenStore, poolStore, sorStore } = this.rootStore;
 
+            poolStore.fetchAndSetTokenPairs(outputTokenAddress);
+            sorStore.fetchPathData(this.inputToken.address, outputTokenAddress);
+
             const outputTokenMetadata = await tokenStore.fetchOnChainTokenMetadata(
                 outputTokenAddress,
                 account
             );
 
             this.outputToken = outputTokenMetadata;
-            sorStore.fetchPathData();
-            poolStore.fetchAndSetTokenPairs(outputTokenAddress);
             localStorage.setItem('outputToken', outputTokenAddress);
         } catch (err) {
             this.outputToken = {

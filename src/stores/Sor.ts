@@ -2,7 +2,7 @@ import { action, observable } from 'mobx';
 import RootStore from 'stores/Root';
 import { getPathData } from '../utils/sorWrapper';
 import CostCalculator from '../utils/CostCalculator';
-import { bnum, scale, fromWei } from 'utils/helpers';
+import { bnum } from 'utils/helpers';
 import { SwapMethods } from './SwapForm';
 import { EtherKey } from './Token';
 
@@ -13,7 +13,7 @@ export default class SorStore {
 
     constructor(rootStore) {
         this.rootStore = rootStore;
-        this.pathData = {};
+        this.pathData = { swapin: null, swapout: null };
         this.costCalculator = new CostCalculator({
             gasPrice: bnum(0),
             gasPerTrade: bnum(0),
@@ -21,11 +21,8 @@ export default class SorStore {
         });
     }
 
-    @action async fetchPathData() {
-        const { swapFormStore, contractMetadataStore } = this.rootStore;
-
-        let inputToken = swapFormStore.inputToken.address;
-        let outputToken = swapFormStore.outputToken.address;
+    @action async fetchPathData(inputToken, outputToken) {
+        const { contractMetadataStore } = this.rootStore;
 
         if (inputToken && outputToken) {
             // Use WETH address for Ether
@@ -35,22 +32,17 @@ export default class SorStore {
             if (outputToken === EtherKey)
                 outputToken = contractMetadataStore.getWethAddress();
 
-            const pathDataExactIn = await getPathData(
-                inputToken,
-                outputToken,
-                SwapMethods.EXACT_IN
+            getPathData(inputToken, outputToken, SwapMethods.EXACT_IN).then(
+                response => {
+                    this.pathData.swapin = response;
+                }
             );
 
-            const pathDataExactOut = await getPathData(
-                inputToken,
-                outputToken,
-                SwapMethods.EXACT_OUT
+            getPathData(inputToken, outputToken, SwapMethods.EXACT_OUT).then(
+                response => {
+                    this.pathData.swapout = response;
+                }
             );
-
-            this.pathData = {
-                swapin: pathDataExactIn,
-                swapout: pathDataExactOut,
-            };
         }
     }
 }
