@@ -706,7 +706,9 @@ export default class SwapFormStore {
         try {
             const { tokenStore, poolStore, sorStore } = this.rootStore;
 
+            this.inputToken.address = inputTokenAddress;
             poolStore.fetchAndSetTokenPairs(inputTokenAddress);
+
             sorStore.fetchPathData(inputTokenAddress, this.outputToken.address);
 
             const inputTokenMetadata = await tokenStore.fetchOnChainTokenMetadata(
@@ -745,6 +747,7 @@ export default class SwapFormStore {
         try {
             const { tokenStore, poolStore, sorStore } = this.rootStore;
 
+            this.outputToken.address = outputTokenAddress;
             poolStore.fetchAndSetTokenPairs(outputTokenAddress);
             sorStore.fetchPathData(this.inputToken.address, outputTokenAddress);
 

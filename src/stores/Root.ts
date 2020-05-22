@@ -30,11 +30,11 @@ export default class RootStore {
 
     constructor() {
         this.proxyStore = new ProxyStore(this);
+        this.poolStore = new PoolStore(this);
         this.providerStore = new ProviderStore(this);
         this.blockchainFetchStore = new BlockchainFetchStore(this);
         this.swapFormStore = new SwapFormStore(this);
         this.tokenStore = new TokenStore(this);
-        this.poolStore = new PoolStore(this);
         this.dropdownStore = new DropdownStore(this);
         this.contractMetadataStore = new ContractMetadataStore(this);
         this.transactionStore = new TransactionStore(this);

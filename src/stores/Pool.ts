@@ -20,17 +20,21 @@ interface TokenPairsMap {
 export default class PoolStore {
     @observable tokenPairs: TokenPairsMap;
     @observable allPools: [];
+    @observable poolsLoaded: boolean;
     rootStore: RootStore;
 
     constructor(rootStore) {
         this.rootStore = rootStore;
         this.tokenPairs = {};
-        this.fetchAllPools();
+        this.allPools = [];
+        this.poolsLoaded = false;
     }
 
     @action async fetchAllPools() {
         const allPools = await getPools();
         this.allPools = allPools.pools;
+        this.poolsLoaded = true;
+        console.log(`!!!!!!! ALLPOOLS LOADED`, this.allPools);
     }
 
     @action fetchAndSetTokenPairs(tokenAddress): void {
@@ -68,9 +72,12 @@ export default class PoolStore {
                     ? contractMetadataStore.getWethAddress()
                     : tokenAddress;
 
+            if (!this.poolsLoaded) await this.fetchAllPools();
+
             const tokenPairs = await sorTokenPairs(
                 tokenAddressToFind,
-                contractMetadataStore
+                contractMetadataStore,
+                this.allPools
             );
 
             console.log('[Token Pairs Fetch] - Success', {

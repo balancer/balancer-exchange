@@ -1,7 +1,7 @@
 import { BigNumber } from './bignumber';
 import { calcSpotPrice, bmul, bdiv } from './balancerCalcs';
 import * as helpers from './helpers';
-import { bnum, scale, fromWei, MAX_UINT } from './helpers';
+import { bnum, scale, fromWei, MAX_UINT, toChecksum } from './helpers';
 import {
     getPoolsWithTokens,
     smartOrderRouterMultiHop,
@@ -80,6 +80,7 @@ export const findPoolSpotPrice = async (
 
 // User SOR to find all swaps including multi-hop
 export const findBestSwapsMulti = async (
+    pools: any,
     pathData: any,
     tokenIn: string,
     tokenOut: string,
@@ -88,6 +89,9 @@ export const findBestSwapsMulti = async (
     maxPools: number,
     returnTokenCostPerPool: BigNumber
 ): Promise<[SorMultiSwap[], BigNumber, any[][]]> => {
+    tokenIn = tokenIn.toLowerCase();
+    tokenOut = tokenOut.toLowerCase();
+
     console.log(
         `!!!!!!! findBestSwapsMulti: ${tokenIn} ${tokenOut} ${swapType} ${fromWei(
             swapAmount
@@ -95,15 +99,14 @@ export const findBestSwapsMulti = async (
     );
 
     // sorSwaps will return a nested array of swaps that can be passed to proxy
-    console.time('smartOrderRouterMultiHopEx');
     const [sorSwaps, totalReturn] = smartOrderRouterMultiHop(
+        pools,
         pathData,
         swapType,
         swapAmount,
         maxPools,
         returnTokenCostPerPool
     );
-    console.timeEnd('smartOrderRouterMultiHopEx');
 
     let formattedSorSwaps: SorMultiSwap[] = [];
 
@@ -126,7 +129,6 @@ export const findBestSwapsMulti = async (
         );
     }
 
-    console.time('loop');
     sorSwaps.forEach((sequence, i) => {
         let sorMultiSwap: SorMultiSwap = { sequence: [] };
         sequence.forEach((swap, j) => {
@@ -154,111 +156,6 @@ export const findBestSwapsMulti = async (
 
         formattedSorSwaps.push(sorMultiSwap);
     });
-    console.timeEnd('loop');
-
-    return [formattedSorSwaps, totalReturn, sorSwaps];
-};
-
-// User SOR to find all swaps including multi-hop
-export const findBestSwapsMultiOld = async (
-    tokenIn: string,
-    tokenOut: string,
-    swapType: SwapMethods,
-    swapAmount: BigNumber,
-    maxPools: number,
-    returnTokenCostPerPool: BigNumber
-): Promise<[SorMultiSwap[], BigNumber, any[][]]> => {
-    console.log(
-        `!!!!!!! findBestSwapsMulti: ${tokenIn} ${tokenOut} ${swapType} ${fromWei(
-            swapAmount
-        )} ${maxPools} ${fromWei(returnTokenCostPerPool)}`
-    );
-    console.time('getPoolsWithTokens');
-    const data = await getPoolsWithTokens(tokenIn, tokenOut);
-    const directPools = data.pools;
-    console.timeEnd('getPoolsWithTokens');
-
-    console.time('getMultihopPoolsWithTokens');
-    let mostLiquidPoolsFirstHop, mostLiquidPoolsSecondHop, hopTokens;
-    [
-        mostLiquidPoolsFirstHop,
-        mostLiquidPoolsSecondHop,
-        hopTokens,
-    ] = await getMultihopPoolsWithTokens(tokenIn, tokenOut);
-    console.timeEnd('getMultihopPoolsWithTokens');
-
-    console.time('parsePoolData');
-    const pathData = parsePoolData(
-        directPools,
-        tokenIn,
-        tokenOut,
-        mostLiquidPoolsFirstHop,
-        mostLiquidPoolsSecondHop,
-        hopTokens
-    );
-    console.timeEnd('parsePoolData');
-
-    // sorSwaps will return a nested array of swaps that can be passed to proxy
-    console.time('smartOrderRouterMultiHopEx');
-    const [sorSwaps, totalReturn] = smartOrderRouterMultiHop(
-        pathData,
-        swapType,
-        swapAmount,
-        maxPools,
-        returnTokenCostPerPool
-    );
-    console.timeEnd('smartOrderRouterMultiHopEx');
-
-    let formattedSorSwaps: SorMultiSwap[] = [];
-
-    // !!!!!!! changed to fix error in SOR return
-    let maxPrice = MAX_UINT.toString();
-    let limitReturnAmount = '0';
-
-    if (swapType === SwapMethods.EXACT_IN) {
-        console.log(
-            `${fromWei(swapAmount)} ${tokenIn} -> ${fromWei(
-                totalReturn
-            )} ${tokenOut} Sequences:`
-        );
-    } else {
-        limitReturnAmount = MAX_UINT.toString();
-        console.log(
-            `${fromWei(totalReturn)} ${tokenIn} -> ${fromWei(
-                swapAmount
-            )} ${tokenOut} Sequences:`
-        );
-    }
-
-    console.time('loop');
-    sorSwaps.forEach((sequence, i) => {
-        let sorMultiSwap: SorMultiSwap = { sequence: [] };
-        sequence.forEach((swap, j) => {
-            swap.maxPrice = maxPrice;
-            swap.limitReturnAmount = limitReturnAmount;
-            console.log(
-                `Swap:${i} Sequence:${j}, ${swap.pool}: ${swap.tokenIn}->${
-                    swap.tokenOut
-                } Amt:${fromWei(swap.swapAmount)} maxPrice:${
-                    swap.maxPrice
-                } limitReturn:${swap.limitReturnAmount}`
-            );
-
-            let multiSwap: MultiSwap = {
-                pool: swap.pool,
-                tokenInParam: swap.tokenIn,
-                tokenOutParam: swap.tokenOut,
-                maxPrice: swap.maxPrice,
-                swapAmount: swap.swapAmount,
-                limitReturnAmount: swap.limitReturnAmount,
-            };
-
-            sorMultiSwap.sequence.push(multiSwap);
-        });
-
-        formattedSorSwaps.push(sorMultiSwap);
-    });
-    console.timeEnd('loop');
 
     return [formattedSorSwaps, totalReturn, sorSwaps];
 };
@@ -267,11 +164,11 @@ export const getPathData = async (
     tokenIn: string,
     tokenOut: string,
     swapType: SwapMethods
-): Promise<any> => {
-    console.log(`!!!!!!! getPathData: ${tokenIn} ${tokenOut} ${swapType}`);
+): Promise<any[]> => {
+    tokenIn = tokenIn.toLowerCase();
+    tokenOut = tokenOut.toLowerCase();
 
-    const data = await getPoolsWithTokens(tokenIn, tokenOut);
-    const directPools = data.pools;
+    const directPools = await getPoolsWithTokens(tokenIn, tokenOut);
 
     let mostLiquidPoolsFirstHop, mostLiquidPoolsSecondHop, hopTokens;
     [
@@ -280,7 +177,8 @@ export const getPathData = async (
         hopTokens,
     ] = await getMultihopPoolsWithTokens(tokenIn, tokenOut);
 
-    const pathData = parsePoolData(
+    let pools, pathData;
+    [pools, pathData] = parsePoolData(
         directPools,
         tokenIn,
         tokenOut,
@@ -289,14 +187,15 @@ export const getPathData = async (
         hopTokens
     );
 
-    return pathData;
+    return [pools, pathData];
 };
 
 export const sorTokenPairs = async (
     tokenAddress: string,
-    contractMetadataStore: ContractMetadataStore
+    contractMetadataStore: ContractMetadataStore,
+    allPools: any[]
 ): Promise<TokenPairs> => {
-    let [, allTokenPairs] = await getTokenPairsMultiHop(tokenAddress);
+    let [, allTokenPairs] = await getTokenPairsMultiHop(tokenAddress, allPools);
 
     let tokenPairs: TokenPairs = new Set<string>();
     const sanitizedWeth = helpers.toChecksum(
