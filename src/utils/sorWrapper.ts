@@ -100,7 +100,7 @@ export const findBestSwapsMulti = async (
 
     // sorSwaps will return a nested array of swaps that can be passed to proxy
     const [sorSwaps, totalReturn] = smartOrderRouterMultiHop(
-        pools,
+        JSON.parse(JSON.stringify(pools)),
         pathData,
         swapType,
         swapAmount,
