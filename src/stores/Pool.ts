@@ -20,21 +20,20 @@ interface TokenPairsMap {
 export default class PoolStore {
     @observable tokenPairs: TokenPairsMap;
     @observable allPools: [];
-    @observable poolsLoaded: boolean;
+    poolsPromise: Promise<void>;
     rootStore: RootStore;
 
     constructor(rootStore) {
         this.rootStore = rootStore;
+        this.poolsPromise = this.fetchAllPools();
         this.tokenPairs = {};
         this.allPools = [];
-        this.poolsLoaded = false;
     }
 
     @action async fetchAllPools() {
         const allPools = await getPools();
         this.allPools = allPools.pools;
-        this.poolsLoaded = true;
-        console.log(`!!!!!!! ALLPOOLS LOADED`, this.allPools);
+        console.log(`[Pool] Subgraph All Pools Loaded`, this.allPools);
     }
 
     @action fetchAndSetTokenPairs(tokenAddress): void {
@@ -54,8 +53,6 @@ export default class PoolStore {
         const { providerStore, contractMetadataStore } = this.rootStore;
         const fetchBlock = providerStore.getCurrentBlockNumber();
 
-        this.fetchAllPools();
-
         //Pre-fetch stale check
         const stale =
             fetchBlock <= this.getTokenPairsLastFetched(tokenAddress) &&
@@ -72,7 +69,9 @@ export default class PoolStore {
                     ? contractMetadataStore.getWethAddress()
                     : tokenAddress;
 
-            if (!this.poolsLoaded) await this.fetchAllPools();
+            // First page load we need to wait for all pools loaded from Subgraph
+            // TO DO: Should we put all pools load on timer loop?
+            await this.poolsPromise;
 
             const tokenPairs = await sorTokenPairs(
                 tokenAddressToFind,
