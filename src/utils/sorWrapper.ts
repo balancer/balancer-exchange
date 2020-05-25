@@ -1,7 +1,7 @@
 import { BigNumber } from './bignumber';
 import { calcSpotPrice, bmul, bdiv } from './balancerCalcs';
 import * as helpers from './helpers';
-import { bnum, scale, fromWei, MAX_UINT, toChecksum } from './helpers';
+import { bnum, scale, fromWei, MAX_UINT } from './helpers';
 import {
     getPoolsWithTokens,
     smartOrderRouterMultiHop,
@@ -162,8 +162,7 @@ export const findBestSwapsMulti = async (
 
 export const getPathData = async (
     tokenIn: string,
-    tokenOut: string,
-    swapType: SwapMethods
+    tokenOut: string
 ): Promise<any[]> => {
     tokenIn = tokenIn.toLowerCase();
     tokenOut = tokenOut.toLowerCase();

@@ -3,7 +3,6 @@ import RootStore from 'stores/Root';
 import { getPathData } from '../utils/sorWrapper';
 import CostCalculator from '../utils/CostCalculator';
 import { bnum } from 'utils/helpers';
-import { SwapMethods } from './SwapForm';
 import { EtherKey } from './Token';
 
 export default class SorStore {
@@ -34,11 +33,7 @@ export default class SorStore {
             if (outputToken === EtherKey)
                 outputToken = contractMetadataStore.getWethAddress();
 
-            let [pools, pathData] = await getPathData(
-                inputToken,
-                outputToken,
-                SwapMethods.EXACT_IN
-            );
+            let [pools, pathData] = await getPathData(inputToken, outputToken);
             this.pathData.swapinpools = pools;
             this.pathData.swapin = pathData;
             this.pathData.swapoutpools = pools;
