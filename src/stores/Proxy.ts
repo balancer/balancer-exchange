@@ -313,8 +313,8 @@ export default class ProxyStore {
                 totalOutput,
                 sorSwaps,
             ] = await findBestSwapsMulti(
-                sorStore.pathData.swapinpools,
-                sorStore.pathData.swapin,
+                sorStore.pools,
+                sorStore.pathData,
                 tokenInToFind,
                 tokenOutToFind,
                 SwapMethods.EXACT_IN,
@@ -416,8 +416,8 @@ export default class ProxyStore {
                 totalInput,
                 sorSwaps,
             ] = await findBestSwapsMulti(
-                sorStore.pathData.swapoutpools,
-                sorStore.pathData.swapout,
+                sorStore.pools,
+                sorStore.pathData,
                 tokenInToFind,
                 tokenOutToFind,
                 SwapMethods.EXACT_OUT,

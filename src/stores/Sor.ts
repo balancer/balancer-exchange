@@ -7,25 +7,29 @@ import { EtherKey } from './Token';
 
 export default class SorStore {
     @observable pathData: any;
+    @observable pools: any;
     costCalculator: CostCalculator;
     rootStore: RootStore;
 
     constructor(rootStore) {
         this.rootStore = rootStore;
-        this.pathData = { swapin: null, swapout: null };
+        this.pathData = null;
+        this.pools = null;
         this.costCalculator = new CostCalculator({
             gasPrice: bnum(0),
             gasPerTrade: bnum(0),
             outTokenEthPrice: bnum(0),
         });
+
+        // TODO: Should we fetchPathData on a timer incase user has window open without refreshing?
     }
 
     @action async fetchPathData(inputToken, outputToken) {
         const { contractMetadataStore } = this.rootStore;
 
-        console.log(`!!!!!!! fetchPathData ${inputToken} ${outputToken}`);
+        if (inputToken !== '' && outputToken !== '') {
+            console.log(`[SOR] fetchPathData(${inputToken} ${outputToken})`);
 
-        if (inputToken && outputToken) {
             // Use WETH address for Ether
             if (inputToken === EtherKey)
                 inputToken = contractMetadataStore.getWethAddress();
@@ -34,28 +38,9 @@ export default class SorStore {
                 outputToken = contractMetadataStore.getWethAddress();
 
             let [pools, pathData] = await getPathData(inputToken, outputToken);
-            this.pathData.swapinpools = pools;
-            this.pathData.swapin = pathData;
-            this.pathData.swapoutpools = pools;
-            this.pathData.swapout = pathData;
-            console.log(`!!!!!! PATHDATA`);
-            /*
-            getPathData(inputToken, outputToken, SwapMethods.EXACT_IN).then(
-                response => {
-                    console.log(`!!!!!! RESPONSE`, response);
-                    this.pathData.swapinpools = response[0];
-                    this.pathData.swapin = response[1];
-                    console.log(this.pathData)
-                }
-            );
-
-            getPathData(inputToken, outputToken, SwapMethods.EXACT_OUT).then(
-                response => {
-                    this.pathData.swapoutpools = response[0];
-                    this.pathData.swapout = response[1];
-                }
-            );
-            */
+            this.pools = pools;
+            this.pathData = pathData;
+            console.log(`[SOR] fetchPathData() Path Data Loaded`);
         }
     }
 }
