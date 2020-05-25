@@ -3,7 +3,7 @@ import { calcSpotPrice, bmul, bdiv } from './balancerCalcs';
 import * as helpers from './helpers';
 import { bnum, scale, fromWei, MAX_UINT } from './helpers';
 import {
-    getPoolsWithTokens,
+    getPoolsWithTokensMultiHop,
     smartOrderRouterMultiHop,
     getMultihopPoolsWithTokens,
     parsePoolData,
@@ -167,7 +167,7 @@ export const getPathData = async (
     tokenIn = tokenIn.toLowerCase();
     tokenOut = tokenOut.toLowerCase();
 
-    const directPools = await getPoolsWithTokens(tokenIn, tokenOut);
+    const directPools = await getPoolsWithTokensMultiHop(tokenIn, tokenOut);
 
     let mostLiquidPoolsFirstHop, mostLiquidPoolsSecondHop, hopTokens;
     [
