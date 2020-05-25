@@ -286,7 +286,6 @@ export default class ProxyStore {
         inputDecimals: number
     ): Promise<ExactAmountInPreview> => {
         try {
-            console.time('previewBatchSwapExactIn');
             this.setPreviewPending(true);
             const {
                 contractMetadataStore,
@@ -305,7 +304,6 @@ export default class ProxyStore {
                     ? contractMetadataStore.getWethAddress()
                     : tokenOut;
 
-            console.time('findBestSwapsMulti');
             // TODO: Combine sorSwapsFormatted/sorSwaps
             // sorSwaps is the unchanged info from SOR that can be directly passed to proxy transaction
             const [
@@ -323,8 +321,6 @@ export default class ProxyStore {
                 sorStore.costCalculator.getCostOutputToken()
             );
 
-            console.timeEnd('findBestSwapsMulti');
-
             if (sorSwapsFormatted.length === 0) {
                 this.setPreviewPending(false);
                 return emptyExactAmountInPreview(
@@ -333,17 +329,11 @@ export default class ProxyStore {
                 );
             }
 
-            console.time('calcTotalSpotValue');
-
             let spotOutput = await calcTotalSpotValue(
                 SwapMethods.EXACT_IN,
                 sorSwapsFormatted,
                 poolStore.allPools
             );
-
-            console.timeEnd('calcTotalSpotValue');
-
-            console.time('calcPrice');
 
             const spotPrice = calcPrice(tokenAmountIn, spotOutput);
 
@@ -362,10 +352,7 @@ export default class ProxyStore {
                 effectivePrice
             );
 
-            console.timeEnd('calcPrice');
-
             this.setPreviewPending(false);
-            console.timeEnd('previewBatchSwapExactIn');
 
             return {
                 tokenAmountIn,

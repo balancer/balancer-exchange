@@ -60,7 +60,7 @@ export const findPoolSpotPrice = async (
     }
 
     console.log(
-        `!!!!!!! swap pool ${obj.id}, BalIn: ${fromWei(
+        `Swap pool ${obj.id}, BalIn: ${fromWei(
             obj.balanceIn
         )}, WeightIn: ${fromWei(obj.weightIn)}, BalOut: ${fromWei(
             obj.balanceOut
@@ -93,7 +93,7 @@ export const findBestSwapsMulti = async (
     tokenOut = tokenOut.toLowerCase();
 
     console.log(
-        `!!!!!!! findBestSwapsMulti: ${tokenIn} ${tokenOut} ${swapType} ${fromWei(
+        `[SOR] findBestSwapsMulti: ${tokenIn} ${tokenOut} ${swapType} ${fromWei(
             swapAmount
         )} ${maxPools} ${fromWei(returnTokenCostPerPool)}`
     );
@@ -248,7 +248,6 @@ export const calcTotalSpotValue = async (
     allPools: any[]
 ): Promise<BigNumber> => {
     let totalValue = bnum(0);
-    console.log(`!!!!!!! calcTotalSpotValue(). ${swaps.length} Swaps.`);
 
     for (let i = 0; i < swaps.length; i++) {
         let sorMultiSwap = swaps[i];
@@ -257,29 +256,23 @@ export const calcTotalSpotValue = async (
         // for each swap in sequence calculate spot price. spot price of sequence is product of all spot prices.
         for (let j = 0; j < sorMultiSwap.sequence.length; j++) {
             let swap = sorMultiSwap.sequence[j];
+            /*
             console.log(
                 `!!!!!! Checking Swap:${i} Sequence:${j}, ${swap.pool}: ${
                     swap.tokenInParam
                 }->${swap.tokenOutParam} Amount:${fromWei(swap.swapAmount)}`
             );
-
-            console.time(`findPoolSpotPrice`);
+            */
             const spotPrice = await findPoolSpotPrice(
                 allPools,
                 swap.pool,
                 swap.tokenInParam,
                 swap.tokenOutParam
             );
-            console.timeEnd(`findPoolSpotPrice`);
-            console.log(`!!!!!!! pool spotPrice:`, fromWei(spotPrice));
             spotPrices.push(spotPrice);
         }
 
-        console.log(`!!!!!!! Sequence SpotPrices: ${spotPrices}`);
         const spotPrice = spotPrices.reduce((a, b) => bmul(a, b));
-        console.log(
-            `!!!!!!! Sequence SpotPrice Product: ${fromWei(spotPrice)}`
-        );
 
         if (method === SwapMethods.EXACT_IN) {
             const swapAmount = sorMultiSwap.sequence[0].swapAmount;
@@ -293,7 +286,6 @@ export const calcTotalSpotValue = async (
             totalValue = totalValue.plus(bmul(bnum(swapAmount), spotPrice));
         }
     }
-    console.log(`!!!!!!! totalValue: ${fromWei(totalValue)}`);
     return totalValue;
 };
 
