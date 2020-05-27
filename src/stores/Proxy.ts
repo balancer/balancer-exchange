@@ -332,7 +332,7 @@ export default class ProxyStore {
             let spotOutput = await calcTotalSpotValue(
                 SwapMethods.EXACT_IN,
                 sorSwapsFormatted,
-                poolStore.allPools
+                poolStore.allPools.pools
             );
 
             const spotPrice = calcPrice(tokenAmountIn, spotOutput);
@@ -424,7 +424,7 @@ export default class ProxyStore {
             const spotInput = await calcTotalSpotValue(
                 SwapMethods.EXACT_OUT,
                 sorSwapsFormatted,
-                poolStore.allPools
+                poolStore.allPools.pools
             );
 
             console.log('[Spot Price Calc]', {

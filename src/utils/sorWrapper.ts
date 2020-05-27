@@ -3,9 +3,9 @@ import { calcSpotPrice, bmul, bdiv } from './balancerCalcs';
 import * as helpers from './helpers';
 import { bnum, scale, fromWei, MAX_UINT } from './helpers';
 import {
-    getPoolsWithTokensMultiHop,
+    filterPoolsWithTokensDirect,
     smartOrderRouterMultiHop,
-    getMultihopPoolsWithTokens,
+    filterPoolsWithTokensMultihop,
     parsePoolData,
     getTokenPairsMultiHop,
 } from '@balancer-labs/sor';
@@ -161,20 +161,25 @@ export const findBestSwapsMulti = async (
 };
 
 export const getPathData = async (
+    allPools: any,
     tokenIn: string,
     tokenOut: string
 ): Promise<any[]> => {
     tokenIn = tokenIn.toLowerCase();
     tokenOut = tokenOut.toLowerCase();
 
-    const directPools = await getPoolsWithTokensMultiHop(tokenIn, tokenOut);
+    const directPools = await filterPoolsWithTokensDirect(
+        allPools,
+        tokenIn,
+        tokenOut
+    );
 
     let mostLiquidPoolsFirstHop, mostLiquidPoolsSecondHop, hopTokens;
     [
         mostLiquidPoolsFirstHop,
         mostLiquidPoolsSecondHop,
         hopTokens,
-    ] = await getMultihopPoolsWithTokens(tokenIn, tokenOut);
+    ] = await filterPoolsWithTokensMultihop(allPools, tokenIn, tokenOut);
 
     let pools, pathData;
     [pools, pathData] = parsePoolData(

@@ -4,7 +4,7 @@ import { EtherKey } from './Token';
 import { sorTokenPairs } from '../utils/sorWrapper';
 import { supportedChainId } from '../provider/connectors';
 import { AsyncStatus, TokenPairsFetch } from './actions/fetch';
-import { getPools } from '@balancer-labs/sor';
+import { getAllPublicSwapPools } from '@balancer-labs/sor';
 
 export type TokenPairs = Set<string>;
 
@@ -19,7 +19,7 @@ interface TokenPairsMap {
 
 export default class PoolStore {
     @observable tokenPairs: TokenPairsMap;
-    @observable allPools: [];
+    @observable allPools: any;
     poolsPromise: Promise<void>;
     rootStore: RootStore;
 
@@ -27,12 +27,12 @@ export default class PoolStore {
         this.rootStore = rootStore;
         this.poolsPromise = this.fetchAllPools();
         this.tokenPairs = {};
-        this.allPools = [];
+        this.allPools = { pools: [] };
     }
 
     @action async fetchAllPools() {
-        const allPools = await getPools();
-        this.allPools = allPools.pools;
+        const allPools = await getAllPublicSwapPools();
+        this.allPools = allPools;
         console.log(`[Pool] Subgraph All Pools Loaded`, this.allPools);
     }
 
@@ -76,7 +76,7 @@ export default class PoolStore {
             const tokenPairs = await sorTokenPairs(
                 tokenAddressToFind,
                 contractMetadataStore,
-                this.allPools
+                this.allPools.pools
             );
 
             console.log('[Token Pairs Fetch] - Success', {

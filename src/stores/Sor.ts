@@ -25,7 +25,7 @@ export default class SorStore {
     }
 
     @action async fetchPathData(inputToken, outputToken) {
-        const { contractMetadataStore } = this.rootStore;
+        const { contractMetadataStore, poolStore } = this.rootStore;
 
         if (inputToken !== '' && outputToken !== '') {
             console.log(`[SOR] fetchPathData(${inputToken} ${outputToken})`);
@@ -37,7 +37,11 @@ export default class SorStore {
             if (outputToken === EtherKey)
                 outputToken = contractMetadataStore.getWethAddress();
 
-            let [pools, pathData] = await getPathData(inputToken, outputToken);
+            let [pools, pathData] = await getPathData(
+                poolStore.allPools,
+                inputToken,
+                outputToken
+            );
             this.pools = pools;
             this.pathData = pathData;
             console.log(`[SOR] fetchPathData() Path Data Loaded`);
