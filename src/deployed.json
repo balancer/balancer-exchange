@@ -276,6 +276,13 @@
                 "decimals": 18,
                 "iconAddress": "0x93ed3fbe21207ec2e8f2d3c3de6e058cb73bc04d",
                 "precision": 2
+            },
+            {
+                "symbol": "AST",
+                "address": "0x27054b13b1B798B345b591a4d22e6562d47eA75a",
+                "decimals": 4,
+                "iconAddress": "0x27054b13b1B798B345b591a4d22e6562d47eA75a",
+                "precision": 2
             }
         ]
     }
