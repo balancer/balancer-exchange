@@ -5,8 +5,8 @@ import {
     ExactAmountInPreview,
     ExactAmountOutPreview,
     SwapPreview,
-    SorMultiSwap,
 } from './Proxy';
+import { SorMultiSwap } from './Sor';
 import { BigNumber } from 'utils/bignumber';
 import { bnum, scale, str, isEmpty } from '../utils/helpers';
 import { TokenMetadata } from './Token';

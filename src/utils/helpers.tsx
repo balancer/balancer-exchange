@@ -4,8 +4,6 @@ import jazzicon from 'jazzicon';
 import { ethers, utils } from 'ethers';
 import { BigNumber } from 'utils/bignumber';
 import { SUPPORTED_THEMES } from '../theme';
-import { Pool, SorSwap, Swap, SwapInput } from '../stores/Proxy';
-import { SwapMethods } from '../stores/SwapForm';
 
 // Utils
 export const MAX_GAS = utils.bigNumberify('0xffffffff');
@@ -325,46 +323,3 @@ export const getGasPriceFromETHGasStation = () => {
 //     });
 //     return result;
 // };
-
-export const printSwapInput = (input: SwapInput) => {
-    if (input.method === SwapMethods.EXACT_IN) {
-        console.log('exactAmountIn', input);
-    } else if (input.method === SwapMethods.EXACT_OUT) {
-        console.log('exactAmountOut', input);
-    }
-};
-
-export const printPoolData = (poolData: Pool[]) => {
-    const formatted = poolData;
-    console.log('---Pool Data---');
-    console.table(formatted);
-};
-
-export const printSwaps = (swapMethod: SwapMethods, swaps: Swap[]) => {
-    const result = [];
-    console.log('---Swaps---');
-    if (swapMethod === SwapMethods.EXACT_IN) {
-        swaps.forEach(swap => {
-            result.push(swap);
-        });
-    } else if (swapMethod === SwapMethods.EXACT_OUT) {
-        swaps.forEach(swap => {
-            result.push(swap);
-        });
-    }
-
-    console.table(result);
-};
-
-export const printSorSwaps = (sorSwaps: SorSwap[]) => {
-    const formatted = [];
-    sorSwaps.forEach(swap => {
-        formatted.push({
-            amount: swap.amount.toString(),
-            balancer: swap.pool,
-        });
-    });
-
-    console.log('---SorSwaps---');
-    console.table(formatted);
-};

@@ -16,8 +16,12 @@ import { useStores } from '../contexts/storesContext';
 import { ErrorIds } from '../stores/Error';
 import { BigNumber } from 'utils/bignumber';
 import { getSupportedChainId } from '../provider/connectors';
-import { calcMaxAmountIn, calcMinAmountOut } from '../utils/sorWrapper';
-import { ExactAmountInPreview, ExactAmountOutPreview } from '../stores/Proxy';
+import {
+    ExactAmountInPreview,
+    ExactAmountOutPreview,
+    calcMaxAmountIn,
+    calcMinAmountOut,
+} from '../stores/Proxy';
 
 const RowContainer = styled.div`
     font-family: var(--roboto);

@@ -1,16 +1,30 @@
 import { action, observable } from 'mobx';
 import RootStore from 'stores/Root';
 import { EtherKey } from './Token';
-import { sorTokenPairs } from '../utils/sorWrapper';
+import { sorTokenPairs } from './Sor';
 import { supportedChainId } from '../provider/connectors';
 import { AsyncStatus, TokenPairsFetch } from './actions/fetch';
 import { getAllPublicSwapPools } from '@balancer-labs/sor';
+import { getAllPublicSwapPoolsBackup } from '../utils/poolsBackup';
+import { BigNumber } from 'utils/bignumber';
+import { toChecksum, scale, bnum, fromWei } from 'utils/helpers';
 
 export type TokenPairs = Set<string>;
 
 export interface TokenPairData {
     tokenPairs: TokenPairs;
     lastFetched: number;
+}
+
+export interface Pool {
+    id: string;
+    decimalsIn: number;
+    decimalsOut: number;
+    balanceIn: BigNumber;
+    balanceOut: BigNumber;
+    weightIn: BigNumber;
+    weightOut: BigNumber;
+    swapFee: BigNumber;
 }
 
 interface TokenPairsMap {
@@ -20,6 +34,7 @@ interface TokenPairsMap {
 export default class PoolStore {
     @observable tokenPairs: TokenPairsMap;
     @observable allPools: any;
+    @observable subgraphError: boolean;
     poolsPromise: Promise<void>;
     rootStore: RootStore;
 
@@ -28,12 +43,23 @@ export default class PoolStore {
         this.poolsPromise = this.fetchAllPools();
         this.tokenPairs = {};
         this.allPools = { pools: [] };
+        this.subgraphError = false;
     }
 
+    // TODO: Should this be fetched on a timer to update?
     @action async fetchAllPools() {
-        const allPools = await getAllPublicSwapPools();
-        this.allPools = allPools;
-        console.log(`[Pool] Subgraph All Pools Loaded`, this.allPools);
+        try {
+            const allPools = await getAllPublicSwapPools();
+            this.subgraphError = false;
+            this.allPools = allPools;
+            console.log(`[Pool] Subgraph All Pools Loaded`, this.allPools);
+        } catch (err) {
+            this.subgraphError = true;
+            console.log(
+                `[Pool] Issue Loading Subgraph pools. Defaulting to backup.`
+            );
+            this.allPools = getAllPublicSwapPoolsBackup();
+        }
     }
 
     @action fetchAndSetTokenPairs(tokenAddress): void {
@@ -176,4 +202,57 @@ export default class PoolStore {
             );
         }
     }
+
+    // Finds pools with tokens & loads the balance/weight info for those
+    findPoolTokenInfo = (
+        poolId: string,
+        tokenIn: string,
+        tokenOut: string
+    ): Pool => {
+        const pool = this.allPools.pools.find(
+            p => toChecksum(p.id) === toChecksum(poolId)
+        );
+        if (!pool) {
+            throw new Error(
+                '[Invariant] No pool found for selected balancer index'
+            );
+        }
+
+        let tI: any = pool.tokens.find(
+            t => toChecksum(t.address) === toChecksum(tokenIn)
+        );
+        let tO: any = pool.tokens.find(
+            t => toChecksum(t.address) === toChecksum(tokenOut)
+        );
+
+        let obj: Pool;
+
+        if (tI.balance > 0 && tO.balance > 0) {
+            obj = {
+                id: toChecksum(pool.id),
+                decimalsIn: tI.decimals,
+                decimalsOut: tO.decimals,
+                balanceIn: scale(bnum(tI.balance), tI.decimals),
+                balanceOut: scale(bnum(tO.balance), tO.decimals),
+                weightIn: scale(
+                    bnum(tI.denormWeight).div(bnum(pool.totalWeight)),
+                    18
+                ),
+                weightOut: scale(
+                    bnum(tO.denormWeight).div(bnum(pool.totalWeight)),
+                    18
+                ),
+                swapFee: scale(bnum(pool.swapFee), 18),
+            };
+        }
+
+        console.log(
+            `Pool ${obj.id}, BalIn: ${fromWei(
+                obj.balanceIn
+            )}, WeightIn: ${fromWei(obj.weightIn)}, BalOut: ${fromWei(
+                obj.balanceOut
+            )}, WeightOut: ${fromWei(obj.weightOut)}`
+        );
+        return obj;
+    };
 }
