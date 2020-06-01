@@ -17,6 +17,8 @@ import { SwapMethods } from '../stores/SwapForm';
 import { Pool, SorSwap, Swap } from '../stores/Proxy';
 import { TokenPairs } from '../stores/Pool';
 import { EtherKey } from '../stores/Token';
+import { getTokenPairsBackup, findPoolsWithTokensBackup } from './poolsBackup';
+import { Web3Provider } from 'ethers/providers';
 
 export const formatSwapsExactAmountIn = (
     sorSwaps: SorSwap[],
@@ -60,43 +62,61 @@ export const formatSwapsExactAmountOut = (
 
 export const findPoolsWithTokens = async (
     tokenIn: string,
-    tokenOut: string
+    tokenOut: string,
+    provider: Web3Provider,
+    multiAddress: string
 ): Promise<Pool[]> => {
-    let pools = await getPoolsWithTokens(tokenIn, tokenOut);
-
-    if (pools.pools.length === 0)
-        throw Error('There are no pools with selected tokens');
-
     let poolData: Pool[] = [];
-    pools.pools.forEach(p => {
-        let tI: any = p.tokens.find(
-            t => helpers.toChecksum(t.address) === helpers.toChecksum(tokenIn)
-        );
-        let tO: any = p.tokens.find(
-            t => helpers.toChecksum(t.address) === helpers.toChecksum(tokenOut)
-        );
 
-        if (tI.balance > 0 && tO.balance > 0) {
-            let obj: Pool = {
-                id: helpers.toChecksum(p.id),
-                decimalsIn: tI.decimals,
-                decimalsOut: tO.decimals,
-                balanceIn: scale(bnum(tI.balance), tI.decimals),
-                balanceOut: scale(bnum(tO.balance), tO.decimals),
-                weightIn: scale(
-                    bnum(tI.denormWeight).div(bnum(p.totalWeight)),
-                    18
-                ),
-                weightOut: scale(
-                    bnum(tO.denormWeight).div(bnum(p.totalWeight)),
-                    18
-                ),
-                swapFee: scale(bnum(p.swapFee), 18),
-            };
+    // If Subgraph fails getPoolsWithTokens will throw error
+    try {
+        let pools = await getPoolsWithTokens(tokenIn, tokenOut);
 
-            poolData.push(obj);
-        }
-    });
+        if (pools.pools.length === 0)
+            throw Error('There are no pools with selected tokens');
+
+        pools.pools.forEach(p => {
+            let tI: any = p.tokens.find(
+                t =>
+                    helpers.toChecksum(t.address) ===
+                    helpers.toChecksum(tokenIn)
+            );
+            let tO: any = p.tokens.find(
+                t =>
+                    helpers.toChecksum(t.address) ===
+                    helpers.toChecksum(tokenOut)
+            );
+
+            if (tI.balance > 0 && tO.balance > 0) {
+                let obj: Pool = {
+                    id: helpers.toChecksum(p.id),
+                    decimalsIn: tI.decimals,
+                    decimalsOut: tO.decimals,
+                    balanceIn: scale(bnum(tI.balance), tI.decimals),
+                    balanceOut: scale(bnum(tO.balance), tO.decimals),
+                    weightIn: scale(
+                        bnum(tI.denormWeight).div(bnum(p.totalWeight)),
+                        18
+                    ),
+                    weightOut: scale(
+                        bnum(tO.denormWeight).div(bnum(p.totalWeight)),
+                        18
+                    ),
+                    swapFee: scale(bnum(p.swapFee), 18),
+                };
+
+                poolData.push(obj);
+            }
+        });
+    } catch (err) {
+        console.log(`[SOR] Subgraph call error. Using backup pools.`);
+        poolData = await findPoolsWithTokensBackup(
+            tokenIn,
+            tokenOut,
+            provider,
+            multiAddress
+        );
+    }
     return poolData;
 };
 
@@ -152,7 +172,13 @@ export const sorTokenPairs = async (
     tokenAddress: string,
     wethAddress: string
 ): Promise<TokenPairs> => {
-    const pools = await getTokenPairs(tokenAddress);
+    let pools;
+    try {
+        pools = await getTokenPairs(tokenAddress);
+    } catch (err) {
+        console.log(`[SOR] Subgraph call error. Using backup pools.`);
+        pools = getTokenPairsBackup(tokenAddress);
+    }
 
     let tokenPairs: TokenPairs = new Set<string>();
     if (pools.pools.length === 0) return tokenPairs;
