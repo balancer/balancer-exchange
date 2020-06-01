@@ -16,7 +16,7 @@ function getPoolsWithTokensBackup(tokenIn: string, tokenOut: string): any {
             t => toChecksum(t.address) === toChecksum(tokenOut)
         );
 
-        if (tI && tO) poolData.pools.push(p);
+        if (tI && tO && p.finalized) poolData.pools.push(p);
     });
 
     return poolData;
@@ -77,7 +77,7 @@ export function getTokenPairsBackup(token: string): any {
     let poolData = { pools: [] };
 
     allPools.pools.forEach(p => {
-        if (p.publicSwap) {
+        if (p.publicSwap && p.finalized) {
             let tI: any = p.tokensList.find(
                 t => toChecksum(t) === toChecksum(token)
             );
