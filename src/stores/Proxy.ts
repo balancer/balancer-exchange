@@ -301,7 +301,7 @@ export default class ProxyStore {
                 poolData,
                 SwapMethods.EXACT_IN,
                 tokenAmountIn,
-                20,
+                4,
                 costOutputToken
             );
 
