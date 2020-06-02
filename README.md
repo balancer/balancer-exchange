@@ -1,7 +1,5 @@
 # Balancer Exchange
 
-TESTING POOLS BACKUP METHOD
-
 ## Development
 
 -   Environment Config
