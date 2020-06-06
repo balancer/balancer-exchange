@@ -304,6 +304,118 @@
                 "decimals": 18,
                 "iconAddress": "0xB4EFd85c19999D84251304bDA99E90B92300Bd93",
                 "precision": 2
+            },
+            {
+                "symbol": "TUSD",
+                "address": "0x0000000000085d4780B73119b644AE5ecd22b376",
+                "decimals": 18,
+                "iconAddress": "0x0000000000085d4780B73119b644AE5ecd22b376",
+                "precision": 2
+            },
+            {
+                "symbol": "STAC",
+                "address": "0x992a780fDEda7a24c52526e027DfEf90CdDc685f",
+                "decimals": 18,
+                "iconAddress": "unknown",
+                "precision": 2
+            },
+            {
+                "symbol": "STA",
+                "address": "0xe343245DE92181bc06ba5Cd1152C705A2C5F3E2F",
+                "decimals": 18,
+                "iconAddress": "unknown",
+                "precision": 2
+            },
+            {
+                "symbol": "KNC",
+                "address": "0xdd974D5C2e2928deA5F71b9825b8b646686BD200",
+                "decimals": 18,
+                "iconAddress": "0xdd974D5C2e2928deA5F71b9825b8b646686BD200",
+                "precision": 2
+            },
+            {
+                "symbol": "STA",
+                "address": "0xa7DE087329BFcda5639247F96140f9DAbe3DeED1",
+                "decimals": 18,
+                "iconAddress": "0xa7DE087329BFcda5639247F96140f9DAbe3DeED1",
+                "precision": 2
+            },
+            {
+                "symbol": "CBIX7",
+                "address": "0xCf8f9555D55CE45a3A33a81D6eF99a2a2E71Dee2",
+                "decimals": 18,
+                "iconAddress": "0xCf8f9555D55CE45a3A33a81D6eF99a2a2E71Dee2",
+                "precision": 2
+            },
+            {
+                "symbol": "PARETO",
+                "address": "0xea5f88E54d982Cbb0c441cde4E79bC305e5b43Bc",
+                "decimals": 18,
+                "iconAddress": "0xea5f88E54d982Cbb0c441cde4E79bC305e5b43Bc",
+                "precision": 2
+            },
+            {
+                "symbol": "AST",
+                "address": "0x27054b13b1B798B345b591a4d22e6562d47eA75a",
+                "decimals": 4,
+                "iconAddress": "0x27054b13b1B798B345b591a4d22e6562d47eA75a",
+                "precision": 2
+            },
+            {
+                "symbol": "CHAI",
+                "address": "0x06AF07097C9Eeb7fD685c692751D5C66dB49c215",
+                "decimals": 18,
+                "iconAddress": "0x06AF07097C9Eeb7fD685c692751D5C66dB49c215",
+                "precision": 2
+            },
+            {
+                "symbol": "sUSD",
+                "address": "0x57Ab1E02fEE23774580C119740129eAC7081e9D3",
+                "decimals": 18,
+                "iconAddress": "0x57Ab1E02fEE23774580C119740129eAC7081e9D3",
+                "precision": 2
+            },
+            {
+                "symbol": "GEN",
+                "address": "0x543Ff227F64Aa17eA132Bf9886cAb5DB55DCAddf",
+                "decimals": 18,
+                "iconAddress": "0x543Ff227F64Aa17eA132Bf9886cAb5DB55DCAddf",
+                "precision": 2
+            },
+            {
+                "symbol": "GNO",
+                "address": "0x6810e776880C02933D47DB1b9fc05908e5386b96",
+                "decimals": 18,
+                "iconAddress": "0x6810e776880C02933D47DB1b9fc05908e5386b96",
+                "precision": 2
+            },
+            {
+                "symbol": "DXD",
+                "address": "0xa1d65E8fB6e87b60FECCBc582F7f97804B725521",
+                "decimals": 18,
+                "iconAddress": "0xa1d65E8fB6e87b60FECCBc582F7f97804B725521",
+                "precision": 2
+            },
+            {
+                "symbol": "DGX",
+                "address": "0x4f3AfEC4E5a3F2A6a1A411DEF7D7dFe50eE057bF",
+                "decimals": 9,
+                "iconAddress": "0x4f3AfEC4E5a3F2A6a1A411DEF7D7dFe50eE057bF",
+                "precision": 2
+            },
+            {
+                "symbol": "aTUSD",
+                "address": "0x4DA9b813057D04BAef4e5800E36083717b4a0341",
+                "decimals": 18,
+                "iconAddress": "0x4DA9b813057D04BAef4e5800E36083717b4a0341",
+                "precision": 2
+            },
+            {
+                "symbol": "aSUSD",
+                "address": "0x625aE63000f46200499120B906716420bd059240",
+                "decimals": 18,
+                "iconAddress": "0x625aE63000f46200499120B906716420bd059240",
+                "precision": 2
             }
         ]
     }
