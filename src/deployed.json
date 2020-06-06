@@ -276,6 +276,20 @@
                 "decimals": 18,
                 "iconAddress": "0x93ed3fbe21207ec2e8f2d3c3de6e058cb73bc04d",
                 "precision": 2
+            },
+            {
+                "symbol": "LRC",
+                "address": "0xBBbbCA6A901c926F240b89EacB641d8Aec7AEafD",
+                "decimals": 18,
+                "iconAddress": "0xBBbbCA6A901c926F240b89EacB641d8Aec7AEafD",
+                "precision": 2
+            },
+            {
+                "symbol": "REN",
+                "address": "0x408e41876cCCDC0F92210600ef50372656052a38",
+                "decimals": 18,
+                "iconAddress": "0x408e41876cCCDC0F92210600ef50372656052a38",
+                "precision": 2
             }
         ]
     }
