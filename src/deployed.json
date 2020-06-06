@@ -290,6 +290,13 @@
                 "decimals": 18,
                 "iconAddress": "0x408e41876cCCDC0F92210600ef50372656052a38",
                 "precision": 2
+            },
+            {
+                "symbol": "RPL",
+                "address": "0xB4EFd85c19999D84251304bDA99E90B92300Bd93",
+                "decimals": 18,
+                "iconAddress": "0xB4EFd85c19999D84251304bDA99E90B92300Bd93",
+                "precision": 2
             }
         ]
     }
