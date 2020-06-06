@@ -283,6 +283,27 @@
                 "decimals": 4,
                 "iconAddress": "0x27054b13b1B798B345b591a4d22e6562d47eA75a",
                 "precision": 2
+            },
+            {
+                "symbol": "LRC",
+                "address": "0xBBbbCA6A901c926F240b89EacB641d8Aec7AEafD",
+                "decimals": 18,
+                "iconAddress": "0xBBbbCA6A901c926F240b89EacB641d8Aec7AEafD",
+                "precision": 2
+            },
+            {
+                "symbol": "REN",
+                "address": "0x408e41876cCCDC0F92210600ef50372656052a38",
+                "decimals": 18,
+                "iconAddress": "0x408e41876cCCDC0F92210600ef50372656052a38",
+                "precision": 2
+            },
+            {
+                "symbol": "RPL",
+                "address": "0xB4EFd85c19999D84251304bDA99E90B92300Bd93",
+                "decimals": 18,
+                "iconAddress": "0xB4EFd85c19999D84251304bDA99E90B92300Bd93",
+                "precision": 2
             }
         ]
     }
