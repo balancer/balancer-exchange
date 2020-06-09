@@ -396,11 +396,14 @@ export default class SwapFormStore {
     }
 
     @action switchInputOutputValues() {
-        const { providerStore } = this.rootStore;
-        const account = providerStore.providerStatus.account;
-
-        this.setSelectedInputToken(this.outputToken.address, account);
-        this.setSelectedOutputToken(this.inputToken.address, account);
+        [this.inputToken, this.outputToken] = [
+            this.outputToken,
+            this.inputToken,
+        ];
+        [this.inputs.inputAmount, this.inputs.outputAmount] = [
+            this.inputs.outputAmount,
+            this.inputs.inputAmount,
+        ];
         this.switchSwapMethod();
         this.setInputFocus(InputFocus.NONE);
     }
