@@ -304,6 +304,13 @@
                 "decimals": 18,
                 "iconAddress": "0xB4EFd85c19999D84251304bDA99E90B92300Bd93",
                 "precision": 2
+            },
+            {
+                "symbol": "KNC",
+                "address": "0xdd974D5C2e2928deA5F71b9825b8b646686BD200",
+                "decimals": 18,
+                "iconAddress": "0xdd974D5C2e2928deA5F71b9825b8b646686BD200",
+                "precision": 2
             }
         ]
     }
