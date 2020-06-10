@@ -306,6 +306,12 @@
                 "precision": 2
             },
             {
+                "symbol": "LEND",
+                "address": "0x80fB784B7eD66730e8b1DBd9820aFD29931aab03",
+                "decimals": 18,
+                "iconAddress": "0x80fB784B7eD66730e8b1DBd9820aFD29931aab03",
+                "precision": 2
+            },
                 "symbol": "KNC",
                 "address": "0xdd974D5C2e2928deA5F71b9825b8b646686BD200",
                 "decimals": 18,
