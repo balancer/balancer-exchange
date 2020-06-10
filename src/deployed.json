@@ -272,9 +272,51 @@
             },
             {
                 "symbol": "PNK",
-                "address": "0x93ed3fbe21207ec2e8f2d3c3de6e058cb73bc04d",
+                "address": "0x93ED3FBe21207Ec2E8f2d3c3de6e058Cb73Bc04d",
                 "decimals": 18,
-                "iconAddress": "0x93ed3fbe21207ec2e8f2d3c3de6e058cb73bc04d",
+                "iconAddress": "0x93ED3FBe21207Ec2E8f2d3c3de6e058Cb73Bc04d",
+                "precision": 2
+            },
+            {
+                "symbol": "AST",
+                "address": "0x27054b13b1B798B345b591a4d22e6562d47eA75a",
+                "decimals": 4,
+                "iconAddress": "0x27054b13b1B798B345b591a4d22e6562d47eA75a",
+                "precision": 2
+            },
+            {
+                "symbol": "LRC",
+                "address": "0xBBbbCA6A901c926F240b89EacB641d8Aec7AEafD",
+                "decimals": 18,
+                "iconAddress": "0xBBbbCA6A901c926F240b89EacB641d8Aec7AEafD",
+                "precision": 2
+            },
+            {
+                "symbol": "REN",
+                "address": "0x408e41876cCCDC0F92210600ef50372656052a38",
+                "decimals": 18,
+                "iconAddress": "0x408e41876cCCDC0F92210600ef50372656052a38",
+                "precision": 2
+            },
+            {
+                "symbol": "RPL",
+                "address": "0xB4EFd85c19999D84251304bDA99E90B92300Bd93",
+                "decimals": 18,
+                "iconAddress": "0xB4EFd85c19999D84251304bDA99E90B92300Bd93",
+                "precision": 2
+            },
+            {
+                "symbol": "LEND",
+                "address": "0x80fB784B7eD66730e8b1DBd9820aFD29931aab03",
+                "decimals": 18,
+                "iconAddress": "0x80fB784B7eD66730e8b1DBd9820aFD29931aab03",
+                "precision": 2
+            },
+            {
+                "symbol": "KNC",
+                "address": "0xdd974D5C2e2928deA5F71b9825b8b646686BD200",
+                "decimals": 18,
+                "iconAddress": "0xdd974D5C2e2928deA5F71b9825b8b646686BD200",
                 "precision": 2
             }
         ]

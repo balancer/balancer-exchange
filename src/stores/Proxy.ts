@@ -271,7 +271,7 @@ export default class ProxyStore {
     ): Promise<ExactAmountInPreview> => {
         try {
             this.setPreviewPending(true);
-            const { contractMetadataStore } = this.rootStore;
+            const { contractMetadataStore, providerStore } = this.rootStore;
 
             const tokenAmountIn = scale(bnum(inputAmount), inputDecimals);
 
@@ -290,7 +290,9 @@ export default class ProxyStore {
 
             const poolData = await findPoolsWithTokens(
                 tokenInToFind,
-                tokenOutToFind
+                tokenOutToFind,
+                providerStore.providerStatus.library,
+                contractMetadataStore.getMultiAddress()
             );
 
             const costOutputToken = this.costCalculator.getCostOutputToken();
@@ -299,7 +301,7 @@ export default class ProxyStore {
                 poolData,
                 SwapMethods.EXACT_IN,
                 tokenAmountIn,
-                20,
+                4,
                 costOutputToken
             );
 
@@ -379,7 +381,7 @@ export default class ProxyStore {
     ): Promise<ExactAmountOutPreview> => {
         try {
             this.setPreviewPending(true);
-            const { contractMetadataStore } = this.rootStore;
+            const { contractMetadataStore, providerStore } = this.rootStore;
 
             const tokenAmountOut = scale(bnum(outputAmount), outputDecimals);
 
@@ -398,7 +400,9 @@ export default class ProxyStore {
 
             const poolData = await findPoolsWithTokens(
                 tokenInToFind,
-                tokenOutToFind
+                tokenOutToFind,
+                providerStore.providerStatus.library,
+                contractMetadataStore.getMultiAddress()
             );
             const costOutputToken = this.costCalculator.getCostOutputToken();
 
