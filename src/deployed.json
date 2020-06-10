@@ -229,6 +229,48 @@
                 "precision": 2
             },
             {
+                "symbol": "cBAT",
+                "address": "0x6C8c6b02E7b2BE14d4fA6022Dfd6d75921D90E4E",
+                "decimals": 8,
+                "iconAddress": "0x6C8c6b02E7b2BE14d4fA6022Dfd6d75921D90E4E",
+                "precision": 2
+            },
+            {
+                "symbol": "cETH",
+                "address": "0x4Ddc2D193948926D02f9B1fE9e1daa0718270ED5",
+                "decimals": 8,
+                "iconAddress": "0x4Ddc2D193948926D02f9B1fE9e1daa0718270ED5",
+                "precision": 2
+            },
+            {
+                "symbol": "cREP",
+                "address": "0x158079Ee67Fce2f58472A96584A73C7Ab9AC95c1",
+                "decimals": 8,
+                "iconAddress": "0x158079Ee67Fce2f58472A96584A73C7Ab9AC95c1",
+                "precision": 2
+            },
+            {
+                "symbol": "cSAI",
+                "address": "0xF5DCe57282A584D2746FaF1593d3121Fcac444dC",
+                "decimals": 8,
+                "iconAddress": "0xF5DCe57282A584D2746FaF1593d3121Fcac444dC",
+                "precision": 2
+            },
+            {
+                "symbol": "cUSDT",
+                "address": "0xf650C3d88D12dB855b8bf7D11Be6C55A4e07dCC9",
+                "decimals": 8,
+                "iconAddress": "0xf650C3d88D12dB855b8bf7D11Be6C55A4e07dCC9",
+                "precision": 2
+            },
+            {
+                "symbol": "cZRX",
+                "address": "0xB3319f5D18Bc0D84dD1b4825Dcde5d5f7266d407",
+                "decimals": 8,
+                "iconAddress": "0xB3319f5D18Bc0D84dD1b4825Dcde5d5f7266d407",
+                "precision": 2
+            },
+            {
                 "symbol": "imBTC",
                 "address": "0x3212b29E33587A00FB1C83346f5dBFA69A458923",
                 "decimals": 8,
