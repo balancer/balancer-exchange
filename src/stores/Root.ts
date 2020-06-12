@@ -12,6 +12,7 @@ import AppSettingsStore from './AppSettings';
 import PoolStore from './Pool';
 import AssetOptionsStore from './AssetOptions';
 import SorStore from './Sor';
+import { useInterval } from 'utils/helperHooks';
 
 export default class RootStore {
     proxyStore: ProxyStore;
@@ -59,7 +60,5 @@ export default class RootStore {
         this.poolStore.fetchOnchainPools();
         this.blockchainFetchStore.blockchainFetch(false);
         // Load on-chain data as soon as a provider is available
-
-        // useInterval(() => blockchainFetchStore.blockchainFetch(false), 5000);
     }
 }

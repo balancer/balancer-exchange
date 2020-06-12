@@ -722,6 +722,7 @@ export default class SwapFormStore {
         inputTokenAddress: string,
         account: string
     ) => {
+        /*
         if (
             this.inputToken.address === inputTokenAddress &&
             this.account === account
@@ -729,6 +730,7 @@ export default class SwapFormStore {
             console.log(`!!!!!!! NOT RELOADING INPUT TOKEN`);
             return;
         }
+        */
         console.log(
             `[SwapFormStore] setSelectedInputToken: ${account} ${inputTokenAddress}`
         );
@@ -775,6 +777,7 @@ export default class SwapFormStore {
         outputTokenAddress: string,
         account: string
     ) => {
+        /*
         if (
             this.outputToken.address === outputTokenAddress &&
             this.account === account
@@ -782,6 +785,7 @@ export default class SwapFormStore {
             console.log(`!!!!!!! NOT RELOADING OUTPUT TOKEN`);
             return;
         }
+        */
 
         console.log(
             `[SwapFormStore] setSelectedOutputToken: ${account} ${outputTokenAddress}`
