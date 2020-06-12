@@ -364,6 +364,13 @@ export default class ProxyStore {
                     ? contractMetadataStore.getWethAddress()
                     : tokenOut;
 
+            if (!sorStore.pools) {
+                this.setPreviewPending(false);
+                return emptyExactAmountInPreview(
+                    inputAmount,
+                    'Waiting For Pool Data To Load'
+                );
+            }
             // sorSwaps is the unchanged info from SOR that can be directly passed to proxy transaction
             const [totalOutput, sorSwaps] = await findBestSwapsMulti(
                 sorStore.pools,
@@ -389,7 +396,7 @@ export default class ProxyStore {
             let spotOutput = await calcTotalSpotValue(
                 SwapMethods.EXACT_IN,
                 sorSwapsFormatted,
-                poolStore.allPools.pools
+                poolStore.onchainPools.pools
             );
 
             const spotPrice = calcPrice(tokenAmountIn, spotOutput);
@@ -455,6 +462,14 @@ export default class ProxyStore {
                     ? contractMetadataStore.getWethAddress()
                     : tokenOut;
 
+            if (!sorStore.pools) {
+                this.setPreviewPending(false);
+                return emptyExactAmountOutPreview(
+                    outputAmount,
+                    'Waiting For Pool Data To Load'
+                );
+            }
+
             const [totalInput, sorSwaps] = await findBestSwapsMulti(
                 sorStore.pools,
                 sorStore.pathData,
@@ -479,7 +494,7 @@ export default class ProxyStore {
             const spotInput = await calcTotalSpotValue(
                 SwapMethods.EXACT_OUT,
                 sorSwapsFormatted,
-                poolStore.allPools.pools
+                poolStore.onchainPools.pools
             );
 
             console.log('[Spot Price Calc]', {

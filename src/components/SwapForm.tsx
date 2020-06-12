@@ -90,22 +90,14 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     }
 
     useEffect(() => {
-        if (tokenIn && isEmpty(swapFormStore.inputToken.address)) {
+        if (tokenIn) {
             console.log(`[SwapForm] Using Input Token From URL: ${tokenIn}`);
             swapFormStore.setSelectedInputToken(tokenIn, account);
-        } else if (isEmpty(swapFormStore.inputToken.address)) {
-            console.log(`[SwapForm] No Input Token Selected, Loading Default.`);
-            swapFormStore.loadDefaultInputToken(account);
         }
 
-        if (tokenOut && isEmpty(swapFormStore.outputToken.address)) {
+        if (tokenOut) {
             console.log(`[SwapForm] Using Output Token From URL: ${tokenOut}`);
             swapFormStore.setSelectedOutputToken(tokenOut, account);
-        } else if (isEmpty(swapFormStore.outputToken.address)) {
-            console.log(
-                `[SwapForm] No Output Token Selected, Loading Default.`
-            );
-            swapFormStore.loadDefaultOutputToken(account);
         }
     }, [tokenIn, tokenOut, swapFormStore, account]); // Only re-run the effect on token address change
 

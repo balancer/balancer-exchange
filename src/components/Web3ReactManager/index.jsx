@@ -47,12 +47,11 @@ const Web3Manager = observer(({ children }) => {
     }, []);
 
     //Fetch user blockchain data on an interval using current params
-    useInterval(() => blockchainFetchStore.blockchainFetch(false), 1000);
-    // blockchainFetchStore.blockchainFetch(true);
+    // blockchainFetchStore.blockchainFetch(false);
+    // useInterval(() => blockchainFetchStore.blockchainFetch(false), 5000);
 
     // This means no injected web3 and infura backup has failed
     if (!providerStore.providerStatus.active) {
-        console.debug('[Web3Manager] Render: No active network, show loading');
         return showLoader ? (
             <MessageWrapper>
                 <Spinner src={Circle} />

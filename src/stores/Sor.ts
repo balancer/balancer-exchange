@@ -110,7 +110,6 @@ export const sorTokenPairs = async (
     allPools: any[]
 ): Promise<TokenPairs> => {
     let [, allTokenPairs] = await getTokenPairsMultiHop(tokenAddress, allPools);
-
     let tokenPairs: TokenPairs = new Set<string>();
     const sanitizedWeth = toChecksum(contractMetadataStore.getWethAddress());
     allTokenPairs.forEach(token => {
@@ -161,14 +160,40 @@ export default class SorStore {
             if (outputToken === EtherKey)
                 outputToken = contractMetadataStore.getWethAddress();
 
+            if (
+                poolStore.onchainPools.pools.length === 0 &&
+                poolStore.subgraphPools.pools.length === 0
+            ) {
+                console.log(
+                    `[SOR] fetchPathData, No Pools Loaded, Can't Fetch Paths`
+                );
+                return;
+            } else if (
+                poolStore.onchainPools.pools.length === 0 &&
+                poolStore.subgraphPools.pools.length !== 0
+            ) {
+                console.log(
+                    `[SOR] fetchPathData() Using Subgraph Until On-Chain Loaded`
+                );
+                let [pools, pathData] = await getPathData(
+                    poolStore.subgraphPools,
+                    inputToken,
+                    outputToken
+                );
+                this.pools = pools;
+                this.pathData = pathData;
+            }
+            // Waits for on-chain pools to finish loading
+            await poolStore.poolsPromise;
+
             let [pools, pathData] = await getPathData(
-                poolStore.allPools,
+                poolStore.onchainPools,
                 inputToken,
                 outputToken
             );
             this.pools = pools;
             this.pathData = pathData;
-            console.log(`[SOR] fetchPathData() Path Data Loaded`);
+            console.log(`[SOR] fetchPathData() On-Chain Path Data Loaded`);
         }
     }
 
