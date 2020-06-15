@@ -211,6 +211,12 @@ export default class SorStore {
         let maxPrice = MAX_UINT.toString();
         let limitReturnAmount = '0';
 
+        // If subgraph has failed we must wait for on-chain balance info to be loaded.
+        if (poolStore.subgraphError) {
+            console.log(`[SOR] Backup - Must Wait For On-Chain Balances.`);
+            await poolStore.poolsPromise;
+        }
+
         for (let i = 0; i < sorSwaps.length; i++) {
             let sequence = sorSwaps[i];
             let sorMultiSwap: SorMultiSwap = { sequence: [] };
@@ -233,33 +239,6 @@ export default class SorStore {
                     swap.tokenIn,
                     swap.tokenOut
                 );
-
-                // If subgraph has failed we must get on-chain balance.
-                // TODO: This is currently querying separately for every pool.
-                if (poolStore.subgraphError) {
-                    console.log(`[SOR] Backup - Using on-chain balances.`);
-                    let pools = await parsePoolDataOnChain(
-                        [{ id: swap.pool }],
-                        swap.tokenIn,
-                        swap.tokenOut,
-                        contractMetadataStore.getMultiAddress(),
-                        providerStore.providerStatus.library
-                    );
-                    if (pools[0]) {
-                        pool.balanceIn = pools[0].balanceIn;
-                        pool.balanceOut = pools[0].balanceOut;
-                    }
-
-                    console.log(
-                        `Pool ${pool.id}, BalIn: ${fromWei(
-                            pool.balanceIn
-                        )}, WeightIn: ${fromWei(
-                            pool.weightIn
-                        )}, BalOut: ${fromWei(
-                            pool.balanceOut
-                        )}, WeightOut: ${fromWei(pool.weightOut)}`
-                    );
-                }
 
                 let multiSwap: MultiSwap = {
                     pool: swap.pool,

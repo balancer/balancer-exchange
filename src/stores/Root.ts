@@ -12,7 +12,6 @@ import AppSettingsStore from './AppSettings';
 import PoolStore from './Pool';
 import AssetOptionsStore from './AssetOptions';
 import SorStore from './Sor';
-import { useInterval } from 'utils/helperHooks';
 
 export default class RootStore {
     proxyStore: ProxyStore;
