@@ -404,9 +404,16 @@ export default class SwapFormStore {
         return inputValue;
     }
 
-    @action switchInputOutputValues() {
+    @action async switchInputOutputValues() {
         this.switchSwapMethod();
         this.switchTokens();
+
+        if (this.exchangeRateInput) {
+            this.setExchangeRateInput(false);
+        } else {
+            this.setExchangeRateInput(true);
+        }
+
         this.setInputFocus(InputFocus.NONE);
     }
 
@@ -416,16 +423,23 @@ export default class SwapFormStore {
         const oldOutputToken = this.outputToken;
         const oldInputToken = this.inputToken;
 
-        // This needs to be blocking as new path needs loaded
-        await sorStore.fetchPathData(
-            oldOutputToken.address,
-            oldInputToken.address
-        );
+        sorStore
+            .fetchPathData(oldOutputToken.address, oldInputToken.address)
+            .then(() => {
+                const inputValue = this.getActiveInputValue();
+                this.refreshSwapFormPreview(inputValue, this.inputs.swapMethod);
+            });
+
         poolStore.fetchAndSetTokenPairs(oldOutputToken.address);
         poolStore.fetchAndSetTokenPairs(oldInputToken.address);
 
         this.inputToken = oldOutputToken;
         this.outputToken = oldInputToken;
+
+        [this.inputs.inputAmount, this.inputs.outputAmount] = [
+            this.inputs.outputAmount,
+            this.inputs.inputAmount,
+        ];
 
         localStorage.setItem('inputToken', this.inputToken.address);
         localStorage.setItem('outputToken', this.outputToken.address);

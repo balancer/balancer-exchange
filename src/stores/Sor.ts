@@ -4,12 +4,11 @@ import CostCalculator from '../utils/CostCalculator';
 import { bnum, MAX_UINT, fromWei, toChecksum } from 'utils/helpers';
 import { EtherKey } from './Token';
 import {
-    parsePoolDataOnChain,
     filterPoolsWithTokensDirect,
     smartOrderRouterMultiHop,
     filterPoolsWithTokensMultihop,
-    parsePoolData,
     getTokenPairsMultiHop,
+    parsePoolData,
 } from '@balancer-labs/sor';
 import { BigNumber } from '../utils/bignumber';
 import { SwapMethods } from './SwapForm';
@@ -200,11 +199,7 @@ export default class SorStore {
     @action formatSorSwaps = async (
         sorSwaps: any[][]
     ): Promise<SorMultiSwap[]> => {
-        const {
-            contractMetadataStore,
-            poolStore,
-            providerStore,
-        } = this.rootStore;
+        const { poolStore } = this.rootStore;
 
         let formattedSorSwaps: SorMultiSwap[] = [];
 
