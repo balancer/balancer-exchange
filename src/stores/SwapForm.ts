@@ -743,6 +743,20 @@ export default class SwapFormStore {
                 .then(inputTokenMetadata => {
                     this.inputToken = inputTokenMetadata;
                     localStorage.setItem('inputToken', inputTokenAddress);
+                })
+                .catch(err => {
+                    this.inputToken = {
+                        address: inputTokenAddress,
+                        symbol: 'unknown',
+                        decimals: 18,
+                        iconAddress: 'unknown',
+                        precision: 4,
+                        balanceFormatted: '0.00',
+                        balanceBn: bnum(0),
+                        allowance: undefined,
+                    };
+
+                    this.setErrorMessage(err.message);
                 });
 
             this.inputToken.address = inputTokenAddress;
@@ -799,6 +813,20 @@ export default class SwapFormStore {
                 .then(outputTokenMetadata => {
                     this.outputToken = outputTokenMetadata;
                     localStorage.setItem('outputToken', outputTokenAddress);
+                })
+                .catch(err => {
+                    this.outputToken = {
+                        address: outputTokenAddress,
+                        symbol: 'unknown',
+                        decimals: 18,
+                        iconAddress: 'unknown',
+                        precision: 4,
+                        balanceFormatted: '0.00',
+                        balanceBn: bnum(0),
+                        allowance: undefined,
+                    };
+
+                    this.setErrorMessage(err.message);
                 });
 
             this.outputToken.address = outputTokenAddress;

@@ -147,6 +147,8 @@ export default class PoolStore {
                     : tokenAddress;
 
             // First page load we need to wait for all pools loaded from Subgraph
+            // Subgraph will be loaded quicker than on-chain pools & assume this
+            // data is fine to use for token pairs as no balances required
             // TO DO: Should we put all pools load on timer loop?
             console.log(`[Pool] Waiting for subgraph before loading pairs...`);
             await this.subgraphPromise;
