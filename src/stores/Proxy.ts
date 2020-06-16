@@ -237,11 +237,19 @@ export default class ProxyStore {
         });
 
         if (tokenIn === EtherKey) {
+            tokenIn = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
+
             await providerStore.sendTransaction(
                 ContractTypes.ExchangeProxy,
                 proxyAddress,
-                'multihopBatchEthInSwapExactIn',
-                [swaps, tokenOut, minAmountOut.toString()],
+                'multihopBatchSwapExactIn',
+                [
+                    swaps,
+                    tokenIn,
+                    tokenOut,
+                    scale(tokenAmountIn, decimalsIn).toString(),
+                    minAmountOut.toString(),
+                ],
                 {
                     value: ethers.utils.bigNumberify(
                         scale(tokenAmountIn, decimalsIn).toString()
@@ -249,13 +257,16 @@ export default class ProxyStore {
                 }
             );
         } else if (tokenOut === EtherKey) {
+            tokenOut = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
+
             await providerStore.sendTransaction(
                 ContractTypes.ExchangeProxy,
                 proxyAddress,
-                'multihopBatchEthOutSwapExactIn',
+                'multihopBatchSwapExactIn',
                 [
                     swaps,
                     tokenIn,
+                    tokenOut,
                     scale(tokenAmountIn, decimalsIn).toString(),
                     minAmountOut.toString(),
                 ]
@@ -308,19 +319,25 @@ export default class ProxyStore {
         });
 
         if (tokenIn === EtherKey) {
+            tokenIn = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
+
             await providerStore.sendTransaction(
                 ContractTypes.ExchangeProxy,
                 proxyAddress,
-                'multihopBatchEthInSwapExactOut',
-                [swaps, tokenOut],
-                { value: ethers.utils.bigNumberify(maxAmountIn.toString()) }
+                'multihopBatchSwapExactOut',
+                [swaps, tokenIn, tokenOut, maxAmountIn.toString()],
+                {
+                    value: ethers.utils.bigNumberify(maxAmountIn.toString()),
+                }
             );
         } else if (tokenOut === EtherKey) {
+            tokenOut = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
+
             await providerStore.sendTransaction(
                 ContractTypes.ExchangeProxy,
                 proxyAddress,
-                'multihopBatchEthOutSwapExactOut',
-                [swaps, tokenIn, maxAmountIn.toString()]
+                'multihopBatchSwapExactOut',
+                [swaps, tokenIn, tokenOut, maxAmountIn.toString()]
             );
         } else {
             await providerStore.sendTransaction(
