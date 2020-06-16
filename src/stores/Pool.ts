@@ -107,7 +107,11 @@ export default class PoolStore {
                 library
             );
             console.timeEnd('onChainPools'); // !!!!!!! REMOVE AFTER TESTING
-            this.onchainPools = allPoolsOnChain;
+            if (!allPoolsOnChain) {
+                console.log(`Error loading on-chain, default to Subgraph`);
+                this.onchainPools = this.subgraphPools;
+            } else this.onchainPools = allPoolsOnChain;
+
             console.log(`[Pool] All On-chain Pools Loaded`, this.onchainPools);
         } catch (err) {
             console.log(err.message);
