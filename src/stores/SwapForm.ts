@@ -595,7 +595,7 @@ export default class SwapFormStore {
             normalizedBalance,
         });
         // Check for insufficient balance if user logged in
-        if (account && value.gte(normalizedBalance)) {
+        if (account && value.gt(normalizedBalance)) {
             return SwapObjection.INSUFFICIENT_BALANCE;
         }
 
