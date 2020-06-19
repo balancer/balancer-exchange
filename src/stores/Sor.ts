@@ -14,6 +14,7 @@ import { BigNumber } from '../utils/bignumber';
 import { SwapMethods } from './SwapForm';
 import { TokenPairs } from './Pool';
 import ContractMetadataStore from './ContractMetadata';
+import { calcInGivenOut } from '../utils/balancerCalcs';
 
 interface MultiSwap {
     pool: string;
@@ -204,7 +205,8 @@ export default class SorStore {
         let formattedSorSwaps: SorMultiSwap[] = [];
 
         let maxPrice = MAX_UINT.toString();
-        let limitReturnAmount = '0';
+        // let limitReturnAmount = '0';
+        // let limitReturnAmount = maxPrice;
 
         // If subgraph has failed we must wait for on-chain balance info to be loaded.
         if (poolStore.subgraphError) {
@@ -218,8 +220,8 @@ export default class SorStore {
 
             for (let j = 0; j < sequence.length; j++) {
                 let swap = sequence[j];
-                swap.maxPrice = maxPrice;
-                swap.limitReturnAmount = limitReturnAmount;
+                // swap.maxPrice = maxPrice;
+                // swap.limitReturnAmount = limitReturnAmount;
                 console.log(
                     `Swap:${i} Sequence:${j}, ${swap.pool}: ${swap.tokenIn}->${
                         swap.tokenOut
@@ -234,6 +236,19 @@ export default class SorStore {
                     swap.tokenIn,
                     swap.tokenOut
                 );
+
+                /*
+                let inCheck = calcInGivenOut(
+                    pool.balanceIn,
+                    pool.weightIn,
+                    pool.balanceOut,
+                    pool.weightOut,
+                    swap.swapAmount,
+                    pool.swapFee
+                )
+
+                console.log(`!!!!!!! inCheck: ${fromWei(inCheck)}`)
+                */
 
                 let multiSwap: MultiSwap = {
                     pool: swap.pool,

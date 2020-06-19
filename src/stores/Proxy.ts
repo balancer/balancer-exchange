@@ -93,6 +93,7 @@ const calcTotalSpotValue = async (
                 swap.weightOut,
                 swap.swapFee
             );
+            // console.log(`!!!!!!! swap[${i}:${j}] spotPrice: ${fromWei(spotPrice)}`);
 
             spotPrices.push(spotPrice);
         }
@@ -109,8 +110,11 @@ const calcTotalSpotValue = async (
                 swapAmount = sorMultiSwap.sequence[1].swapAmount;
 
             totalValue = totalValue.plus(bmul(bnum(swapAmount), spotPrice));
+            // console.log(`swap[${i}] spotPriceProduct: ${fromWei(spotPrice)} swapAmt: ${fromWei(swapAmount)}: tv:${fromWei(totalValue)}`);
         }
     }
+    // console.log(`!!!!!!! calcTotalSpotValue: ${fromWei(totalValue)}`)
+
     return totalValue;
 };
 
@@ -524,6 +528,12 @@ export default class ProxyStore {
                 tokenAmountOut,
                 totalInput
             );
+
+            console.log('[Eff Price Calc]', {
+                tokenAmountOut: tokenAmountOut.toString(),
+                totalInput: totalInput.toString(),
+                effectivePrice: effectivePrice.toString(),
+            });
 
             const expectedSlippage = calcExpectedSlippage(
                 effectivePrice,

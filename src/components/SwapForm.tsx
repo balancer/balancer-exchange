@@ -165,6 +165,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                 spotInput,
                 expectedSlippage,
                 swaps,
+                totalInput,
             } = swapFormStore.preview as ExactAmountOutPreview;
 
             const maxAmountIn = calcMaxAmountIn(
@@ -172,10 +173,12 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                 expectedSlippage.plus(extraSlippageAllowance)
             );
 
+            let maxIn = maxAmountIn.gt(totalInput) ? maxAmountIn : totalInput;
+
             await proxyStore.batchSwapExactOut(
                 swaps,
                 swapFormStore.inputToken.address,
-                maxAmountIn,
+                maxIn, //totalInput, //maxAmountIn,
                 swapFormStore.inputToken.decimals,
                 swapFormStore.outputToken.address,
                 bnum(outputAmount),
