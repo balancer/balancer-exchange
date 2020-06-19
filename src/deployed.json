@@ -325,6 +325,13 @@
                 "decimals": 18,
                 "iconAddress": "0xc00e94Cb662C3520282E6f5717214004A7f26888",
                 "precision": 2
+            },
+            {
+                "symbol": "BNT",
+                "address": "0x1F573D6Fb3F13d689FF844B4cE37794d79a7FF1C",
+                "decimals": 18,
+                "iconAddress": "0x1F573D6Fb3F13d689FF844B4cE37794d79a7FF1C",
+                "precision": 2
             }
         ]
     }
