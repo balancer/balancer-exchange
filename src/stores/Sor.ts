@@ -1,7 +1,7 @@
 import { action, observable } from 'mobx';
 import RootStore from 'stores/Root';
 import CostCalculator from '../utils/CostCalculator';
-import { bnum, MAX_UINT, fromWei, toChecksum } from 'utils/helpers';
+import { bnum, fromWei, toChecksum } from 'utils/helpers';
 import { EtherKey } from './Token';
 import {
     filterPoolsWithTokensDirect,
@@ -14,7 +14,7 @@ import { BigNumber } from '../utils/bignumber';
 import { SwapMethods } from './SwapForm';
 import { TokenPairs } from './Pool';
 import ContractMetadataStore from './ContractMetadata';
-import { calcInGivenOut } from '../utils/balancerCalcs';
+// import { calcInGivenOut } from '../utils/balancerCalcs';
 
 interface MultiSwap {
     pool: string;
@@ -204,7 +204,7 @@ export default class SorStore {
 
         let formattedSorSwaps: SorMultiSwap[] = [];
 
-        let maxPrice = MAX_UINT.toString();
+        // let maxPrice = MAX_UINT.toString();
         // let limitReturnAmount = '0';
         // let limitReturnAmount = maxPrice;
 
