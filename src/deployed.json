@@ -325,6 +325,13 @@
                 "decimals": 18,
                 "iconAddress": "0xc00e94Cb662C3520282E6f5717214004A7f26888",
                 "precision": 2
+            },
+            {
+                "symbol": "MLN",
+                "address": "0xec67005c4E498Ec7f55E092bd1d35cbC47C91892",
+                "decimals": 18,
+                "iconAddress": "0xec67005c4E498Ec7f55E092bd1d35cbC47C91892",
+                "precision": 2
             }
         ]
     }
