@@ -22,17 +22,6 @@ const Switch = () => {
 
     const switchAssets = () => {
         swapFormStore.switchInputOutputValues();
-        const inputValue = swapFormStore.getActiveInputValue();
-        swapFormStore.refreshSwapFormPreview(
-            inputValue,
-            swapFormStore.inputs.swapMethod
-        );
-        if (swapFormStore.exchangeRateInput) {
-            return swapFormStore.setExchangeRateInput(false);
-        } else {
-            return swapFormStore.setExchangeRateInput(true);
-        }
-        // swapFormStore.clearInputs();
     };
 
     return (

@@ -93,6 +93,7 @@ const calcTotalSpotValue = async (
                 swap.weightOut,
                 swap.swapFee
             );
+            // console.log(`!!!!!!! swap[${i}:${j}] spotPrice: ${fromWei(spotPrice)}`);
 
             spotPrices.push(spotPrice);
         }
@@ -109,8 +110,11 @@ const calcTotalSpotValue = async (
                 swapAmount = sorMultiSwap.sequence[1].swapAmount;
 
             totalValue = totalValue.plus(bmul(bnum(swapAmount), spotPrice));
+            // console.log(`swap[${i}] spotPriceProduct: ${fromWei(spotPrice)} swapAmt: ${fromWei(swapAmount)}: tv:${fromWei(totalValue)}`);
         }
     }
+    // console.log(`!!!!!!! calcTotalSpotValue: ${fromWei(totalValue)}`)
+
     return totalValue;
 };
 
@@ -237,11 +241,19 @@ export default class ProxyStore {
         });
 
         if (tokenIn === EtherKey) {
+            tokenIn = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
+
             await providerStore.sendTransaction(
                 ContractTypes.ExchangeProxy,
                 proxyAddress,
-                'multihopBatchEthInSwapExactIn',
-                [swaps, tokenOut, minAmountOut.toString()],
+                'multihopBatchSwapExactIn',
+                [
+                    swaps,
+                    tokenIn,
+                    tokenOut,
+                    scale(tokenAmountIn, decimalsIn).toString(),
+                    minAmountOut.toString(),
+                ],
                 {
                     value: ethers.utils.bigNumberify(
                         scale(tokenAmountIn, decimalsIn).toString()
@@ -249,13 +261,16 @@ export default class ProxyStore {
                 }
             );
         } else if (tokenOut === EtherKey) {
+            tokenOut = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
+
             await providerStore.sendTransaction(
                 ContractTypes.ExchangeProxy,
                 proxyAddress,
-                'multihopBatchEthOutSwapExactIn',
+                'multihopBatchSwapExactIn',
                 [
                     swaps,
                     tokenIn,
+                    tokenOut,
                     scale(tokenAmountIn, decimalsIn).toString(),
                     minAmountOut.toString(),
                 ]
@@ -308,19 +323,25 @@ export default class ProxyStore {
         });
 
         if (tokenIn === EtherKey) {
+            tokenIn = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
+
             await providerStore.sendTransaction(
                 ContractTypes.ExchangeProxy,
                 proxyAddress,
-                'multihopBatchEthInSwapExactOut',
-                [swaps, tokenOut],
-                { value: ethers.utils.bigNumberify(maxAmountIn.toString()) }
+                'multihopBatchSwapExactOut',
+                [swaps, tokenIn, tokenOut, maxAmountIn.toString()],
+                {
+                    value: ethers.utils.bigNumberify(maxAmountIn.toString()),
+                }
             );
         } else if (tokenOut === EtherKey) {
+            tokenOut = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
+
             await providerStore.sendTransaction(
                 ContractTypes.ExchangeProxy,
                 proxyAddress,
-                'multihopBatchEthOutSwapExactOut',
-                [swaps, tokenIn, maxAmountIn.toString()]
+                'multihopBatchSwapExactOut',
+                [swaps, tokenIn, tokenOut, maxAmountIn.toString()]
             );
         } else {
             await providerStore.sendTransaction(
@@ -364,6 +385,13 @@ export default class ProxyStore {
                     ? contractMetadataStore.getWethAddress()
                     : tokenOut;
 
+            if (!sorStore.pools) {
+                this.setPreviewPending(false);
+                return emptyExactAmountInPreview(
+                    inputAmount,
+                    'Waiting For Pool Data To Load'
+                );
+            }
             // sorSwaps is the unchanged info from SOR that can be directly passed to proxy transaction
             const [totalOutput, sorSwaps] = await findBestSwapsMulti(
                 sorStore.pools,
@@ -389,7 +417,7 @@ export default class ProxyStore {
             let spotOutput = await calcTotalSpotValue(
                 SwapMethods.EXACT_IN,
                 sorSwapsFormatted,
-                poolStore.allPools.pools
+                poolStore.onchainPools.pools
             );
 
             const spotPrice = calcPrice(tokenAmountIn, spotOutput);
@@ -455,6 +483,14 @@ export default class ProxyStore {
                     ? contractMetadataStore.getWethAddress()
                     : tokenOut;
 
+            if (!sorStore.pools) {
+                this.setPreviewPending(false);
+                return emptyExactAmountOutPreview(
+                    outputAmount,
+                    'Waiting For Pool Data To Load'
+                );
+            }
+
             const [totalInput, sorSwaps] = await findBestSwapsMulti(
                 sorStore.pools,
                 sorStore.pathData,
@@ -479,7 +515,7 @@ export default class ProxyStore {
             const spotInput = await calcTotalSpotValue(
                 SwapMethods.EXACT_OUT,
                 sorSwapsFormatted,
-                poolStore.allPools.pools
+                poolStore.onchainPools.pools
             );
 
             console.log('[Spot Price Calc]', {
@@ -492,6 +528,12 @@ export default class ProxyStore {
                 tokenAmountOut,
                 totalInput
             );
+
+            console.log('[Eff Price Calc]', {
+                tokenAmountOut: tokenAmountOut.toString(),
+                totalInput: totalInput.toString(),
+                effectivePrice: effectivePrice.toString(),
+            });
 
             const expectedSlippage = calcExpectedSlippage(
                 effectivePrice,

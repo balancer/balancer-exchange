@@ -1,20 +1,20 @@
 import { action, observable } from 'mobx';
 import RootStore from 'stores/Root';
 import CostCalculator from '../utils/CostCalculator';
-import { bnum, MAX_UINT, fromWei, toChecksum } from 'utils/helpers';
+import { bnum, fromWei, toChecksum } from 'utils/helpers';
 import { EtherKey } from './Token';
 import {
-    parsePoolDataOnChain,
     filterPoolsWithTokensDirect,
     smartOrderRouterMultiHop,
     filterPoolsWithTokensMultihop,
-    parsePoolData,
     getTokenPairsMultiHop,
+    parsePoolData,
 } from '@balancer-labs/sor';
 import { BigNumber } from '../utils/bignumber';
 import { SwapMethods } from './SwapForm';
 import { TokenPairs } from './Pool';
 import ContractMetadataStore from './ContractMetadata';
+// import { calcInGivenOut } from '../utils/balancerCalcs';
 
 interface MultiSwap {
     pool: string;
@@ -110,7 +110,6 @@ export const sorTokenPairs = async (
     allPools: any[]
 ): Promise<TokenPairs> => {
     let [, allTokenPairs] = await getTokenPairsMultiHop(tokenAddress, allPools);
-
     let tokenPairs: TokenPairs = new Set<string>();
     const sanitizedWeth = toChecksum(contractMetadataStore.getWethAddress());
     allTokenPairs.forEach(token => {
@@ -161,30 +160,59 @@ export default class SorStore {
             if (outputToken === EtherKey)
                 outputToken = contractMetadataStore.getWethAddress();
 
+            if (
+                poolStore.onchainPools.pools.length === 0 &&
+                poolStore.subgraphPools.pools.length === 0
+            ) {
+                console.log(
+                    `[SOR] fetchPathData, No Pools Loaded, Can't Fetch Paths`
+                );
+                return;
+            } else if (
+                poolStore.onchainPools.pools.length === 0 &&
+                poolStore.subgraphPools.pools.length !== 0
+            ) {
+                console.log(
+                    `[SOR] fetchPathData() Using Subgraph Until On-Chain Loaded`
+                );
+                let [pools, pathData] = await getPathData(
+                    poolStore.subgraphPools,
+                    inputToken,
+                    outputToken
+                );
+                this.pools = pools;
+                this.pathData = pathData;
+            }
+            // Waits for on-chain pools to finish loading
+            await poolStore.poolsPromise;
+
             let [pools, pathData] = await getPathData(
-                poolStore.allPools,
+                poolStore.onchainPools,
                 inputToken,
                 outputToken
             );
             this.pools = pools;
             this.pathData = pathData;
-            console.log(`[SOR] fetchPathData() Path Data Loaded`);
+            console.log(`[SOR] fetchPathData() On-Chain Path Data Loaded`);
         }
     }
 
     @action formatSorSwaps = async (
         sorSwaps: any[][]
     ): Promise<SorMultiSwap[]> => {
-        const {
-            contractMetadataStore,
-            poolStore,
-            providerStore,
-        } = this.rootStore;
+        const { poolStore } = this.rootStore;
 
         let formattedSorSwaps: SorMultiSwap[] = [];
 
-        let maxPrice = MAX_UINT.toString();
-        let limitReturnAmount = '0';
+        // let maxPrice = MAX_UINT.toString();
+        // let limitReturnAmount = '0';
+        // let limitReturnAmount = maxPrice;
+
+        // If subgraph has failed we must wait for on-chain balance info to be loaded.
+        if (poolStore.subgraphError) {
+            console.log(`[SOR] Backup - Must Wait For On-Chain Balances.`);
+            await poolStore.poolsPromise;
+        }
 
         for (let i = 0; i < sorSwaps.length; i++) {
             let sequence = sorSwaps[i];
@@ -192,8 +220,8 @@ export default class SorStore {
 
             for (let j = 0; j < sequence.length; j++) {
                 let swap = sequence[j];
-                swap.maxPrice = maxPrice;
-                swap.limitReturnAmount = limitReturnAmount;
+                // swap.maxPrice = maxPrice;
+                // swap.limitReturnAmount = limitReturnAmount;
                 console.log(
                     `Swap:${i} Sequence:${j}, ${swap.pool}: ${swap.tokenIn}->${
                         swap.tokenOut
@@ -209,32 +237,18 @@ export default class SorStore {
                     swap.tokenOut
                 );
 
-                // If subgraph has failed we must get on-chain balance.
-                // TODO: This is currently querying separately for every pool.
-                if (poolStore.subgraphError) {
-                    console.log(`[SOR] Backup - Using on-chain balances.`);
-                    let pools = await parsePoolDataOnChain(
-                        [{ id: swap.pool }],
-                        swap.tokenIn,
-                        swap.tokenOut,
-                        contractMetadataStore.getMultiAddress(),
-                        providerStore.providerStatus.library
-                    );
-                    if (pools[0]) {
-                        pool.balanceIn = pools[0].balanceIn;
-                        pool.balanceOut = pools[0].balanceOut;
-                    }
+                /*
+                let inCheck = calcInGivenOut(
+                    pool.balanceIn,
+                    pool.weightIn,
+                    pool.balanceOut,
+                    pool.weightOut,
+                    swap.swapAmount,
+                    pool.swapFee
+                )
 
-                    console.log(
-                        `Pool ${pool.id}, BalIn: ${fromWei(
-                            pool.balanceIn
-                        )}, WeightIn: ${fromWei(
-                            pool.weightIn
-                        )}, BalOut: ${fromWei(
-                            pool.balanceOut
-                        )}, WeightOut: ${fromWei(pool.weightOut)}`
-                    );
-                }
+                console.log(`!!!!!!! inCheck: ${fromWei(inCheck)}`)
+                */
 
                 let multiSwap: MultiSwap = {
                     pool: swap.pool,

@@ -33,10 +33,10 @@ export default class RootStore {
         this.poolStore = new PoolStore(this);
         this.providerStore = new ProviderStore(this);
         this.blockchainFetchStore = new BlockchainFetchStore(this);
+        this.contractMetadataStore = new ContractMetadataStore(this);
         this.swapFormStore = new SwapFormStore(this);
         this.tokenStore = new TokenStore(this);
         this.dropdownStore = new DropdownStore(this);
-        this.contractMetadataStore = new ContractMetadataStore(this);
         this.transactionStore = new TransactionStore(this);
         this.appSettingsStore = new AppSettingsStore(this);
         this.assetOptionsStore = new AssetOptionsStore(this);
@@ -50,6 +50,14 @@ export default class RootStore {
     }
 
     async asyncSetup() {
+        // Load Subgraph asap to avoid lag
+        this.poolStore.fetchSubgraphPools();
         await this.providerStore.loadWeb3();
+        this.swapFormStore.setDefaultTokenAddresses(
+            this.providerStore.providerStatus.account
+        );
+        this.poolStore.fetchOnchainPools();
+        this.blockchainFetchStore.blockchainFetch(false);
+        // Load on-chain data as soon as a provider is available
     }
 }

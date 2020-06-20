@@ -85,6 +85,7 @@ export default class SwapFormStore {
     };
     @observable assetSelectFilter: string = '';
     @observable slippageCell: number = 3;
+    account: string = '';
 
     rootStore: RootStore;
 
@@ -112,6 +113,11 @@ export default class SwapFormStore {
             balanceBn: bnum(0),
             allowance: undefined,
         };
+    }
+
+    @action setDefaultTokenAddresses(account) {
+        this.loadDefaultInputToken(account);
+        this.loadDefaultOutputToken(account);
     }
 
     @action loadDefaultInputToken(account) {
@@ -398,9 +404,16 @@ export default class SwapFormStore {
         return inputValue;
     }
 
-    @action switchInputOutputValues() {
+    @action async switchInputOutputValues() {
         this.switchSwapMethod();
         this.switchTokens();
+
+        if (this.exchangeRateInput) {
+            this.setExchangeRateInput(false);
+        } else {
+            this.setExchangeRateInput(true);
+        }
+
         this.setInputFocus(InputFocus.NONE);
     }
 
@@ -410,16 +423,23 @@ export default class SwapFormStore {
         const oldOutputToken = this.outputToken;
         const oldInputToken = this.inputToken;
 
-        // This needs to be blocking as new path needs loaded
-        await sorStore.fetchPathData(
-            oldOutputToken.address,
-            oldInputToken.address
-        );
+        sorStore
+            .fetchPathData(oldOutputToken.address, oldInputToken.address)
+            .then(() => {
+                const inputValue = this.getActiveInputValue();
+                this.refreshSwapFormPreview(inputValue, this.inputs.swapMethod);
+            });
+
         poolStore.fetchAndSetTokenPairs(oldOutputToken.address);
         poolStore.fetchAndSetTokenPairs(oldInputToken.address);
 
         this.inputToken = oldOutputToken;
         this.outputToken = oldInputToken;
+
+        [this.inputs.inputAmount, this.inputs.outputAmount] = [
+            this.inputs.outputAmount,
+            this.inputs.inputAmount,
+        ];
 
         localStorage.setItem('inputToken', this.inputToken.address);
         localStorage.setItem('outputToken', this.outputToken.address);
@@ -716,6 +736,15 @@ export default class SwapFormStore {
         inputTokenAddress: string,
         account: string
     ) => {
+        /*
+        if (
+            this.inputToken.address === inputTokenAddress &&
+            this.account === account
+        ) {
+            console.log(`!!!!!!! NOT RELOADING INPUT TOKEN`);
+            return;
+        }
+        */
         console.log(
             `[SwapFormStore] setSelectedInputToken: ${account} ${inputTokenAddress}`
         );
@@ -723,18 +752,37 @@ export default class SwapFormStore {
         try {
             const { tokenStore, poolStore, sorStore } = this.rootStore;
 
+            tokenStore
+                .fetchOnChainTokenMetadata(inputTokenAddress, account)
+                .then(inputTokenMetadata => {
+                    this.inputToken = inputTokenMetadata;
+                    localStorage.setItem('inputToken', inputTokenAddress);
+                })
+                .catch(err => {
+                    this.inputToken = {
+                        address: inputTokenAddress,
+                        symbol: 'unknown',
+                        decimals: 18,
+                        iconAddress: 'unknown',
+                        precision: 4,
+                        balanceFormatted: '0.00',
+                        balanceBn: bnum(0),
+                        allowance: undefined,
+                    };
+
+                    this.setErrorMessage(err.message);
+                });
+
             this.inputToken.address = inputTokenAddress;
-            poolStore.fetchAndSetTokenPairs(inputTokenAddress);
-
-            sorStore.fetchPathData(inputTokenAddress, this.outputToken.address);
-
-            const inputTokenMetadata = await tokenStore.fetchOnChainTokenMetadata(
-                inputTokenAddress,
-                account
+            this.account = account;
+            console.log(
+                `[SwapFormStore] fetching Token Pairs: ${inputTokenAddress}`
             );
-
-            this.inputToken = inputTokenMetadata;
-            localStorage.setItem('inputToken', inputTokenAddress);
+            // Uses SOR & AllPools to retrieve all pairs for address, used for Asset Picker
+            poolStore.fetchAndSetTokenPairs(inputTokenAddress);
+            // This uses SOR to get paths between in/out tokens. Quite intensive so loaded ASAP to be ready.
+            // Required for when asset picker selects new tokens
+            sorStore.fetchPathData(inputTokenAddress, this.outputToken.address);
         } catch (err) {
             this.inputToken = {
                 address: inputTokenAddress,
@@ -757,6 +805,16 @@ export default class SwapFormStore {
         outputTokenAddress: string,
         account: string
     ) => {
+        /*
+        if (
+            this.outputToken.address === outputTokenAddress &&
+            this.account === account
+        ) {
+            console.log(`!!!!!!! NOT RELOADING OUTPUT TOKEN`);
+            return;
+        }
+        */
+
         console.log(
             `[SwapFormStore] setSelectedOutputToken: ${account} ${outputTokenAddress}`
         );
@@ -764,17 +822,32 @@ export default class SwapFormStore {
         try {
             const { tokenStore, poolStore, sorStore } = this.rootStore;
 
+            tokenStore
+                .fetchOnChainTokenMetadata(outputTokenAddress, account)
+                .then(outputTokenMetadata => {
+                    this.outputToken = outputTokenMetadata;
+                    localStorage.setItem('outputToken', outputTokenAddress);
+                })
+                .catch(err => {
+                    this.outputToken = {
+                        address: outputTokenAddress,
+                        symbol: 'unknown',
+                        decimals: 18,
+                        iconAddress: 'unknown',
+                        precision: 4,
+                        balanceFormatted: '0.00',
+                        balanceBn: bnum(0),
+                        allowance: undefined,
+                    };
+
+                    this.setErrorMessage(err.message);
+                });
+
             this.outputToken.address = outputTokenAddress;
+            this.account = account;
             poolStore.fetchAndSetTokenPairs(outputTokenAddress);
+            // Required for when asset picker selects new tokens
             sorStore.fetchPathData(this.inputToken.address, outputTokenAddress);
-
-            const outputTokenMetadata = await tokenStore.fetchOnChainTokenMetadata(
-                outputTokenAddress,
-                account
-            );
-
-            this.outputToken = outputTokenMetadata;
-            localStorage.setItem('outputToken', outputTokenAddress);
         } catch (err) {
             this.outputToken = {
                 address: outputTokenAddress,

@@ -90,22 +90,14 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     }
 
     useEffect(() => {
-        if (tokenIn && isEmpty(swapFormStore.inputToken.address)) {
+        if (tokenIn) {
             console.log(`[SwapForm] Using Input Token From URL: ${tokenIn}`);
             swapFormStore.setSelectedInputToken(tokenIn, account);
-        } else if (isEmpty(swapFormStore.inputToken.address)) {
-            console.log(`[SwapForm] No Input Token Selected, Loading Default.`);
-            swapFormStore.loadDefaultInputToken(account);
         }
 
-        if (tokenOut && isEmpty(swapFormStore.outputToken.address)) {
+        if (tokenOut) {
             console.log(`[SwapForm] Using Output Token From URL: ${tokenOut}`);
             swapFormStore.setSelectedOutputToken(tokenOut, account);
-        } else if (isEmpty(swapFormStore.outputToken.address)) {
-            console.log(
-                `[SwapForm] No Output Token Selected, Loading Default.`
-            );
-            swapFormStore.loadDefaultOutputToken(account);
         }
     }, [tokenIn, tokenOut, swapFormStore, account]); // Only re-run the effect on token address change
 
@@ -173,6 +165,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                 spotInput,
                 expectedSlippage,
                 swaps,
+                totalInput,
             } = swapFormStore.preview as ExactAmountOutPreview;
 
             const maxAmountIn = calcMaxAmountIn(
@@ -180,10 +173,12 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                 expectedSlippage.plus(extraSlippageAllowance)
             );
 
+            let maxIn = maxAmountIn.gt(totalInput) ? maxAmountIn : totalInput;
+
             await proxyStore.batchSwapExactOut(
                 swaps,
                 swapFormStore.inputToken.address,
-                maxAmountIn,
+                maxIn, //totalInput, //maxAmountIn,
                 swapFormStore.inputToken.decimals,
                 swapFormStore.outputToken.address,
                 bnum(outputAmount),

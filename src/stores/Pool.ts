@@ -4,7 +4,10 @@ import { EtherKey } from './Token';
 import { sorTokenPairs } from './Sor';
 import { supportedChainId } from '../provider/connectors';
 import { AsyncStatus, TokenPairsFetch } from './actions/fetch';
-import { getAllPublicSwapPools } from '@balancer-labs/sor';
+import {
+    getAllPublicSwapPools,
+    getAllPoolDataOnChain,
+} from '@balancer-labs/sor';
 import { getAllPublicSwapPoolsBackup } from '../utils/poolsBackup';
 import { BigNumber } from 'utils/bignumber';
 import { toChecksum, scale, bnum, fromWei } from 'utils/helpers';
@@ -33,32 +36,89 @@ interface TokenPairsMap {
 
 export default class PoolStore {
     @observable tokenPairs: TokenPairsMap;
-    @observable allPools: any;
+    @observable onchainPools: any;
     @observable subgraphError: boolean;
+    subgraphPools: any;
+    subgraphPromise: Promise<void>;
     poolsPromise: Promise<void>;
     rootStore: RootStore;
 
     constructor(rootStore) {
         this.rootStore = rootStore;
-        this.poolsPromise = this.fetchAllPools();
         this.tokenPairs = {};
-        this.allPools = { pools: [] };
+        this.subgraphPools = { pools: [] };
+        this.onchainPools = { pools: [] };
         this.subgraphError = false;
     }
 
-    // TODO: Should this be fetched on a timer to update?
-    @action async fetchAllPools() {
+    @action async fetchSubgraphPools() {
+        this.subgraphPromise = this.loadSubgraphPools();
+    }
+
+    @action async fetchOnchainPools() {
+        this.poolsPromise = this.loadOnChainPools();
+    }
+
+    // TODO: Should this be fetched on a timer to update? See Root.ts for order
+    async loadSubgraphPools() {
         try {
-            const allPools = await getAllPublicSwapPools();
+            console.log(`[Pool] Loading Subgraph Pools`);
+            console.time('Subgraph'); // !!!!!!! REMOVE AFTER TESTING
+            this.subgraphPools = await getAllPublicSwapPools();
             this.subgraphError = false;
-            this.allPools = allPools;
-            console.log(`[Pool] Subgraph All Pools Loaded`, this.allPools);
+            console.timeEnd('Subgraph'); // !!!!!!! REMOVE AFTER TESTING
+            console.log(`[Pool] Subgraph Pools Loaded`);
         } catch (err) {
             this.subgraphError = true;
+            console.log(err.message);
             console.log(
                 `[Pool] Issue Loading Subgraph pools. Defaulting to backup.`
             );
-            this.allPools = getAllPublicSwapPoolsBackup();
+            this.subgraphPools = getAllPublicSwapPoolsBackup();
+        }
+    }
+
+    // TODO: Should this be fetched on a timer to update? See Root.ts for order
+    @action async loadOnChainPools() {
+        try {
+            const {
+                providerStore,
+                contractMetadataStore,
+                sorStore,
+                swapFormStore,
+            } = this.rootStore;
+            const library = providerStore.providerStatus.library;
+            console.log(
+                `[Pool] Fetch All Pools On-chain Balances, Waiting For Subgraph...`
+            );
+            await this.subgraphPromise;
+
+            console.log(`[Pool] Fetch paths while waiting for onchain...`);
+            // This function will use Subgraph for paths and wait until on-chain pools are loaded then use those
+            sorStore.fetchPathData(
+                swapFormStore.inputToken.address,
+                swapFormStore.outputToken.address
+            );
+            console.log(`[Pool] Loading Pool On-chain Balances`);
+            console.time('onChainPools'); // !!!!!!! REMOVE AFTER TESTING
+            const allPoolsOnChain = await getAllPoolDataOnChain(
+                this.subgraphPools,
+                contractMetadataStore.getMultiAddress(),
+                library
+            );
+            console.timeEnd('onChainPools'); // !!!!!!! REMOVE AFTER TESTING
+            if (!allPoolsOnChain) {
+                console.log(`Error loading on-chain, default to Subgraph`);
+                this.onchainPools = this.subgraphPools;
+            } else this.onchainPools = allPoolsOnChain;
+
+            console.log(`[Pool] All On-chain Pools Loaded`, this.onchainPools);
+        } catch (err) {
+            console.log(err.message);
+            console.log(
+                `[Pool] Issue Loading OnChain pools. Defaulting to Subgraph.`
+            );
+            this.onchainPools = this.subgraphPools;
         }
     }
 
@@ -84,11 +144,6 @@ export default class PoolStore {
             fetchBlock <= this.getTokenPairsLastFetched(tokenAddress) &&
             fetchBlock !== -1;
 
-        console.log({
-            currentBlock: fetchBlock,
-            lastFetched: this.getTokenPairsLastFetched(tokenAddress),
-        });
-
         if (!stale) {
             const tokenAddressToFind =
                 tokenAddress === EtherKey
@@ -96,16 +151,19 @@ export default class PoolStore {
                     : tokenAddress;
 
             // First page load we need to wait for all pools loaded from Subgraph
+            // Subgraph will be loaded quicker than on-chain pools & assume this
+            // data is fine to use for token pairs as no balances required
             // TO DO: Should we put all pools load on timer loop?
-            await this.poolsPromise;
-
+            console.log(`[Pool] Waiting for subgraph before loading pairs...`);
+            await this.subgraphPromise;
+            console.log(`[Pool] Loading Pairs ${tokenAddressToFind}`);
             const tokenPairs = await sorTokenPairs(
                 tokenAddressToFind,
                 contractMetadataStore,
-                this.allPools.pools
+                this.subgraphPools.pools
             );
 
-            console.log('[Token Pairs Fetch] - Success', {
+            console.log('[Pool] - TokenPairs Success', {
                 tokenAddress,
                 tokenPairs,
                 fetchBlock,
@@ -209,9 +267,19 @@ export default class PoolStore {
         tokenIn: string,
         tokenOut: string
     ): Pool => {
-        const pool = this.allPools.pools.find(
-            p => toChecksum(p.id) === toChecksum(poolId)
-        );
+        // Use Subgraph pools as a backup until on-chain loaded
+        let pool;
+
+        if (this.onchainPools.pools.length === 0) {
+            pool = this.subgraphPools.pools.find(
+                p => toChecksum(p.id) === toChecksum(poolId)
+            );
+        } else {
+            pool = this.onchainPools.pools.find(
+                p => toChecksum(p.id) === toChecksum(poolId)
+            );
+        }
+
         if (!pool) {
             throw new Error(
                 '[Invariant] No pool found for selected balancer index'

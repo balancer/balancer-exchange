@@ -350,9 +350,14 @@ export default class ProviderStore {
             console.log(`[Provider] Injected provider active.`);
             this.providerStatus.library = this.providerStatus.injectedWeb3;
             this.providerStatus.activeChainId = this.providerStatus.injectedChainId;
-            this.providerStatus.injectedActive = true;
-            if (this.providerStatus.account)
+            // Only fetch if not first page load as could be change of provider
+            if (
+                this.providerStatus.account &&
+                this.providerStatus.injectedActive
+            )
                 this.fetchUserBlockchainData(this.providerStatus.account);
+
+            this.providerStatus.injectedActive = true;
         }
 
         this.providerStatus.active = true;
