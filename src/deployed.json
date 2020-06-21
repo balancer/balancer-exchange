@@ -325,6 +325,13 @@
                 "decimals": 18,
                 "iconAddress": "0xc00e94Cb662C3520282E6f5717214004A7f26888",
                 "precision": 2
+            },
+            {
+                "symbol": "OCEAN",
+                "address": "0x985dd3D42De1e256d09e1c10F112bCCB8015AD41",
+                "decimals": 18,
+                "iconAddress": "0x985dd3D42De1e256d09e1c10F112bCCB8015AD41",
+                "precision": 2,
             }
         ]
     }
