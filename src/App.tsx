@@ -6,26 +6,15 @@ import Header from 'components/Header';
 import SwapForm from 'components/SwapForm';
 import './App.css';
 
-const Footer = styled.div`
-    height: 60px;
-    display: flex;
-    justify-content: space-between;
-`;
-
-const Link = styled.a`
-    margin: 0 20px;
-    display: flex;
-    align-items: center;
-    color: var(--header-text);
-    text-decoration: none;
-`;
-
 const BuildVersion = styled.div`
-    margin: 0 20px;
     display: flex;
-    align-items: center;
+    flex-direction: row;
+    text-align: center;
+    margin: 20px;
     font-size: 10px;
     color: var(--body-text);
+    position: fixed;
+    bottom: 0px;
     @media screen and (max-width: 1024px) {
         display: none;
     }
@@ -65,24 +54,15 @@ const App = () => {
             <HashRouter>
                 <Header />
                 {renderViews()}
-                <Footer>
-                    <BuildVersion>
-                        BUILD ID:{' '}
-                        <BuildLink
-                            href={`https://github.com/balancer-labs/balancer-exchange/tree/${buildId}`}
-                            target="_blank"
-                        >
-                            {buildId.substring(0, 12)}
-                            asdfasdf
-                        </BuildLink>
-                    </BuildVersion>
-                    <Link
-                        href="https://pools.balancer.exchange"
+                <BuildVersion>
+                    BUILD ID:{' '}
+                    <BuildLink
+                        href={`https://github.com/balancer-labs/balancer-exchange/tree/${buildId}`}
                         target="_blank"
                     >
-                        Add Liquidity
-                    </Link>
-                </Footer>
+                        {buildId.substring(0, 12)}
+                    </BuildLink>
+                </BuildVersion>
             </HashRouter>
         </Web3ReactManager>
     );
