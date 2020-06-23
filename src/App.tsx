@@ -6,22 +6,32 @@ import Header from 'components/Header';
 import SwapForm from 'components/SwapForm';
 import './App.css';
 
-const BuildVersion = styled.div`
+const Footer = styled.div`
+    height: 60px;
     display: flex;
-    flex-direction: row;
-    text-align: center;
-    margin: 20px;
+    justify-content: space-between;
+`;
+
+const Link = styled.a`
+    margin: 0 20px;
+    display: flex;
+    align-items: center;
+    color: var(--header-text);
+    text-decoration: none;
+`;
+
+const BuildVersion = styled.div`
+    margin: 0 20px;
+    display: flex;
+    align-items: center;
     font-size: 10px;
     color: var(--body-text);
-    position: fixed;
-    bottom: 0px;
     @media screen and (max-width: 1024px) {
         display: none;
     }
 `;
 
 const BuildLink = styled.a`
-    font-size: 10px;
     color: var(--body-text);
     text-decoration: none;
     margin-left: 5px;
@@ -55,15 +65,24 @@ const App = () => {
             <HashRouter>
                 <Header />
                 {renderViews()}
-                <BuildVersion>
-                    BUILD ID:{' '}
-                    <BuildLink
-                        href={`https://github.com/balancer-labs/balancer-exchange/tree/${buildId}`}
+                <Footer>
+                    <BuildVersion>
+                        BUILD ID:{' '}
+                        <BuildLink
+                            href={`https://github.com/balancer-labs/balancer-exchange/tree/${buildId}`}
+                            target="_blank"
+                        >
+                            {buildId.substring(0, 12)}
+                            asdfasdf
+                        </BuildLink>
+                    </BuildVersion>
+                    <Link
+                        href="https://pools.balancer.exchange"
                         target="_blank"
                     >
-                        {buildId.substring(0, 12)}
-                    </BuildLink>
-                </BuildVersion>
+                        Add Liquidity
+                    </Link>
+                </Footer>
             </HashRouter>
         </Web3ReactManager>
     );
