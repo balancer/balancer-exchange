@@ -65,7 +65,6 @@ const Error = styled.button`
     border: 1px solid var(--warning);
     display: flex;
     flex-flow: row nowrap;
-    width: 100%;
     font-size: 0.9rem;
     align-items: center;
     padding: 0.5rem;
