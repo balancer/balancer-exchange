@@ -127,7 +127,7 @@
                 "address": "0xba100000625a3754423978a60c9317c58a424e3D",
                 "decimals": 18,
                 "iconAddress": "0xba100000625a3754423978a60c9317c58a424e3D",
-                "precision": 4
+                "precision": 2
             },
             {
                 "symbol": "DAI",
