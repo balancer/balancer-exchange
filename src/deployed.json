@@ -123,6 +123,13 @@
                 "precision": 4
             },
             {
+                "symbol": "BAL",
+                "address": "0xba100000625a3754423978a60c9317c58a424e3D",
+                "decimals": 18,
+                "iconAddress": "0xba100000625a3754423978a60c9317c58a424e3D",
+                "precision": 4
+            },
+            {
                 "symbol": "DAI",
                 "address": "0x6B175474E89094C44Da98b954EedeAC495271d0F",
                 "decimals": 18,
