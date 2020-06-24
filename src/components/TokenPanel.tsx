@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { isAddress } from '../utils/helpers';
 import { EtherKey } from '../stores/Token';
+import { ModalType } from '../stores/SwapForm';
 import { observer } from 'mobx-react';
 import { useStores } from '../contexts/storesContext';
 
@@ -188,6 +189,9 @@ const Token = observer(
             }
         });
 
+        const modalType =
+            inputName === 'inputAmount' ? ModalType.INPUT : ModalType.OUTPUT;
+
         const InputContainer = ({ errorMessage }) => {
             // TODO make sure conditional is checking the correct thing
             const errorBorders = errorMessage === '' ? false : true;
@@ -202,7 +206,7 @@ const Token = observer(
                         placeholder="0"
                     />
                     {(tokenAddress === EtherKey &&
-                        inputName === 'inputAmount') ||
+                        modalType === ModalType.INPUT) ||
                     !showMax ? (
                         <div />
                     ) : (
@@ -221,10 +225,7 @@ const Token = observer(
                 <PanelHeader>{headerText}</PanelHeader>
                 <TokenContainer
                     onClick={() => {
-                        swapFormStore.setAssetModalState({
-                            open: true,
-                            input: inputName,
-                        });
+                        swapFormStore.openModal(modalType);
                     }}
                 >
                     <IconAndNameContainer>
