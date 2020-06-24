@@ -32,9 +32,6 @@ const AssetPanel = styled.div`
     :nth-child(3n + 3) {
         border-right: none;
     }
-    :nth-child(10) {
-        border-bottom: none;
-    }
 `;
 
 const AssetWrapper = styled.div`
