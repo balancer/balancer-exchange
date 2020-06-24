@@ -339,6 +339,13 @@
                 "decimals": 18,
                 "iconAddress": "0x985dd3D42De1e256d09e1c10F112bCCB8015AD41",
                 "precision": 2
+            },
+            {
+                "symbol": "AUC",
+                "address": "0xc12d099be31567add4e4e4d0D45691C3F58f5663",
+                "decimals": 18,
+                "iconAddress": "0xc12d099be31567add4e4e4d0D45691C3F58f5663",
+                "precision": 2
             }
         ]
     }
