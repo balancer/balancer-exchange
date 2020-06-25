@@ -339,6 +339,13 @@
                 "decimals": 18,
                 "iconAddress": "0x985dd3D42De1e256d09e1c10F112bCCB8015AD41",
                 "precision": 2
+            },
+            {
+                "symbol": "CHR",
+                "address": "0x915044526758533dfb918eceb6e44bc21632060d",
+                "decimals": 6,
+                "iconAddress": "0x915044526758533dfb918eceb6e44bc21632060d",
+                "precision": 2
             }
         ]
     }
