@@ -173,6 +173,14 @@
                 "iconAddress": "0x0327112423F3A68efdF1fcF402F6c5CB9f7C33fd"
             },
             {
+                "symbol": "USD++",
+                "address": "0x9a48bd0ec040ea4f1d3147c025cd4076a2e71e3e",
+                "decimals": 18,
+                "ticker": "USD",
+                "precision": 2,
+                "iconAddress": "0x9a48bd0ec040ea4f1d3147c025cd4076a2e71e3e"
+            },
+            {
                 "symbol": "WBTC",
                 "address": "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
                 "decimals": 8,
