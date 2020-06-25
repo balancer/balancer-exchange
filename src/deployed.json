@@ -339,6 +339,13 @@
                 "decimals": 18,
                 "iconAddress": "0x985dd3D42De1e256d09e1c10F112bCCB8015AD41",
                 "precision": 2
+            },
+            {
+                "symbol": "BCDT",
+                "address": "0xAcfa209Fb73bF3Dd5bBfb1101B9Bc999C49062a5",
+                "decimals": 18,
+                "iconAddress": "0xAcfa209Fb73bF3Dd5bBfb1101B9Bc999C49062a5",
+                "precision": 2
             }
         ]
     }
