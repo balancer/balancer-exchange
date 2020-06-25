@@ -339,6 +339,13 @@
                 "decimals": 18,
                 "iconAddress": "0x985dd3D42De1e256d09e1c10F112bCCB8015AD41",
                 "precision": 2
+            },
+            {
+                "symbol": "TUSD",
+                "address": "0x0000000000085d4780B73119b644AE5ecd22b376",
+                "decimals": 18,
+                "iconAddress": "0x0000000000085d4780B73119b644AE5ecd22b376",
+                "precision": 2
             }
         ]
     }
