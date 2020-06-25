@@ -339,6 +339,13 @@
                 "decimals": 18,
                 "iconAddress": "0x985dd3D42De1e256d09e1c10F112bCCB8015AD41",
                 "precision": 2
+            },
+            {
+                "symbol": "TOL",
+                "address": "0xd07d9fe2d2cc067015e2b4917d24933804f42cfa",
+                "decimals": 18,
+                "iconAddress": "0xd07d9fe2d2cc067015e2b4917d24933804f42cfa",
+                "precision": 2
             }
         ]
     }
