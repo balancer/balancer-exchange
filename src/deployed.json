@@ -339,6 +339,13 @@
                 "decimals": 18,
                 "iconAddress": "0x985dd3D42De1e256d09e1c10F112bCCB8015AD41",
                 "precision": 2
+            },
+            {
+                "symbol": "AKRO",
+                "address": "0x8ab7404063ec4dbcfd4598215992dc3f8ec853d7",
+                "decimals": 18,
+                "iconAddress": "0x8ab7404063ec4dbcfd4598215992dc3f8ec853d7",
+                "precision": 2
             }
         ]
     }
