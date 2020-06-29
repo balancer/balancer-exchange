@@ -218,6 +218,10 @@ const AssetOptions = observer(() => {
         }
     };
 
+    const IconError = e => {
+        e.target.src = './empty-token.png';
+    };
+
     return (
         <AssetPanelContainer>
             {assets.map(token => (
@@ -228,7 +232,12 @@ const AssetOptions = observer(() => {
                     key={token.address}
                 >
                     <AssetWrapper>
-                        <TokenIcon src={TokenIconAddress(token.iconAddress)} />
+                        <TokenIcon
+                            src={TokenIconAddress(token.iconAddress)}
+                            onError={e => {
+                                IconError(e);
+                            }}
+                        />
                         <TokenName>{token.symbol}</TokenName>
                     </AssetWrapper>
                     <TokenBalance>

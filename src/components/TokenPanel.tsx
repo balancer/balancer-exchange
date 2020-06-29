@@ -62,6 +62,7 @@ export const TokenIconAddress = address => {
         )}/logo.png`;
     }
 };
+
 const TokenIcon = styled.img`
     width: 28px;
     height: 28px;
@@ -188,6 +189,10 @@ const Token = observer(
             }
         });
 
+        const IconError = e => {
+            e.target.src = './empty-token.png';
+        };
+
         const InputContainer = ({ errorMessage }) => {
             // TODO make sure conditional is checking the correct thing
             const errorBorders = errorMessage === '' ? false : true;
@@ -228,7 +233,12 @@ const Token = observer(
                     }}
                 >
                     <IconAndNameContainer>
-                        <TokenIcon src={TokenIconAddress(tokenAddress)} />
+                        <TokenIcon
+                            src={TokenIconAddress(tokenAddress)}
+                            onError={e => {
+                                IconError(e);
+                            }}
+                        />
                         <TokenName>{tokenName}</TokenName>
                     </IconAndNameContainer>
                     <TokenBalance>
