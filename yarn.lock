@@ -12261,10 +12261,10 @@ web3-provider-engine@15.0.4:
     xhr "^2.2.0"
     xtend "^4.0.1"
 
-web3modal@^1.2.1:
-  version "1.6.3"
-  resolved "https://registry.yarnpkg.com/web3modal/-/web3modal-1.6.3.tgz#2faa21e97794b8950d976658aa7327dbae3f8012"
-  integrity sha512-4xgpCC+uX+lON52y1dGzkxtlufVjSHEirVn0A8KwUs4RKXGFpZNU8jRDfkrbw7gdeznsscxym+NNgwK/ZcME5w==
+web3modal@^1.7.0:
+  version "1.7.0"
+  resolved "https://registry.yarnpkg.com/web3modal/-/web3modal-1.7.0.tgz#21b424325e6e4221d7ffaaaa11632e80d9204bf9"
+  integrity sha512-OHkoHIrP7NLu41N8GJfaaV1/z7Si7pP65jJq7fC+DIwfLa8URWqyvRvhD95ChgTVi0w5nEp18IYuqONFR6KTcQ==
   dependencies:
     detect-browser "^5.1.0"
     prop-types "^15.7.2"
