@@ -97,7 +97,7 @@
         "tslint-react": "^4.1.0",
         "typescript": "<3.7.0",
         "url-loader": "2.1.0",
-        "web3modal": "^1.2.1",
+        "web3modal": "^1.7.0",
         "webpack": "4.41.0",
         "webpack-dev-server": "3.2.1",
         "webpack-manifest-plugin": "2.1.1",

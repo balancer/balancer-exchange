@@ -4682,6 +4682,11 @@ destroy@~1.0.4:
   resolved "https://registry.yarnpkg.com/destroy/-/destroy-1.0.4.tgz#978857442c44749e4206613e37946205826abd80"
   integrity sha1-l4hXRCxEdJ5CBmE+N5RiBYJqvYA=
 
+detect-browser@^5.1.0:
+  version "5.1.1"
+  resolved "https://registry.yarnpkg.com/detect-browser/-/detect-browser-5.1.1.tgz#a800db91d3fd60d0861669f5984f1be9ffbe009c"
+  integrity sha512-5n2aWI57qC3kZaK4j2zYsG6L1LrxgLptGCNhMQgdKhVn6cSdcq43pp6xHPfTHG3TYM6myF4tIPWiZtfdVDgb9w==
+
 detect-indent@^4.0.0:
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/detect-indent/-/detect-indent-4.0.0.tgz#f76d064352cdf43a1cb6ce619c4ee3a9475de208"
@@ -13157,11 +13162,12 @@ web3-provider-engine@15.0.4:
     xhr "^2.2.0"
     xtend "^4.0.1"
 
-web3modal@^1.2.1:
-  version "1.5.0"
-  resolved "https://registry.yarnpkg.com/web3modal/-/web3modal-1.5.0.tgz#e0562523fe9abd2afb7e7a9714e532cefae08f37"
-  integrity sha512-ylh/uhcjJ5Z6uXCv//EdeouemuLYijWptosde2wa2G6hr3A0BOJR9Gk2bPrkQ7h/dpYLYAS6/4Oay27I8sep2Q==
+web3modal@^1.7.0:
+  version "1.7.0"
+  resolved "https://registry.yarnpkg.com/web3modal/-/web3modal-1.7.0.tgz#21b424325e6e4221d7ffaaaa11632e80d9204bf9"
+  integrity sha512-OHkoHIrP7NLu41N8GJfaaV1/z7Si7pP65jJq7fC+DIwfLa8URWqyvRvhD95ChgTVi0w5nEp18IYuqONFR6KTcQ==
   dependencies:
+    detect-browser "^5.1.0"
     prop-types "^15.7.2"
     react "^16.8.6"
     react-dom "^16.8.6"
