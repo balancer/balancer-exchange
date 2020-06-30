@@ -47,11 +47,11 @@ export default class ContractMetadataStore {
         };
 
         tokenMetadata.forEach(token => {
-            const { address, symbol, decimals, iconAddress, precision } = token;
+            const { address, symbol, iconAddress, precision } = token;
             contractMetadata.tokens.push({
                 address,
                 symbol,
-                decimals,
+                decimals: undefined,
                 iconAddress,
                 precision,
                 isSupported: true,
