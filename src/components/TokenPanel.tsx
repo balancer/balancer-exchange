@@ -220,6 +220,10 @@ const Token = observer(
             );
         };
 
+        const IconError = e => {
+            e.target.src = './empty-token.png';
+        };
+
         return (
             <Panel>
                 <PanelHeader>{headerText}</PanelHeader>
@@ -229,7 +233,12 @@ const Token = observer(
                     }}
                 >
                     <IconAndNameContainer>
-                        <TokenIcon src={TokenIconAddress(tokenAddress)} />
+                        <TokenIcon
+                            src={TokenIconAddress(tokenAddress)}
+                            onError={e => {
+                                IconError(e);
+                            }}
+                        />
                         <TokenName>{tokenName}</TokenName>
                     </IconAndNameContainer>
                     <TokenBalance>
