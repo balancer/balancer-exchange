@@ -3,7 +3,7 @@ import Popup from 'reactjs-popup';
 import styled from 'styled-components';
 import { observer } from 'mobx-react';
 import { useStores } from '../contexts/storesContext';
-import { InputValidationStatus } from '../stores/SwapForm';
+import { InputValidationStatus, SwapObjection } from '../stores/SwapForm';
 import { formatPctString, bnum } from '../utils/helpers';
 
 const SlippageInfoContainer = styled.div`
@@ -72,6 +72,9 @@ const SlippageInfo = observer(() => {
     } = swapFormStore;
 
     let slippageIndicator = false;
+
+    if (swapFormStore.outputs.swapObjection !== SwapObjection.NONE)
+        slippageIndicator = true;
 
     if (expectedSlippage > '5') {
         slippageIndicator = true;
