@@ -140,8 +140,8 @@ const AssetSelector = observer(() => {
                     <HeaderContent>
                         Select Token to{' '}
                         {assetModalState.type === ModalType.INPUT
-                            ? 'Sell'
-                            : 'Buy'}
+                            ? `Sell for ${swapFormStore.outputToken.symbol}`
+                            : `Buy with ${swapFormStore.inputToken.symbol}`}
                     </HeaderContent>
                     <ExitComponent
                         onClick={() => {
