@@ -155,4 +155,11 @@ export default class ContractMetadataStore {
             token => token.isSupported
         )[0].address;
     }
+
+    setTokenDecimals(address: string, decimals: number) {
+        const tokenUrl = this.contractMetadata.tokens.find(
+            t => t.address === address
+        );
+        if (tokenUrl) tokenUrl.decimals = decimals;
+    }
 }

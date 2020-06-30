@@ -229,6 +229,23 @@ export default class TokenStore {
         return undefined;
     }
 
+    private setDecimals(tokens: string[], decimals: number[]) {
+        const { contractMetadataStore } = this.rootStore;
+
+        let index = 0;
+        tokens.forEach(tokenAddr => {
+            if (tokenAddr === EtherKey) {
+                contractMetadataStore.setTokenDecimals(tokenAddr, 18);
+            } else {
+                contractMetadataStore.setTokenDecimals(
+                    tokenAddr,
+                    decimals[index]
+                );
+                index += 1;
+            }
+        });
+    }
+
     private getBalanceLastFetched(tokenAddress, account): number | undefined {
         const chainBalances = this.balances;
         if (chainBalances) {
@@ -273,6 +290,7 @@ export default class TokenStore {
         const promises: Promise<any>[] = [];
         const balanceCalls = [];
         const allowanceCalls = [];
+        const decimalsCalls = [];
         const tokenList = [];
 
         const multiAddress = contractMetadataStore.getMultiAddress();
@@ -297,18 +315,25 @@ export default class TokenStore {
                         contractMetadataStore.getProxyAddress(),
                     ]),
                 ]);
+
+                decimalsCalls.push([
+                    address,
+                    iface.functions.decimals.encode([]),
+                ]);
             }
         });
 
         promises.push(multi.aggregate(balanceCalls));
         promises.push(multi.aggregate(allowanceCalls));
         promises.push(multi.getEthBalance(account));
+        promises.push(multi.aggregate(decimalsCalls));
 
         try {
             const [
                 [balBlock, mulBalance],
                 [allBlock, mulAllowance],
                 mulEth,
+                [mulDecimals],
             ] = await Promise.all(promises);
             const balances = mulBalance.map(value =>
                 bnum(iface.functions.balanceOf.decode(value))
@@ -322,6 +347,10 @@ export default class TokenStore {
             balances.unshift(ethBalance);
             allowances.unshift(bnum(helpers.setPropertyToMaxUintIfEmpty()));
 
+            const decimalsList = mulDecimals.map(value =>
+                bnum(iface.functions.decimals.decode(value))
+            );
+
             this.setBalances(tokenList, balances, account, balBlock.toNumber());
 
             this.setAllowances(
@@ -331,6 +360,8 @@ export default class TokenStore {
                 allowances,
                 allBlock.toNumber()
             );
+
+            this.setDecimals(tokenList, decimalsList);
 
             console.debug('[All Fetches Success]');
         } catch (e) {
