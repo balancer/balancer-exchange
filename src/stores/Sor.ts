@@ -9,6 +9,9 @@ import {
     filterPoolsWithTokensMultihop,
     getTokenPairsMultiHop,
     parsePoolData,
+    processPaths,
+    processEpsOfInterestMultiHop,
+    smartOrderRouterMultiHopEpsOfInterest,
 } from '@balancer-labs/sor';
 import { BigNumber } from '../utils/bignumber';
 import { SwapMethods } from './SwapForm';
@@ -36,73 +39,6 @@ interface MultiSwap {
 export interface SorMultiSwap {
     sequence: MultiSwap[];
 }
-
-// User SOR to find all swaps including multi-hop
-export const findBestSwapsMulti = async (
-    pools: any,
-    pathData: any,
-    tokenIn: string,
-    tokenOut: string,
-    swapType: SwapMethods,
-    swapAmount: BigNumber,
-    maxPools: number,
-    returnTokenCostPerPool: BigNumber
-): Promise<[BigNumber, any[][]]> => {
-    tokenIn = tokenIn.toLowerCase();
-    tokenOut = tokenOut.toLowerCase();
-
-    console.log(
-        `[SOR] findBestSwapsMulti: ${tokenIn} ${tokenOut} ${swapType} ${fromWei(
-            swapAmount
-        )} ${maxPools} ${fromWei(returnTokenCostPerPool)}`
-    );
-
-    // sorSwaps will return a nested array of swaps that can be passed to proxy
-    const [sorSwaps, totalReturn] = smartOrderRouterMultiHop(
-        JSON.parse(JSON.stringify(pools)),
-        pathData,
-        swapType,
-        swapAmount,
-        maxPools,
-        returnTokenCostPerPool
-    );
-
-    return [totalReturn, sorSwaps];
-};
-
-export const getPathData = async (
-    allPools: any,
-    tokenIn: string,
-    tokenOut: string
-): Promise<any[]> => {
-    tokenIn = tokenIn.toLowerCase();
-    tokenOut = tokenOut.toLowerCase();
-
-    const directPools = await filterPoolsWithTokensDirect(
-        allPools,
-        tokenIn,
-        tokenOut
-    );
-
-    let mostLiquidPoolsFirstHop, mostLiquidPoolsSecondHop, hopTokens;
-    [
-        mostLiquidPoolsFirstHop,
-        mostLiquidPoolsSecondHop,
-        hopTokens,
-    ] = await filterPoolsWithTokensMultihop(allPools, tokenIn, tokenOut);
-
-    let pools, pathData;
-    [pools, pathData] = parsePoolData(
-        directPools,
-        tokenIn,
-        tokenOut,
-        mostLiquidPoolsFirstHop,
-        mostLiquidPoolsSecondHop,
-        hopTokens
-    );
-
-    return [pools, pathData];
-};
 
 export const sorTokenPairs = async (
     tokenAddress: string,
@@ -133,11 +69,19 @@ export default class SorStore {
     @observable pools: any;
     costCalculator: CostCalculator;
     rootStore: RootStore;
+    processedPathsIn: any;
+    processedPathsOut: any;
+    epsOfInterestIn: any;
+    epsOfInterestOut: any;
 
     constructor(rootStore) {
         this.rootStore = rootStore;
         this.pathData = null;
         this.pools = null;
+        this.processedPathsIn = null;
+        this.processedPathsOut = null;
+        this.epsOfInterestIn = null;
+        this.epsOfInterestOut = null;
         this.costCalculator = new CostCalculator({
             gasPrice: bnum(0),
             gasPerTrade: bnum(0),
@@ -175,24 +119,69 @@ export default class SorStore {
                 console.log(
                     `[SOR] fetchPathData() Using Subgraph Until On-Chain Loaded`
                 );
-                let [pools, pathData] = await getPathData(
+                let [pools, pathData] = await this.getPathData(
                     poolStore.subgraphPools,
                     inputToken,
                     outputToken
                 );
+                console.time(`processingSubgraph`);
+
+                this.processedPathsIn = processPaths(
+                    pathData,
+                    pools,
+                    'swapExactIn'
+                );
+                this.epsOfInterestIn = processEpsOfInterestMultiHop(
+                    this.processedPathsIn,
+                    'swapExactIn'
+                );
+
+                this.processedPathsOut = processPaths(
+                    pathData,
+                    pools,
+                    'swapExactOut'
+                );
+                this.epsOfInterestOut = processEpsOfInterestMultiHop(
+                    this.processedPathsOut,
+                    'swapExactOut'
+                );
+                console.timeEnd(`processingSubgraph`);
+
                 this.pools = pools;
                 this.pathData = pathData;
             }
             // Waits for on-chain pools to finish loading
             await poolStore.poolsPromise;
 
-            let [pools, pathData] = await getPathData(
+            let [pools, pathData] = await this.getPathData(
                 poolStore.onchainPools,
                 inputToken,
                 outputToken
             );
             this.pools = pools;
             this.pathData = pathData;
+            console.time(`processingOnchain`);
+            this.processedPathsIn = processPaths(
+                pathData,
+                pools,
+                'swapExactIn'
+            );
+            this.epsOfInterestIn = processEpsOfInterestMultiHop(
+                this.processedPathsIn,
+                'swapExactIn'
+            );
+            this.processedPathsOut = processPaths(
+                pathData,
+                pools,
+                'swapExactOut'
+            );
+
+            this.epsOfInterestOut = processEpsOfInterestMultiHop(
+                this.processedPathsOut,
+                'swapExactOut'
+            );
+            console.timeEnd(`processingOnchain`);
+
             console.log(`[SOR] fetchPathData() On-Chain Path Data Loaded`);
         }
     }
@@ -274,5 +263,102 @@ export default class SorStore {
         }
 
         return formattedSorSwaps;
+    };
+
+    getPathData = async (
+        allPools: any,
+        tokenIn: string,
+        tokenOut: string
+    ): Promise<any[]> => {
+        tokenIn = tokenIn.toLowerCase();
+        tokenOut = tokenOut.toLowerCase();
+
+        const directPools = await filterPoolsWithTokensDirect(
+            allPools,
+            tokenIn,
+            tokenOut
+        );
+
+        let mostLiquidPoolsFirstHop, mostLiquidPoolsSecondHop, hopTokens;
+        [
+            mostLiquidPoolsFirstHop,
+            mostLiquidPoolsSecondHop,
+            hopTokens,
+        ] = await filterPoolsWithTokensMultihop(allPools, tokenIn, tokenOut);
+
+        let pools, pathData;
+        [pools, pathData] = parsePoolData(
+            directPools,
+            tokenIn,
+            tokenOut,
+            mostLiquidPoolsFirstHop,
+            mostLiquidPoolsSecondHop,
+            hopTokens
+        );
+
+        return [pools, pathData];
+    };
+
+    // User SOR to find all swaps including multi-hop
+    findBestSwapsMultiOld = async (
+        pools: any,
+        pathData: any,
+        tokenIn: string,
+        tokenOut: string,
+        swapType: SwapMethods,
+        swapAmount: BigNumber,
+        maxPools: number,
+        returnTokenCostPerPool: BigNumber
+    ): Promise<[BigNumber, any[][]]> => {
+        tokenIn = tokenIn.toLowerCase();
+        tokenOut = tokenOut.toLowerCase();
+
+        console.log(
+            `[SOR] findBestSwapsMulti: ${tokenIn} ${tokenOut} ${swapType} ${fromWei(
+                swapAmount
+            )} ${maxPools} ${fromWei(returnTokenCostPerPool)}`
+        );
+
+        // sorSwaps will return a nested array of swaps that can be passed to proxy
+        const [sorSwaps, totalReturn] = smartOrderRouterMultiHop(
+            JSON.parse(JSON.stringify(pools)),
+            pathData,
+            swapType,
+            swapAmount,
+            maxPools,
+            returnTokenCostPerPool
+        );
+
+        return [totalReturn, sorSwaps];
+    };
+
+    // User SOR to find all swaps including multi-hop
+    findBestSwapsMulti = async (
+        swapType: SwapMethods,
+        swapAmount: BigNumber,
+        maxPools: number,
+        returnTokenCostPerPool: BigNumber
+    ): Promise<[BigNumber, any[][]]> => {
+        let processedPaths = this.processedPathsIn;
+        let epsOfInterest = this.epsOfInterestIn;
+
+        if (swapType === SwapMethods.EXACT_OUT) {
+            processedPaths = this.processedPathsOut;
+            epsOfInterest = this.epsOfInterestOut;
+        }
+
+        const [sorSwaps, totalReturn] = smartOrderRouterMultiHopEpsOfInterest(
+            JSON.parse(JSON.stringify(this.pools)),
+            processedPaths,
+            swapType,
+            swapAmount,
+            maxPools,
+            returnTokenCostPerPool,
+            epsOfInterest
+        );
+
+        console.log(`!!!!!!! totalReturn: ${totalReturn}`);
+
+        return [totalReturn, sorSwaps];
     };
 }

@@ -7,7 +7,7 @@ import { ContractTypes } from './Provider';
 import { SwapMethods } from './SwapForm';
 import { ethers } from 'ethers';
 import { EtherKey } from './Token';
-import { SorMultiSwap, findBestSwapsMulti } from './Sor';
+import { SorMultiSwap } from './Sor';
 import { calcSpotPrice, bmul, bdiv } from '../utils/balancerCalcs';
 
 export type SwapPreview = ExactAmountInPreview | ExactAmountOutPreview;
@@ -393,9 +393,22 @@ export default class ProxyStore {
                     'Waiting For Pool Data To Load'
                 );
             }
+
+            console.log(
+                `[SOR] findBestSwapsMultiEps: ${tokenInToFind} ${tokenOutToFind} ${
+                    SwapMethods.EXACT_IN
+                } ${fromWei(tokenAmountIn)}`
+            );
             console.time('timefindBestSwapsMulti');
             // sorSwaps is the unchanged info from SOR that can be directly passed to proxy transaction
-            const [totalOutput, sorSwaps] = await findBestSwapsMulti(
+            const [totalOutput, sorSwaps] = await sorStore.findBestSwapsMulti(
+                SwapMethods.EXACT_IN,
+                tokenAmountIn,
+                4,
+                sorStore.costCalculator.getCostOutputToken()
+            );
+            /*
+            const [totalOutput, sorSwaps] = await sorStore.findBestSwapsMulti(
                 sorStore.pools,
                 sorStore.pathData,
                 tokenInToFind,
@@ -405,6 +418,7 @@ export default class ProxyStore {
                 4,
                 sorStore.costCalculator.getCostOutputToken()
             );
+            */
             console.timeEnd('timefindBestSwapsMulti');
 
             console.time('timeformatSorSwapss');
@@ -499,11 +513,26 @@ export default class ProxyStore {
                 );
             }
 
-            const [totalInput, sorSwaps] = await findBestSwapsMulti(
+            /*
+            const [totalInput, sorSwaps] = await sorStore.findBestSwapsMulti(
                 sorStore.pools,
                 sorStore.pathData,
                 tokenInToFind,
                 tokenOutToFind,
+                SwapMethods.EXACT_OUT,
+                tokenAmountOut,
+                4,
+                sorStore.costCalculator.getCostOutputToken()
+            );
+            */
+            console.log(
+                `[SOR] findBestSwapsMultiEps: ${tokenInToFind} ${tokenOutToFind} ${
+                    SwapMethods.EXACT_OUT
+                } ${fromWei(tokenAmountOut)}`
+            );
+            console.time('timefindBestSwapsMulti');
+            // sorSwaps is the unchanged info from SOR that can be directly passed to proxy transaction
+            const [totalInput, sorSwaps] = await sorStore.findBestSwapsMulti(
                 SwapMethods.EXACT_OUT,
                 tokenAmountOut,
                 4,
