@@ -333,7 +333,7 @@ export default class TokenStore {
                 [balBlock, mulBalance],
                 [allBlock, mulAllowance],
                 mulEth,
-                [mulDecimals],
+                [, mulDecimals],
             ] = await Promise.all(promises);
             const balances = mulBalance.map(value =>
                 bnum(iface.functions.balanceOf.decode(value))
