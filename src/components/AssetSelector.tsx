@@ -119,6 +119,11 @@ const AssetSelector = observer(() => {
     } = useStores();
 
     const ref = useRef();
+    const inputRef = useRef(null);
+
+    useEffect(() => {
+        if (inputRef !== null) inputRef.current.focus();
+    });
 
     useOnClickOutside(ref, () => swapFormStore.closeModal());
 
@@ -135,8 +140,8 @@ const AssetSelector = observer(() => {
                     <HeaderContent>
                         Select Token to{' '}
                         {assetModalState.type === ModalType.INPUT
-                            ? 'Sell'
-                            : 'Buy'}
+                            ? `Sell for ${swapFormStore.outputToken.symbol}`
+                            : `Buy with ${swapFormStore.inputToken.symbol}`}
                     </HeaderContent>
                     <ExitComponent
                         onClick={() => {
@@ -151,6 +156,7 @@ const AssetSelector = observer(() => {
                         value={assetModalState.input}
                         onChange={e => onChange(e)}
                         placeholder="Search Token Name, Symbol, or Address"
+                        ref={inputRef}
                     />
                 </InputContainer>
                 <AssetOptions />
