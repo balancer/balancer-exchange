@@ -23,7 +23,7 @@
     "kovan": {
         "chainId": 42,
         "bFactory": "0x8f7F78080219d4066A8036ccD30D588B416a40DB",
-        "proxy": "0xD9c8ae0ecF77D0F7c1C28B4F6991A041963545d6",
+        "proxy": "0x39f7380eCDAA1b231ec2EC9583eB1026b74C6d2b",
         "weth": "0xd0A1E359811322d97991E03f863a0C30C2cF029C",
         "multicall": "0x2cc8688C5f75E365aaEEb4ea8D6a480405A48D2A",
         "tokens": [

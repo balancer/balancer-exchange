@@ -103,7 +103,11 @@ export default class ContractMetadataStore {
 
         let filteredMetadata: TokenMetadata[] = [];
 
-        if (filter.indexOf('0x') === 0) {
+        if (filter === 'ether') {
+            filteredMetadata = tokens.filter(value => {
+                return value.address === filter;
+            });
+        } else if (filter.indexOf('0x') === 0) {
             //Search by address
             filteredMetadata = tokens.filter(value => {
                 return value.address === filter;

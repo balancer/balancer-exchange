@@ -8,7 +8,13 @@ import {
 } from './Proxy';
 import { SorMultiSwap } from './Sor';
 import { BigNumber } from 'utils/bignumber';
-import { bnum, scale, str, isEmpty } from '../utils/helpers';
+import {
+    bnum,
+    scale,
+    str,
+    isEmpty,
+    formatBalanceTruncated,
+} from '../utils/helpers';
 import { TokenMetadata } from './Token';
 
 export enum InputFocus {
@@ -124,19 +130,19 @@ export default class SwapFormStore {
         const localInputTokenAddr = localStorage.getItem('inputToken');
 
         if (localInputTokenAddr && account)
-            this.setSelectedInputToken(localInputTokenAddr, account);
-        else this.setSelectedInputToken('ether', account);
+            this.setSelectedInputTokenTest(localInputTokenAddr, account);
+        else this.setSelectedInputTokenTest('ether', account);
     }
 
     @action loadDefaultOutputToken(account) {
         const localOutputTokenAddr = localStorage.getItem('outputToken');
 
         if (localOutputTokenAddr && account)
-            this.setSelectedOutputToken(localOutputTokenAddr, account);
+            this.setSelectedOutputTokenTest(localOutputTokenAddr, account);
         else {
             const { contractMetadataStore } = this.rootStore;
             const daiAddr = contractMetadataStore.getDaiAddress();
-            this.setSelectedOutputToken(daiAddr, account);
+            this.setSelectedOutputTokenTest(daiAddr, account);
         }
     }
 
@@ -720,31 +726,79 @@ export default class SwapFormStore {
             this.inputToken.address !== 'unknown' &&
             !isEmpty(this.inputToken.address)
         )
-            this.setSelectedInputToken(this.inputToken.address, account);
+            this.setSelectedInputTokenTest(this.inputToken.address, account);
 
         if (
             this.outputToken.address !== 'unknown' &&
             !isEmpty(this.outputToken.address)
         )
-            this.setSelectedOutputToken(this.outputToken.address, account);
+            this.setSelectedOutputTokenTest(this.outputToken.address, account);
     }
 
     // Fetches and sets the input token metaData.
     // Fetch will try stored whitelisted info and revert to on-chain if not available
     // Also loads pool info for token
+    @action setSelectedInputTokenTest = async (
+        inputTokenAddress: string,
+        account: string
+    ) => {
+        console.log(
+            `!!!!! SFS: setSelectedInputTokenTest: ${inputTokenAddress}`
+        );
+        this.inputToken.iconAddress = 'unknown';
+        const {
+            contractMetadataStore,
+            assetOptionsStore,
+            tokenStore,
+        } = this.rootStore;
+
+        this.inputToken.address = inputTokenAddress;
+        const filteredWhitelistedTokens = contractMetadataStore.getFilteredTokenMetadata(
+            inputTokenAddress
+        );
+        console.log(filteredWhitelistedTokens);
+        if (filteredWhitelistedTokens.length > 0) {
+            console.log(
+                `!!!!!!! SFS using whitelist: `,
+                filteredWhitelistedTokens[0]
+            );
+
+            this.inputToken.symbol = filteredWhitelistedTokens[0].symbol;
+            this.inputToken.iconAddress =
+                filteredWhitelistedTokens[0].iconAddress;
+
+            const userBalances = tokenStore.getAccountBalances(
+                filteredWhitelistedTokens,
+                account
+            );
+
+            let balanceBn = userBalances[inputTokenAddress]
+                ? bnum(userBalances[inputTokenAddress])
+                : bnum(0);
+
+            const userBalance = formatBalanceTruncated(
+                balanceBn,
+                filteredWhitelistedTokens[0].decimals,
+                filteredWhitelistedTokens[0].precision,
+                20
+            );
+            this.inputToken.balanceBn = balanceBn;
+            this.inputToken.balanceFormatted = userBalance;
+        } else {
+            const assetOptions = assetOptionsStore.tokenAssetData;
+            if (assetOptions) {
+                console.log(`!!!!!!! SFS using assetOptions: `, assetOptions);
+                this.inputToken.symbol = assetOptions.symbol;
+                this.inputToken.iconAddress = assetOptions.iconAddress;
+                this.inputToken.balanceFormatted = assetOptions.userBalance;
+            }
+        }
+    };
+
     @action setSelectedInputToken = async (
         inputTokenAddress: string,
         account: string
     ) => {
-        /*
-        if (
-            this.inputToken.address === inputTokenAddress &&
-            this.account === account
-        ) {
-            console.log(`!!!!!!! NOT RELOADING INPUT TOKEN`);
-            return;
-        }
-        */
         console.log(
             `[SwapFormStore] setSelectedInputToken: ${account} ${inputTokenAddress}`
         );
@@ -798,6 +852,62 @@ export default class SwapFormStore {
         }
     };
 
+    // Fetches and sets the input token metaData.
+    // Fetch will try stored whitelisted info and revert to on-chain if not available
+    // Also loads pool info for token
+    @action setSelectedOutputTokenTest = async (
+        outputTokenAddress: string,
+        account: string
+    ) => {
+        console.log(`!!!!! SFS: setSelectedOutputTokenTest`);
+        this.outputToken.iconAddress = 'unknown';
+        const {
+            contractMetadataStore,
+            assetOptionsStore,
+            tokenStore,
+        } = this.rootStore;
+
+        this.outputToken.address = outputTokenAddress;
+        const filteredWhitelistedTokens = contractMetadataStore.getFilteredTokenMetadata(
+            outputTokenAddress
+        );
+        if (filteredWhitelistedTokens.length > 0) {
+            console.log(
+                `!!!!!!! SFS using whitelist: `,
+                filteredWhitelistedTokens[0]
+            );
+            this.outputToken.symbol = filteredWhitelistedTokens[0].symbol;
+            this.outputToken.iconAddress =
+                filteredWhitelistedTokens[0].iconAddress;
+
+            const userBalances = tokenStore.getAccountBalances(
+                filteredWhitelistedTokens,
+                account
+            );
+
+            let balanceBn = userBalances[outputTokenAddress]
+                ? bnum(userBalances[outputTokenAddress])
+                : bnum(0);
+
+            const userBalance = formatBalanceTruncated(
+                balanceBn,
+                filteredWhitelistedTokens[0].decimals,
+                filteredWhitelistedTokens[0].precision,
+                20
+            );
+            this.outputToken.balanceBn = balanceBn;
+            this.outputToken.balanceFormatted = userBalance;
+        } else {
+            const assetOptions = assetOptionsStore.tokenAssetData;
+            if (assetOptions) {
+                console.log(`!!!!!!! SFS using assetOptions: `, assetOptions);
+                this.outputToken.symbol = assetOptions.symbol;
+                this.outputToken.iconAddress = assetOptions.iconAddress;
+                this.outputToken.balanceFormatted = assetOptions.userBalance;
+            }
+        }
+    };
+
     // Fetches and sets the output token metaData.
     // Fetch will try stored whitelisted info and revert to on-chain if not available
     // Also loads pool info for token
@@ -805,16 +915,6 @@ export default class SwapFormStore {
         outputTokenAddress: string,
         account: string
     ) => {
-        /*
-        if (
-            this.outputToken.address === outputTokenAddress &&
-            this.account === account
-        ) {
-            console.log(`!!!!!!! NOT RELOADING OUTPUT TOKEN`);
-            return;
-        }
-        */
-
         console.log(
             `[SwapFormStore] setSelectedOutputToken: ${account} ${outputTokenAddress}`
         );

@@ -333,8 +333,9 @@ export default class TokenStore {
                 [balBlock, mulBalance],
                 [allBlock, mulAllowance],
                 mulEth,
-                [mulDecimals],
+                [, mulDecimals],
             ] = await Promise.all(promises);
+
             const balances = mulBalance.map(value =>
                 bnum(iface.functions.balanceOf.decode(value))
             );
@@ -351,8 +352,6 @@ export default class TokenStore {
                 bnum(iface.functions.decimals.decode(value))
             );
 
-            this.setBalances(tokenList, balances, account, balBlock.toNumber());
-
             this.setAllowances(
                 tokenList,
                 account,
@@ -362,7 +361,7 @@ export default class TokenStore {
             );
 
             this.setDecimals(tokenList, decimalsList);
-
+            this.setBalances(tokenList, balances, account, balBlock.toNumber());
             console.debug('[All Fetches Success]');
         } catch (e) {
             console.error('[Fetch] Balancer Token Data', { error: e });

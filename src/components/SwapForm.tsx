@@ -101,6 +101,28 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
         }
     }, [tokenIn, tokenOut, swapFormStore, account]); // Only re-run the effect on token address change
 
+    // This loads all the token data after selection
+    const inputAddress = swapFormStore.inputToken.address;
+    useEffect(() => {
+        if (inputAddress !== '') {
+            console.log(
+                `!!!!!!! SFC, setSelectedInputToken ${inputAddress} ${account}`
+            );
+            swapFormStore.setSelectedInputToken(inputAddress, account);
+        }
+    }, [inputAddress, account, swapFormStore]); // Only re-run the effect on token address change
+
+    // This loads all the token data after selection
+    const outputAddress = swapFormStore.outputToken.address;
+    useEffect(() => {
+        if (outputAddress !== '') {
+            console.log(
+                `!!!!!!! SFC, setSelectedOutputToken ${outputAddress} ${account}`
+            );
+            swapFormStore.setSelectedOutputToken(outputAddress, account);
+        }
+    }, [outputAddress, account, swapFormStore]); // Only re-run the effect on token address change
+
     const buttonActionHandler = (buttonState: ButtonState) => {
         switch (buttonState) {
             case ButtonState.NO_WALLET:

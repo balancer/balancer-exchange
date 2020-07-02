@@ -108,6 +108,7 @@ const AssetOptions = observer(() => {
         const filteredWhitelistedTokens = contractMetadataStore.getFilteredTokenMetadata(
             filter
         );
+        // filteredWhitelistedTokens.forEach(token => console.log(token))
 
         let assetSelectorData: Asset[] = [];
         let userBalances = {};
@@ -202,9 +203,9 @@ const AssetOptions = observer(() => {
 
     const selectAsset = token => {
         if (assetModalState.input === 'inputAmount') {
-            swapFormStore.setSelectedInputToken(token.address, account);
+            swapFormStore.setSelectedInputTokenTest(token.address, account);
         } else {
-            swapFormStore.setSelectedOutputToken(token.address, account);
+            swapFormStore.setSelectedOutputTokenTest(token.address, account);
         }
         clearInputs();
         swapFormStore.setAssetModalState({ open: false });
