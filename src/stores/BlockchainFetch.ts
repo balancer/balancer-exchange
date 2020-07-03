@@ -12,7 +12,11 @@ export default class BlockchainFetchStore {
     }
 
     @action blockchainFetch(accountSwitchOverride?: boolean) {
-        const { providerStore } = this.rootStore;
+        const {
+            providerStore,
+            tokenStore,
+            contractMetadataStore,
+        } = this.rootStore;
 
         const active = providerStore.providerStatus.active;
         const chainId = providerStore.providerStatus.activeChainId;
@@ -55,6 +59,10 @@ export default class BlockchainFetchStore {
                                 .catch(e => {
                                     console.log(e);
                                 });
+                        } else {
+                            tokenStore.fetchOnChainTokenDecimals(
+                                contractMetadataStore.getTrackedTokenAddresses()
+                            );
                         }
                     }
                 })

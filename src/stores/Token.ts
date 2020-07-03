@@ -349,7 +349,7 @@ export default class TokenStore {
             allowances.unshift(bnum(helpers.setPropertyToMaxUintIfEmpty()));
 
             const decimalsList = mulDecimals.map(value =>
-                bnum(iface.functions.decimals.decode(value))
+                bnum(iface.functions.decimals.decode(value)).toNumber()
             );
 
             this.setAllowances(
@@ -365,6 +365,53 @@ export default class TokenStore {
             console.debug('[All Fetches Success]');
         } catch (e) {
             console.error('[Fetch] Balancer Token Data', { error: e });
+            return FetchCode.FAILURE;
+        }
+        return FetchCode.SUCCESS;
+    };
+
+    @action fetchOnChainTokenDecimals = async (
+        tokensToTrack: string[]
+    ): Promise<FetchCode> => {
+        const { providerStore, contractMetadataStore } = this.rootStore;
+        const promises: Promise<any>[] = [];
+        const decimalsCalls = [];
+        const tokenList = [];
+
+        console.log('[Token] !!!!!! fetchOnChainTokenDecimals');
+
+        const multiAddress = contractMetadataStore.getMultiAddress();
+        const multi = providerStore.getContract(
+            ContractTypes.Multicall,
+            multiAddress
+        );
+
+        const iface = new Interface(tokenAbi);
+
+        tokensToTrack.forEach(address => {
+            tokenList.push(address);
+            if (address !== EtherKey) {
+                decimalsCalls.push([
+                    address,
+                    iface.functions.decimals.encode([]),
+                ]);
+            }
+        });
+
+        promises.push(multi.aggregate(decimalsCalls));
+
+        try {
+            const [[, mulDecimals]] = await Promise.all(promises);
+
+            const decimalsList = mulDecimals.map(value =>
+                bnum(iface.functions.decimals.decode(value))
+            );
+            this.setDecimals(tokenList, decimalsList);
+            console.log('[Token] fetchOnChainTokenDecimals Finished');
+        } catch (e) {
+            console.log('[Token] fetchOnChainTokenDecimals Error', {
+                error: e,
+            });
             return FetchCode.FAILURE;
         }
         return FetchCode.SUCCESS;

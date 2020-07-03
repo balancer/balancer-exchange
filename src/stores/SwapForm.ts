@@ -742,28 +742,26 @@ export default class SwapFormStore {
         inputTokenAddress: string,
         account: string
     ) => {
-        console.log(
-            `!!!!! SFS: setSelectedInputTokenTest: ${inputTokenAddress}`
-        );
+        this.inputToken.address = inputTokenAddress;
         this.inputToken.iconAddress = 'unknown';
+
         const {
             contractMetadataStore,
             assetOptionsStore,
             tokenStore,
         } = this.rootStore;
 
-        this.inputToken.address = inputTokenAddress;
         const filteredWhitelistedTokens = contractMetadataStore.getFilteredTokenMetadata(
             inputTokenAddress
         );
-        console.log(filteredWhitelistedTokens);
+
         if (filteredWhitelistedTokens.length > 0) {
             console.log(
-                `!!!!!!! SFS using whitelist: `,
-                filteredWhitelistedTokens[0]
+                `!!!!!!! SFS using whitelist: ${filteredWhitelistedTokens[0].address}`
             );
-
             this.inputToken.symbol = filteredWhitelistedTokens[0].symbol;
+            this.inputToken.decimals = filteredWhitelistedTokens[0].decimals;
+            this.inputToken.precision = filteredWhitelistedTokens[0].precision;
             this.inputToken.iconAddress =
                 filteredWhitelistedTokens[0].iconAddress;
 
@@ -782,6 +780,14 @@ export default class SwapFormStore {
                 filteredWhitelistedTokens[0].precision,
                 20
             );
+
+            const proxyAddress = contractMetadataStore.getProxyAddress();
+            const userAllowance = tokenStore.getAllowance(
+                inputTokenAddress,
+                account,
+                proxyAddress
+            );
+            this.inputToken.allowance = userAllowance;
             this.inputToken.balanceBn = balanceBn;
             this.inputToken.balanceFormatted = userBalance;
         } else {
@@ -791,8 +797,13 @@ export default class SwapFormStore {
                 this.inputToken.symbol = assetOptions.symbol;
                 this.inputToken.iconAddress = assetOptions.iconAddress;
                 this.inputToken.balanceFormatted = assetOptions.userBalance;
+                this.inputToken.decimals = assetOptions.decimals;
+                this.inputToken.precision = 4;
+                this.inputToken.allowance = assetOptions.allowance;
             }
         }
+
+        console.log(`[SwapForm] InputToken`, this.inputToken);
     };
 
     @action setSelectedInputToken = async (
@@ -804,30 +815,10 @@ export default class SwapFormStore {
         );
 
         try {
-            const { tokenStore, poolStore, sorStore } = this.rootStore;
-
-            tokenStore
-                .fetchOnChainTokenMetadata(inputTokenAddress, account)
-                .then(inputTokenMetadata => {
-                    this.inputToken = inputTokenMetadata;
-                    localStorage.setItem('inputToken', inputTokenAddress);
-                })
-                .catch(err => {
-                    this.inputToken = {
-                        address: inputTokenAddress,
-                        symbol: 'unknown',
-                        decimals: 18,
-                        iconAddress: 'unknown',
-                        precision: 4,
-                        balanceFormatted: '0.00',
-                        balanceBn: bnum(0),
-                        allowance: undefined,
-                    };
-
-                    this.setErrorMessage(err.message);
-                });
+            const { poolStore, sorStore } = this.rootStore;
 
             this.inputToken.address = inputTokenAddress;
+            localStorage.setItem('inputToken', inputTokenAddress);
             this.account = account;
             console.log(
                 `[SwapFormStore] fetching Token Pairs: ${inputTokenAddress}`
@@ -859,15 +850,15 @@ export default class SwapFormStore {
         outputTokenAddress: string,
         account: string
     ) => {
-        console.log(`!!!!! SFS: setSelectedOutputTokenTest`);
+        this.outputToken.address = outputTokenAddress;
         this.outputToken.iconAddress = 'unknown';
+
         const {
             contractMetadataStore,
             assetOptionsStore,
             tokenStore,
         } = this.rootStore;
 
-        this.outputToken.address = outputTokenAddress;
         const filteredWhitelistedTokens = contractMetadataStore.getFilteredTokenMetadata(
             outputTokenAddress
         );
@@ -877,6 +868,8 @@ export default class SwapFormStore {
                 filteredWhitelistedTokens[0]
             );
             this.outputToken.symbol = filteredWhitelistedTokens[0].symbol;
+            this.outputToken.decimals = filteredWhitelistedTokens[0].decimals;
+            this.outputToken.precision = filteredWhitelistedTokens[0].precision;
             this.outputToken.iconAddress =
                 filteredWhitelistedTokens[0].iconAddress;
 
@@ -895,6 +888,13 @@ export default class SwapFormStore {
                 filteredWhitelistedTokens[0].precision,
                 20
             );
+            const proxyAddress = contractMetadataStore.getProxyAddress();
+            const userAllowance = tokenStore.getAllowance(
+                outputTokenAddress,
+                account,
+                proxyAddress
+            );
+            this.outputToken.allowance = userAllowance;
             this.outputToken.balanceBn = balanceBn;
             this.outputToken.balanceFormatted = userBalance;
         } else {
@@ -904,6 +904,9 @@ export default class SwapFormStore {
                 this.outputToken.symbol = assetOptions.symbol;
                 this.outputToken.iconAddress = assetOptions.iconAddress;
                 this.outputToken.balanceFormatted = assetOptions.userBalance;
+                this.outputToken.decimals = assetOptions.decimals;
+                this.outputToken.precision = 4;
+                this.outputToken.allowance = assetOptions.allowance;
             }
         }
     };
@@ -920,31 +923,14 @@ export default class SwapFormStore {
         );
 
         try {
-            const { tokenStore, poolStore, sorStore } = this.rootStore;
-
-            tokenStore
-                .fetchOnChainTokenMetadata(outputTokenAddress, account)
-                .then(outputTokenMetadata => {
-                    this.outputToken = outputTokenMetadata;
-                    localStorage.setItem('outputToken', outputTokenAddress);
-                })
-                .catch(err => {
-                    this.outputToken = {
-                        address: outputTokenAddress,
-                        symbol: 'unknown',
-                        decimals: 18,
-                        iconAddress: 'unknown',
-                        precision: 4,
-                        balanceFormatted: '0.00',
-                        balanceBn: bnum(0),
-                        allowance: undefined,
-                    };
-
-                    this.setErrorMessage(err.message);
-                });
+            const { poolStore, sorStore } = this.rootStore;
 
             this.outputToken.address = outputTokenAddress;
+            localStorage.setItem('outputToken', outputTokenAddress);
             this.account = account;
+            console.log(
+                `[SwapFormStore] fetching Token Pairs: ${outputTokenAddress}`
+            );
             poolStore.fetchAndSetTokenPairs(outputTokenAddress);
             // Required for when asset picker selects new tokens
             sorStore.fetchPathData(this.inputToken.address, outputTokenAddress);

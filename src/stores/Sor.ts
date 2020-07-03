@@ -201,6 +201,7 @@ export default class SorStore {
         if (poolStore.subgraphError) {
             console.log(`[SOR] Backup - Must Wait For On-Chain Balances.`);
             await poolStore.poolsPromise;
+            console.log(`[SOR] Backup - On-Chain Balances Loaded.`);
         }
 
         for (let i = 0; i < sorSwaps.length; i++) {
@@ -346,6 +347,10 @@ export default class SorStore {
             processedPaths = this.processedPathsOut;
             epsOfInterest = this.epsOfInterestOut;
         }
+
+        console.log(`!!!!!!! ${Object.keys(processedPaths).length}`);
+        console.log(`!!!!!!! ${Object.keys(epsOfInterest).length}`);
+        console.log(`!!!!!!! ${Object.keys(this.pools).length}`);
 
         const [sorSwaps, totalReturn] = smartOrderRouterMultiHopEpsOfInterest(
             JSON.parse(JSON.stringify(this.pools)),

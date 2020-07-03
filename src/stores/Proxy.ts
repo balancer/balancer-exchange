@@ -407,18 +407,7 @@ export default class ProxyStore {
                 4,
                 sorStore.costCalculator.getCostOutputToken()
             );
-            /*
-            const [totalOutput, sorSwaps] = await sorStore.findBestSwapsMulti(
-                sorStore.pools,
-                sorStore.pathData,
-                tokenInToFind,
-                tokenOutToFind,
-                SwapMethods.EXACT_IN,
-                tokenAmountIn,
-                4,
-                sorStore.costCalculator.getCostOutputToken()
-            );
-            */
+
             console.timeEnd('timefindBestSwapsMulti');
 
             console.time('timeformatSorSwapss');
