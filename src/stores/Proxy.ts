@@ -367,13 +367,26 @@ export default class ProxyStore {
         inputDecimals: number
     ): Promise<ExactAmountInPreview> => {
         try {
-            console.time('timePreviewBatchSwapExactIn');
-            this.setPreviewPending(true);
             const {
                 contractMetadataStore,
                 poolStore,
                 sorStore,
+                swapFormStore,
             } = this.rootStore;
+
+            this.setPreviewPending(true);
+
+            if (poolStore.subgraphError) {
+                console.log(`!!!!!!! ERROR DISPLAY TEST`);
+                // swapFormStore.setErrorMessage('Waiting For Pools To Load')
+                swapFormStore.setSwapObjection(
+                    'Waiting For Pools To Load - WORK IN PROGRESS'
+                );
+                await poolStore.poolsPromise;
+            }
+
+            console.time('timePreviewBatchSwapExactIn');
+
             const tokenAmountIn = scale(bnum(inputAmount), inputDecimals);
 
             // Use WETH address for Ether
