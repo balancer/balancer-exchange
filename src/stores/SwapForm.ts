@@ -15,7 +15,7 @@ import {
     isEmpty,
     formatBalanceTruncated,
 } from '../utils/helpers';
-import { TokenMetadata } from './Token';
+import { TokenMetadata, EtherKey } from './Token';
 
 export enum InputFocus {
     NONE,
@@ -815,6 +815,16 @@ export default class SwapFormStore {
         );
 
         try {
+            if (
+                inputTokenAddress === EtherKey &&
+                this.outputToken.address === EtherKey
+            ) {
+                this.setErrorMessage('Please Select Alternative Pair');
+                this.setValidSwap(false);
+                this.resetTradeComposition();
+                return;
+            }
+
             const { poolStore, sorStore } = this.rootStore;
 
             this.inputToken.address = inputTokenAddress;
@@ -923,6 +933,16 @@ export default class SwapFormStore {
         );
 
         try {
+            if (
+                outputTokenAddress === EtherKey &&
+                this.inputToken.address === EtherKey
+            ) {
+                this.setErrorMessage('Please Select Alternative Pair');
+                this.setValidSwap(false);
+                this.resetTradeComposition();
+                return;
+            }
+
             const { poolStore, sorStore } = this.rootStore;
 
             this.outputToken.address = outputTokenAddress;
