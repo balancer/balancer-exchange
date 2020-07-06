@@ -376,7 +376,10 @@ export default class ProxyStore {
 
             this.setPreviewPending(true);
 
-            if (poolStore.subgraphError) {
+            if (
+                poolStore.subgraphError &&
+                poolStore.onChainPools.pools.length === 0
+            ) {
                 console.log(`!!!!!!! ERROR DISPLAY TEST`);
                 // swapFormStore.setErrorMessage('Waiting For Pools To Load')
                 swapFormStore.setSwapObjection(
