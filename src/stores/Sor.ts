@@ -1,11 +1,10 @@
-import { action, observable } from 'mobx';
+import { action } from 'mobx';
 import RootStore from 'stores/Root';
 import CostCalculator from '../utils/CostCalculator';
 import { bnum, fromWei, toChecksum } from 'utils/helpers';
 import { EtherKey } from './Token';
 import {
     filterPoolsWithTokensDirect,
-    smartOrderRouterMultiHop,
     filterPoolsWithTokensMultihop,
     getTokenPairsMultiHop,
     parsePoolData,

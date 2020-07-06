@@ -66,7 +66,7 @@ export default class TransactionStore {
     }
 
     @action async checkPendingTransactions(account): Promise<FetchCode> {
-        const { providerStore } = this.rootStore;
+        const { providerStore, poolStore } = this.rootStore;
         const currentBlock = providerStore.getCurrentBlockNumber();
 
         const library = providerStore.providerStatus.library;
@@ -83,6 +83,7 @@ export default class TransactionStore {
                             value.blockNumberChecked = currentBlock;
                             if (receipt) {
                                 value.receipt = receipt;
+                                poolStore.fetchOnchainPools();
                             }
                         })
                         .catch(() => {
