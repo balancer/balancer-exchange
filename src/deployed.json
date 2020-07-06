@@ -288,6 +288,12 @@
                 "address": "0x985dd3D42De1e256d09e1c10F112bCCB8015AD41",
                 "iconAddress": "0x985dd3D42De1e256d09e1c10F112bCCB8015AD41",
                 "precision": 2
+            },
+            {
+                "symbol": "mUSD",
+                "address": "0xe2f2a5C287993345a840Db3B0845fbC70f5935a5",
+                "iconAddress": "0xe2f2a5C287993345a840Db3B0845fbC70f5935a5",
+                "precision": 2
             }
         ]
     }
