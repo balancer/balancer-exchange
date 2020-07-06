@@ -382,7 +382,7 @@ export default class ProxyStore {
                 swapFormStore.setSwapObjection(
                     'Waiting For Pools To Load - WORK IN PROGRESS'
                 );
-                await poolStore.poolsPromise;
+                await poolStore.onChainPoolsPromise;
             }
 
             console.time('timePreviewBatchSwapExactIn');
@@ -439,7 +439,7 @@ export default class ProxyStore {
             let spotOutput = await calcTotalSpotValue(
                 SwapMethods.EXACT_IN,
                 sorSwapsFormatted,
-                poolStore.onchainPools.pools
+                poolStore.onChainPools.pools
             );
             console.timeEnd('timecalcTotalSpotValue');
 
@@ -554,7 +554,7 @@ export default class ProxyStore {
             const spotInput = await calcTotalSpotValue(
                 SwapMethods.EXACT_OUT,
                 sorSwapsFormatted,
-                poolStore.onchainPools.pools
+                poolStore.onChainPools.pools
             );
 
             console.log('[Spot Price Calc]', {

@@ -105,7 +105,7 @@ export default class SorStore {
                 outputToken = contractMetadataStore.getWethAddress();
 
             if (
-                poolStore.onchainPools.pools.length === 0 &&
+                poolStore.onChainPools.pools.length === 0 &&
                 poolStore.subgraphPools.pools.length === 0
             ) {
                 console.log(
@@ -113,7 +113,7 @@ export default class SorStore {
                 );
                 return;
             } else if (
-                poolStore.onchainPools.pools.length === 0 &&
+                poolStore.onChainPools.pools.length === 0 &&
                 poolStore.subgraphPools.pools.length !== 0
             ) {
                 console.log(
@@ -151,10 +151,10 @@ export default class SorStore {
                 this.pathData = pathData;
             }
             // Waits for on-chain pools to finish loading
-            await poolStore.poolsPromise;
+            await poolStore.onChainPoolsPromise;
 
             let [pools, pathData] = await this.getPathData(
-                poolStore.onchainPools,
+                poolStore.onChainPools,
                 inputToken,
                 outputToken
             );
@@ -200,7 +200,7 @@ export default class SorStore {
         // If subgraph has failed we must wait for on-chain balance info to be loaded.
         if (poolStore.subgraphError) {
             console.log(`[SOR] Backup - Must Wait For On-Chain Balances.`);
-            await poolStore.poolsPromise;
+            await poolStore.onChainPoolsPromise;
             console.log(`[SOR] Backup - On-Chain Balances Loaded.`);
         }
 

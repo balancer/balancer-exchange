@@ -36,27 +36,27 @@ interface TokenPairsMap {
 
 export default class PoolStore {
     @observable tokenPairs: TokenPairsMap;
-    @observable onchainPools: any;
+    @observable onChainPools: any;
     @observable subgraphError: boolean;
     subgraphPools: any;
-    subgraphPromise: Promise<void>;
-    poolsPromise: Promise<void>;
+    subgraphPoolsPromise: Promise<void>;
+    onChainPoolsPromise: Promise<void>;
     rootStore: RootStore;
 
     constructor(rootStore) {
         this.rootStore = rootStore;
         this.tokenPairs = {};
         this.subgraphPools = { pools: [] };
-        this.onchainPools = { pools: [] };
+        this.onChainPools = { pools: [] };
         this.subgraphError = false;
     }
 
     @action async fetchSubgraphPools() {
-        this.subgraphPromise = this.loadSubgraphPools();
+        this.subgraphPoolsPromise = this.loadSubgraphPools();
     }
 
     @action async fetchOnchainPools() {
-        this.poolsPromise = this.loadOnChainPools();
+        this.onChainPoolsPromise = this.loadOnChainPools();
     }
 
     // TODO: Should this be fetched on a timer to update? See Root.ts for order
@@ -91,7 +91,7 @@ export default class PoolStore {
             console.log(
                 `[Pool] Fetch All Pools On-chain Balances, Waiting For Subgraph...`
             );
-            await this.subgraphPromise;
+            await this.subgraphPoolsPromise;
 
             console.log(`[Pool] Fetch paths while waiting for onchain...`);
             // This function will use Subgraph for paths and wait until on-chain pools are loaded then use those
@@ -101,24 +101,24 @@ export default class PoolStore {
             );
             console.log(`[Pool] Loading Pool On-chain Balances`);
             console.time('onChainPools'); // !!!!!!! REMOVE AFTER TESTING
-            const allPoolsOnChain = await getAllPoolDataOnChain(
+            const onChainPoolsFresh = await getAllPoolDataOnChain(
                 this.subgraphPools,
                 contractMetadataStore.getMultiAddress(),
                 library
             );
             console.timeEnd('onChainPools'); // !!!!!!! REMOVE AFTER TESTING
-            if (!allPoolsOnChain) {
+            if (!onChainPoolsFresh) {
                 console.log(`Error loading on-chain, default to Subgraph`);
-                this.onchainPools = this.subgraphPools;
-            } else this.onchainPools = allPoolsOnChain;
+                this.onChainPools = this.subgraphPools;
+            } else this.onChainPools = onChainPoolsFresh;
 
-            console.log(`[Pool] All On-chain Pools Loaded`, this.onchainPools);
+            console.log(`[Pool] All On-chain Pools Loaded`, this.onChainPools);
         } catch (err) {
             console.log(err.message);
             console.log(
                 `[Pool] Issue Loading OnChain pools. Defaulting to Subgraph.`
             );
-            this.onchainPools = this.subgraphPools;
+            this.onChainPools = this.subgraphPools;
         }
     }
 
@@ -155,7 +155,7 @@ export default class PoolStore {
             // data is fine to use for token pairs as no balances required
             // TO DO: Should we put all pools load on timer loop?
             console.log(`[Pool] Waiting for subgraph before loading pairs...`);
-            await this.subgraphPromise;
+            await this.subgraphPoolsPromise;
             console.log(`[Pool] Loading Pairs ${tokenAddressToFind}`);
             const tokenPairs = await sorTokenPairs(
                 tokenAddressToFind,
@@ -270,12 +270,12 @@ export default class PoolStore {
         // Use Subgraph pools as a backup until on-chain loaded
         let pool;
 
-        if (this.onchainPools.pools.length === 0) {
+        if (this.onChainPools.pools.length === 0) {
             pool = this.subgraphPools.pools.find(
                 p => toChecksum(p.id) === toChecksum(poolId)
             );
         } else {
-            pool = this.onchainPools.pools.find(
+            pool = this.onChainPools.pools.find(
                 p => toChecksum(p.id) === toChecksum(poolId)
             );
         }
