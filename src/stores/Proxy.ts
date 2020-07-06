@@ -402,14 +402,6 @@ export default class ProxyStore {
                     ? contractMetadataStore.getWethAddress()
                     : tokenOut;
 
-            if (!sorStore.pools) {
-                this.setPreviewPending(false);
-                return emptyExactAmountInPreview(
-                    inputAmount,
-                    'Waiting For Pool Data To Load'
-                );
-            }
-
             console.log(
                 `[SOR] findBestSwapsMultiEps: ${tokenInToFind} ${tokenOutToFind} ${
                     SwapMethods.EXACT_IN
@@ -510,26 +502,6 @@ export default class ProxyStore {
                     ? contractMetadataStore.getWethAddress()
                     : tokenOut;
 
-            if (!sorStore.pools) {
-                this.setPreviewPending(false);
-                return emptyExactAmountOutPreview(
-                    outputAmount,
-                    'Waiting For Pool Data To Load'
-                );
-            }
-
-            /*
-            const [totalInput, sorSwaps] = await sorStore.findBestSwapsMulti(
-                sorStore.pools,
-                sorStore.pathData,
-                tokenInToFind,
-                tokenOutToFind,
-                SwapMethods.EXACT_OUT,
-                tokenAmountOut,
-                4,
-                sorStore.costCalculator.getCostOutputToken()
-            );
-            */
             console.log(
                 `[SOR] findBestSwapsMultiEps: ${tokenInToFind} ${tokenOutToFind} ${
                     SwapMethods.EXACT_OUT

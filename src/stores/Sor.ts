@@ -65,19 +65,17 @@ export const sorTokenPairs = async (
 };
 
 export default class SorStore {
-    @observable pathData: any;
-    @observable pools: any;
     costCalculator: CostCalculator;
-    rootStore: RootStore;
-    processedPathsIn: any;
-    processedPathsOut: any;
-    epsOfInterestIn: any;
-    epsOfInterestOut: any;
+    private rootStore: RootStore;
+    private processedPools: any;
+    private processedPathsIn: any;
+    private processedPathsOut: any;
+    private epsOfInterestIn: any;
+    private epsOfInterestOut: any;
 
     constructor(rootStore) {
         this.rootStore = rootStore;
-        this.pathData = null;
-        this.pools = null;
+        this.processedPools = null;
         this.processedPathsIn = null;
         this.processedPathsOut = null;
         this.epsOfInterestIn = null;
@@ -121,66 +119,21 @@ export default class SorStore {
                 console.log(
                     `[SOR] fetchPathData() Using Subgraph Until On-Chain Loaded`
                 );
-                let [pools, pathData] = await this.getPathData(
+                console.time(`processingSubgraph`);
+                await this.getPathData(
                     poolStore.subgraphPools,
                     inputToken,
                     outputToken
                 );
-                console.time(`processingSubgraph`);
-
-                this.processedPathsIn = processPaths(
-                    pathData,
-                    pools,
-                    'swapExactIn'
-                );
-                this.epsOfInterestIn = processEpsOfInterestMultiHop(
-                    this.processedPathsIn,
-                    'swapExactIn'
-                );
-
-                this.processedPathsOut = processPaths(
-                    pathData,
-                    pools,
-                    'swapExactOut'
-                );
-                this.epsOfInterestOut = processEpsOfInterestMultiHop(
-                    this.processedPathsOut,
-                    'swapExactOut'
-                );
                 console.timeEnd(`processingSubgraph`);
-
-                this.pools = pools;
-                this.pathData = pathData;
             }
             // Waits for on-chain pools to finish loading
             await poolStore.onChainPoolsPromise;
-
-            let [pools, pathData] = await this.getPathData(
+            console.time(`processingOnchain`);
+            await this.getPathData(
                 poolStore.onChainPools,
                 inputToken,
                 outputToken
-            );
-            this.pools = pools;
-            this.pathData = pathData;
-            console.time(`processingOnchain`);
-            this.processedPathsIn = processPaths(
-                pathData,
-                pools,
-                'swapExactIn'
-            );
-            this.epsOfInterestIn = processEpsOfInterestMultiHop(
-                this.processedPathsIn,
-                'swapExactIn'
-            );
-            this.processedPathsOut = processPaths(
-                pathData,
-                pools,
-                'swapExactOut'
-            );
-
-            this.epsOfInterestOut = processEpsOfInterestMultiHop(
-                this.processedPathsOut,
-                'swapExactOut'
             );
             console.timeEnd(`processingOnchain`);
 
@@ -271,7 +224,33 @@ export default class SorStore {
         return formattedSorSwaps;
     };
 
-    getPathData = async (
+    private getPathData = async (
+        Pools,
+        InputToken,
+        OutputToken
+    ): Promise<void> => {
+        let [pools, pathData] = await this.loadPathData(
+            Pools,
+            InputToken,
+            OutputToken
+        );
+
+        this.processedPools = pools;
+
+        this.processedPathsIn = processPaths(pathData, pools, 'swapExactIn');
+        this.epsOfInterestIn = processEpsOfInterestMultiHop(
+            this.processedPathsIn,
+            'swapExactIn'
+        );
+        this.processedPathsOut = processPaths(pathData, pools, 'swapExactOut');
+
+        this.epsOfInterestOut = processEpsOfInterestMultiHop(
+            this.processedPathsOut,
+            'swapExactOut'
+        );
+    };
+
+    loadPathData = async (
         allPools: any,
         tokenIn: string,
         tokenOut: string
@@ -306,39 +285,6 @@ export default class SorStore {
     };
 
     // User SOR to find all swaps including multi-hop
-    findBestSwapsMultiOld = async (
-        pools: any,
-        pathData: any,
-        tokenIn: string,
-        tokenOut: string,
-        swapType: SwapMethods,
-        swapAmount: BigNumber,
-        maxPools: number,
-        returnTokenCostPerPool: BigNumber
-    ): Promise<[BigNumber, any[][]]> => {
-        tokenIn = tokenIn.toLowerCase();
-        tokenOut = tokenOut.toLowerCase();
-
-        console.log(
-            `[SOR] findBestSwapsMulti: ${tokenIn} ${tokenOut} ${swapType} ${fromWei(
-                swapAmount
-            )} ${maxPools} ${fromWei(returnTokenCostPerPool)}`
-        );
-
-        // sorSwaps will return a nested array of swaps that can be passed to proxy
-        const [sorSwaps, totalReturn] = smartOrderRouterMultiHop(
-            JSON.parse(JSON.stringify(pools)),
-            pathData,
-            swapType,
-            swapAmount,
-            maxPools,
-            returnTokenCostPerPool
-        );
-
-        return [totalReturn, sorSwaps];
-    };
-
-    // User SOR to find all swaps including multi-hop
     findBestSwapsMulti = async (
         swapType: SwapMethods,
         swapAmount: BigNumber,
@@ -355,10 +301,10 @@ export default class SorStore {
 
         console.log(`!!!!!!! ${Object.keys(processedPaths).length}`);
         console.log(`!!!!!!! ${Object.keys(epsOfInterest).length}`);
-        console.log(`!!!!!!! ${Object.keys(this.pools).length}`);
+        console.log(`!!!!!!! ${Object.keys(this.processedPools).length}`);
 
         const [sorSwaps, totalReturn] = smartOrderRouterMultiHopEpsOfInterest(
-            JSON.parse(JSON.stringify(this.pools)),
+            JSON.parse(JSON.stringify(this.processedPools)),
             processedPaths,
             swapType,
             swapAmount,
