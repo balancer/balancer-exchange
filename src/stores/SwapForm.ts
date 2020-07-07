@@ -422,13 +422,13 @@ export default class SwapFormStore {
             this.inputs.inputAmount,
         ];
 
+        this.setInputFocus(InputFocus.NONE);
+
         if (this.exchangeRateInput) {
             this.setExchangeRateInput(false);
         } else {
             this.setExchangeRateInput(true);
         }
-
-        this.setInputFocus(InputFocus.NONE);
     }
 
     @action clearInputs() {

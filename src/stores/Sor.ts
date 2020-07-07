@@ -89,7 +89,11 @@ export default class SorStore {
     }
 
     @action async fetchPathData(inputToken, outputToken) {
-        const { contractMetadataStore, poolStore } = this.rootStore;
+        const {
+            contractMetadataStore,
+            poolStore,
+            swapFormStore,
+        } = this.rootStore;
 
         if (inputToken !== '' && outputToken !== '') {
             console.log(`[SOR] fetchPathData(${inputToken} ${outputToken})`);
@@ -135,6 +139,13 @@ export default class SorStore {
                 outputToken
             );
             console.timeEnd(`processingOnchain`);
+
+            // This will update any existing input values for new paths
+            const inputValue = swapFormStore.getActiveInputValue();
+            swapFormStore.refreshSwapFormPreview(
+                inputValue,
+                swapFormStore.inputs.swapMethod
+            );
 
             console.log(`[SOR] fetchPathData() On-Chain Path Data Loaded`);
         }
