@@ -5,8 +5,8 @@ import { useInterval } from 'utils/helperHooks';
 import { observer } from 'mobx-react';
 
 import Circle from '../../assets/images/circle.svg';
-/* eslint import/no-webpack-loader-syntax: off */
-import Worker from 'worker-loader!../../utils/sgWebWorker.js';
+// /* eslint import/no-webpack-loader-syntax: off */
+// import Worker from 'worker-loader!../../utils/sgWebWorker.js';
 
 const MessageWrapper = styled.div`
     display: flex;
@@ -39,6 +39,7 @@ const Web3Manager = observer(({ children }) => {
     // handle delayed loader state
     const [showLoader, setShowLoader] = useState(true);
 
+    /*
     const tWorker = new Worker('utils/sgWebWorker.js');
     tWorker.postMessage(JSON.stringify(poolStore.subgraphPools));
 
@@ -47,6 +48,7 @@ const Web3Manager = observer(({ children }) => {
             console.log(`@@@@@@ Event received!!!`);
         };
     }, [tWorker]);
+    */
 
     useEffect(() => {
         const timeout = setTimeout(() => {
