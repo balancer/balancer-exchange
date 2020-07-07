@@ -380,11 +380,9 @@ export default class ProxyStore {
                 poolStore.subgraphError &&
                 poolStore.onChainPools.pools.length === 0
             ) {
-                console.log(`!!!!!!! ERROR DISPLAY TEST`);
-                // swapFormStore.setErrorMessage('Waiting For Pools To Load')
-                swapFormStore.setSwapObjection(
-                    'Waiting For Pools To Load - WORK IN PROGRESS'
-                );
+                swapFormStore.setSwapObjection('Waiting For Pools To Load');
+
+                swapFormStore.showLoader = true;
                 await poolStore.onChainPoolsPromise;
             }
 
@@ -488,7 +486,18 @@ export default class ProxyStore {
                 contractMetadataStore,
                 poolStore,
                 sorStore,
+                swapFormStore,
             } = this.rootStore;
+
+            if (
+                poolStore.subgraphError &&
+                poolStore.onChainPools.pools.length === 0
+            ) {
+                swapFormStore.setSwapObjection('Waiting For Pools To Load');
+
+                swapFormStore.showLoader = true;
+                await poolStore.onChainPoolsPromise;
+            }
 
             const tokenAmountOut = scale(bnum(outputAmount), outputDecimals);
 
