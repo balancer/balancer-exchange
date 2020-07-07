@@ -91,6 +91,7 @@ export default class SwapFormStore {
     };
     @observable assetSelectFilter: string = '';
     @observable slippageCell: number = 3;
+    @observable showLoader: boolean = false;
     account: string = '';
     rootStore: RootStore;
 
@@ -410,6 +411,7 @@ export default class SwapFormStore {
     }
 
     @action async switchInputOutputValues() {
+        this.showLoader = true;
         this.switchSwapMethod();
 
         const oldOutputToken = this.outputToken;

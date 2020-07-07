@@ -140,6 +140,8 @@ export default class SorStore {
             );
             console.timeEnd(`processingOnchain`);
 
+            swapFormStore.showLoader = false;
+
             // This will update any existing input values for new paths
             const inputValue = swapFormStore.getActiveInputValue();
             swapFormStore.refreshSwapFormPreview(

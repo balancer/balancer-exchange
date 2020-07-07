@@ -1,5 +1,6 @@
 import React from 'react';
-import styled from 'styled-components';
+import { observer } from 'mobx-react';
+import styled, { keyframes } from 'styled-components';
 import { useStores } from '../contexts/storesContext';
 
 const Container = styled.div`
@@ -15,7 +16,22 @@ const SwapIcon = styled.img`
     cursor: pointer;
 `;
 
-const Switch = () => {
+const rotate = keyframes`
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+`;
+
+const Spinner = styled.img`
+    animation: 2s ${rotate} linear infinite;
+    width: 80px;
+    height: 80px;
+`;
+
+const Switch = observer(() => {
     const {
         root: { swapFormStore },
     } = useStores();
@@ -24,11 +40,21 @@ const Switch = () => {
         swapFormStore.switchInputOutputValues();
     };
 
+    const showLoader = swapFormStore.showLoader;
+
     return (
         <Container>
-            <SwapIcon src="/swap.svg" onClick={() => switchAssets()} />
+            <Spinner
+                src="/circle.svg"
+                style={{ display: showLoader ? 'block' : 'none' }}
+            />
+            <SwapIcon
+                src="/swap.svg"
+                onClick={() => switchAssets()}
+                style={{ display: showLoader ? 'none' : 'block' }}
+            />
         </Container>
     );
-};
+});
 
 export default Switch;
