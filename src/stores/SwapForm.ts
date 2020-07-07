@@ -92,7 +92,6 @@ export default class SwapFormStore {
     @observable assetSelectFilter: string = '';
     @observable slippageCell: number = 3;
     account: string = '';
-
     rootStore: RootStore;
 
     constructor(rootStore) {
@@ -412,33 +411,9 @@ export default class SwapFormStore {
 
     @action async switchInputOutputValues() {
         this.switchSwapMethod();
-        this.switchTokens();
-
-        if (this.exchangeRateInput) {
-            this.setExchangeRateInput(false);
-        } else {
-            this.setExchangeRateInput(true);
-        }
-
-        this.setInputFocus(InputFocus.NONE);
-    }
-
-    @action async switchTokens() {
-        const { poolStore, sorStore } = this.rootStore;
 
         const oldOutputToken = this.outputToken;
         const oldInputToken = this.inputToken;
-
-        sorStore
-            .fetchPathData(oldOutputToken.address, oldInputToken.address)
-            .then(() => {
-                const inputValue = this.getActiveInputValue();
-                this.refreshSwapFormPreview(inputValue, this.inputs.swapMethod);
-            });
-
-        poolStore.fetchAndSetTokenPairs(oldOutputToken.address);
-        poolStore.fetchAndSetTokenPairs(oldInputToken.address);
-
         this.inputToken = oldOutputToken;
         this.outputToken = oldInputToken;
 
@@ -447,8 +422,13 @@ export default class SwapFormStore {
             this.inputs.inputAmount,
         ];
 
-        localStorage.setItem('inputToken', this.inputToken.address);
-        localStorage.setItem('outputToken', this.outputToken.address);
+        if (this.exchangeRateInput) {
+            this.setExchangeRateInput(false);
+        } else {
+            this.setExchangeRateInput(true);
+        }
+
+        this.setInputFocus(InputFocus.NONE);
     }
 
     @action clearInputs() {
