@@ -359,8 +359,6 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
             <AssetSelector />
             <RowContainer>
                 <SellToken
-                    key="122"
-                    inputID="amount-in"
                     inputName="inputAmount"
                     tokenName={swapFormStore.inputToken.symbol}
                     tokenBalance={swapFormStore.inputToken.balanceFormatted}
@@ -373,8 +371,6 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                 />
                 <Switch />
                 <BuyToken
-                    key="123"
-                    inputID="amount-out"
                     inputName="outputAmount"
                     tokenName={swapFormStore.outputToken.symbol}
                     tokenBalance={swapFormStore.outputToken.balanceFormatted}

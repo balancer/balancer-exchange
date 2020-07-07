@@ -17,12 +17,6 @@ import {
 } from '../utils/helpers';
 import { TokenMetadata, EtherKey } from './Token';
 
-export enum InputFocus {
-    NONE,
-    BUY,
-    SELL,
-}
-
 export enum SwapMethods {
     EXACT_IN = 'swapExactIn',
     EXACT_OUT = 'swapExactOut',
@@ -40,6 +34,11 @@ export enum InputValidationStatus {
     NOT_FLOAT = 'Not Float',
     NEGATIVE = 'Negative',
     MAX_DIGITS_EXCEEDED = 'Maximum Digits Exceeded',
+}
+
+export enum ModalType {
+    INPUT = 'Input',
+    OUTPUT = 'Output',
 }
 
 export interface ChartData {
@@ -68,7 +67,6 @@ export default class SwapFormStore {
         outputLimit: '0',
         inputLimit: '0',
         limitPrice: '0',
-        focus: 0,
         swaps: [],
     };
     @observable inputToken: TokenMetadata;
@@ -190,10 +188,6 @@ export default class SwapFormStore {
         } else {
             this.inputs.swapMethod = SwapMethods.EXACT_IN;
         }
-    }
-
-    @action setInputFocus(element: InputFocus) {
-        this.inputs.focus = element;
     }
 
     @action setSwapObjection(message: string) {
@@ -423,8 +417,6 @@ export default class SwapFormStore {
             this.inputs.outputAmount,
             this.inputs.inputAmount,
         ];
-
-        this.setInputFocus(InputFocus.NONE);
 
         if (this.exchangeRateInput) {
             this.setExchangeRateInput(false);
