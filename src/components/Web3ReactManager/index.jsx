@@ -33,7 +33,7 @@ const Spinner = styled.img`
 
 const Web3Manager = observer(({ children }) => {
     const {
-        root: { providerStore, blockchainFetchStore, poolStore },
+        root: { providerStore, blockchainFetchStore },
     } = useStores();
 
     // handle delayed loader state
