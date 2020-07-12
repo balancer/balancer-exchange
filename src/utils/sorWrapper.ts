@@ -19,7 +19,7 @@ import { Pool, SorSwap, Swap } from '../stores/Proxy';
 import { TokenPairs } from '../stores/Pool';
 import { EtherKey } from '../stores/Token';
 import { getTokenPairsBackup, findPoolsWithTokensBackup } from './poolsBackup';
-import { Web3Provider } from 'ethers/providers';
+import { Web3Provider } from '@ethersproject/providers';
 
 export const formatSwapsExactAmountIn = (
     sorSwaps: SorSwap[],

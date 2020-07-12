@@ -1,4 +1,4 @@
-import { Web3Provider } from 'ethers/providers';
+import { Web3Provider } from '@ethersproject/providers';
 import { parsePoolDataOnChain } from '@balancer-labs/sor';
 import { Pool } from '../stores/Proxy';
 import { toChecksum } from './helpers';
