@@ -1025,10 +1025,10 @@
     lodash "^4.17.13"
     to-fast-properties "^2.0.0"
 
-"@balancer-labs/sor@^0.2.8":
-  version "0.2.8"
-  resolved "https://registry.yarnpkg.com/@balancer-labs/sor/-/sor-0.2.8.tgz#bbff3627ea1d9faa74955dbb61f6e40359ebef09"
-  integrity sha512-WIdlpOuf+V6aEs8S4M0LVcxHx0MXtSxCo2Z7acxHsS6sSwLMyhk80/om/OwZJ4L9+zmpiX5DoUlTcj7DM1Mc3w==
+"@balancer-labs/sor@^0.3.0":
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/@balancer-labs/sor/-/sor-0.3.0.tgz#c221225d9a3d1791ebfc3c566f7a76843bca98fa"
+  integrity sha512-QTVkeDmcGCaEgBhcVSu8c7cz6HA1ueWRbniuT+Yh0N/sqcZIcDMdoCFcpq66SD+hOxQ88RvzShmJ+P/3vKbXfg==
   dependencies:
     bignumber.js "^9.0.0"
     ethers "^4.0.39"
