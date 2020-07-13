@@ -106,6 +106,7 @@ const InputWrapper = styled.div`
     border-radius: 0px 0px 4px 4px;
     input {
         width: 100%;
+        text-overflow: ellipsis;
         color: var(--input-text);
         font-size: 16px;
         font-weight: 500;
