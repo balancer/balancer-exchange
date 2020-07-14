@@ -376,10 +376,7 @@ export default class ProxyStore {
 
             this.setPreviewPending(true);
 
-            if (
-                poolStore.subgraphError &&
-                poolStore.onChainPools.pools.length === 0
-            ) {
+            if (poolStore.onChainPools.pools.length === 0) {
                 swapFormStore.setSwapObjection('Waiting For Pools To Load');
 
                 swapFormStore.showLoader = true;
@@ -489,10 +486,7 @@ export default class ProxyStore {
                 swapFormStore,
             } = this.rootStore;
 
-            if (
-                poolStore.subgraphError &&
-                poolStore.onChainPools.pools.length === 0
-            ) {
+            if (poolStore.onChainPools.pools.length === 0) {
                 swapFormStore.setSwapObjection('Waiting For Pools To Load');
 
                 swapFormStore.showLoader = true;

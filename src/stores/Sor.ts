@@ -107,7 +107,7 @@ export default class SorStore {
 
             if (
                 poolStore.onChainPools.pools.length === 0 &&
-                poolStore.subgraphPools.pools.length === 0
+                poolStore.poolsList.pools.length === 0
             ) {
                 console.log(
                     `[SOR] fetchPathData, No Pools Loaded, Can't Fetch Paths`
@@ -116,19 +116,16 @@ export default class SorStore {
             } else if (
                 // We only use Subgraph as a UI backup if onchain not loaded & SubGraph up to date
                 poolStore.onChainPools.pools.length === 0 &&
-                poolStore.subgraphPools.pools.length !== 0 &&
-                !poolStore.subgraphError
+                poolStore.poolsList.pools.length !== 0
             ) {
                 console.log(
                     `[SOR] fetchPathData() Using Subgraph Until On-Chain Loaded`
                 );
-                console.time(`processingSubgraph`);
                 await this.getPathData(
-                    poolStore.subgraphPools,
+                    poolStore.poolsList,
                     inputToken,
                     outputToken
                 );
-                console.timeEnd(`processingSubgraph`);
             }
             // Waits for on-chain pools to finish loading
             await poolStore.onChainPoolsPromise;
@@ -165,10 +162,7 @@ export default class SorStore {
         // let limitReturnAmount = maxPrice;
 
         // If subgraph has failed we must wait for on-chain balance info to be loaded.
-        if (
-            poolStore.subgraphError &&
-            poolStore.onChainPools.pools.length === 0
-        ) {
+        if (poolStore.onChainPools.pools.length === 0) {
             console.log(`[SOR] Backup - Must Wait For On-Chain Balances.`);
             await poolStore.onChainPoolsPromise;
             console.log(`[SOR] Backup - On-Chain Balances Loaded.`);

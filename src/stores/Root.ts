@@ -50,8 +50,6 @@ export default class RootStore {
     }
 
     async asyncSetup() {
-        // Load Subgraph asap to avoid lag
-        this.poolStore.fetchSubgraphPools();
         await this.providerStore.loadWeb3();
         this.swapFormStore.setDefaultTokenAddresses(
             this.providerStore.providerStatus.account
