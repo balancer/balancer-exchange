@@ -105,9 +105,6 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     const inputAddress = swapFormStore.inputToken.address;
     useEffect(() => {
         if (inputAddress !== '') {
-            console.log(
-                `!!!!!!! SFC, setSelectedInputToken ${inputAddress} ${account}`
-            );
             swapFormStore.setSelectedInputToken(inputAddress, account);
         }
     }, [inputAddress, account, swapFormStore]); // Only re-run the effect on token address change
@@ -116,9 +113,6 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     const outputAddress = swapFormStore.outputToken.address;
     useEffect(() => {
         if (outputAddress !== '') {
-            console.log(
-                `!!!!!!! SFC, setSelectedOutputToken ${outputAddress} ${account}`
-            );
             swapFormStore.setSelectedOutputToken(outputAddress, account);
         }
     }, [outputAddress, account, swapFormStore]); // Only re-run the effect on token address change

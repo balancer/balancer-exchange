@@ -730,9 +730,6 @@ export default class SwapFormStore {
         );
 
         if (filteredWhitelistedTokens.length > 0) {
-            console.log(
-                `!!!!!!! SFS using whitelist: ${filteredWhitelistedTokens[0].address}`
-            );
             this.inputToken.symbol = filteredWhitelistedTokens[0].symbol;
             this.inputToken.decimals = filteredWhitelistedTokens[0].decimals;
             this.inputToken.precision = filteredWhitelistedTokens[0].precision;
@@ -767,7 +764,6 @@ export default class SwapFormStore {
         } else {
             const assetOptions = assetOptionsStore.tokenAssetData;
             if (assetOptions) {
-                console.log(`!!!!!!! SFS using assetOptions: `, assetOptions);
                 this.inputToken.symbol = assetOptions.symbol;
                 this.inputToken.iconAddress = assetOptions.iconAddress;
                 this.inputToken.balanceFormatted = assetOptions.userBalance;
@@ -847,10 +843,6 @@ export default class SwapFormStore {
             outputTokenAddress
         );
         if (filteredWhitelistedTokens.length > 0) {
-            console.log(
-                `!!!!!!! SFS using whitelist: `,
-                filteredWhitelistedTokens[0]
-            );
             this.outputToken.symbol = filteredWhitelistedTokens[0].symbol;
             this.outputToken.decimals = filteredWhitelistedTokens[0].decimals;
             this.outputToken.precision = filteredWhitelistedTokens[0].precision;
@@ -884,7 +876,6 @@ export default class SwapFormStore {
         } else {
             const assetOptions = assetOptionsStore.tokenAssetData;
             if (assetOptions) {
-                console.log(`!!!!!!! SFS using assetOptions: `, assetOptions);
                 this.outputToken.symbol = assetOptions.symbol;
                 this.outputToken.iconAddress = assetOptions.iconAddress;
                 this.outputToken.balanceFormatted = assetOptions.userBalance;

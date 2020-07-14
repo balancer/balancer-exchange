@@ -383,8 +383,6 @@ export default class ProxyStore {
                 await poolStore.onChainPoolsPromise;
             }
 
-            console.time('timePreviewBatchSwapExactIn');
-
             const tokenAmountIn = scale(bnum(inputAmount), inputDecimals);
 
             // Use WETH address for Ether
@@ -402,7 +400,6 @@ export default class ProxyStore {
                     SwapMethods.EXACT_IN
                 } ${fromWei(tokenAmountIn)}`
             );
-            console.time('timefindBestSwapsMulti');
             // sorSwaps is the unchanged info from SOR that can be directly passed to proxy transaction
             const [totalOutput, sorSwaps] = await sorStore.findBestSwapsMulti(
                 SwapMethods.EXACT_IN,
@@ -411,11 +408,7 @@ export default class ProxyStore {
                 sorStore.costCalculator.getCostOutputToken()
             );
 
-            console.timeEnd('timefindBestSwapsMulti');
-
-            console.time('timeformatSorSwapss');
             const sorSwapsFormatted = await sorStore.formatSorSwaps(sorSwaps);
-            console.timeEnd('timeformatSorSwapss');
 
             if (sorSwapsFormatted.length === 0) {
                 this.setPreviewPending(false);
@@ -425,13 +418,11 @@ export default class ProxyStore {
                 );
             }
 
-            console.time('timecalcTotalSpotValue');
             let spotOutput = await calcTotalSpotValue(
                 SwapMethods.EXACT_IN,
                 sorSwapsFormatted,
                 poolStore.onChainPools.pools
             );
-            console.timeEnd('timecalcTotalSpotValue');
 
             const spotPrice = calcPrice(tokenAmountIn, spotOutput);
 
@@ -451,7 +442,6 @@ export default class ProxyStore {
             );
 
             this.setPreviewPending(false);
-            console.timeEnd('timePreviewBatchSwapExactIn');
 
             return {
                 tokenAmountIn,
@@ -510,7 +500,6 @@ export default class ProxyStore {
                     SwapMethods.EXACT_OUT
                 } ${fromWei(tokenAmountOut)}`
             );
-            console.time('timefindBestSwapsMulti');
             // sorSwaps is the unchanged info from SOR that can be directly passed to proxy transaction
             const [totalInput, sorSwaps] = await sorStore.findBestSwapsMulti(
                 SwapMethods.EXACT_OUT,

@@ -65,9 +65,7 @@ export default class PoolStore {
                 if (this.poolsList.pools.length !== response.pools.length) {
                     console.log(`[Pool] Subgraph Pools Loaded With New Info.`);
                     this.poolsList = response;
-
-                    console.log(`!!!! GOOD TO GO`);
-                    this.loadOnChainPools(false); // THIS CAN FREEZE UI
+                    this.loadOnChainPools(false); // THIS CAN FREEZE UI??
                 } else {
                     console.log(`[Pool] Subgraph Pools Loaded.`);
                 }
@@ -90,36 +88,33 @@ export default class PoolStore {
             const library = providerStore.providerStatus.library;
             console.log(`[Pool] Loading On-Chain Pool Info...`);
             await this.onChainPoolsPromise; // Pause if already loading info
-            console.log(`!!!!!!! YEEEEEE HAAAAA`);
 
             if (loadPoolList) {
                 console.log(`[Pool] Loading Pools List...`);
                 this.loadPoolsList();
             }
-
+            /*
+            REMOVED THIS AS ONLY WANT TO USE ONCHAIN BALANCES FOR EVERYTHING
             console.log(`[Pool] Fetch paths while waiting for onchain...`);
             // This function will use Subgraph for paths and wait until on-chain pools are loaded then use those
             sorStore.fetchPathData(
                 swapFormStore.inputToken.address,
                 swapFormStore.outputToken.address
             );
+            */
             console.log(`[Pool] Loading Pool On-chain Balances`);
-            console.time('onChainPools'); // !!!!!!! REMOVE AFTER TESTING
             const onChainPoolsFresh = await getAllPoolDataOnChain(
                 this.poolsList,
                 contractMetadataStore.getMultiAddress(),
                 library
             );
-            console.timeEnd('onChainPools'); // !!!!!!! REMOVE AFTER TESTING
+
             if (!onChainPoolsFresh) {
                 console.log(`Error loading on-chain, default to Subgraph`);
                 this.onChainPools = this.poolsList;
             } else this.onChainPools = onChainPoolsFresh;
 
-            console.log(
-                `[Pool] !!!!!!! All On-chain Pools Loaded`,
-                this.onChainPools
-            );
+            console.log(`[Pool] All On-chain Pools Loaded`, this.onChainPools);
         } catch (err) {
             console.log(err.message);
             console.log(
@@ -161,8 +156,6 @@ export default class PoolStore {
             // Subgraph will be loaded quicker than on-chain pools & assume this
             // data is fine to use for token pairs as no balances required
             // TO DO: Should we put all pools load on timer loop?
-            console.log(`[Pool] Waiting for subgraph before loading pairs...`);
-
             console.log(`[Pool] Loading Pairs ${tokenAddressToFind}`);
             const tokenPairs = await sorTokenPairs(
                 tokenAddressToFind,

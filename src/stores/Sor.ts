@@ -113,13 +113,16 @@ export default class SorStore {
                     `[SOR] fetchPathData, No Pools Loaded, Can't Fetch Paths`
                 );
                 return;
-            } else if (
+            }
+            /*
+            REMOVED THIS AS ONLY WANT TO USE ONCHAIN BALANCES FOR EVERYTHING
+            else if (
                 // We only use Subgraph as a UI backup if onchain not loaded & SubGraph up to date
                 poolStore.onChainPools.pools.length === 0 &&
                 poolStore.poolsList.pools.length !== 0
             ) {
                 console.log(
-                    `[SOR] fetchPathData() Using Subgraph Until On-Chain Loaded`
+                    `[SOR] fetchPathData() Using Backup Pools Until On-Chain Loaded`
                 );
                 await this.getPathData(
                     poolStore.poolsList,
@@ -127,15 +130,15 @@ export default class SorStore {
                     outputToken
                 );
             }
+            */
             // Waits for on-chain pools to finish loading
             await poolStore.onChainPoolsPromise;
-            console.time(`processingOnchain`);
+
             await this.getPathData(
                 poolStore.onChainPools,
                 inputToken,
                 outputToken
             );
-            console.timeEnd(`processingOnchain`);
 
             swapFormStore.showLoader = false;
 
@@ -305,10 +308,6 @@ export default class SorStore {
             epsOfInterest = this.epsOfInterestOut;
         }
 
-        console.log(`!!!!!!! ${Object.keys(processedPaths).length}`);
-        console.log(`!!!!!!! ${Object.keys(epsOfInterest).length}`);
-        console.log(`!!!!!!! ${Object.keys(this.processedPools).length}`);
-
         const [sorSwaps, totalReturn] = smartOrderRouterMultiHopEpsOfInterest(
             JSON.parse(JSON.stringify(this.processedPools)),
             processedPaths,
@@ -318,8 +317,6 @@ export default class SorStore {
             returnTokenCostPerPool,
             epsOfInterest
         );
-
-        console.log(`!!!!!!! totalReturn: ${totalReturn}`);
 
         return [totalReturn, sorSwaps];
     };
