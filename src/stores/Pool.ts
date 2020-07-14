@@ -79,12 +79,7 @@ export default class PoolStore {
     // TODO: Should this be fetched on a timer to update? See Root.ts for order
     @action async loadOnChainPools(loadPoolList: boolean) {
         try {
-            const {
-                providerStore,
-                contractMetadataStore,
-                sorStore,
-                swapFormStore,
-            } = this.rootStore;
+            const { providerStore, contractMetadataStore } = this.rootStore;
             const library = providerStore.providerStatus.library;
             console.log(`[Pool] Loading On-Chain Pool Info...`);
             await this.onChainPoolsPromise; // Pause if already loading info
