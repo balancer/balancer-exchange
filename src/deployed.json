@@ -109,6 +109,13 @@
                 "precision": 4
             },
             {
+                "symbol": "BAL",
+                "address": "0xba100000625a3754423978a60c9317c58a424e3D",
+                "decimals": 18,
+                "iconAddress": "0xba100000625a3754423978a60c9317c58a424e3D",
+                "precision": 2
+            },
+            {
                 "symbol": "DAI",
                 "address": "0x6B175474E89094C44Da98b954EedeAC495271d0F",
                 "iconAddress": "0x6b175474e89094c44da98b954eedeac495271d0f",
@@ -287,6 +294,18 @@
                 "symbol": "OCEAN",
                 "address": "0x985dd3D42De1e256d09e1c10F112bCCB8015AD41",
                 "iconAddress": "0x985dd3D42De1e256d09e1c10F112bCCB8015AD41",
+                "precision": 2
+            },
+            {
+                "symbol": "mUSD",
+                "address": "0xe2f2a5C287993345a840Db3B0845fbC70f5935a5",
+                "iconAddress": "0xe2f2a5C287993345a840Db3B0845fbC70f5935a5",
+                "precision": 2
+            },
+            {
+                "symbol": "USD++",
+                "address": "0x9A48BD0EC040ea4f1D3147C025cd4076A2e71e3e",
+                "iconAddress": "unknown",
                 "precision": 2
             }
         ]
