@@ -1,11 +1,18 @@
 import Web3Modal from 'web3modal';
 import WalletConnectProvider from '@walletconnect/web3-provider';
+import Portis from '@portis/web3';
 
 const providerOptions = {
     walletconnect: {
         package: WalletConnectProvider,
         options: {
             infuraId: process.env.REACT_APP_INFURA_ID,
+        },
+    },
+    portis: {
+        package: Portis,
+        options: {
+            id: '3f1c3cfc-7dd5-4e8a-aa03-71ff7396d9fe',
         },
     },
 };

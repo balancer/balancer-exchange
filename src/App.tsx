@@ -21,7 +21,6 @@ const BuildVersion = styled.div`
 `;
 
 const BuildLink = styled.a`
-    font-size: 10px;
     color: var(--body-text);
     text-decoration: none;
     margin-left: 5px;

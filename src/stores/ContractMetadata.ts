@@ -47,11 +47,11 @@ export default class ContractMetadataStore {
         };
 
         tokenMetadata.forEach(token => {
-            const { address, symbol, decimals, iconAddress, precision } = token;
+            const { address, symbol, iconAddress, precision } = token;
             contractMetadata.tokens.push({
                 address,
                 symbol,
-                decimals,
+                decimals: undefined,
                 iconAddress,
                 precision,
                 isSupported: true,
@@ -154,5 +154,12 @@ export default class ContractMetadataStore {
         return this.contractMetadata.tokens.filter(
             token => token.isSupported
         )[0].address;
+    }
+
+    setTokenDecimals(address: string, decimals: number) {
+        const tokenUrl = this.contractMetadata.tokens.find(
+            t => t.address === address
+        );
+        if (tokenUrl) tokenUrl.decimals = decimals;
     }
 }

@@ -4,6 +4,7 @@ import { TokenIconAddress } from './TokenPanel';
 import { useStores } from '../contexts/storesContext';
 import { bnum, formatBalanceTruncated, isEmpty } from 'utils/helpers';
 import { isChainIdSupported } from '../provider/connectors';
+import { ModalType } from '../stores/SwapForm';
 import { observer } from 'mobx-react';
 
 const AssetPanelContainer = styled.div`
@@ -30,9 +31,6 @@ const AssetPanel = styled.div`
     border-bottom: 1px solid var(--panel-border);
     :nth-child(3n + 3) {
         border-right: none;
-    }
-    :nth-child(10) {
-        border-bottom: none;
     }
 `;
 
@@ -97,7 +95,8 @@ const AssetOptions = observer(() => {
     const account = providerStore.providerStatus.account;
     const chainId = providerStore.providerStatus.activeChainId;
 
-    const { assetSelectFilter, assetModalState } = swapFormStore;
+    const { assetModalState } = swapFormStore;
+    const assetSelectFilter = assetModalState.input;
 
     useEffect(() => {
         if (!isEmpty(assetSelectFilter))
@@ -113,11 +112,11 @@ const AssetOptions = observer(() => {
         let userBalances = {};
         let tradableTokens;
 
-        if (assetModalState.input === 'inputAmount') {
+        if (assetModalState.type === ModalType.INPUT) {
             tradableTokens = poolStore.getTokenPairs(
                 swapFormStore.outputToken.address
             );
-        } else if (assetModalState.input === 'outputAmount') {
+        } else {
             tradableTokens = poolStore.getTokenPairs(
                 swapFormStore.inputToken.address
             );
@@ -201,13 +200,13 @@ const AssetOptions = observer(() => {
     };
 
     const selectAsset = token => {
-        if (assetModalState.input === 'inputAmount') {
+        if (assetModalState.type === ModalType.INPUT) {
             swapFormStore.setSelectedInputToken(token.address, account);
         } else {
             swapFormStore.setSelectedOutputToken(token.address, account);
         }
         clearInputs();
-        swapFormStore.setAssetModalState({ open: false });
+        swapFormStore.closeModal();
     };
 
     const TradableToken = ({ isTradable }) => {
@@ -216,6 +215,10 @@ const AssetOptions = observer(() => {
         } else {
             return <NoPool>No Pool</NoPool>;
         }
+    };
+
+    const IconError = e => {
+        e.target.src = './empty-token.png';
     };
 
     return (
@@ -228,7 +231,12 @@ const AssetOptions = observer(() => {
                     key={token.address}
                 >
                     <AssetWrapper>
-                        <TokenIcon src={TokenIconAddress(token.iconAddress)} />
+                        <TokenIcon
+                            src={TokenIconAddress(token.iconAddress)}
+                            onError={e => {
+                                IconError(e);
+                            }}
+                        />
                         <TokenName>{token.symbol}</TokenName>
                     </AssetWrapper>
                     <TokenBalance>

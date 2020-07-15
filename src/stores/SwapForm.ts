@@ -36,6 +36,11 @@ export enum InputValidationStatus {
     MAX_DIGITS_EXCEEDED = 'Maximum Digits Exceeded',
 }
 
+export enum ModalType {
+    INPUT = 'Input',
+    OUTPUT = 'Output',
+}
+
 export interface ChartData {
     validSwap: boolean;
     swaps: ChartSwap[];
@@ -78,9 +83,9 @@ export default class SwapFormStore {
     @observable slippageSelectorOpen: boolean;
     @observable assetModalState = {
         open: false,
-        input: 'inputAmount',
+        type: ModalType.INPUT,
+        input: '',
     };
-    @observable assetSelectFilter: string = '';
     @observable slippageCell: number = 3;
 
     rootStore: RootStore;
@@ -377,11 +382,16 @@ export default class SwapFormStore {
         this.slippageSelectorOpen = value;
     }
 
-    @action setAssetModalState(value: { open?: boolean; input?: string }) {
+    @action openModal(type: ModalType) {
         this.assetModalState = {
-            ...this.assetModalState,
-            ...value,
+            open: true,
+            type,
+            input: '',
         };
+    }
+
+    @action closeModal() {
+        this.assetModalState.open = false;
     }
 
     getActiveInputValue(): string {
@@ -415,7 +425,7 @@ export default class SwapFormStore {
     }
 
     @action setAssetSelectFilter(value: string) {
-        this.assetSelectFilter = value;
+        this.assetModalState.input = value;
     }
 
     /* Assume swaps are in order of biggest to smallest value */

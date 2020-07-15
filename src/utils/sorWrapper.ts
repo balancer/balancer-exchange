@@ -7,11 +7,12 @@ import {
     bdiv,
 } from './balancerCalcs';
 import * as helpers from './helpers';
-import { bnum, scale, printPoolData } from './helpers';
+import { bnum, printPoolData, toChecksum } from './helpers';
 import {
     getPoolsWithTokens,
     getTokenPairs,
     smartOrderRouter,
+    parsePoolDataOnChain,
 } from '@balancer-labs/sor';
 import { SwapMethods } from '../stores/SwapForm';
 import { Pool, SorSwap, Swap } from '../stores/Proxy';
@@ -72,42 +73,47 @@ export const findPoolsWithTokens = async (
     try {
         let pools = await getPoolsWithTokens(tokenIn, tokenOut);
 
-        if (pools.pools.length === 0)
-            throw Error('There are no pools with selected tokens');
+        // Gets on-chain balances
+        let poolsWithTokens = await parsePoolDataOnChain(
+            pools.pools,
+            tokenIn,
+            tokenOut,
+            multiAddress,
+            provider
+        );
 
-        pools.pools.forEach(p => {
-            let tI: any = p.tokens.find(
-                t =>
-                    helpers.toChecksum(t.address) ===
-                    helpers.toChecksum(tokenIn)
-            );
-            let tO: any = p.tokens.find(
-                t =>
-                    helpers.toChecksum(t.address) ===
-                    helpers.toChecksum(tokenOut)
-            );
+        let poolsWithBalances = [];
 
-            if (tI.balance > 0 && tO.balance > 0) {
+        // Current SOR doesn't return decimals or check balances so filter locally
+        poolsWithTokens.forEach(pool => {
+            if (pool.balanceIn.gt(0) && pool.balanceOut.gt(0)) {
+                let subgraphPool = pools.pools.find(
+                    p => toChecksum(p.id) === toChecksum(pool.id)
+                );
+
+                let tI: any = subgraphPool.tokens.find(
+                    t => toChecksum(t.address) === toChecksum(tokenIn)
+                );
+                let tO: any = subgraphPool.tokens.find(
+                    t => toChecksum(t.address) === toChecksum(tokenOut)
+                );
+
                 let obj: Pool = {
-                    id: helpers.toChecksum(p.id),
+                    id: toChecksum(pool.id),
                     decimalsIn: tI.decimals,
                     decimalsOut: tO.decimals,
-                    balanceIn: scale(bnum(tI.balance), tI.decimals),
-                    balanceOut: scale(bnum(tO.balance), tO.decimals),
-                    weightIn: scale(
-                        bnum(tI.denormWeight).div(bnum(p.totalWeight)),
-                        18
-                    ),
-                    weightOut: scale(
-                        bnum(tO.denormWeight).div(bnum(p.totalWeight)),
-                        18
-                    ),
-                    swapFee: scale(bnum(p.swapFee), 18),
+                    balanceIn: pool.balanceIn,
+                    balanceOut: pool.balanceOut,
+                    weightIn: pool.weightIn,
+                    weightOut: pool.weightOut,
+                    swapFee: pool.swapFee,
                 };
 
-                poolData.push(obj);
+                poolsWithBalances.push(obj);
             }
         });
+
+        return poolsWithBalances;
     } catch (err) {
         console.log(`[SOR] Subgraph call error. Using backup pools.`);
         poolData = await findPoolsWithTokensBackup(
