@@ -271,6 +271,15 @@ export default class ProxyStore {
     ): Promise<ExactAmountInPreview> => {
         try {
             this.setPreviewPending(true);
+
+            if (
+                tokenIn === '0xbf6a2fa04860f0b2f9e7d5a76d841ccbabaffb8f' ||
+                tokenOut === '0xbf6a2fa04860f0b2f9e7d5a76d841ccbabaffb8f' ||
+                tokenIn === '0xb60fde5d798236fbf1e2697b2a0645380921fccf' ||
+                tokenOut === '0xb60fde5d798236fbf1e2697b2a0645380921fccf'
+            )
+                throw Error('Unsupported Token');
+
             const { contractMetadataStore, providerStore } = this.rootStore;
 
             const tokenAmountIn = scale(bnum(inputAmount), inputDecimals);
@@ -381,6 +390,15 @@ export default class ProxyStore {
     ): Promise<ExactAmountOutPreview> => {
         try {
             this.setPreviewPending(true);
+
+            if (
+                tokenIn === '0xbf6a2fa04860f0b2f9e7d5a76d841ccbabaffb8f' ||
+                tokenOut === '0xbf6a2fa04860f0b2f9e7d5a76d841ccbabaffb8f' ||
+                tokenIn === '0xb60fde5d798236fbf1e2697b2a0645380921fccf' ||
+                tokenOut === '0xb60fde5d798236fbf1e2697b2a0645380921fccf'
+            )
+                throw Error('Unsupported Token');
+
             const { contractMetadataStore, providerStore } = this.rootStore;
 
             const tokenAmountOut = scale(bnum(outputAmount), outputDecimals);
