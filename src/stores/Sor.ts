@@ -171,12 +171,17 @@ export default class SorStore {
             console.log(`[SOR] Backup - On-Chain Balances Loaded.`);
         }
 
+        let swapDebug = [];
+
         for (let i = 0; i < sorSwaps.length; i++) {
             let sequence = sorSwaps[i];
             let sorMultiSwap: SorMultiSwap = { sequence: [] };
 
+            let seqDebug = [];
+
             for (let j = 0; j < sequence.length; j++) {
                 let swap = sequence[j];
+                seqDebug.push(swap);
                 // swap.maxPrice = maxPrice;
                 // swap.limitReturnAmount = limitReturnAmount;
                 console.log(
@@ -227,8 +232,12 @@ export default class SorStore {
                 sorMultiSwap.sequence.push(multiSwap);
             }
 
+            swapDebug.push(seqDebug);
+
             formattedSorSwaps.push(sorMultiSwap);
         }
+
+        console.log(swapDebug);
 
         return formattedSorSwaps;
     };
