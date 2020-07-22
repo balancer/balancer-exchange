@@ -217,6 +217,9 @@ export default class SwapFormStore {
             bnum(inputAmount),
             this.inputToken.decimals
         );
+        if (inputAmount !== this.inputs.inputAmount) {
+            return;
+        }
 
         this.setSwapObjection(SwapObjection.NONE);
 
@@ -266,6 +269,9 @@ export default class SwapFormStore {
             bnum(outputAmount),
             this.outputToken.decimals
         );
+        if (outputAmount !== this.inputs.outputAmount) {
+            return;
+        }
 
         if (preview.error) {
             this.setErrorMessage(preview.error);
