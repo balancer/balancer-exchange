@@ -16,7 +16,6 @@ export default class BlockchainFetchStore {
             providerStore,
             tokenStore,
             contractMetadataStore,
-            poolStore,
         } = this.rootStore;
 
         const active = providerStore.providerStatus.active;
@@ -43,7 +42,7 @@ export default class BlockchainFetchStore {
                         });
 
                         // Using on-chain balances. These may change so need to be updated.
-                        poolStore.fetchOnchainPools();
+                        // poolStore.fetchOnchainPools();
 
                         // Set block number
                         providerStore.setCurrentBlockNumber(blockNumber);

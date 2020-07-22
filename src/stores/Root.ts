@@ -54,7 +54,7 @@ export default class RootStore {
         this.swapFormStore.setDefaultTokenAddresses(
             this.providerStore.providerStatus.account
         );
-        // this.poolStore.fetchOnchainPools();
+        this.poolStore.loadPoolsList();
         this.blockchainFetchStore.blockchainFetch(false);
         // Load on-chain data as soon as a provider is available
     }

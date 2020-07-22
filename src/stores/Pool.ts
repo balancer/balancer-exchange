@@ -48,8 +48,8 @@ export default class PoolStore {
         this.onChainPools = { pools: [] };
     }
 
-    @action async fetchOnchainPools() {
-        this.onChainPoolsPromise = this.loadOnChainPools(true);
+    async loadOnChain() {
+        this.onChainPoolsPromise = this.loadOnChainPools();
     }
 
     // TODO: Should this be fetched on a timer to update? See Root.ts for order
@@ -57,6 +57,7 @@ export default class PoolStore {
         if (this.poolsList.pools.length === 0) {
             console.log(`[Pool] Loading Backup Pools`);
             this.poolsList = getAllPublicSwapPoolsBackup();
+            this.loadOnChain();
             console.log(`[Pool] Backup Pools Loaded`);
         }
 
@@ -71,7 +72,7 @@ export default class PoolStore {
                     console.log(`[Pool] Subgraph Pools Loaded.`);
                 }
                 // Load on-chain info every time to keep balances fresh
-                this.loadOnChainPools(false); // THIS CAN FREEZE UI??
+                this.loadOnChain(); // THIS CAN FREEZE UI??
             })
             .catch(err => {
                 console.log(`[Pool] Subgraph Loading Issue. Using Backup.`);
@@ -80,7 +81,7 @@ export default class PoolStore {
     }
 
     // TODO: Should this be fetched on a timer to update? See Root.ts for order
-    @action async loadOnChainPools(loadPoolList: boolean) {
+    @action private async loadOnChainPools() {
         try {
             const {
                 providerStore,
@@ -92,10 +93,6 @@ export default class PoolStore {
             console.log(`[Pool] Loading On-Chain Pool Info...`);
             await this.onChainPoolsPromise; // Pause if already loading info
 
-            if (loadPoolList) {
-                console.log(`[Pool] Loading Pools List...`);
-                this.loadPoolsList();
-            }
             /*
             REMOVED THIS AS ONLY WANT TO USE ONCHAIN BALANCES FOR EVERYTHING
             console.log(`[Pool] Fetch paths while waiting for onchain...`);
