@@ -54,9 +54,11 @@ export default class PoolStore {
 
     // TODO: Should this be fetched on a timer to update? See Root.ts for order
     async loadPoolsList() {
-        console.log(`[Pool] Loading Backup Pools`);
-        this.poolsList = getAllPublicSwapPoolsBackup();
-        console.log(`[Pool] Backup Pools Loaded`);
+        if (this.poolsList.pools.length === 0) {
+            console.log(`[Pool] Loading Backup Pools`);
+            this.poolsList = getAllPublicSwapPoolsBackup();
+            console.log(`[Pool] Backup Pools Loaded`);
+        }
 
         console.log(`[Pool] Loading Subgraph Pools`);
         //this.poolsList = await getAllPublicSwapPools();
@@ -65,10 +67,11 @@ export default class PoolStore {
                 if (this.poolsList.pools.length !== response.pools.length) {
                     console.log(`[Pool] Subgraph Pools Loaded With New Info.`);
                     this.poolsList = response;
-                    this.loadOnChainPools(false); // THIS CAN FREEZE UI??
                 } else {
                     console.log(`[Pool] Subgraph Pools Loaded.`);
                 }
+                // Load on-chain info every time to keep balances fresh
+                this.loadOnChainPools(false); // THIS CAN FREEZE UI??
             })
             .catch(err => {
                 console.log(`[Pool] Subgraph Loading Issue. Using Backup.`);
@@ -79,7 +82,12 @@ export default class PoolStore {
     // TODO: Should this be fetched on a timer to update? See Root.ts for order
     @action async loadOnChainPools(loadPoolList: boolean) {
         try {
-            const { providerStore, contractMetadataStore } = this.rootStore;
+            const {
+                providerStore,
+                contractMetadataStore,
+                sorStore,
+                swapFormStore,
+            } = this.rootStore;
             const library = providerStore.providerStatus.library;
             console.log(`[Pool] Loading On-Chain Pool Info...`);
             await this.onChainPoolsPromise; // Pause if already loading info
@@ -108,6 +116,14 @@ export default class PoolStore {
                 console.log(`Error loading on-chain, default to Subgraph`);
                 this.onChainPools = this.poolsList;
             } else this.onChainPools = onChainPoolsFresh;
+
+            sorStore.fetchPathData(
+                swapFormStore.inputToken.address,
+                swapFormStore.outputToken.address
+            );
+
+            this.fetchAndSetTokenPairs(swapFormStore.inputToken.address);
+            this.fetchAndSetTokenPairs(swapFormStore.outputToken.address);
 
             console.log(`[Pool] All On-chain Pools Loaded`, this.onChainPools);
         } catch (err) {
