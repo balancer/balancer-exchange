@@ -325,6 +325,12 @@
                 "address": "0x81ab848898b5ffD3354dbbEfb333D5D183eEDcB5",
                 "iconAddress": "unknown",
                 "precision": 2
+            },
+            {
+                "symbol": "GRG",
+                "address": "0x4fbb350052bca5417566f188eb2ebce5b19bc964",
+                "iconAddress": "0x4fbb350052bca5417566f188eb2ebce5b19bc964",
+                "precision": 2
             }
         ]
     }
