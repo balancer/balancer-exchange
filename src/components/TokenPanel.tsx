@@ -104,6 +104,14 @@ const InputWrapper = styled.div`
     padding-right: 21px;
     border-top: 1px solid var(--panel-border);
     border-radius: 0px 0px 4px 4px;
+    input[type="number"] {
+        -moz-appearance: textfield;
+    }
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
     input {
         width: 100px;
         color: var(--input-text);
@@ -204,6 +212,8 @@ const Token = observer(
                         onChange={onChange}
                         ref={textInput}
                         placeholder="0"
+                        inputMode="decimal"
+                        type="number"
                     />
                     {(tokenAddress === EtherKey &&
                         modalType === ModalType.INPUT) ||
