@@ -21,10 +21,11 @@ const AssetPanelContainer = styled.div`
 
 const AssetPanel = styled.div`
     display: flex;
+    flex-grow: 1
     align-items: center;
     justify-content: center;
     flex-direction: column;
-    width: 184px;
+    width: 33%;
     height: 98px;
     cursor: pointer;
     border-right: 1px solid var(--panel-border);
