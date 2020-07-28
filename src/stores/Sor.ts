@@ -11,6 +11,7 @@ import {
     processPaths,
     processEpsOfInterestMultiHop,
     smartOrderRouterMultiHopEpsOfInterest,
+    filterAllPools,
 } from '@balancer-labs/sor';
 import { BigNumber } from '../utils/bignumber';
 import { SwapMethods } from './SwapForm';
@@ -44,7 +45,11 @@ export const sorTokenPairs = async (
     contractMetadataStore: ContractMetadataStore,
     allPools: any[]
 ): Promise<TokenPairs> => {
-    let [, allTokenPairs] = await getTokenPairsMultiHop(tokenAddress, allPools);
+    let [allTokensSet] = filterAllPools(allPools);
+    let [, allTokenPairs] = await getTokenPairsMultiHop(
+        tokenAddress.toLowerCase(),
+        allTokensSet
+    );
     let tokenPairs: TokenPairs = new Set<string>();
     const sanitizedWeth = toChecksum(contractMetadataStore.getWethAddress());
     allTokenPairs.forEach(token => {
@@ -71,6 +76,7 @@ export default class SorStore {
     private processedPathsOut: any;
     private epsOfInterestIn: any;
     private epsOfInterestOut: any;
+    noPools: number;
 
     constructor(rootStore) {
         this.rootStore = rootStore;
@@ -84,6 +90,7 @@ export default class SorStore {
             gasPerTrade: bnum(0),
             outTokenEthPrice: bnum(0),
         });
+        this.noPools = 4;
 
         // TODO: Should we fetchPathData on a timer incase user has window open without refreshing?
     }
@@ -258,13 +265,15 @@ export default class SorStore {
         this.processedPathsIn = processPaths(pathData, pools, 'swapExactIn');
         this.epsOfInterestIn = processEpsOfInterestMultiHop(
             this.processedPathsIn,
-            'swapExactIn'
+            'swapExactIn',
+            this.noPools
         );
         this.processedPathsOut = processPaths(pathData, pools, 'swapExactOut');
 
         this.epsOfInterestOut = processEpsOfInterestMultiHop(
             this.processedPathsOut,
-            'swapExactOut'
+            'swapExactOut',
+            this.noPools
         );
     };
 
@@ -276,8 +285,10 @@ export default class SorStore {
         tokenIn = tokenIn.toLowerCase();
         tokenOut = tokenOut.toLowerCase();
 
+        let [, allPoolsNonZeroBalances] = filterAllPools(allPools);
+
         const directPools = await filterPoolsWithTokensDirect(
-            allPools,
+            allPoolsNonZeroBalances,
             tokenIn,
             tokenOut
         );
@@ -287,7 +298,11 @@ export default class SorStore {
             mostLiquidPoolsFirstHop,
             mostLiquidPoolsSecondHop,
             hopTokens,
-        ] = await filterPoolsWithTokensMultihop(allPools, tokenIn, tokenOut);
+        ] = await filterPoolsWithTokensMultihop(
+            allPoolsNonZeroBalances,
+            tokenIn,
+            tokenOut
+        );
 
         let pools, pathData;
         [pools, pathData] = parsePoolData(

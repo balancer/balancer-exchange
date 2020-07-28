@@ -168,7 +168,7 @@ export default class PoolStore {
             const tokenPairs = await sorTokenPairs(
                 tokenAddressToFind,
                 contractMetadataStore,
-                this.poolsList.pools
+                this.poolsList
             );
 
             console.log('[Pool] - TokenPairs Success', {
