@@ -687,6 +687,12 @@ module.exports = function(webpackEnv) {
                         ? typescriptFormatter
                         : undefined,
                 }),
+            new webpack.ContextReplacementPlugin(/jsclass/, data => {
+                console.log(data);
+                delete data.dependencies[0].critical;
+                delete data.dependencies[1].critical;
+                return data;
+            }),
         ].filter(Boolean),
         // Some libraries import Node modules but don't use them in the browser.
         // Tell Webpack to provide empty mocks for them so importing them works.
