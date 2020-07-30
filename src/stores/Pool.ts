@@ -4,13 +4,11 @@ import { EtherKey } from './Token';
 import { sorTokenPairs } from './Sor';
 import { supportedChainId } from '../provider/connectors';
 import { AsyncStatus, TokenPairsFetch } from './actions/fetch';
-import {
-    getAllPublicSwapPools,
-    getAllPoolDataOnChain,
-} from '@balancer-labs/sor';
+import { getAllPoolDataOnChain } from '@balancer-labs/sor';
 import { getAllPublicSwapPoolsBackup } from '../utils/poolsBackup';
 import { BigNumber } from 'utils/bignumber';
 import { toChecksum, scale, bnum, fromWei } from 'utils/helpers';
+import { getAllPublicSwapPools } from 'utils/subGraph';
 
 export type TokenPairs = Set<string>;
 
