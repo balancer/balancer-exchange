@@ -688,7 +688,6 @@ module.exports = function(webpackEnv) {
                         : undefined,
                 }),
             new webpack.ContextReplacementPlugin(/jsclass/, data => {
-                console.log(data);
                 delete data.dependencies[0].critical;
                 delete data.dependencies[1].critical;
                 return data;
