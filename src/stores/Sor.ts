@@ -90,7 +90,7 @@ export default class SorStore {
             gasPerTrade: bnum(0),
             outTokenEthPrice: bnum(0),
         });
-        this.noPools = 4;
+        this.noPools = 3;
 
         // TODO: Should we fetchPathData on a timer incase user has window open without refreshing?
     }

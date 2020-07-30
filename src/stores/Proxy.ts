@@ -404,7 +404,7 @@ export default class ProxyStore {
             const [totalOutput, sorSwaps] = await sorStore.findBestSwapsMulti(
                 SwapMethods.EXACT_IN,
                 tokenAmountIn,
-                4,
+                sorStore.noPools,
                 sorStore.costCalculator.getCostOutputToken()
             );
 
@@ -504,7 +504,7 @@ export default class ProxyStore {
             const [totalInput, sorSwaps] = await sorStore.findBestSwapsMulti(
                 SwapMethods.EXACT_OUT,
                 tokenAmountOut,
-                4,
+                sorStore.noPools,
                 sorStore.costCalculator.getCostOutputToken()
             );
 
