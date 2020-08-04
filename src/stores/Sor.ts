@@ -93,7 +93,7 @@ export default class SorStore {
             gasPerTrade: bnum(0),
             outTokenEthPrice: bnum(0),
         });
-        this.noPools = 3;
+        this.noPools = Number(process.env.REACT_APP_MAX_POOLS);
         this.costOutputToken = bnum(0);
         this.costInputToken = bnum(0);
         // TODO: Should we fetchPathData on a timer incase user has window open without refreshing?
