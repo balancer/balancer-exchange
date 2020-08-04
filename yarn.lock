@@ -1057,10 +1057,10 @@
     lodash "^4.17.13"
     to-fast-properties "^2.0.0"
 
-"@balancer-labs/sor@0.4.0-3":
-  version "0.4.0-3"
-  resolved "https://registry.yarnpkg.com/@balancer-labs/sor/-/sor-0.4.0-3.tgz#fe9ea1f00eaef6cff54161dc28c3531ca8e2169e"
-  integrity sha512-VFc1ZouX1Cq0rR4VGdjvYF03uq1VOHrAOhYeqs0XoL1nX8RqDH3IIs46s3l9gp1hJeRFZpdT256I1XIbQwUVOg==
+"@balancer-labs/sor@0.4.0-4":
+  version "0.4.0-4"
+  resolved "https://registry.yarnpkg.com/@balancer-labs/sor/-/sor-0.4.0-4.tgz#49539b165ce8466f48f21c83060a28e69d5ac664"
+  integrity sha512-hkJrBIndT2P2s6KsU1/F7s/mRa5kwLxKOgZ8Oo1z0HadbHu9CVNxmLsF4a1v6o4D2ra7dC/aC3TdTbW2QFgjug==
   dependencies:
     "@ethersproject/address" "^5.0.2"
     "@ethersproject/solidity" "^5.0.2"

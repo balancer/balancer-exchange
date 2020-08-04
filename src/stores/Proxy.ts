@@ -400,12 +400,12 @@ export default class ProxyStore {
                     SwapMethods.EXACT_IN
                 } ${fromWei(tokenAmountIn)}`
             );
-            // sorSwaps is the unchanged info from SOR that can be directly passed to proxy transaction
+
             const [totalOutput, sorSwaps] = await sorStore.findBestSwapsMulti(
                 SwapMethods.EXACT_IN,
                 tokenAmountIn,
                 sorStore.noPools,
-                sorStore.costCalculator.getCostOutputToken()
+                sorStore.costOutputToken
             );
 
             const sorSwapsFormatted = await sorStore.formatSorSwaps(sorSwaps);
@@ -500,12 +500,13 @@ export default class ProxyStore {
                     SwapMethods.EXACT_OUT
                 } ${fromWei(tokenAmountOut)}`
             );
+
             // sorSwaps is the unchanged info from SOR that can be directly passed to proxy transaction
             const [totalInput, sorSwaps] = await sorStore.findBestSwapsMulti(
                 SwapMethods.EXACT_OUT,
                 tokenAmountOut,
                 sorStore.noPools,
-                sorStore.costCalculator.getCostOutputToken()
+                sorStore.costInputToken
             );
 
             const sorSwapsFormatted = await sorStore.formatSorSwaps(sorSwaps);

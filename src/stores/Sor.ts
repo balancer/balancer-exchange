@@ -12,6 +12,7 @@ import {
     processEpsOfInterestMultiHop,
     smartOrderRouterMultiHopEpsOfInterest,
     filterAllPools,
+    getCostOutputToken,
 } from '@balancer-labs/sor';
 import { BigNumber } from '../utils/bignumber';
 import { SwapMethods } from './SwapForm';
@@ -77,6 +78,8 @@ export default class SorStore {
     private epsOfInterestIn: any;
     private epsOfInterestOut: any;
     noPools: number;
+    costOutputToken: BigNumber;
+    costInputToken: BigNumber;
 
     constructor(rootStore) {
         this.rootStore = rootStore;
@@ -91,7 +94,8 @@ export default class SorStore {
             outTokenEthPrice: bnum(0),
         });
         this.noPools = 3;
-
+        this.costOutputToken = bnum(0);
+        this.costInputToken = bnum(0);
         // TODO: Should we fetchPathData on a timer incase user has window open without refreshing?
     }
 
@@ -100,6 +104,7 @@ export default class SorStore {
             contractMetadataStore,
             poolStore,
             swapFormStore,
+            providerStore,
         } = this.rootStore;
 
         if (inputToken !== '' && outputToken !== '') {
@@ -145,6 +150,36 @@ export default class SorStore {
                 poolStore.onChainPools,
                 inputToken,
                 outputToken
+            );
+
+            const library = providerStore.providerStatus.library;
+
+            let filteredWhitelistedTokens = contractMetadataStore.getFilteredTokenMetadata(
+                outputToken
+            );
+
+            let decimals: number;
+            decimals = Number(filteredWhitelistedTokens[0].decimals.toString()); // Dirty fix as sometimes return BigNumber and not sure why
+
+            this.costOutputToken = await this.getCostOutputToken(
+                outputToken,
+                decimals,
+                bnum(process.env.REACT_APP_GAS_PRICE),
+                bnum(process.env.REACT_APP_SWAP_COST),
+                library
+            );
+
+            filteredWhitelistedTokens = contractMetadataStore.getFilteredTokenMetadata(
+                inputToken
+            );
+            decimals = Number(filteredWhitelistedTokens[0].decimals.toString()); // Dirty fix as sometimes return BigNumber and not sure why
+
+            this.costInputToken = await this.getCostOutputToken(
+                inputToken,
+                decimals,
+                bnum(process.env.REACT_APP_GAS_PRICE),
+                bnum(process.env.REACT_APP_SWAP_COST),
+                library
             );
 
             swapFormStore.showLoader = false;
@@ -343,5 +378,24 @@ export default class SorStore {
         );
 
         return [totalReturn, sorSwaps];
+    };
+
+    getCostOutputToken = async (
+        TokenAddr: string,
+        TokenDecimals: number,
+        GasPriceWei: BigNumber,
+        SwapGasCost: BigNumber,
+        Provider: any
+    ): Promise<BigNumber> => {
+        // console.log(`!!!!!!! COST: `, TokenAddr, TokenDecimals, GasPriceWei.toString(), SwapGasCost.toString())
+        const cost = await getCostOutputToken(
+            TokenAddr,
+            TokenDecimals,
+            GasPriceWei,
+            SwapGasCost,
+            Provider
+        );
+        console.log(`[SOR] costOutputToken: ${cost.toString()}`);
+        return cost;
     };
 }
