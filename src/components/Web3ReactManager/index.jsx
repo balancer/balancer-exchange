@@ -33,7 +33,7 @@ const Spinner = styled.img`
 
 const Web3Manager = observer(({ children }) => {
     const {
-        root: { providerStore, blockchainFetchStore /*, poolStore */ },
+        root: { providerStore, blockchainFetchStore, poolStore },
     } = useStores();
 
     // handle delayed loader state
@@ -63,7 +63,7 @@ const Web3Manager = observer(({ children }) => {
     //Fetch user blockchain data on an interval using current params
     blockchainFetchStore.blockchainFetch(false);
     useInterval(() => blockchainFetchStore.blockchainFetch(false), 2000);
-    // useInterval(() => poolStore.loadPoolsList(), 70000);
+    useInterval(() => poolStore.loadPoolsList(), 120000);
 
     // This means no injected web3 and infura backup has failed
     if (!providerStore.providerStatus.active) {
