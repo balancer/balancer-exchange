@@ -313,6 +313,18 @@
                 "address": "0xa3BeD4E1c75D00fa6f4E5E6922DB7261B5E9AcD2",
                 "iconAddress": "0xa3BeD4E1c75D00fa6f4E5E6922DB7261B5E9AcD2",
                 "precision": 2
+            },
+            {
+                "symbol": "wNXM",
+                "address": "0x0d438F3b5175Bebc262bF23753C1E53d03432bDE",
+                "iconAddress": "unknown",
+                "precision": 2
+            },
+            {
+                "symbol": "yUSD-SEP20",
+                "address": "0x81ab848898b5ffD3354dbbEfb333D5D183eEDcB5",
+                "iconAddress": "unknown",
+                "precision": 2
             }
         ]
     }
