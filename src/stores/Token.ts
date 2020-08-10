@@ -1,4 +1,6 @@
 import { action, observable } from 'mobx';
+import { Interface } from '@ethersproject/abi';
+import { parseBytes32String } from '@ethersproject/strings'
 import RootStore from 'stores/Root';
 import { ContractTypes } from 'stores/Provider';
 import * as helpers from 'utils/helpers';
@@ -6,9 +8,7 @@ import { bnum, formatBalanceTruncated } from 'utils/helpers';
 import { FetchCode } from './Transaction';
 import { BigNumber } from 'utils/bignumber';
 import { isAddress, MAX_UINT } from 'utils/helpers';
-import { Interface } from 'ethers/utils';
 import { getSupportedChainName } from '../provider/connectors';
-import * as ethers from 'ethers';
 
 const tokenAbi = require('../abi/TestToken').abi;
 
@@ -296,7 +296,7 @@ export default class TokenStore {
         const multiAddress = contractMetadataStore.getMultiAddress();
         const multi = providerStore.getContract(
             ContractTypes.Multicall,
-            multiAddress
+            multiAddress,
         );
 
         const iface = new Interface(tokenAbi);
@@ -306,11 +306,11 @@ export default class TokenStore {
             if (address !== EtherKey) {
                 balanceCalls.push([
                     address,
-                    iface.functions.balanceOf.encode([account]),
+                    iface.encodeFunctionData("balanceOf", [account]),
                 ]);
                 allowanceCalls.push([
                     address,
-                    iface.functions.allowance.encode([
+                    iface.encodeFunctionData("allowance", [
                         account,
                         contractMetadataStore.getProxyAddress(),
                     ]),
@@ -318,7 +318,7 @@ export default class TokenStore {
 
                 decimalsCalls.push([
                     address,
-                    iface.functions.decimals.encode([]),
+                    iface.encodeFunctionData("decimals"),
                 ]);
             }
         });
@@ -335,21 +335,15 @@ export default class TokenStore {
                 mulEth,
                 [, mulDecimals],
             ] = await Promise.all(promises);
-            const balances = mulBalance.map(value =>
-                bnum(iface.functions.balanceOf.decode(value))
-            );
 
-            const allowances = mulAllowance.map(value =>
-                bnum(iface.functions.allowance.decode(value))
-            );
+            const balances = mulBalance.map(value => bnum(value));
+            const allowances = mulAllowance.map(value => bnum(value));
 
             const ethBalance = bnum(mulEth);
             balances.unshift(ethBalance);
             allowances.unshift(bnum(helpers.setPropertyToMaxUintIfEmpty()));
 
-            const decimalsList = mulDecimals.map(value =>
-                bnum(iface.functions.decimals.decode(value))
-            );
+            const decimalsList = mulDecimals.map(value => bnum(value));
 
             this.setBalances(tokenList, balances, account, balBlock.toNumber());
 
@@ -528,9 +522,7 @@ export default class TokenStore {
                     );
 
                     const tokenSymbolBytes = await tokenContractBytes.symbol();
-                    tokenSymbol = ethers.utils.parseBytes32String(
-                        tokenSymbolBytes
-                    );
+                    tokenSymbol = parseBytes32String(tokenSymbolBytes);
                 }
 
                 const precision = contractMetadataStore.getWhiteListedTokenPrecision(
