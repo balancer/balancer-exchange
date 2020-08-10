@@ -25,7 +25,6 @@ import {
     formatSwapsExactAmountIn,
     formatSwapsExactAmountOut,
 } from '../utils/sorWrapper';
-import { ethers } from 'ethers';
 import { EtherKey } from './Token';
 
 export type SwapPreview = ExactAmountInPreview | ExactAmountOutPreview;
@@ -186,7 +185,7 @@ export default class ProxyStore {
                 'batchEthInSwapExactIn',
                 [swaps, tokenOut, minAmountOut.toString()],
                 {
-                    value: ethers.utils.bigNumberify(
+                    value: new BigNumber(
                         scale(tokenAmountIn, decimalsIn).toString()
                     ),
                 }
@@ -237,7 +236,7 @@ export default class ProxyStore {
                 proxyAddress,
                 'batchEthInSwapExactOut',
                 [swaps, tokenOut],
-                { value: ethers.utils.bigNumberify(maxAmountIn.toString()) }
+                { value: new BigNumber(maxAmountIn.toString()) }
             );
         } else if (tokenOut === EtherKey) {
             await providerStore.sendTransaction(
