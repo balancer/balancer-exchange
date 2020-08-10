@@ -1,18 +1,20 @@
 // Libraries
 import React from 'react';
 import jazzicon from 'jazzicon';
-import { ethers, utils } from 'ethers';
+import { getAddress } from '@ethersproject/address';
+import { MaxUint256 } from '@ethersproject/constants';
+import { formatEther } from '@ethersproject/units';
 import { BigNumber } from 'utils/bignumber';
 import { SUPPORTED_THEMES } from '../theme';
 import { Pool, SorSwap, Swap, SwapInput } from '../stores/Proxy';
 import { SwapMethods } from '../stores/SwapForm';
 
 // Utils
-export const MAX_GAS = utils.bigNumberify('0xffffffff');
-export const MAX_UINT = utils.bigNumberify(ethers.constants.MaxUint256);
+export const MAX_GAS = new BigNumber('0xffffffff');
+export const MAX_UINT = MaxUint256;
 
 export function toChecksum(address) {
-    return utils.getAddress(address);
+    return getAddress(address);
 }
 
 export const formatDate = timestamp => {
@@ -27,7 +29,7 @@ export const addZero = value => {
 };
 
 export function bnum(
-    val: string | number | utils.BigNumber | BigNumber
+    val: string | number | BigNumber
 ): BigNumber {
     return new BigNumber(val.toString());
 }
@@ -38,11 +40,11 @@ export function scale(input: BigNumber, decimalPlaces: number): BigNumber {
     return input.times(scaleMul);
 }
 
-export function fromWei(val: string | utils.BigNumber | BigNumber): string {
-    return utils.formatEther(val.toString());
+export function fromWei(val: string  | BigNumber): string {
+    return formatEther(val.toString());
 }
 
-export function toWei(val: string | utils.BigNumber | BigNumber): BigNumber {
+export function toWei(val: string | BigNumber): BigNumber {
     return scale(bnum(val.toString()), 18).integerValue();
 }
 
@@ -98,7 +100,7 @@ export function shortenTransactionHash(hash, digits = 4) {
 
 export function isAddress(value) {
     try {
-        return ethers.utils.getAddress(value.toLowerCase());
+        return getAddress(value.toLowerCase());
     } catch {
         return false;
     }
