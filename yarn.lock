@@ -1025,10 +1025,10 @@
     lodash "^4.17.13"
     to-fast-properties "^2.0.0"
 
-"@balancer-labs/sor@^0.3.0":
-  version "0.3.0"
-  resolved "https://registry.yarnpkg.com/@balancer-labs/sor/-/sor-0.3.0.tgz#c221225d9a3d1791ebfc3c566f7a76843bca98fa"
-  integrity sha512-QTVkeDmcGCaEgBhcVSu8c7cz6HA1ueWRbniuT+Yh0N/sqcZIcDMdoCFcpq66SD+hOxQ88RvzShmJ+P/3vKbXfg==
+"@balancer-labs/sor@0.3.2":
+  version "0.3.2"
+  resolved "https://registry.yarnpkg.com/@balancer-labs/sor/-/sor-0.3.2.tgz#b05c63a07031c2ea13ed0d2670f5105cfaa40523"
+  integrity sha512-wmYmTm/zhnRPd/OaqzJJGo9mRIp4PvNNS/AG0EVWJmLmZvYkm2sl6/dBL3KC88rub9duVQr2M8BHCosseFuGLw==
   dependencies:
     bignumber.js "^9.0.0"
     ethers "^4.0.39"
@@ -12834,9 +12834,9 @@ typescript@<3.7.0:
   integrity sha512-BEjlc0Z06ORZKbtcxGrIvvwYs5hAnuo6TKdNFL55frVDlB+na3z5bsLhFaIxmT+dPWgBIjMo6aNnTOgHHmHgiQ==
 
 typescript@^3.8.3:
-  version "3.8.3"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.8.3.tgz#409eb8544ea0335711205869ec458ab109ee1061"
-  integrity sha512-MYlEfn5VrLNsgudQTVJeNaQFUAI7DkhnOjdpAp4T+ku1TfQClewlbSuTVHiA+8skNBgaf02TL/kLOvig4y3G8w==
+  version "3.9.7"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.9.7.tgz#98d600a5ebdc38f40cb277522f12dc800e9e25fa"
+  integrity sha512-BLbiRkiBzAwsjut4x/dsibSTB6yWpwT5qWmC2OfuCg3GgVQCSgMs4vEctYPhsaGtd0AeuuHMkjZ2h2WG8MSzRw==
 
 ua-parser-js@^0.7.20:
   version "0.7.21"
