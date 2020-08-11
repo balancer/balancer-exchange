@@ -185,9 +185,7 @@ export default class ProxyStore {
                 'batchEthInSwapExactIn',
                 [swaps, tokenOut, minAmountOut.toString()],
                 {
-                    value: new BigNumber(
-                        scale(tokenAmountIn, decimalsIn).toString()
-                    ),
+                    value: scale(tokenAmountIn, decimalsIn).toString(),
                 }
             );
         } else if (tokenOut === EtherKey) {
@@ -236,7 +234,7 @@ export default class ProxyStore {
                 proxyAddress,
                 'batchEthInSwapExactOut',
                 [swaps, tokenOut],
-                { value: new BigNumber(maxAmountIn.toString()) }
+                { value: maxAmountIn.toString() }
             );
         } else if (tokenOut === EtherKey) {
             await providerStore.sendTransaction(
