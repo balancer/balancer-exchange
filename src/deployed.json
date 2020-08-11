@@ -325,6 +325,12 @@
                 "address": "0x81ab848898b5ffD3354dbbEfb333D5D183eEDcB5",
                 "iconAddress": "unknown",
                 "precision": 2
+            },
+            {
+                "symbol": "SRM",
+                "address": "0x476c5E26a75bd202a9683ffD34359C0CC15be0fF",
+                "iconAddress": "unknown",
+                "precision": 2
             }
         ]
     }
