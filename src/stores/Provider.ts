@@ -1,7 +1,7 @@
 import { action, observable, ObservableMap } from 'mobx';
 import RootStore from 'stores/Root';
 import { Contract } from '@ethersproject/contracts';
-import { JsonRpcProvider, Web3Provider } from '@ethersproject/providers';
+import { WebSocketProvider, Web3Provider } from '@ethersproject/providers';
 import { ActionResponse, sendAction } from './actions/actions';
 import { web3Window as window } from 'provider/Web3Window';
 import { backupUrls, supportedChainId, web3Modal } from 'provider/connectors';
@@ -321,9 +321,11 @@ export default class ProviderStore {
                 this.providerStatus
             );
             try {
-                let web3 = new JsonRpcProvider(
-                    backupUrls[supportedChainId]
-                );
+                let web3 = new WebSocketProvider(backupUrls[supportedChainId]);
+                web3.on('block', blockNumber => {
+                    console.log('[Subscribe] Block', blockNumber);
+                    this.setCurrentBlockNumber(blockNumber);
+                });
                 let network = await web3.getNetwork();
                 this.providerStatus.injectedActive = false;
                 this.providerStatus.backUpLoaded = true;
