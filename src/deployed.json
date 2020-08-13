@@ -331,6 +331,12 @@
                 "address": "0x476c5E26a75bd202a9683ffD34359C0CC15be0fF",
                 "iconAddress": "unknown",
                 "precision": 2
+            },
+            {
+                "symbol": "BZRX",
+                "address": "0x56d811088235F11C8920698a204A5010a788f4b3",
+                "iconAddress": "0x56d811088235F11C8920698a204A5010a788f4b3",
+                "precision": 2
             }
         ]
     }
