@@ -307,6 +307,36 @@
                 "address": "0x9A48BD0EC040ea4f1D3147C025cd4076A2e71e3e",
                 "iconAddress": "unknown",
                 "precision": 2
+            },
+            {
+                "symbol": "MTA",
+                "address": "0xa3BeD4E1c75D00fa6f4E5E6922DB7261B5E9AcD2",
+                "iconAddress": "0xa3BeD4E1c75D00fa6f4E5E6922DB7261B5E9AcD2",
+                "precision": 2
+            },
+            {
+                "symbol": "wNXM",
+                "address": "0x0d438F3b5175Bebc262bF23753C1E53d03432bDE",
+                "iconAddress": "unknown",
+                "precision": 2
+            },
+            {
+                "symbol": "yUSD-SEP20",
+                "address": "0x81ab848898b5ffD3354dbbEfb333D5D183eEDcB5",
+                "iconAddress": "unknown",
+                "precision": 2
+            },
+            {
+                "symbol": "SRM",
+                "address": "0x476c5E26a75bd202a9683ffD34359C0CC15be0fF",
+                "iconAddress": "unknown",
+                "precision": 2
+            },
+            {
+                "symbol": "CRV",
+                "address": "0xD533a949740bb3306d119CC777fa900bA034cd52",
+                "iconAddress": "0xD533a949740bb3306d119CC777fa900bA034cd52",
+                "precision": 2
             }
         ]
     }
