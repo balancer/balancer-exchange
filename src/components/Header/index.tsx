@@ -46,6 +46,19 @@ const AppName = styled.div`
     margin-left: 12px;
 `;
 
+const Link = styled.a`
+    font-family: Roboto;
+    margin-right: 24px;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    color: var(--header-text);
+    text-decoration: none;
+    @media screen and (max-width: 767px) {
+        display: none;
+    }
+`;
+
 const Header = () => {
     return (
         <HeaderFrame>
@@ -58,6 +71,9 @@ const Header = () => {
                 </Title>
             </HeaderElement>
             <HeaderElement>
+                <Link href="https://pools.balancer.exchange" target="_blank">
+                    Add Liquidity
+                </Link>
                 <Wallet />
             </HeaderElement>
         </HeaderFrame>
