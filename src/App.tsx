@@ -3,7 +3,6 @@ import { HashRouter, Redirect, Route, Switch } from 'react-router-dom';
 import styled from 'styled-components';
 import Web3ReactManager from 'components/Web3ReactManager';
 import Header from 'components/Header';
-import GeneralNotification from 'components/GeneralNotification';
 import SwapForm from 'components/SwapForm';
 import './App.css';
 
@@ -22,7 +21,6 @@ const BuildVersion = styled.div`
 `;
 
 const BuildLink = styled.a`
-    font-size: 10px;
     color: var(--body-text);
     text-decoration: none;
     margin-left: 5px;
@@ -55,7 +53,6 @@ const App = () => {
         <Web3ReactManager>
             <HashRouter>
                 <Header />
-                <GeneralNotification />
                 {renderViews()}
                 <BuildVersion>
                     BUILD ID:{' '}
