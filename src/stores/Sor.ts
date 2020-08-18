@@ -105,6 +105,7 @@ export default class SorStore {
             poolStore,
             swapFormStore,
             providerStore,
+            assetOptionsStore,
         } = this.rootStore;
 
         if (inputToken !== '' && outputToken !== '') {
@@ -158,12 +159,20 @@ export default class SorStore {
                 outputToken
             );
 
-            let decimals: number;
-            decimals = Number(filteredWhitelistedTokens[0].decimals.toString()); // Dirty fix as sometimes return BigNumber and not sure why
+            let outPutTokenDecimals: number = 18;
+            if (filteredWhitelistedTokens.length === 0) {
+                outPutTokenDecimals = Number(
+                    assetOptionsStore.tokenAssetData.decimals.toString()
+                );
+            } else {
+                outPutTokenDecimals = Number(
+                    filteredWhitelistedTokens[0].decimals.toString()
+                );
+            }
 
             this.costOutputToken = await this.getCostOutputToken(
                 outputToken,
-                decimals,
+                outPutTokenDecimals,
                 bnum(process.env.REACT_APP_GAS_PRICE),
                 bnum(process.env.REACT_APP_SWAP_COST),
                 library
@@ -172,11 +181,21 @@ export default class SorStore {
             filteredWhitelistedTokens = contractMetadataStore.getFilteredTokenMetadata(
                 inputToken
             );
-            decimals = Number(filteredWhitelistedTokens[0].decimals.toString()); // Dirty fix as sometimes return BigNumber and not sure why
+
+            let inputTokenDecimals: number = 18;
+            if (filteredWhitelistedTokens.length === 0) {
+                inputTokenDecimals = Number(
+                    assetOptionsStore.tokenAssetData.decimals.toString()
+                );
+            } else {
+                inputTokenDecimals = Number(
+                    filteredWhitelistedTokens[0].decimals.toString()
+                );
+            }
 
             this.costInputToken = await this.getCostOutputToken(
                 inputToken,
-                decimals,
+                inputTokenDecimals,
                 bnum(process.env.REACT_APP_GAS_PRICE),
                 bnum(process.env.REACT_APP_SWAP_COST),
                 library

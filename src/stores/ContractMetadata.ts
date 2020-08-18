@@ -113,7 +113,7 @@ export default class ContractMetadataStore {
         } else if (filter.indexOf('0x') === 0) {
             //Search by address
             filteredMetadata = tokens.filter(value => {
-                return value.address === filter;
+                return value.address.toLowerCase() === filter.toLowerCase();
             });
         } else {
             //Search by symbol
