@@ -128,19 +128,19 @@ export default class SwapFormStore {
         const localInputTokenAddr = localStorage.getItem('inputToken');
 
         if (localInputTokenAddr && account)
-            this.setSelectedInputTokenTest(localInputTokenAddr, account);
-        else this.setSelectedInputTokenTest('ether', account);
+            this.setSelectedInputTokenMetaData(localInputTokenAddr, account);
+        else this.setSelectedInputTokenMetaData('ether', account);
     }
 
     @action loadDefaultOutputToken(account) {
         const localOutputTokenAddr = localStorage.getItem('outputToken');
 
         if (localOutputTokenAddr && account)
-            this.setSelectedOutputTokenTest(localOutputTokenAddr, account);
+            this.setSelectedOutputTokenMetaData(localOutputTokenAddr, account);
         else {
             const { contractMetadataStore } = this.rootStore;
             const daiAddr = contractMetadataStore.getDaiAddress();
-            this.setSelectedOutputTokenTest(daiAddr, account);
+            this.setSelectedOutputTokenMetaData(daiAddr, account);
         }
     }
 
@@ -700,19 +700,25 @@ export default class SwapFormStore {
             this.inputToken.address !== 'unknown' &&
             !isEmpty(this.inputToken.address)
         )
-            this.setSelectedInputTokenTest(this.inputToken.address, account);
+            this.setSelectedInputTokenMetaData(
+                this.inputToken.address,
+                account
+            );
 
         if (
             this.outputToken.address !== 'unknown' &&
             !isEmpty(this.outputToken.address)
         )
-            this.setSelectedOutputTokenTest(this.outputToken.address, account);
+            this.setSelectedOutputTokenMetaData(
+                this.outputToken.address,
+                account
+            );
     }
 
     // Fetches and sets the input token metaData.
     // Fetch will try stored whitelisted info and revert to on-chain if not available
     // Also loads pool info for token
-    @action setSelectedInputTokenTest = async (
+    @action setSelectedInputTokenMetaData = async (
         inputTokenAddress: string,
         account: string
     ) => {
@@ -776,12 +782,12 @@ export default class SwapFormStore {
         console.log(`[SwapForm] InputToken`, this.inputToken);
     };
 
-    @action setSelectedInputToken = async (
+    @action setSelectedInputTokenAddress = async (
         inputTokenAddress: string,
         account: string
     ) => {
         console.log(
-            `[SwapFormStore] setSelectedInputToken: ${account} ${inputTokenAddress}`
+            `[SwapFormStore] setSelectedInputTokenAddress: ${account} ${inputTokenAddress}`
         );
 
         try {
@@ -826,7 +832,7 @@ export default class SwapFormStore {
     // Fetches and sets the input token metaData.
     // Fetch will try stored whitelisted info and revert to on-chain if not available
     // Also loads pool info for token
-    @action setSelectedOutputTokenTest = async (
+    @action setSelectedOutputTokenMetaData = async (
         outputTokenAddress: string,
         account: string
     ) => {
@@ -886,10 +892,7 @@ export default class SwapFormStore {
         }
     };
 
-    // Fetches and sets the output token metaData.
-    // Fetch will try stored whitelisted info and revert to on-chain if not available
-    // Also loads pool info for token
-    @action setSelectedOutputToken = async (
+    @action setSelectedOutputTokenAddress = async (
         outputTokenAddress: string,
         account: string
     ) => {
