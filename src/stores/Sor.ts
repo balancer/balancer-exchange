@@ -196,8 +196,8 @@ export default class SorStore {
             this.costInputToken = await this.getCostOutputToken(
                 inputToken,
                 inputTokenDecimals,
-                bnum(process.env.REACT_APP_GAS_PRICE),
-                bnum(process.env.REACT_APP_SWAP_COST),
+                bnum(process.env.REACT_APP_GAS_PRICE || 30000000000),
+                bnum(process.env.REACT_APP_SWAP_COST || 100000),
                 library
             );
 
