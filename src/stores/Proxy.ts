@@ -5,7 +5,6 @@ import { BigNumber } from 'utils/bignumber';
 import * as log from 'loglevel';
 import { ContractTypes } from './Provider';
 import { SwapMethods } from './SwapForm';
-import { ethers } from 'ethers';
 import { EtherKey } from './Token';
 import { SorMultiSwap } from './Sor';
 import { calcSpotPrice, bmul, bdiv } from '../utils/balancerCalcs';
@@ -255,9 +254,7 @@ export default class ProxyStore {
                     minAmountOut.toString(),
                 ],
                 {
-                    value: ethers.utils.bigNumberify(
-                        scale(tokenAmountIn, decimalsIn).toString()
-                    ),
+                    value: scale(tokenAmountIn, decimalsIn).toString(),
                 }
             );
         } else if (tokenOut === EtherKey) {
@@ -331,7 +328,7 @@ export default class ProxyStore {
                 'multihopBatchSwapExactOut',
                 [swaps, tokenIn, tokenOut, maxAmountIn.toString()],
                 {
-                    value: ethers.utils.bigNumberify(maxAmountIn.toString()),
+                    value: maxAmountIn.toString(),
                 }
             );
         } else if (tokenOut === EtherKey) {
