@@ -3,10 +3,10 @@ import {
     supportedChainId,
 } from '../provider/connectors';
 import { getAddress } from '@ethersproject/address';
-import { JsonRpcProvider } from '@ethersproject/providers';
+import { WebSocketProvider } from '@ethersproject/providers';
 import { Contract } from '@ethersproject/contracts';
 
-let web3 = new JsonRpcProvider(backupUrls[supportedChainId]);
+let web3 = new WebSocketProvider(backupUrls[supportedChainId]);
 
 // This is taken from TokenPanel.tsx. Imports of existing files for test not always working so dirty fix.
 export const TokenIconAddress = address => {
