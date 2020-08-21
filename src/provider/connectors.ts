@@ -8,11 +8,11 @@ const providerOptions = {
         options: {
             infuraId: process.env.REACT_APP_INFURA_ID,
         },
-        portis: {
-            package: Portis,
-            options: {
-                id: '3f1c3cfc-7dd5-4e8a-aa03-71ff7396d9fe',
-            },
+    },
+    portis: {
+        package: Portis,
+        options: {
+            id: '3f1c3cfc-7dd5-4e8a-aa03-71ff7396d9fe',
         },
     },
 };
