@@ -1,6 +1,4 @@
 import { action, observable } from 'mobx';
-import { Interface } from '@ethersproject/abi';
-import { parseBytes32String } from '@ethersproject/strings';
 import RootStore from 'stores/Root';
 import { ContractTypes } from 'stores/Provider';
 import * as helpers from 'utils/helpers';
@@ -8,7 +6,9 @@ import { bnum, formatBalanceTruncated } from 'utils/helpers';
 import { FetchCode } from './Transaction';
 import { BigNumber } from 'utils/bignumber';
 import { isAddress, MAX_UINT } from 'utils/helpers';
+import { Interface } from 'ethers/utils';
 import { getSupportedChainName } from '../provider/connectors';
+import * as ethers from 'ethers';
 
 const tokenAbi = require('../abi/TestToken').abi;
 
@@ -306,11 +306,11 @@ export default class TokenStore {
             if (address !== EtherKey) {
                 balanceCalls.push([
                     address,
-                    iface.encodeFunctionData('balanceOf', [account]),
+                    iface.functions.balanceOf.encode([account]),
                 ]);
                 allowanceCalls.push([
                     address,
-                    iface.encodeFunctionData('allowance', [
+                    iface.functions.allowance.encode([
                         account,
                         contractMetadataStore.getProxyAddress(),
                     ]),
@@ -574,7 +574,9 @@ export default class TokenStore {
                     );
 
                     const tokenSymbolBytes = await tokenContractBytes.symbol();
-                    tokenSymbol = parseBytes32String(tokenSymbolBytes);
+                    tokenSymbol = ethers.utils.parseBytes32String(
+                        tokenSymbolBytes
+                    );
                 }
 
                 const precision = contractMetadataStore.getWhiteListedTokenPrecision(

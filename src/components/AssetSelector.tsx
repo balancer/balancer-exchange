@@ -2,7 +2,6 @@ import React, { useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import AssetOptions from './AssetOptions';
 import { observer } from 'mobx-react';
-import { ModalType } from '../stores/SwapForm';
 import { useStores } from '../contexts/storesContext';
 
 const Container = styled.div`
