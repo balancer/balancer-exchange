@@ -1,20 +1,16 @@
 // Libraries
 import React from 'react';
 import jazzicon from 'jazzicon';
-import { getAddress } from '@ethersproject/address';
-import { MaxUint256 } from '@ethersproject/constants';
-import { formatEther } from '@ethersproject/units';
+import { ethers, utils } from 'ethers';
 import { BigNumber } from 'utils/bignumber';
 import { SUPPORTED_THEMES } from '../theme';
-import { Pool, SorSwap, Swap, SwapInput } from '../stores/Proxy';
-import { SwapMethods } from '../stores/SwapForm';
 
 // Utils
-export const MAX_GAS = new BigNumber('0xffffffff');
-export const MAX_UINT = MaxUint256;
+export const MAX_GAS = utils.bigNumberify('0xffffffff');
+export const MAX_UINT = utils.bigNumberify(ethers.constants.MaxUint256);
 
 export function toChecksum(address) {
-    return getAddress(address);
+    return utils.getAddress(address);
 }
 
 export const formatDate = timestamp => {
@@ -29,7 +25,7 @@ export const addZero = value => {
 };
 
 export function bnum(
-    val: string | number | BigNumber
+    val: string | number | utils.BigNumber | BigNumber
 ): BigNumber {
     return new BigNumber(val.toString());
 }
@@ -40,11 +36,11 @@ export function scale(input: BigNumber, decimalPlaces: number): BigNumber {
     return input.times(scaleMul);
 }
 
-export function fromWei(val: string  | BigNumber): string {
-    return formatEther(val.toString());
+export function fromWei(val: string | utils.BigNumber | BigNumber): string {
+    return utils.formatEther(val.toString());
 }
 
-export function toWei(val: string | BigNumber): BigNumber {
+export function toWei(val: string | utils.BigNumber | BigNumber): BigNumber {
     return scale(bnum(val.toString()), 18).integerValue();
 }
 
@@ -100,7 +96,7 @@ export function shortenTransactionHash(hash, digits = 4) {
 
 export function isAddress(value) {
     try {
-        return getAddress(value.toLowerCase());
+        return ethers.utils.getAddress(value.toLowerCase());
     } catch {
         return false;
     }
@@ -327,46 +323,3 @@ export const getGasPriceFromETHGasStation = () => {
 //     });
 //     return result;
 // };
-
-export const printSwapInput = (input: SwapInput) => {
-    if (input.method === SwapMethods.EXACT_IN) {
-        console.log('exactAmountIn', input);
-    } else if (input.method === SwapMethods.EXACT_OUT) {
-        console.log('exactAmountOut', input);
-    }
-};
-
-export const printPoolData = (poolData: Pool[]) => {
-    const formatted = poolData;
-    console.log('---Pool Data---');
-    console.table(formatted);
-};
-
-export const printSwaps = (swapMethod: SwapMethods, swaps: Swap[]) => {
-    const result = [];
-    console.log('---Swaps---');
-    if (swapMethod === SwapMethods.EXACT_IN) {
-        swaps.forEach(swap => {
-            result.push(swap);
-        });
-    } else if (swapMethod === SwapMethods.EXACT_OUT) {
-        swaps.forEach(swap => {
-            result.push(swap);
-        });
-    }
-
-    console.table(result);
-};
-
-export const printSorSwaps = (sorSwaps: SorSwap[]) => {
-    const formatted = [];
-    sorSwaps.forEach(swap => {
-        formatted.push({
-            amount: swap.amount.toString(),
-            balancer: swap.pool,
-        });
-    });
-
-    console.log('---SorSwaps---');
-    console.table(formatted);
-};

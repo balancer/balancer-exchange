@@ -50,18 +50,10 @@ export const isChainIdSupported = (chainId: number): boolean => {
     return supportedChainId === chainId;
 };
 
-/*
 const RPC_URLS: { [chainId: number]: string } = {
     1: process.env.REACT_APP_RPC_URL_1 as string,
     3: process.env.REACT_APP_RPC_URL_3 as string,
     42: process.env.REACT_APP_RPC_URL_42 as string,
-};
-*/
-
-const WS_URLS: { [chainId: number]: string } = {
-    1: process.env.REACT_APP_WS_URL_1 as string,
-    3: process.env.REACT_APP_WS_URL_3 as string,
-    42: process.env.REACT_APP_WS_URL_42 as string,
 };
 
 export const SUBGRAPH_URLS: { [chainId: number]: string } = {
@@ -71,7 +63,7 @@ export const SUBGRAPH_URLS: { [chainId: number]: string } = {
 };
 
 export const backupUrls = {};
-backupUrls[supportedChainId] = WS_URLS[supportedChainId];
+backupUrls[supportedChainId] = RPC_URLS[supportedChainId];
 
 export const SUPPORTED_WALLETS = {
     INJECTED: {

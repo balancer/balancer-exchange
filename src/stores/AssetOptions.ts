@@ -1,4 +1,5 @@
 import { action, observable } from 'mobx';
+import { BigNumber } from 'utils/bignumber';
 import RootStore from 'stores/Root';
 
 interface Asset {
@@ -7,6 +8,9 @@ interface Asset {
     symbol: string;
     userBalance: string;
     isTradable: boolean;
+    decimals: number;
+    precision: number;
+    allowance: BigNumber;
 }
 
 export default class AssetOptions {
@@ -35,6 +39,9 @@ export default class AssetOptions {
                 symbol: tokenMetadata.symbol,
                 userBalance: tokenMetadata.balanceFormatted,
                 isTradable: true,
+                decimals: tokenMetadata.decimals,
+                precision: tokenMetadata.precision,
+                allowance: tokenMetadata.allowance,
             };
         } catch (err) {
             this.tokenAssetData = undefined;

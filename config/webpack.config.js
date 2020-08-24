@@ -338,6 +338,10 @@ module.exports = function(webpackEnv) {
         module: {
             strictExportPresence: true,
             rules: [
+                {
+                    test: /\.worker\.js$/,
+                    use: { loader: 'worker-loader' },
+                },
                 // Disable require.ensure as it's not a standard language feature.
                 { parser: { requireEnsure: false } },
 
@@ -683,6 +687,11 @@ module.exports = function(webpackEnv) {
                         ? typescriptFormatter
                         : undefined,
                 }),
+            new webpack.ContextReplacementPlugin(/jsclass/, data => {
+                delete data.dependencies[0].critical;
+                delete data.dependencies[1].critical;
+                return data;
+            }),
         ].filter(Boolean),
         // Some libraries import Node modules but don't use them in the browser.
         // Tell Webpack to provide empty mocks for them so importing them works.

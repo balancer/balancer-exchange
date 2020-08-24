@@ -2,7 +2,6 @@ import React, { useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import AssetOptions from './AssetOptions';
 import { observer } from 'mobx-react';
-import { ModalType } from '../stores/SwapForm';
 import { useStores } from '../contexts/storesContext';
 
 const Container = styled.div`
@@ -125,7 +124,9 @@ const AssetSelector = observer(() => {
         if (inputRef !== null) inputRef.current.focus();
     });
 
-    useOnClickOutside(ref, () => swapFormStore.closeModal());
+    useOnClickOutside(ref, () =>
+        swapFormStore.setAssetModalState({ open: false })
+    );
 
     const { assetModalState } = swapFormStore;
 
@@ -139,13 +140,13 @@ const AssetSelector = observer(() => {
                 <AssetSelectorHeader>
                     <HeaderContent>
                         Select Token to{' '}
-                        {assetModalState.type === ModalType.INPUT
+                        {assetModalState.input === 'inputAmount'
                             ? `Sell for ${swapFormStore.outputToken.symbol}`
                             : `Buy with ${swapFormStore.inputToken.symbol}`}
                     </HeaderContent>
                     <ExitComponent
                         onClick={() => {
-                            swapFormStore.closeModal();
+                            swapFormStore.setAssetModalState({ open: false });
                         }}
                     >
                         +
@@ -153,7 +154,6 @@ const AssetSelector = observer(() => {
                 </AssetSelectorHeader>
                 <InputContainer>
                     <input
-                        value={assetModalState.input}
                         onChange={e => onChange(e)}
                         placeholder="Search Token Name, Symbol, or Address"
                         ref={inputRef}

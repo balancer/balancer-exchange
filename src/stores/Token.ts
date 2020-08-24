@@ -1,6 +1,4 @@
 import { action, observable } from 'mobx';
-import { Interface } from '@ethersproject/abi';
-import { parseBytes32String } from '@ethersproject/strings'
 import RootStore from 'stores/Root';
 import { ContractTypes } from 'stores/Provider';
 import * as helpers from 'utils/helpers';
@@ -8,7 +6,9 @@ import { bnum, formatBalanceTruncated } from 'utils/helpers';
 import { FetchCode } from './Transaction';
 import { BigNumber } from 'utils/bignumber';
 import { isAddress, MAX_UINT } from 'utils/helpers';
+import { Interface } from 'ethers/utils';
 import { getSupportedChainName } from '../provider/connectors';
+import * as ethers from 'ethers';
 
 const tokenAbi = require('../abi/TestToken').abi;
 
@@ -213,6 +213,22 @@ export default class TokenStore {
         };
     }
 
+    getBalance(tokenAddress: string, account: string): BigNumber | undefined {
+        const chainBalances = this.balances;
+        if (chainBalances) {
+            const tokenBalances = chainBalances[tokenAddress];
+            if (tokenBalances) {
+                const balance = tokenBalances[account];
+                if (balance) {
+                    if (balance.balance) {
+                        return balance.balance;
+                    }
+                }
+            }
+        }
+        return undefined;
+    }
+
     private setDecimals(tokens: string[], decimals: number[]) {
         const { contractMetadataStore } = this.rootStore;
 
@@ -228,22 +244,6 @@ export default class TokenStore {
                 index += 1;
             }
         });
-    }
-
-    getBalance(tokenAddress: string, account: string): BigNumber | undefined {
-        const chainBalances = this.balances;
-        if (chainBalances) {
-            const tokenBalances = chainBalances[tokenAddress];
-            if (tokenBalances) {
-                const balance = tokenBalances[account];
-                if (balance) {
-                    if (balance.balance) {
-                        return balance.balance;
-                    }
-                }
-            }
-        }
-        return undefined;
     }
 
     private getBalanceLastFetched(tokenAddress, account): number | undefined {
@@ -296,7 +296,7 @@ export default class TokenStore {
         const multiAddress = contractMetadataStore.getMultiAddress();
         const multi = providerStore.getContract(
             ContractTypes.Multicall,
-            multiAddress,
+            multiAddress
         );
 
         const iface = new Interface(tokenAbi);
@@ -306,11 +306,11 @@ export default class TokenStore {
             if (address !== EtherKey) {
                 balanceCalls.push([
                     address,
-                    iface.encodeFunctionData("balanceOf", [account]),
+                    iface.functions.balanceOf.encode([account]),
                 ]);
                 allowanceCalls.push([
                     address,
-                    iface.encodeFunctionData("allowance", [
+                    iface.functions.allowance.encode([
                         account,
                         contractMetadataStore.getProxyAddress(),
                     ]),
@@ -318,7 +318,7 @@ export default class TokenStore {
 
                 decimalsCalls.push([
                     address,
-                    iface.encodeFunctionData("decimals"),
+                    iface.functions.decimals.encode([]),
                 ]);
             }
         });
@@ -336,16 +336,21 @@ export default class TokenStore {
                 [, mulDecimals],
             ] = await Promise.all(promises);
 
-            const balances = mulBalance.map(value => bnum(value));
-            const allowances = mulAllowance.map(value => bnum(value));
+            const balances = mulBalance.map(value =>
+                bnum(iface.functions.balanceOf.decode(value))
+            );
+
+            const allowances = mulAllowance.map(value =>
+                bnum(iface.functions.allowance.decode(value))
+            );
 
             const ethBalance = bnum(mulEth);
             balances.unshift(ethBalance);
             allowances.unshift(bnum(helpers.setPropertyToMaxUintIfEmpty()));
 
-            const decimalsList = mulDecimals.map(value => bnum(value));
-
-            this.setBalances(tokenList, balances, account, balBlock.toNumber());
+            const decimalsList = mulDecimals.map(value =>
+                bnum(iface.functions.decimals.decode(value)).toNumber()
+            );
 
             this.setAllowances(
                 tokenList,
@@ -356,10 +361,57 @@ export default class TokenStore {
             );
 
             this.setDecimals(tokenList, decimalsList);
-
+            this.setBalances(tokenList, balances, account, balBlock.toNumber());
             console.debug('[All Fetches Success]');
         } catch (e) {
             console.error('[Fetch] Balancer Token Data', { error: e });
+            return FetchCode.FAILURE;
+        }
+        return FetchCode.SUCCESS;
+    };
+
+    @action fetchOnChainTokenDecimals = async (
+        tokensToTrack: string[]
+    ): Promise<FetchCode> => {
+        const { providerStore, contractMetadataStore } = this.rootStore;
+        const promises: Promise<any>[] = [];
+        const decimalsCalls = [];
+        const tokenList = [];
+
+        console.log('[Token] !!!!!! fetchOnChainTokenDecimals');
+
+        const multiAddress = contractMetadataStore.getMultiAddress();
+        const multi = providerStore.getContract(
+            ContractTypes.Multicall,
+            multiAddress
+        );
+
+        const iface = new Interface(tokenAbi);
+
+        tokensToTrack.forEach(address => {
+            tokenList.push(address);
+            if (address !== EtherKey) {
+                decimalsCalls.push([
+                    address,
+                    iface.functions.decimals.encode([]),
+                ]);
+            }
+        });
+
+        promises.push(multi.aggregate(decimalsCalls));
+
+        try {
+            const [[, mulDecimals]] = await Promise.all(promises);
+
+            const decimalsList = mulDecimals.map(value =>
+                bnum(iface.functions.decimals.decode(value))
+            );
+            this.setDecimals(tokenList, decimalsList);
+            console.log('[Token] fetchOnChainTokenDecimals Finished');
+        } catch (e) {
+            console.log('[Token] fetchOnChainTokenDecimals Error', {
+                error: e,
+            });
             return FetchCode.FAILURE;
         }
         return FetchCode.SUCCESS;
@@ -522,7 +574,9 @@ export default class TokenStore {
                     );
 
                     const tokenSymbolBytes = await tokenContractBytes.symbol();
-                    tokenSymbol = parseBytes32String(tokenSymbolBytes);
+                    tokenSymbol = ethers.utils.parseBytes32String(
+                        tokenSymbolBytes
+                    );
                 }
 
                 const precision = contractMetadataStore.getWhiteListedTokenPrecision(

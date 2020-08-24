@@ -5,6 +5,8 @@ import { useInterval } from 'utils/helperHooks';
 import { observer } from 'mobx-react';
 
 import Circle from '../../assets/images/circle.svg';
+// /* eslint import/no-webpack-loader-syntax: off */
+// import Worker from 'worker-loader!../../utils/sgWebWorker.js';
 
 const MessageWrapper = styled.div`
     display: flex;
@@ -31,11 +33,23 @@ const Spinner = styled.img`
 
 const Web3Manager = observer(({ children }) => {
     const {
-        root: { providerStore, blockchainFetchStore },
+        root: { providerStore, blockchainFetchStore, poolStore },
     } = useStores();
 
     // handle delayed loader state
     const [showLoader, setShowLoader] = useState(true);
+
+    /*
+    const tWorker = new Worker('utils/sgWebWorker.js');
+    tWorker.postMessage(JSON.stringify(poolStore.subgraphPools));
+
+    useEffect(() => {
+        tWorker.onmessage = ev => {
+            console.log(`@@@@@@ Event received!!!`);
+        };
+    }, [tWorker]);
+    */
+
     useEffect(() => {
         const timeout = setTimeout(() => {
             setShowLoader(true);
@@ -47,12 +61,12 @@ const Web3Manager = observer(({ children }) => {
     }, []);
 
     //Fetch user blockchain data on an interval using current params
-    useInterval(() => blockchainFetchStore.blockchainFetch(false), 1000);
-    // blockchainFetchStore.blockchainFetch(true);
+    blockchainFetchStore.blockchainFetch(false);
+    useInterval(() => blockchainFetchStore.blockchainFetch(false), 2000);
+    useInterval(() => poolStore.loadPoolsList(), 120000);
 
     // This means no injected web3 and infura backup has failed
     if (!providerStore.providerStatus.active) {
-        console.debug('[Web3Manager] Render: No active network, show loading');
         return showLoader ? (
             <MessageWrapper>
                 <Spinner src={Circle} />
