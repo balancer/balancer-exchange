@@ -45,8 +45,8 @@ const GeneralNotification = () => {
             <Warning>
                 <WarningIcon src="info-general-notification.svg" />
                 <Message>
-                    Exchange now uses multi path to route swaps across pools.
-                    This required an updated{' '}
+                    Exchange now splits orders across multiple pools to get a
+                    better price. This required an updated{' '}
                     <Link
                         href="https://etherscan.io/address/0xB56b171C05d5FfCc623f8Ee497ef1Ce838179169#code"
                         target="_blank"
