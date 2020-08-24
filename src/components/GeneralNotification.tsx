@@ -45,16 +45,17 @@ const GeneralNotification = () => {
             <Warning>
                 <WarningIcon src="info-general-notification.svg" />
                 <Message>
-                    Exchange now splits orders across multiple pools to get a
-                    better price. This required an updated{' '}
+                    The exchange has been upgraded to use multi-path order
+                    routing which improves overall pricing and gas usage. You
+                    will need to approve tokens against{' '}
                     <Link
                         href="https://etherscan.io/address/0xB56b171C05d5FfCc623f8Ee497ef1Ce838179169#code"
                         target="_blank"
                         rel="noopener noreferrer"
                     >
-                        proxy contract
+                        this
                     </Link>{' '}
-                    which means your token approvals will have to be redone.
+                    new contract in order to trade.
                 </Message>
             </Warning>
         </Wrapper>
