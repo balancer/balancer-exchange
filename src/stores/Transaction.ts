@@ -1,15 +1,13 @@
 import { action, observable } from 'mobx';
-import {
-    TransactionReceipt,
-    TransactionResponse,
-} from '@ethersproject/providers';
+import { providers } from 'ethers';
 import RootStore from 'stores/Root';
+import { TransactionResponse } from 'ethers/providers';
 
 export interface TransactionRecord {
     hash: string;
-    response: TransactionResponse;
+    response: providers.TransactionResponse;
     blockNumberChecked: number;
-    receipt: TransactionReceipt | undefined;
+    receipt: providers.TransactionReceipt | undefined;
 }
 
 const ERRORS = {

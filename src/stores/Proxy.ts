@@ -255,7 +255,9 @@ export default class ProxyStore {
                     minAmountOut.toString(),
                 ],
                 {
-                    value: scale(tokenAmountIn, decimalsIn).toString(),
+                    value: ethers.utils.bigNumberify(
+                        scale(tokenAmountIn, decimalsIn).toString()
+                    ),
                 }
             );
         } else if (tokenOut === EtherKey) {

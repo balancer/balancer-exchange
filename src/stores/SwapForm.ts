@@ -85,9 +85,9 @@ export default class SwapFormStore {
     @observable slippageSelectorOpen: boolean;
     @observable assetModalState = {
         open: false,
-        type: ModalType.INPUT,
-        input: '',
+        input: 'inputAmount',
     };
+    @observable assetSelectFilter: string = '';
     @observable slippageCell: number = 3;
     @observable showLoader: boolean = false;
     account: string = '';
@@ -221,9 +221,6 @@ export default class SwapFormStore {
             bnum(inputAmount),
             this.inputToken.decimals
         );
-        if (inputAmount !== this.inputs.inputAmount) {
-            return;
-        }
 
         this.setSwapObjection(SwapObjection.NONE);
 
@@ -273,9 +270,6 @@ export default class SwapFormStore {
             bnum(outputAmount),
             this.outputToken.decimals
         );
-        if (outputAmount !== this.inputs.outputAmount) {
-            return;
-        }
 
         if (preview.error) {
             this.setErrorMessage(preview.error);
@@ -392,16 +386,11 @@ export default class SwapFormStore {
         this.slippageSelectorOpen = value;
     }
 
-    @action openModal(type: ModalType) {
+    @action setAssetModalState(value: { open?: boolean; input?: string }) {
         this.assetModalState = {
-            open: true,
-            type,
-            input: '',
+            ...this.assetModalState,
+            ...value,
         };
-    }
-
-    @action closeModal() {
-        this.assetModalState.open = false;
     }
 
     getActiveInputValue(): string {
@@ -443,7 +432,7 @@ export default class SwapFormStore {
     }
 
     @action setAssetSelectFilter(value: string) {
-        this.assetModalState.input = value;
+        this.assetSelectFilter = value;
     }
 
     /* Assume swaps are in order of biggest to smallest value */
@@ -647,7 +636,7 @@ export default class SwapFormStore {
             normalizedBalance,
         });
         // Check for insufficient balance if user logged in
-        if (account && value.gt(normalizedBalance)) {
+        if (account && value.gte(normalizedBalance)) {
             return SwapObjection.INSUFFICIENT_BALANCE;
         }
 

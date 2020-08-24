@@ -124,7 +124,9 @@ const AssetSelector = observer(() => {
         if (inputRef !== null) inputRef.current.focus();
     });
 
-    useOnClickOutside(ref, () => swapFormStore.closeModal());
+    useOnClickOutside(ref, () =>
+        swapFormStore.setAssetModalState({ open: false })
+    );
 
     const { assetModalState } = swapFormStore;
 
@@ -144,7 +146,7 @@ const AssetSelector = observer(() => {
                     </HeaderContent>
                     <ExitComponent
                         onClick={() => {
-                            swapFormStore.closeModal();
+                            swapFormStore.setAssetModalState({ open: false });
                         }}
                     >
                         +
@@ -152,7 +154,6 @@ const AssetSelector = observer(() => {
                 </AssetSelectorHeader>
                 <InputContainer>
                     <input
-                        value={assetModalState.input}
                         onChange={e => onChange(e)}
                         placeholder="Search Token Name, Symbol, or Address"
                         ref={inputRef}
