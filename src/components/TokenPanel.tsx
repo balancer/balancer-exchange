@@ -194,10 +194,7 @@ const Token = observer(
                 <PanelHeader>{headerText}</PanelHeader>
                 <TokenContainer
                     onClick={() => {
-                        swapFormStore.setAssetModalState({
-                            open: true,
-                            input: inputName,
-                        });
+                        swapFormStore.openModal(modalType);
                     }}
                 >
                     <IconAndNameContainer>

@@ -23,7 +23,7 @@ export default class BlockchainFetchStore {
         const library = providerStore.providerStatus.library;
         const account = providerStore.providerStatus.account;
 
-        if (active && chainId === supportedChainId) {
+        if (active && chainId === supportedChainId && !library._wsReady) {
             library
                 .getBlockNumber()
                 .then(blockNumber => {
@@ -81,12 +81,6 @@ export default class BlockchainFetchStore {
                     });
                     providerStore.setCurrentBlockNumber(undefined);
                 });
-        } else {
-            console.log(`[BlockchainFetch] Aborting fetch. `, {
-                active,
-                chainId,
-                supportedChainId,
-            });
         }
     }
 

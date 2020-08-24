@@ -4,6 +4,7 @@ import { TokenIconAddress } from './TokenPanel';
 import { useStores } from '../contexts/storesContext';
 import { bnum, formatBalanceTruncated, isEmpty } from 'utils/helpers';
 import { isChainIdSupported } from '../provider/connectors';
+import { ModalType } from '../stores/SwapForm';
 import { observer } from 'mobx-react';
 
 const AssetPanelContainer = styled.div`
@@ -94,7 +95,8 @@ const AssetOptions = observer(() => {
     const account = providerStore.providerStatus.account;
     const chainId = providerStore.providerStatus.activeChainId;
 
-    const { assetSelectFilter, assetModalState } = swapFormStore;
+    const { assetModalState } = swapFormStore;
+    const assetSelectFilter = assetModalState.input;
 
     useEffect(() => {
         if (!isEmpty(assetSelectFilter))
@@ -111,11 +113,11 @@ const AssetOptions = observer(() => {
         let userBalances = {};
         let tradableTokens;
 
-        if (assetModalState.input === 'inputAmount') {
+        if (assetModalState.type === ModalType.INPUT) {
             tradableTokens = poolStore.getTokenPairs(
                 swapFormStore.outputToken.address
             );
-        } else if (assetModalState.input === 'outputAmount') {
+        } else {
             tradableTokens = poolStore.getTokenPairs(
                 swapFormStore.inputToken.address
             );
@@ -208,7 +210,7 @@ const AssetOptions = observer(() => {
             );
         }
         clearInputs();
-        swapFormStore.setAssetModalState({ open: false });
+        swapFormStore.closeModal();
     };
 
     const TradableToken = ({ isTradable }) => {
