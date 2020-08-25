@@ -1,12 +1,13 @@
 import { action, observable } from 'mobx';
-import { TransactionReceipt, TransactionResponse } from '@ethersproject/providers';
+import { providers } from 'ethers';
 import RootStore from 'stores/Root';
+import { TransactionResponse } from 'ethers/providers';
 
 export interface TransactionRecord {
     hash: string;
-    response: TransactionResponse;
+    response: providers.TransactionResponse;
     blockNumberChecked: number;
-    receipt: TransactionReceipt | undefined;
+    receipt: providers.TransactionReceipt | undefined;
 }
 
 const ERRORS = {
@@ -65,7 +66,7 @@ export default class TransactionStore {
     }
 
     @action async checkPendingTransactions(account): Promise<FetchCode> {
-        const { providerStore } = this.rootStore;
+        const { providerStore, poolStore } = this.rootStore;
         const currentBlock = providerStore.getCurrentBlockNumber();
 
         const library = providerStore.providerStatus.library;
@@ -82,6 +83,7 @@ export default class TransactionStore {
                             value.blockNumberChecked = currentBlock;
                             if (receipt) {
                                 value.receipt = receipt;
+                                poolStore.loadPoolsList();
                             }
                         })
                         .catch(() => {

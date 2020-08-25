@@ -7,10 +7,10 @@ const Warning = styled.div`
     display: flex;
     flex-direction: row;
     align-items: center;
-    color: var(--warning);
+    color: var(--info);
     width: 50%;
     margin: 20px auto;
-    border: 1px solid var(--warning);
+    border: 1px solid var(--info);
     border-radius: 4px;
     padding: 20px;
     @media screen and (max-width: 1024px) {
@@ -32,29 +32,37 @@ const WarningIcon = styled.img`
     width: 22px;
     height: 26px;
     margin-right: 20px;
-    color: var(--warning);
+    color: var(--info);
 `;
 
 const Link = styled.a`
-    color: color: var(--warning);
+    color: color: var(--info);
 `;
 
 const GeneralNotification = () => {
     return (
         <Wrapper>
             <Warning>
-                <WarningIcon src="WarningSign.svg" />
+                <WarningIcon src="info-general-notification.svg" />
                 <Message>
-                    This is still beta software. Use small amounts of funds to
-                    start. Please reach out in our{' '}
+                    The exchange has been upgraded to use multi-path order
+                    routing which improves overall pricing and gas usage. You
+                    will need to unlock tokens again for the new{' '}
                     <Link
-                        href="https://discord.gg/ARJWaeF"
+                        href="https://etherscan.io/address/0xB56b171C05d5FfCc623f8Ee497ef1Ce838179169#code"
                         target="_blank"
                         rel="noopener noreferrer"
                     >
-                        Discord
-                    </Link>{' '}
-                    for any questions or issues!
+                        proxy contract
+                    </Link>
+                    . To use the old exchange proxy visit:{' '}
+                    <Link
+                        href="https://legacy.balancer.exchange"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        https://legacy.balancer.exchange
+                    </Link>
                 </Message>
             </Warning>
         </Wrapper>

@@ -4,18 +4,18 @@ import { ValidationRules } from 'react-form-validator-core';
 import {
     ExactAmountInPreview,
     ExactAmountOutPreview,
-    Swap,
     SwapPreview,
 } from './Proxy';
+import { SorMultiSwap } from './Sor';
 import { BigNumber } from 'utils/bignumber';
-import { bnum, scale, str, isEmpty } from '../utils/helpers';
-import { TokenMetadata } from './Token';
-
-export enum InputFocus {
-    NONE,
-    BUY,
-    SELL,
-}
+import {
+    bnum,
+    scale,
+    str,
+    isEmpty,
+    formatBalanceTruncated,
+} from '../utils/helpers';
+import { TokenMetadata, EtherKey } from './Token';
 
 export enum SwapMethods {
     EXACT_IN = 'swapExactIn',
@@ -46,12 +46,15 @@ export interface ChartData {
     swaps: ChartSwap[];
     inputPriceValue: BigNumber;
     outputPriceValue: BigNumber;
+    noPools?: number;
 }
 
 export interface ChartSwap {
     isOthers: boolean;
-    poolAddress?: string;
+    firstPoolAddress?: string;
+    secondPoolAddress?: string;
     percentage: number;
+    noPools?: number;
 }
 
 export default class SwapFormStore {
@@ -64,7 +67,6 @@ export default class SwapFormStore {
         outputLimit: '0',
         inputLimit: '0',
         limitPrice: '0',
-        focus: 0,
         swaps: [],
     };
     @observable inputToken: TokenMetadata;
@@ -83,11 +85,12 @@ export default class SwapFormStore {
     @observable slippageSelectorOpen: boolean;
     @observable assetModalState = {
         open: false,
-        type: ModalType.INPUT,
-        input: '',
+        input: 'inputAmount',
     };
+    @observable assetSelectFilter: string = '';
     @observable slippageCell: number = 3;
-
+    @observable showLoader: boolean = false;
+    account: string = '';
     rootStore: RootStore;
 
     constructor(rootStore) {
@@ -116,23 +119,28 @@ export default class SwapFormStore {
         };
     }
 
+    @action setDefaultTokenAddresses(account) {
+        this.loadDefaultInputToken(account);
+        this.loadDefaultOutputToken(account);
+    }
+
     @action loadDefaultInputToken(account) {
         const localInputTokenAddr = localStorage.getItem('inputToken');
 
         if (localInputTokenAddr && account)
-            this.setSelectedInputToken(localInputTokenAddr, account);
-        else this.setSelectedInputToken('ether', account);
+            this.setSelectedInputTokenMetaData(localInputTokenAddr, account);
+        else this.setSelectedInputTokenMetaData('ether', account);
     }
 
     @action loadDefaultOutputToken(account) {
         const localOutputTokenAddr = localStorage.getItem('outputToken');
 
         if (localOutputTokenAddr && account)
-            this.setSelectedOutputToken(localOutputTokenAddr, account);
+            this.setSelectedOutputTokenMetaData(localOutputTokenAddr, account);
         else {
             const { contractMetadataStore } = this.rootStore;
             const daiAddr = contractMetadataStore.getDaiAddress();
-            this.setSelectedOutputToken(daiAddr, account);
+            this.setSelectedOutputTokenMetaData(daiAddr, account);
         }
     }
 
@@ -182,10 +190,6 @@ export default class SwapFormStore {
         }
     }
 
-    @action setInputFocus(element: InputFocus) {
-        this.inputs.focus = element;
-    }
-
     @action setSwapObjection(message: string) {
         this.outputs.swapObjection = message;
     }
@@ -217,9 +221,6 @@ export default class SwapFormStore {
             bnum(inputAmount),
             this.inputToken.decimals
         );
-        if (inputAmount !== this.inputs.inputAmount) {
-            return;
-        }
 
         this.setSwapObjection(SwapObjection.NONE);
 
@@ -269,9 +270,6 @@ export default class SwapFormStore {
             bnum(outputAmount),
             this.outputToken.decimals
         );
-        if (outputAmount !== this.inputs.outputAmount) {
-            return;
-        }
 
         if (preview.error) {
             this.setErrorMessage(preview.error);
@@ -388,16 +386,11 @@ export default class SwapFormStore {
         this.slippageSelectorOpen = value;
     }
 
-    @action openModal(type: ModalType) {
+    @action setAssetModalState(value: { open?: boolean; input?: string }) {
         this.assetModalState = {
-            open: true,
-            type,
-            input: '',
+            ...this.assetModalState,
+            ...value,
         };
-    }
-
-    @action closeModal() {
-        this.assetModalState.open = false;
     }
 
     getActiveInputValue(): string {
@@ -411,17 +404,25 @@ export default class SwapFormStore {
         return inputValue;
     }
 
-    @action switchInputOutputValues() {
-        [this.inputToken, this.outputToken] = [
-            this.outputToken,
-            this.inputToken,
-        ];
+    @action async switchInputOutputValues() {
+        this.showLoader = true;
+        this.switchSwapMethod();
+
+        const oldOutputToken = this.outputToken;
+        const oldInputToken = this.inputToken;
+        this.inputToken = oldOutputToken;
+        this.outputToken = oldInputToken;
+
         [this.inputs.inputAmount, this.inputs.outputAmount] = [
             this.inputs.outputAmount,
             this.inputs.inputAmount,
         ];
-        this.switchSwapMethod();
-        this.setInputFocus(InputFocus.NONE);
+
+        if (this.exchangeRateInput) {
+            this.setExchangeRateInput(false);
+        } else {
+            this.setExchangeRateInput(true);
+        }
     }
 
     @action clearInputs() {
@@ -431,21 +432,21 @@ export default class SwapFormStore {
     }
 
     @action setAssetSelectFilter(value: string) {
-        this.assetModalState.input = value;
+        this.assetSelectFilter = value;
     }
 
     /* Assume swaps are in order of biggest to smallest value */
     @action setTradeCompositionEAI(preview: ExactAmountInPreview) {
         const {
             tokenAmountIn,
-            swaps,
+            sorSwapsFormatted,
             totalOutput,
             effectivePrice,
             validSwap,
         } = preview;
         this.setTradeComposition(
             SwapMethods.EXACT_IN,
-            swaps,
+            sorSwapsFormatted,
             tokenAmountIn,
             totalOutput,
             effectivePrice,
@@ -457,14 +458,14 @@ export default class SwapFormStore {
     @action setTradeCompositionEAO(preview: ExactAmountOutPreview) {
         const {
             tokenAmountOut,
-            swaps,
+            sorSwapsFormatted,
             totalInput,
             effectivePrice,
             validSwap,
         } = preview;
         this.setTradeComposition(
             SwapMethods.EXACT_OUT,
-            swaps,
+            sorSwapsFormatted,
             tokenAmountOut,
             totalInput,
             effectivePrice,
@@ -474,7 +475,7 @@ export default class SwapFormStore {
 
     @action private setTradeComposition(
         method: SwapMethods,
-        swaps: Swap[],
+        swaps: SorMultiSwap[],
         inputValue: BigNumber,
         totalValue: BigNumber,
         effectivePrice: BigNumber,
@@ -485,6 +486,7 @@ export default class SwapFormStore {
             inputPriceValue: bnum(0),
             outputPriceValue: bnum(0),
             swaps: [],
+            noPools: 0,
         };
 
         if (!validSwap) {
@@ -499,21 +501,42 @@ export default class SwapFormStore {
 
         const tempChartSwaps: ChartSwap[] = [];
         // Convert all Swaps to ChartSwaps
-        swaps.forEach(value => {
-            const swapValue =
-                method === SwapMethods.EXACT_IN
-                    ? value.tokenInParam
-                    : value.tokenOutParam;
+        swaps.forEach(sorMultiSwap => {
+            if (sorMultiSwap.sequence.length === 1) {
+                const swap = sorMultiSwap.sequence[0];
 
-            tempChartSwaps.push({
-                isOthers: false,
-                poolAddress: value.pool,
-                percentage: bnum(swapValue)
-                    .div(inputValue)
-                    .times(100)
-                    .dp(2, BigNumber.ROUND_HALF_EVEN)
-                    .toNumber(),
-            });
+                tempChartSwaps.push({
+                    isOthers: false,
+                    firstPoolAddress: swap.pool,
+                    secondPoolAddress: null,
+                    percentage: bnum(swap.swapAmount)
+                        .div(inputValue)
+                        .times(100)
+                        .dp(2, BigNumber.ROUND_HALF_EVEN)
+                        .toNumber(),
+                    noPools: 1,
+                });
+            } else if (sorMultiSwap.sequence.length > 1) {
+                const swapFirst = sorMultiSwap.sequence[0];
+                const swapSecond = sorMultiSwap.sequence[1];
+
+                const swapValue =
+                    method === SwapMethods.EXACT_IN
+                        ? swapFirst.swapAmount
+                        : swapSecond.swapAmount;
+
+                tempChartSwaps.push({
+                    isOthers: false,
+                    firstPoolAddress: swapFirst.pool,
+                    secondPoolAddress: swapSecond.pool,
+                    percentage: bnum(swapValue)
+                        .div(inputValue)
+                        .times(100)
+                        .dp(2, BigNumber.ROUND_HALF_EVEN)
+                        .toNumber(),
+                    noPools: 2,
+                });
+            }
         });
 
         let totalPercentage = 0;
@@ -521,8 +544,10 @@ export default class SwapFormStore {
         tempChartSwaps.forEach((value, index) => {
             if (index === 0 || index === 1 || index === 2) {
                 result.swaps.push(value);
+                result.noPools += value.noPools;
             } else {
                 others.percentage += value.percentage;
+                result.noPools += 1;
             }
 
             totalPercentage += value.percentage;
@@ -611,7 +636,7 @@ export default class SwapFormStore {
             normalizedBalance,
         });
         // Check for insufficient balance if user logged in
-        if (account && value.gt(normalizedBalance)) {
+        if (account && value.gte(normalizedBalance)) {
             return SwapObjection.INSUFFICIENT_BALANCE;
         }
 
@@ -675,38 +700,120 @@ export default class SwapFormStore {
             this.inputToken.address !== 'unknown' &&
             !isEmpty(this.inputToken.address)
         )
-            this.setSelectedInputToken(this.inputToken.address, account);
+            this.setSelectedInputTokenMetaData(
+                this.inputToken.address,
+                account
+            );
 
         if (
             this.outputToken.address !== 'unknown' &&
             !isEmpty(this.outputToken.address)
         )
-            this.setSelectedOutputToken(this.outputToken.address, account);
+            this.setSelectedOutputTokenMetaData(
+                this.outputToken.address,
+                account
+            );
     }
 
     // Fetches and sets the input token metaData.
     // Fetch will try stored whitelisted info and revert to on-chain if not available
     // Also loads pool info for token
-    @action setSelectedInputToken = async (
+    @action setSelectedInputTokenMetaData = async (
+        inputTokenAddress: string,
+        account: string
+    ) => {
+        this.inputToken.address = inputTokenAddress;
+        this.inputToken.iconAddress = 'unknown';
+
+        const {
+            contractMetadataStore,
+            assetOptionsStore,
+            tokenStore,
+        } = this.rootStore;
+
+        const filteredWhitelistedTokens = contractMetadataStore.getFilteredTokenMetadata(
+            inputTokenAddress
+        );
+
+        if (filteredWhitelistedTokens.length > 0) {
+            this.inputToken.symbol = filteredWhitelistedTokens[0].symbol;
+            this.inputToken.decimals = filteredWhitelistedTokens[0].decimals;
+            this.inputToken.precision = filteredWhitelistedTokens[0].precision;
+            this.inputToken.iconAddress =
+                filteredWhitelistedTokens[0].iconAddress;
+
+            const userBalances = tokenStore.getAccountBalances(
+                filteredWhitelistedTokens,
+                account
+            );
+
+            let balanceBn = userBalances[inputTokenAddress]
+                ? bnum(userBalances[inputTokenAddress])
+                : bnum(0);
+
+            const userBalance = formatBalanceTruncated(
+                balanceBn,
+                filteredWhitelistedTokens[0].decimals,
+                filteredWhitelistedTokens[0].precision,
+                20
+            );
+
+            const proxyAddress = contractMetadataStore.getProxyAddress();
+            const userAllowance = tokenStore.getAllowance(
+                inputTokenAddress,
+                account,
+                proxyAddress
+            );
+            this.inputToken.allowance = userAllowance;
+            this.inputToken.balanceBn = balanceBn;
+            this.inputToken.balanceFormatted = userBalance;
+        } else {
+            const assetOptions = assetOptionsStore.tokenAssetData;
+            if (assetOptions) {
+                this.inputToken.symbol = assetOptions.symbol;
+                this.inputToken.iconAddress = assetOptions.iconAddress;
+                this.inputToken.balanceFormatted = assetOptions.userBalance;
+                this.inputToken.decimals = assetOptions.decimals;
+                this.inputToken.precision = 4;
+                this.inputToken.allowance = assetOptions.allowance;
+            }
+        }
+
+        console.log(`[SwapForm] InputToken`, this.inputToken);
+    };
+
+    @action setSelectedInputTokenAddress = async (
         inputTokenAddress: string,
         account: string
     ) => {
         console.log(
-            `[SwapFormStore] setSelectedInputToken: ${account} ${inputTokenAddress}`
+            `[SwapFormStore] setSelectedInputTokenAddress: ${account} ${inputTokenAddress}`
         );
 
         try {
-            const { tokenStore, poolStore } = this.rootStore;
+            if (
+                inputTokenAddress === EtherKey &&
+                this.outputToken.address === EtherKey
+            ) {
+                this.setErrorMessage('Please Select Alternative Pair');
+                this.setValidSwap(false);
+                this.resetTradeComposition();
+                return;
+            }
 
-            const inputTokenMetadata = await tokenStore.fetchOnChainTokenMetadata(
-                inputTokenAddress,
-                account
-            );
+            const { poolStore, sorStore } = this.rootStore;
 
-            this.inputToken = inputTokenMetadata;
-
-            poolStore.fetchAndSetTokenPairs(inputTokenAddress);
+            this.inputToken.address = inputTokenAddress;
             localStorage.setItem('inputToken', inputTokenAddress);
+            this.account = account;
+            console.log(
+                `[SwapFormStore] fetching Token Pairs: ${inputTokenAddress}`
+            );
+            // Uses SOR & AllPools to retrieve all pairs for address, used for Asset Picker
+            poolStore.fetchAndSetTokenPairs(inputTokenAddress);
+            // This uses SOR to get paths between in/out tokens. Quite intensive so loaded ASAP to be ready.
+            // Required for when asset picker selects new tokens
+            sorStore.fetchPathData(inputTokenAddress, this.outputToken.address);
         } catch (err) {
             this.inputToken = {
                 address: inputTokenAddress,
@@ -722,10 +829,70 @@ export default class SwapFormStore {
         }
     };
 
-    // Fetches and sets the output token metaData.
+    // Fetches and sets the input token metaData.
     // Fetch will try stored whitelisted info and revert to on-chain if not available
     // Also loads pool info for token
-    @action setSelectedOutputToken = async (
+    @action setSelectedOutputTokenMetaData = async (
+        outputTokenAddress: string,
+        account: string
+    ) => {
+        this.outputToken.address = outputTokenAddress;
+        this.outputToken.iconAddress = 'unknown';
+
+        const {
+            contractMetadataStore,
+            assetOptionsStore,
+            tokenStore,
+        } = this.rootStore;
+
+        const filteredWhitelistedTokens = contractMetadataStore.getFilteredTokenMetadata(
+            outputTokenAddress
+        );
+        if (filteredWhitelistedTokens.length > 0) {
+            this.outputToken.symbol = filteredWhitelistedTokens[0].symbol;
+            this.outputToken.decimals = filteredWhitelistedTokens[0].decimals;
+            this.outputToken.precision = filteredWhitelistedTokens[0].precision;
+            this.outputToken.iconAddress =
+                filteredWhitelistedTokens[0].iconAddress;
+
+            const userBalances = tokenStore.getAccountBalances(
+                filteredWhitelistedTokens,
+                account
+            );
+
+            let balanceBn = userBalances[outputTokenAddress]
+                ? bnum(userBalances[outputTokenAddress])
+                : bnum(0);
+
+            const userBalance = formatBalanceTruncated(
+                balanceBn,
+                filteredWhitelistedTokens[0].decimals,
+                filteredWhitelistedTokens[0].precision,
+                20
+            );
+            const proxyAddress = contractMetadataStore.getProxyAddress();
+            const userAllowance = tokenStore.getAllowance(
+                outputTokenAddress,
+                account,
+                proxyAddress
+            );
+            this.outputToken.allowance = userAllowance;
+            this.outputToken.balanceBn = balanceBn;
+            this.outputToken.balanceFormatted = userBalance;
+        } else {
+            const assetOptions = assetOptionsStore.tokenAssetData;
+            if (assetOptions) {
+                this.outputToken.symbol = assetOptions.symbol;
+                this.outputToken.iconAddress = assetOptions.iconAddress;
+                this.outputToken.balanceFormatted = assetOptions.userBalance;
+                this.outputToken.decimals = assetOptions.decimals;
+                this.outputToken.precision = 4;
+                this.outputToken.allowance = assetOptions.allowance;
+            }
+        }
+    };
+
+    @action setSelectedOutputTokenAddress = async (
         outputTokenAddress: string,
         account: string
     ) => {
@@ -734,17 +901,27 @@ export default class SwapFormStore {
         );
 
         try {
-            const { tokenStore, poolStore } = this.rootStore;
+            if (
+                outputTokenAddress === EtherKey &&
+                this.inputToken.address === EtherKey
+            ) {
+                this.setErrorMessage('Please Select Alternative Pair');
+                this.setValidSwap(false);
+                this.resetTradeComposition();
+                return;
+            }
 
-            const outputTokenMetadata = await tokenStore.fetchOnChainTokenMetadata(
-                outputTokenAddress,
-                account
-            );
+            const { poolStore, sorStore } = this.rootStore;
 
-            this.outputToken = outputTokenMetadata;
-
-            poolStore.fetchAndSetTokenPairs(outputTokenAddress);
+            this.outputToken.address = outputTokenAddress;
             localStorage.setItem('outputToken', outputTokenAddress);
+            this.account = account;
+            console.log(
+                `[SwapFormStore] fetching Token Pairs: ${outputTokenAddress}`
+            );
+            poolStore.fetchAndSetTokenPairs(outputTokenAddress);
+            // Required for when asset picker selects new tokens
+            sorStore.fetchPathData(this.inputToken.address, outputTokenAddress);
         } catch (err) {
             this.outputToken = {
                 address: outputTokenAddress,

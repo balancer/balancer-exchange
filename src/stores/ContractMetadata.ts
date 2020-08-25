@@ -2,6 +2,7 @@ import { action, observable } from 'mobx';
 import RootStore from 'stores/Root';
 import * as deployed from 'deployed.json';
 import { getSupportedChainName } from '../provider/connectors';
+import { BigNumber } from 'utils/bignumber';
 
 export interface ContractMetadata {
     bFactory: string;
@@ -19,6 +20,7 @@ export interface TokenMetadata {
     iconAddress: string;
     precision: number;
     isSupported: boolean;
+    allowance: BigNumber;
 }
 
 export default class ContractMetadataStore {
@@ -51,10 +53,11 @@ export default class ContractMetadataStore {
             contractMetadata.tokens.push({
                 address,
                 symbol,
-                decimals: undefined,
+                decimals: 18,
                 iconAddress,
                 precision,
                 isSupported: true,
+                allowance: new BigNumber(0),
             });
         });
 
@@ -103,10 +106,14 @@ export default class ContractMetadataStore {
 
         let filteredMetadata: TokenMetadata[] = [];
 
-        if (filter.indexOf('0x') === 0) {
-            //Search by address
+        if (filter === 'ether') {
             filteredMetadata = tokens.filter(value => {
                 return value.address === filter;
+            });
+        } else if (filter.indexOf('0x') === 0) {
+            //Search by address
+            filteredMetadata = tokens.filter(value => {
+                return value.address.toLowerCase() === filter.toLowerCase();
             });
         } else {
             //Search by symbol

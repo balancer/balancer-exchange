@@ -16,8 +16,12 @@ import { useStores } from '../contexts/storesContext';
 import { ErrorIds } from '../stores/Error';
 import { BigNumber } from 'utils/bignumber';
 import { getSupportedChainId } from '../provider/connectors';
-import { calcMaxAmountIn, calcMinAmountOut } from '../utils/sorWrapper';
-import { ExactAmountInPreview, ExactAmountOutPreview } from '../stores/Proxy';
+import {
+    ExactAmountInPreview,
+    ExactAmountOutPreview,
+    calcMaxAmountIn,
+    calcMinAmountOut,
+} from '../stores/Proxy';
 
 const RowContainer = styled.div`
     font-family: var(--roboto);
@@ -86,24 +90,32 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     }
 
     useEffect(() => {
-        if (tokenIn && isEmpty(swapFormStore.inputToken.address)) {
+        if (tokenIn) {
             console.log(`[SwapForm] Using Input Token From URL: ${tokenIn}`);
-            swapFormStore.setSelectedInputToken(tokenIn, account);
-        } else if (isEmpty(swapFormStore.inputToken.address)) {
-            console.log(`[SwapForm] No Input Token Selected, Loading Default.`);
-            swapFormStore.loadDefaultInputToken(account);
+            swapFormStore.setSelectedInputTokenAddress(tokenIn, account);
         }
 
-        if (tokenOut && isEmpty(swapFormStore.outputToken.address)) {
+        if (tokenOut) {
             console.log(`[SwapForm] Using Output Token From URL: ${tokenOut}`);
-            swapFormStore.setSelectedOutputToken(tokenOut, account);
-        } else if (isEmpty(swapFormStore.outputToken.address)) {
-            console.log(
-                `[SwapForm] No Output Token Selected, Loading Default.`
-            );
-            swapFormStore.loadDefaultOutputToken(account);
+            swapFormStore.setSelectedOutputTokenAddress(tokenOut, account);
         }
     }, [tokenIn, tokenOut, swapFormStore, account]); // Only re-run the effect on token address change
+
+    // This loads all the token data after selection
+    const inputAddress = swapFormStore.inputToken.address;
+    useEffect(() => {
+        if (inputAddress !== '') {
+            swapFormStore.setSelectedInputTokenAddress(inputAddress, account);
+        }
+    }, [inputAddress, account, swapFormStore]); // Only re-run the effect on token address change
+
+    // This loads all the token data after selection
+    const outputAddress = swapFormStore.outputToken.address;
+    useEffect(() => {
+        if (outputAddress !== '') {
+            swapFormStore.setSelectedOutputTokenAddress(outputAddress, account);
+        }
+    }, [outputAddress, account, swapFormStore]); // Only re-run the effect on token address change
 
     const buttonActionHandler = (buttonState: ButtonState) => {
         switch (buttonState) {
@@ -169,6 +181,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                 spotInput,
                 expectedSlippage,
                 swaps,
+                totalInput,
             } = swapFormStore.preview as ExactAmountOutPreview;
 
             const maxAmountIn = calcMaxAmountIn(
@@ -176,10 +189,12 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                 expectedSlippage.plus(extraSlippageAllowance)
             );
 
+            let maxIn = maxAmountIn.gt(totalInput) ? maxAmountIn : totalInput;
+
             await proxyStore.batchSwapExactOut(
                 swaps,
                 swapFormStore.inputToken.address,
-                maxAmountIn,
+                maxIn, //totalInput, //maxAmountIn,
                 swapFormStore.inputToken.decimals,
                 swapFormStore.outputToken.address,
                 bnum(outputAmount),
@@ -338,8 +353,6 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
             <AssetSelector />
             <RowContainer>
                 <SellToken
-                    key="122"
-                    inputID="amount-in"
                     inputName="inputAmount"
                     tokenName={swapFormStore.inputToken.symbol}
                     tokenBalance={swapFormStore.inputToken.balanceFormatted}
@@ -352,8 +365,6 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                 />
                 <Switch />
                 <BuyToken
-                    key="123"
-                    inputID="amount-out"
                     inputName="outputAmount"
                     tokenName={swapFormStore.outputToken.symbol}
                     tokenBalance={swapFormStore.outputToken.balanceFormatted}

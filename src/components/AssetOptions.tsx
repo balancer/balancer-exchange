@@ -4,7 +4,6 @@ import { TokenIconAddress } from './TokenPanel';
 import { useStores } from '../contexts/storesContext';
 import { bnum, formatBalanceTruncated, isEmpty } from 'utils/helpers';
 import { isChainIdSupported } from '../provider/connectors';
-import { ModalType } from '../stores/SwapForm';
 import { observer } from 'mobx-react';
 
 const AssetPanelContainer = styled.div`
@@ -95,8 +94,7 @@ const AssetOptions = observer(() => {
     const account = providerStore.providerStatus.account;
     const chainId = providerStore.providerStatus.activeChainId;
 
-    const { assetModalState } = swapFormStore;
-    const assetSelectFilter = assetModalState.input;
+    const { assetSelectFilter, assetModalState } = swapFormStore;
 
     useEffect(() => {
         if (!isEmpty(assetSelectFilter))
@@ -107,16 +105,17 @@ const AssetOptions = observer(() => {
         const filteredWhitelistedTokens = contractMetadataStore.getFilteredTokenMetadata(
             filter
         );
+        // filteredWhitelistedTokens.forEach(token => console.log(token))
 
         let assetSelectorData: Asset[] = [];
         let userBalances = {};
         let tradableTokens;
 
-        if (assetModalState.type === ModalType.INPUT) {
+        if (assetModalState.input === 'inputAmount') {
             tradableTokens = poolStore.getTokenPairs(
                 swapFormStore.outputToken.address
             );
-        } else {
+        } else if (assetModalState.input === 'outputAmount') {
             tradableTokens = poolStore.getTokenPairs(
                 swapFormStore.inputToken.address
             );
@@ -200,13 +199,16 @@ const AssetOptions = observer(() => {
     };
 
     const selectAsset = token => {
-        if (assetModalState.type === ModalType.INPUT) {
-            swapFormStore.setSelectedInputToken(token.address, account);
+        if (assetModalState.input === 'inputAmount') {
+            swapFormStore.setSelectedInputTokenMetaData(token.address, account);
         } else {
-            swapFormStore.setSelectedOutputToken(token.address, account);
+            swapFormStore.setSelectedOutputTokenMetaData(
+                token.address,
+                account
+            );
         }
         clearInputs();
-        swapFormStore.closeModal();
+        swapFormStore.setAssetModalState({ open: false });
     };
 
     const TradableToken = ({ isTradable }) => {

@@ -1,12 +1,11 @@
 import {
     backupUrls,
     supportedChainId,
+    web3Modal,
 } from '../provider/connectors';
-import { getAddress } from '@ethersproject/address';
-import { WebSocketProvider } from '@ethersproject/providers';
-import { Contract } from '@ethersproject/contracts';
+import { ethers, utils } from 'ethers';
 
-let web3 = new WebSocketProvider(backupUrls[supportedChainId]);
+let web3 = new ethers.providers.JsonRpcProvider(backupUrls[supportedChainId]);
 
 // This is taken from TokenPanel.tsx. Imports of existing files for test not always working so dirty fix.
 export const TokenIconAddress = address => {
@@ -28,7 +27,7 @@ test('Confirm correct on-chain data DAI (18 decimals)', async () => {
     const abi = require('../abi/TestToken').abi;
     const daiKovanAddr = '0x1528F3FCc26d13F7079325Fb78D9442607781c8C';
 
-    const tokenContract = new Contract(daiKovanAddr, abi, web3);
+    const tokenContract = new ethers.Contract(daiKovanAddr, abi, web3);
 
     const tokenSymbol = await tokenContract.symbol();
     const tokenDecimals = await tokenContract.decimals();
@@ -41,7 +40,7 @@ test('Confirm correct on-chain data USDC (6 decimals)', async () => {
     const abi = require('../abi/TestToken').abi;
     const usdcKovanAddr = '0x2F375e94FC336Cdec2Dc0cCB5277FE59CBf1cAe5';
 
-    const tokenContract = new Contract(usdcKovanAddr, abi, web3);
+    const tokenContract = new ethers.Contract(usdcKovanAddr, abi, web3);
 
     const tokenSymbol = await tokenContract.symbol();
     const tokenDecimals = await tokenContract.decimals();
@@ -53,7 +52,7 @@ test('Confirm correct on-chain data USDC (6 decimals)', async () => {
 test('Confirm checksum address conversion', async () => {
     const nonCheckSumAddr = '0xd115bffabbdd893a6f7cea402e7338643ced44a6';
 
-    const checkSumAddr = getAddress(nonCheckSumAddr);
+    const checkSumAddr = utils.getAddress(nonCheckSumAddr);
 
     expect(checkSumAddr).toEqual('0xD115BFFAbbdd893A6f7ceA402e7338643Ced44a6');
     expect(nonCheckSumAddr).not.toBe(
@@ -65,7 +64,7 @@ test('Invalid checksum address conversion', async () => {
     const nonCheckSumAddr = '0xD115BFfabbdd893a6f7cea402E7338643ced44a6';
     let checkSumAddr;
     try {
-        checkSumAddr = getAddress(nonCheckSumAddr);
+        checkSumAddr = utils.getAddress(nonCheckSumAddr);
     } catch {
         checkSumAddr = false;
     }
@@ -75,7 +74,7 @@ test('Invalid checksum address conversion', async () => {
 
 test('Confirm correct DAI icon retrival', async () => {
     const nonCheckSumAddr = '0x6b175474e89094c44da98b954eedeac495271d0f';
-    const checkSumAddr = getAddress(nonCheckSumAddr);
+    const checkSumAddr = utils.getAddress(nonCheckSumAddr);
 
     const iconAddress = TokenIconAddress(checkSumAddr);
     console.log(iconAddress);
