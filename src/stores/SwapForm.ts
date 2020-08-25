@@ -14,6 +14,7 @@ import {
     str,
     isEmpty,
     formatBalanceTruncated,
+    toChecksum,
 } from '../utils/helpers';
 import { TokenMetadata, EtherKey } from './Token';
 
@@ -742,14 +743,15 @@ export default class SwapFormStore {
             this.inputToken.iconAddress =
                 filteredWhitelistedTokens[0].iconAddress;
 
-            const userBalances = tokenStore.getAccountBalances(
-                filteredWhitelistedTokens,
-                account
-            );
+            let balanceBn;
+            if (inputTokenAddress !== EtherKey)
+                balanceBn = tokenStore.getBalance(
+                    toChecksum(inputTokenAddress),
+                    account
+                );
+            else balanceBn = tokenStore.getBalance(inputTokenAddress, account);
 
-            let balanceBn = userBalances[inputTokenAddress]
-                ? bnum(userBalances[inputTokenAddress])
-                : bnum(0);
+            if (!balanceBn) balanceBn = bnum(0);
 
             const userBalance = formatBalanceTruncated(
                 balanceBn,
@@ -856,14 +858,16 @@ export default class SwapFormStore {
             this.outputToken.iconAddress =
                 filteredWhitelistedTokens[0].iconAddress;
 
-            const userBalances = tokenStore.getAccountBalances(
-                filteredWhitelistedTokens,
-                account
-            );
+            let balanceBn;
 
-            let balanceBn = userBalances[outputTokenAddress]
-                ? bnum(userBalances[outputTokenAddress])
-                : bnum(0);
+            if (outputTokenAddress !== EtherKey)
+                balanceBn = tokenStore.getBalance(
+                    toChecksum(outputTokenAddress),
+                    account
+                );
+            else balanceBn = tokenStore.getBalance(outputTokenAddress, account);
+
+            if (!balanceBn) balanceBn = bnum(0);
 
             const userBalance = formatBalanceTruncated(
                 balanceBn,
