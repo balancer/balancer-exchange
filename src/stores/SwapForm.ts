@@ -636,7 +636,7 @@ export default class SwapFormStore {
             normalizedBalance,
         });
         // Check for insufficient balance if user logged in
-        if (account && value.gte(normalizedBalance)) {
+        if (account && value.gt(normalizedBalance)) {
             return SwapObjection.INSUFFICIENT_BALANCE;
         }
 
@@ -773,6 +773,7 @@ export default class SwapFormStore {
                 this.inputToken.symbol = assetOptions.symbol;
                 this.inputToken.iconAddress = assetOptions.iconAddress;
                 this.inputToken.balanceFormatted = assetOptions.userBalance;
+                this.inputToken.balanceBn = assetOptions.balanceBn;
                 this.inputToken.decimals = assetOptions.decimals;
                 this.inputToken.precision = 4;
                 this.inputToken.allowance = assetOptions.allowance;
