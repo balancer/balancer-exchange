@@ -321,6 +321,12 @@
                 "precision": 2
             },
             {
+                "symbol": "yUSD-OTC20",
+                "address": "0xB2FdD60AD80ca7bA89B9BAb3b5336c2601C020b4",
+                "iconAddress": "unknown",
+                "precision": 2
+            },
+            {
                 "symbol": "SRM",
                 "address": "0x476c5E26a75bd202a9683ffD34359C0CC15be0fF",
                 "iconAddress": "unknown",
