@@ -889,6 +889,7 @@ export default class SwapFormStore {
                 this.outputToken.decimals = assetOptions.decimals;
                 this.outputToken.precision = 4;
                 this.outputToken.allowance = assetOptions.allowance;
+                this.inputToken.balanceBn = assetOptions.balanceBn;
             }
         }
     };

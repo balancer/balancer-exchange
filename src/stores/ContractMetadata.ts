@@ -129,8 +129,13 @@ export default class ContractMetadataStore {
 
     // Provider uses this to get balances
     getTrackedTokenAddresses(): string[] {
+        const { assetOptionsStore } = this.rootStore;
         const tokens = this.contractMetadata.tokens;
-        return tokens.map(token => token.address);
+        let tokenList = tokens.map(token => token.address);
+        if (assetOptionsStore.tokenAssetData)
+            tokenList.push(assetOptionsStore.tokenAssetData.address);
+
+        return tokenList;
     }
 
     getWhiteListedTokenIcon(address: string): string {
