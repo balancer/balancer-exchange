@@ -184,9 +184,11 @@ export default class SorStore {
 
             let inputTokenDecimals: number = 18;
             if (filteredWhitelistedTokens.length === 0) {
-                inputTokenDecimals = Number(
-                    assetOptionsStore.tokenAssetData.decimals.toString()
-                );
+                if (assetOptionsStore.tokenAssetData) {
+                    inputTokenDecimals = Number(
+                        assetOptionsStore.tokenAssetData.decimals.toString()
+                    );
+                }
             } else {
                 inputTokenDecimals = Number(
                     filteredWhitelistedTokens[0].decimals.toString()

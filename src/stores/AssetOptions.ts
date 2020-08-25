@@ -11,6 +11,7 @@ interface Asset {
     decimals: number;
     precision: number;
     allowance: BigNumber;
+    balanceBn: BigNumber;
 }
 
 export default class AssetOptions {
@@ -42,6 +43,7 @@ export default class AssetOptions {
                 decimals: tokenMetadata.decimals,
                 precision: tokenMetadata.precision,
                 allowance: tokenMetadata.allowance,
+                balanceBn: tokenMetadata.balanceBn,
             };
         } catch (err) {
             this.tokenAssetData = undefined;

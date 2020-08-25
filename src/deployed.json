@@ -98,7 +98,7 @@
     "mainnet": {
         "chainId": 1,
         "bFactory": "0x9424B1412450D0f8Fc2255FAf6046b98213B76Bd",
-        "proxy": "0xB56b171C05d5FfCc623f8Ee497ef1Ce838179169",
+        "proxy": "0x3E66B66Fd1d0b02fDa6C811Da9E0547970DB2f21",
         "weth": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
         "multicall": "0xeefBa1e63905eF1D7ACbA5a8513c70307C1cE441",
         "tokens": [
