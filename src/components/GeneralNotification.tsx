@@ -47,15 +47,22 @@ const GeneralNotification = () => {
                 <Message>
                     The exchange has been upgraded to use multi-path order
                     routing which improves overall pricing and gas usage. You
-                    will need to approve tokens against{' '}
+                    will need to unlock tokens again for the new{' '}
                     <Link
                         href="https://etherscan.io/address/0xB56b171C05d5FfCc623f8Ee497ef1Ce838179169#code"
                         target="_blank"
                         rel="noopener noreferrer"
                     >
-                        this
-                    </Link>{' '}
-                    new contract in order to trade.
+                        proxy contract
+                    </Link>
+                    . To use the old exchange proxy visit:{' '}
+                    <Link
+                        href="https://legacy.balancer.exchange"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        https://legacy.balancer.exchange
+                    </Link>
                 </Message>
             </Warning>
         </Wrapper>

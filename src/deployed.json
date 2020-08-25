@@ -231,12 +231,6 @@
                 "precision": 2
             },
             {
-                "symbol": "DZAR",
-                "address": "0x9Cb2f26A23b8d89973F08c957C4d7cdf75CD341c",
-                "iconAddress": "0x9Cb2f26A23b8d89973F08c957C4d7cdf75CD341c",
-                "precision": 2
-            },
-            {
                 "symbol": "UMA",
                 "address": "0x04Fa0d235C4abf4BcF4787aF4CF447DE572eF828",
                 "iconAddress": "0x04Fa0d235C4abf4BcF4787aF4CF447DE572eF828",
@@ -342,6 +336,24 @@
                 "symbol": "CRV",
                 "address": "0xD533a949740bb3306d119CC777fa900bA034cd52",
                 "iconAddress": "0xD533a949740bb3306d119CC777fa900bA034cd52",
+                "precision": 2
+            },
+            {
+                "symbol": "LPT",
+                "address": "0x58b6A8A3302369DAEc383334672404Ee733aB239",
+                "iconAddress": "0x58b6A8A3302369DAEc383334672404Ee733aB239",
+                "precision": 2
+            },
+            {
+                "symbol": "renBTC",
+                "address": "0xEB4C2781e4ebA804CE9a9803C67d0893436bB27D",
+                "iconAddress": "0xEB4C2781e4ebA804CE9a9803C67d0893436bB27D",
+                "precision": 4
+            },
+            {
+                "symbol": "YFI",
+                "address": "0x0bc529c00C6401aEF6D220BE8C6Ea1667F6Ad93e",
+                "iconAddress": "0x0bc529c00C6401aEF6D220BE8C6Ea1667F6Ad93e",
                 "precision": 2
             }
         ]
