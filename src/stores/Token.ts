@@ -122,7 +122,7 @@ export default class TokenStore {
         );
     }
 
-    private setAllowances(
+    setAllowances(
         tokens: string[],
         owner: string,
         spender: string,
@@ -178,7 +178,7 @@ export default class TokenStore {
         return chainBalances[tokenAddress][account].lastFetched < blockNumber;
     }
 
-    private setBalances(
+    setBalances(
         tokens: string[],
         balances: BigNumber[],
         account: string,
@@ -373,12 +373,16 @@ export default class TokenStore {
     @action fetchOnChainTokenDecimals = async (
         tokensToTrack: string[]
     ): Promise<FetchCode> => {
-        const { providerStore, contractMetadataStore } = this.rootStore;
+        const {
+            providerStore,
+            contractMetadataStore,
+            swapFormStore,
+        } = this.rootStore;
         const promises: Promise<any>[] = [];
         const decimalsCalls = [];
         const tokenList = [];
 
-        console.log('[Token] !!!!!! fetchOnChainTokenDecimals');
+        console.log('[Token] fetchOnChainTokenDecimals');
 
         const multiAddress = contractMetadataStore.getMultiAddress();
         const multi = providerStore.getContract(
@@ -408,6 +412,7 @@ export default class TokenStore {
             );
             this.setDecimals(tokenList, decimalsList);
             console.log('[Token] fetchOnChainTokenDecimals Finished');
+            swapFormStore.updateSelectedTokenMetaData(undefined);
         } catch (e) {
             console.log('[Token] fetchOnChainTokenDecimals Error', {
                 error: e,
@@ -569,7 +574,7 @@ export default class TokenStore {
                     precision
                 );
 
-                let allowance;
+                let allowance = bnum(0);
                 if (account) {
                     allowance = this.getAllowance(
                         address,

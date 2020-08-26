@@ -2,6 +2,8 @@ import { action, observable } from 'mobx';
 import RootStore from 'stores/Root';
 import { contracts, assets } from 'configs';
 import { BigNumber } from 'utils/bignumber';
+import { toChecksum } from '../utils/helpers';
+import { EtherKey } from './Token';
 
 export interface ContractMetadata {
     bFactory: string;
@@ -59,6 +61,53 @@ export default class ContractMetadataStore {
         });
 
         this.contractMetadata = contractMetadata;
+    }
+
+    async addToken(tokenAddr, account) {
+        const { tokenStore, swapFormStore } = this.rootStore;
+        const existingTokens = this.contractMetadata.tokens || undefined;
+
+        if (tokenAddr === EtherKey) return;
+
+        let isToken = existingTokens.filter(value => {
+            if (value.address === EtherKey) return false;
+            return toChecksum(tokenAddr) === toChecksum(value.address);
+        });
+
+        if (isToken.length === 0) {
+            console.log(`Adding TOken: ${tokenAddr}`);
+            const tokenMetadata = await tokenStore.fetchOnChainTokenMetadata(
+                tokenAddr,
+                account
+            );
+
+            console.log(`Allowance: ${tokenMetadata.allowance.toString()}`);
+            tokenStore.setBalances(
+                [toChecksum(tokenAddr)],
+                [tokenMetadata.balanceBn],
+                account,
+                20000
+            );
+            tokenStore.setAllowances(
+                [tokenAddr],
+                account,
+                this.getProxyAddress(),
+                [tokenMetadata.allowance],
+                20000
+            );
+
+            this.contractMetadata.tokens.push({
+                address: tokenAddr,
+                symbol: tokenMetadata.symbol,
+                decimals: tokenMetadata.decimals,
+                iconAddress: tokenMetadata.iconAddress,
+                precision: tokenMetadata.precision,
+                isSupported: true,
+                allowance: tokenMetadata.allowance,
+            });
+
+            swapFormStore.updateSelectedTokenMetaData(account);
+        }
     }
 
     getProxyAddress(): string {
