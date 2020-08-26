@@ -355,6 +355,12 @@
                 "address": "0x0bc529c00C6401aEF6D220BE8C6Ea1667F6Ad93e",
                 "iconAddress": "0x0bc529c00C6401aEF6D220BE8C6Ea1667F6Ad93e",
                 "precision": 2
+            },
+            {
+                "symbol": "YFII",
+                "address": "0xa1d0E215a23d7030842FC67cE582a6aFa3CCaB83",
+                "iconAddress": "0xa1d0E215a23d7030842FC67cE582a6aFa3CCaB83",
+                "precision": 2
             }
         ]
     }
