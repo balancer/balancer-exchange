@@ -71,8 +71,9 @@ const NoPool = styled.div`
 
 interface Asset {
     address: string;
-    iconAddress: string;
     symbol: string;
+    name: string;
+    hasIcon: boolean;
     userBalance: string;
     isTradable: boolean;
 }
@@ -140,8 +141,9 @@ const AssetOptions = observer(() => {
 
             return {
                 address: value.address,
-                iconAddress: value.iconAddress,
                 symbol: value.symbol,
+                name: value.name,
+                hasIcon: value.hasIcon,
                 userBalance: userBalance,
                 isTradable: tradableTokens
                     ? tradableTokens.has(value.address)
@@ -234,7 +236,7 @@ const AssetOptions = observer(() => {
                 >
                     <AssetWrapper>
                         <TokenIcon
-                            src={TokenIconAddress(token.iconAddress)}
+                            src={TokenIconAddress(token.address, token.hasIcon)}
                             onError={e => {
                                 IconError(e);
                             }}

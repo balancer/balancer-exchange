@@ -2484,6 +2484,10 @@ assert@^1.1.1:
     object-assign "^4.1.1"
     util "0.10.3"
 
+"assets@github:balancer-labs/assets":
+  version "1.0.0"
+  resolved "https://codeload.github.com/balancer-labs/assets/tar.gz/1642cde1da52fd38854fe74de02a36a706608ab3"
+
 assign-symbols@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/assign-symbols/-/assign-symbols-1.0.0.tgz#59667f41fadd4f20ccbc2bb96b8d4f7f78ec0367"

@@ -4,8 +4,9 @@ import RootStore from 'stores/Root';
 
 interface Asset {
     address: string;
-    iconAddress: string;
     symbol: string;
+    name: string;
+    hasIcon: boolean;
     userBalance: string;
     isTradable: boolean;
     decimals: number;
@@ -36,8 +37,9 @@ export default class AssetOptions {
 
             this.tokenAssetData = {
                 address: tokenMetadata.address,
-                iconAddress: tokenMetadata.iconAddress,
                 symbol: tokenMetadata.symbol,
+                name: tokenMetadata.name,
+                hasIcon: tokenMetadata.hasIcon,
                 userBalance: tokenMetadata.balanceFormatted,
                 isTradable: true,
                 decimals: tokenMetadata.decimals,
