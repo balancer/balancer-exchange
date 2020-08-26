@@ -121,7 +121,6 @@ export default class SwapFormStore {
     }
 
     @action setDefaultTokenAddresses(account) {
-        console.log(`!!!!!! DEFAULTS`);
         this.loadDefaultInputToken(account);
         this.loadDefaultOutputToken(account);
     }
@@ -717,6 +716,14 @@ export default class SwapFormStore {
             );
     }
 
+    @action setInputAddress = async (inputTokenAddress: string) => {
+        this.inputToken.address = inputTokenAddress;
+    };
+
+    @action setOutputAddress = async (outputTokenAddress: string) => {
+        this.outputToken.address = outputTokenAddress;
+    };
+
     // Fetches and sets the input token metaData.
     // Fetch will try stored whitelisted info and revert to on-chain if not available
     // Also loads pool info for token
@@ -724,7 +731,6 @@ export default class SwapFormStore {
         inputTokenAddress: string,
         account: string
     ) => {
-        console.log(`!!!!!!! ${inputTokenAddress}`);
         this.inputToken.address = inputTokenAddress;
         this.inputToken.iconAddress = 'unknown';
 
@@ -784,18 +790,22 @@ export default class SwapFormStore {
             }
         }
 
-        console.log(`[SwapForm] InputToken`, this.inputToken);
+        console.log(`[SwapFormStore] InputToken`, this.inputToken);
     };
 
-    @action setSelectedInputTokenAddress = async (
+    @action setSelectedInputToken = async (
         inputTokenAddress: string,
         account: string
     ) => {
         console.log(
-            `[SwapFormStore] setSelectedInputTokenAddress: ${account} ${inputTokenAddress}`
+            `[SwapFormStore] setSelectedInputToken: ${account} ${inputTokenAddress}`
         );
 
+        const { contractMetadataStore } = this.rootStore;
+
         try {
+            await contractMetadataStore.addToken(inputTokenAddress, account);
+
             if (
                 inputTokenAddress === EtherKey &&
                 this.outputToken.address === EtherKey
@@ -902,7 +912,7 @@ export default class SwapFormStore {
         }
     };
 
-    @action setSelectedOutputTokenAddress = async (
+    @action setSelectedOutputToken = async (
         outputTokenAddress: string,
         account: string
     ) => {
@@ -910,7 +920,11 @@ export default class SwapFormStore {
             `[SwapFormStore] setSelectedOutputToken: ${account} ${outputTokenAddress}`
         );
 
+        const { contractMetadataStore } = this.rootStore;
+
         try {
+            await contractMetadataStore.addToken(outputTokenAddress, account);
+
             if (
                 outputTokenAddress === EtherKey &&
                 this.inputToken.address === EtherKey
