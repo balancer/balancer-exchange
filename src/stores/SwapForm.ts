@@ -121,6 +121,7 @@ export default class SwapFormStore {
     }
 
     @action setDefaultTokenAddresses(account) {
+        console.log(`!!!!!! DEFAULTS`);
         this.loadDefaultInputToken(account);
         this.loadDefaultOutputToken(account);
     }
@@ -723,6 +724,7 @@ export default class SwapFormStore {
         inputTokenAddress: string,
         account: string
     ) => {
+        console.log(`!!!!!!! ${inputTokenAddress}`);
         this.inputToken.address = inputTokenAddress;
         this.inputToken.iconAddress = 'unknown';
 
@@ -809,6 +811,8 @@ export default class SwapFormStore {
             this.inputToken.address = inputTokenAddress;
             localStorage.setItem('inputToken', inputTokenAddress);
             this.account = account;
+            if (!account) this.updateSelectedTokenMetaData(account);
+
             console.log(
                 `[SwapFormStore] fetching Token Pairs: ${inputTokenAddress}`
             );
