@@ -99,8 +99,9 @@ export default class ContractMetadataStore {
             this.contractMetadata.tokens.push({
                 address: tokenAddr,
                 symbol: tokenMetadata.symbol,
+                name: tokenMetadata.name,
                 decimals: tokenMetadata.decimals,
-                iconAddress: tokenMetadata.iconAddress,
+                hasIcon: tokenMetadata.hasIcon,
                 precision: tokenMetadata.precision,
                 isSupported: true,
                 allowance: tokenMetadata.allowance,
