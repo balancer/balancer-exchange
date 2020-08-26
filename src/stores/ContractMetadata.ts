@@ -1,7 +1,6 @@
 import { action, observable } from 'mobx';
 import RootStore from 'stores/Root';
-import * as deployed from 'deployed.json';
-import { getSupportedChainName } from '../provider/connectors';
+import { contracts, assets } from 'configs';
 import { BigNumber } from 'utils/bignumber';
 import { toChecksum } from '../utils/helpers';
 import { EtherKey } from './Token';
@@ -11,15 +10,16 @@ export interface ContractMetadata {
     proxy: string;
     weth: string;
     multicall: string;
-    defaultPrecision: number;
     tokens: TokenMetadata[];
+    untrusted: string[];
 }
 
 export interface TokenMetadata {
     address: string;
     symbol: string;
+    name: string;
     decimals: number;
-    iconAddress: string;
+    hasIcon: boolean;
     precision: number;
     isSupported: boolean;
     allowance: BigNumber;
@@ -37,26 +37,26 @@ export default class ContractMetadataStore {
 
     // Take the data from the JSON and get it into the store, so we access it just like other data
     @action loadWhitelistedTokenMetadata() {
-        const chainName = getSupportedChainName();
-        const metadata = JSON.parse(JSON.stringify(deployed));
-        const tokenMetadata = metadata.default[chainName].tokens;
+        const { tokens, untrusted } = assets;
 
         const contractMetadata = {
-            bFactory: metadata.default[chainName].bFactory,
-            proxy: metadata.default[chainName].proxy,
-            weth: metadata.default[chainName].weth,
-            multicall: metadata.default[chainName].multicall,
-            defaultPrecision: metadata.default[chainName].defaultPrecision,
+            bFactory: contracts.bFactory,
+            proxy: contracts.proxy,
+            weth: contracts.weth,
+            multicall: contracts.multicall,
             tokens: [] as TokenMetadata[],
+            untrusted,
         };
 
-        tokenMetadata.forEach(token => {
-            const { address, symbol, iconAddress, precision } = token;
+        Object.keys(tokens).forEach(tokenAddress => {
+            const token = tokens[tokenAddress];
+            const { address, symbol, name, precision, hasIcon } = token;
             contractMetadata.tokens.push({
                 address,
                 symbol,
+                name,
                 decimals: 18,
-                iconAddress,
+                hasIcon,
                 precision,
                 isSupported: true,
                 allowance: new BigNumber(0),
@@ -102,8 +102,9 @@ export default class ContractMetadataStore {
             this.contractMetadata.tokens.push({
                 address: tokenAddr,
                 symbol: tokenMetadata.symbol,
+                name: tokenMetadata.name,
                 decimals: tokenMetadata.decimals,
-                iconAddress: tokenMetadata.iconAddress,
+                hasIcon: tokenMetadata.hasIcon,
                 precision: tokenMetadata.precision,
                 isSupported: true,
                 allowance: tokenMetadata.allowance,
@@ -141,6 +142,10 @@ export default class ContractMetadataStore {
             );
         }
         return multiAddress;
+    }
+
+    getUntrustedTokens(): string[] {
+        return this.contractMetadata.untrusted;
     }
 
     // Used for asset options
@@ -185,15 +190,6 @@ export default class ContractMetadataStore {
             tokenList.push(assetOptionsStore.tokenAssetData.address);
 
         return tokenList;
-    }
-
-    getWhiteListedTokenIcon(address: string): string {
-        const tokenList = this.contractMetadata.tokens.filter(
-            token => token.isSupported
-        );
-        const tokenUrl = tokenList.find(t => t.address === address);
-        if (tokenUrl) return tokenUrl.iconAddress;
-        else return 'unknown';
     }
 
     getWhiteListedTokenPrecision(address: string): number {

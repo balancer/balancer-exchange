@@ -5,9 +5,8 @@ import * as helpers from 'utils/helpers';
 import { bnum, formatBalanceTruncated } from 'utils/helpers';
 import { FetchCode } from './Transaction';
 import { BigNumber } from 'utils/bignumber';
-import { isAddress, MAX_UINT } from 'utils/helpers';
+import { MAX_UINT } from 'utils/helpers';
 import { Interface } from 'ethers/utils';
-import { getSupportedChainName } from '../provider/connectors';
 import * as ethers from 'ethers';
 
 const tokenAbi = require('../abi/TestToken').abi;
@@ -47,8 +46,9 @@ export interface BigNumberMap {
 export interface TokenMetadata {
     address: string;
     symbol: string;
+    name: string;
     decimals: number;
-    iconAddress: string;
+    hasIcon: boolean;
     precision: number;
     balanceFormatted?: string;
     balanceBn?: BigNumber;
@@ -439,28 +439,6 @@ export default class TokenStore {
         return undefined;
     };
 
-    fetchTokenIconAddress = (address): string => {
-        if (address === 'ether') return 'ether';
-
-        // Checksum addr needed for retrieval of icon from trustwallet asset repo
-        const checkSumAddr = isAddress(address);
-
-        if (!checkSumAddr) {
-            throw new Error(`Token address in wrong format.`);
-        }
-
-        const chainName = getSupportedChainName();
-
-        // kovan icons still retrieved from meta data.
-        // trustwallet asset repo used for mainnet token addresses.
-        if (chainName === 'kovan') {
-            const { contractMetadataStore } = this.rootStore;
-            return contractMetadataStore.getWhiteListedTokenIcon(address);
-        } else {
-            return checkSumAddr;
-        }
-    };
-
     async getTokenBalance(
         tokenAddr,
         account,
@@ -508,17 +486,11 @@ export default class TokenStore {
         }
     }
 
-    fetchOnChainTokenMetadata = async (address: string, account: string) => {
+    fetchOnChainTokenMetadata = async (
+        address: string,
+        account: string
+    ): Promise<TokenMetadata> => {
         console.log(`[Token] fetchOnChainTokenMetadata: ${address} ${account}`);
-
-        let iconAddress;
-
-        try {
-            iconAddress = this.fetchTokenIconAddress(address);
-        } catch (err) {
-            console.log(`[Token] Error. ${address}`);
-            throw new Error('Incorrect Address Format');
-        }
 
         const { providerStore, contractMetadataStore } = this.rootStore;
 
@@ -529,8 +501,9 @@ export default class TokenStore {
             tokenMetadata = {
                 address: address,
                 symbol: 'ETH',
+                name: 'Ether',
                 decimals: 18,
-                iconAddress: 'ether',
+                hasIcon: true,
                 precision: 4,
                 balanceBn: bnum(0),
                 balanceFormatted: '0.00',
@@ -550,8 +523,9 @@ export default class TokenStore {
                 tokenMetadata = {
                     address: address,
                     symbol: 'ETH',
+                    name: 'Ether',
                     decimals: 18,
-                    iconAddress: 'ether',
+                    hasIcon: true,
                     precision: 4,
                     balanceBn: bnum(balanceWei),
                     balanceFormatted: balanceFormatted,
@@ -569,8 +543,10 @@ export default class TokenStore {
                 const tokenDecimals = await tokenContract.decimals();
 
                 let tokenSymbol;
+                let tokenName;
                 try {
                     tokenSymbol = await tokenContract.symbol();
+                    tokenName = await tokenContract.name();
                 } catch (err) {
                     console.log('[Token] Trying TokenBytes');
                     const tokenContractBytes = providerStore.getContract(
@@ -582,6 +558,8 @@ export default class TokenStore {
                     tokenSymbol = ethers.utils.parseBytes32String(
                         tokenSymbolBytes
                     );
+                    const tokenNameBytes = await tokenContractBytes.name();
+                    tokenName = ethers.utils.parseBytes32String(tokenNameBytes);
                 }
 
                 const precision = contractMetadataStore.getWhiteListedTokenPrecision(
@@ -622,8 +600,9 @@ export default class TokenStore {
                 tokenMetadata = {
                     address: address,
                     symbol: tokenSymbol,
+                    name: tokenName,
                     decimals: tokenDecimals,
-                    iconAddress: iconAddress,
+                    hasIcon: true,
                     precision: precision,
                     balanceBn: balance.balanceBn,
                     balanceFormatted: balance.balanceFormatted,
