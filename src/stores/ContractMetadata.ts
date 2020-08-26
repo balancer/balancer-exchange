@@ -11,6 +11,7 @@ export interface ContractMetadata {
     weth: string;
     multicall: string;
     tokens: TokenMetadata[];
+    untrusted: string[];
 }
 
 export interface TokenMetadata {
@@ -36,15 +37,17 @@ export default class ContractMetadataStore {
 
     // Take the data from the JSON and get it into the store, so we access it just like other data
     @action loadWhitelistedTokenMetadata() {
+        const { tokens, untrusted } = assets;
+
         const contractMetadata = {
             bFactory: contracts.bFactory,
             proxy: contracts.proxy,
             weth: contracts.weth,
             multicall: contracts.multicall,
             tokens: [] as TokenMetadata[],
+            untrusted,
         };
 
-        const { tokens } = assets;
         Object.keys(tokens).forEach(tokenAddress => {
             const token = tokens[tokenAddress];
             const { address, symbol, name, precision, hasIcon } = token;
@@ -139,6 +142,10 @@ export default class ContractMetadataStore {
             );
         }
         return multiAddress;
+    }
+
+    getUntrustedTokens(): string[] {
+        return this.contractMetadata.untrusted;
     }
 
     // Used for asset options
