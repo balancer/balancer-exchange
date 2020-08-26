@@ -92,12 +92,12 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     useEffect(() => {
         if (tokenIn) {
             console.log(`[SwapForm] Using Input Token From URL: ${tokenIn}`);
-            swapFormStore.setSelectedInputTokenAddress(tokenIn, account);
+            swapFormStore.setInputAddress(tokenIn);
         }
 
         if (tokenOut) {
             console.log(`[SwapForm] Using Output Token From URL: ${tokenOut}`);
-            swapFormStore.setSelectedOutputTokenAddress(tokenOut, account);
+            swapFormStore.setOutputAddress(tokenOut);
         }
     }, [tokenIn, tokenOut, swapFormStore, account]); // Only re-run the effect on token address change
 
@@ -105,7 +105,8 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     const inputAddress = swapFormStore.inputToken.address;
     useEffect(() => {
         if (inputAddress !== '') {
-            swapFormStore.setSelectedInputTokenAddress(inputAddress, account);
+            console.log(`[SwapForm] Setting Input Token ${inputAddress}`);
+            swapFormStore.setSelectedInputToken(inputAddress, account);
         }
     }, [inputAddress, account, swapFormStore]); // Only re-run the effect on token address change
 
@@ -113,7 +114,8 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     const outputAddress = swapFormStore.outputToken.address;
     useEffect(() => {
         if (outputAddress !== '') {
-            swapFormStore.setSelectedOutputTokenAddress(outputAddress, account);
+            console.log(`[SwapForm] Setting Output Token ${outputAddress}`);
+            swapFormStore.setSelectedOutputToken(outputAddress, account);
         }
     }, [outputAddress, account, swapFormStore]); // Only re-run the effect on token address change
 
