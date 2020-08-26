@@ -64,17 +64,11 @@ const TokenBalance = styled.div`
     margin-top: 12px;
 `;
 
-const NoPool = styled.div`
-    margin-left: 5px;
-    color: var(--error-color);
-`;
-
 interface Asset {
     address: string;
     iconAddress: string;
     symbol: string;
     userBalance: string;
-    isTradable: boolean;
 }
 
 const AssetOptions = observer(() => {
@@ -86,7 +80,6 @@ const AssetOptions = observer(() => {
             contractMetadataStore,
             swapFormStore,
             tokenStore,
-            poolStore,
             assetOptionsStore,
         },
     } = useStores();
@@ -109,17 +102,6 @@ const AssetOptions = observer(() => {
 
         let assetSelectorData: Asset[] = [];
         let userBalances = {};
-        let tradableTokens;
-
-        if (assetModalState.input === 'inputAmount') {
-            tradableTokens = poolStore.getTokenPairs(
-                swapFormStore.outputToken.address
-            );
-        } else if (assetModalState.input === 'outputAmount') {
-            tradableTokens = poolStore.getTokenPairs(
-                swapFormStore.inputToken.address
-            );
-        }
 
         if (account && isChainIdSupported(chainId)) {
             userBalances = tokenStore.getAccountBalances(
@@ -143,9 +125,6 @@ const AssetOptions = observer(() => {
                 iconAddress: value.iconAddress,
                 symbol: value.symbol,
                 userBalance: userBalance,
-                isTradable: tradableTokens
-                    ? tradableTokens.has(value.address)
-                    : false,
             };
         });
 
@@ -159,21 +138,14 @@ const AssetOptions = observer(() => {
         const buckets = {
             tradableWithBalance: [] as Asset[],
             tradableWithoutBalance: [] as Asset[],
-            notTradableWithBalance: [] as Asset[],
-            notTradableWithoutBalance: [] as Asset[],
         };
         assets.forEach(asset => {
-            const isTradable = asset.isTradable;
             const hasBalance = account && bnum(asset.userBalance).gt(0);
 
-            if (isTradable && hasBalance) {
+            if (hasBalance) {
                 buckets.tradableWithBalance.push(asset);
-            } else if (isTradable && !hasBalance) {
+            } else if (!hasBalance) {
                 buckets.tradableWithoutBalance.push(asset);
-            } else if (!isTradable && hasBalance) {
-                buckets.notTradableWithBalance.push(asset);
-            } else if (!isTradable && !hasBalance) {
-                buckets.notTradableWithoutBalance.push(asset);
             }
         });
 
@@ -181,8 +153,6 @@ const AssetOptions = observer(() => {
         return [
             ...buckets.tradableWithBalance,
             ...buckets.tradableWithoutBalance,
-            ...buckets.notTradableWithBalance,
-            ...buckets.notTradableWithoutBalance,
         ];
     };
 
@@ -211,14 +181,6 @@ const AssetOptions = observer(() => {
         swapFormStore.setAssetModalState({ open: false });
     };
 
-    const TradableToken = ({ isTradable }) => {
-        if (isTradable) {
-            return <div />;
-        } else {
-            return <NoPool>No Pool</NoPool>;
-        }
-    };
-
     const IconError = e => {
         e.target.src = './empty-token.png';
     };
@@ -243,7 +205,6 @@ const AssetOptions = observer(() => {
                     </AssetWrapper>
                     <TokenBalance>
                         {token.userBalance + ' ' + token.symbol}
-                        <TradableToken isTradable={token.isTradable} />
                     </TokenBalance>
                 </AssetPanel>
             ))}

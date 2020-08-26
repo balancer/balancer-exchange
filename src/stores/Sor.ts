@@ -1,12 +1,11 @@
 import { action } from 'mobx';
 import RootStore from 'stores/Root';
 import CostCalculator from '../utils/CostCalculator';
-import { bnum, fromWei, toChecksum } from 'utils/helpers';
+import { bnum, fromWei } from 'utils/helpers';
 import { EtherKey } from './Token';
 import {
     filterPoolsWithTokensDirect,
     filterPoolsWithTokensMultihop,
-    getTokenPairsMultiHop,
     parsePoolData,
     processPaths,
     processEpsOfInterestMultiHop,
@@ -16,9 +15,6 @@ import {
 } from '@balancer-labs/sor';
 import { BigNumber } from '../utils/bignumber';
 import { SwapMethods } from './SwapForm';
-import { TokenPairs } from './Pool';
-import ContractMetadataStore from './ContractMetadata';
-// import { calcInGivenOut } from '../utils/balancerCalcs';
 
 interface MultiSwap {
     pool: string;
@@ -40,34 +36,6 @@ interface MultiSwap {
 export interface SorMultiSwap {
     sequence: MultiSwap[];
 }
-
-export const sorTokenPairs = async (
-    tokenAddress: string,
-    contractMetadataStore: ContractMetadataStore,
-    allPools: any[]
-): Promise<TokenPairs> => {
-    let [allTokensSet] = filterAllPools(allPools);
-    let [, allTokenPairs] = await getTokenPairsMultiHop(
-        tokenAddress.toLowerCase(),
-        allTokensSet
-    );
-    let tokenPairs: TokenPairs = new Set<string>();
-    const sanitizedWeth = toChecksum(contractMetadataStore.getWethAddress());
-    allTokenPairs.forEach(token => {
-        const sanitizedToken = toChecksum(token);
-
-        if (!tokenPairs.has(sanitizedToken)) {
-            tokenPairs.add(sanitizedToken);
-        }
-
-        // Add Ether along with WETH
-        if (sanitizedToken === sanitizedWeth && !tokenPairs.has(EtherKey)) {
-            tokenPairs.add(EtherKey);
-        }
-    });
-
-    return tokenPairs;
-};
 
 export default class SorStore {
     costCalculator: CostCalculator;
@@ -117,35 +85,6 @@ export default class SorStore {
 
             if (outputToken === EtherKey)
                 outputToken = contractMetadataStore.getWethAddress();
-
-            if (
-                poolStore.onChainPools.pools.length === 0 &&
-                poolStore.poolsList.pools.length === 0
-            ) {
-                console.log(
-                    `[SOR] fetchPathData, No Pools Loaded, Can't Fetch Paths`
-                );
-                return;
-            }
-            /*
-            REMOVED THIS AS ONLY WANT TO USE ONCHAIN BALANCES FOR EVERYTHING
-            else if (
-                // We only use Subgraph as a UI backup if onchain not loaded & SubGraph up to date
-                poolStore.onChainPools.pools.length === 0 &&
-                poolStore.poolsList.pools.length !== 0
-            ) {
-                console.log(
-                    `[SOR] fetchPathData() Using Backup Pools Until On-Chain Loaded`
-                );
-                await this.getPathData(
-                    poolStore.poolsList,
-                    inputToken,
-                    outputToken
-                );
-            }
-            */
-            // Waits for on-chain pools to finish loading
-            await poolStore.onChainPoolsPromise;
 
             await this.getPathData(
                 poolStore.onChainPools,
@@ -222,17 +161,6 @@ export default class SorStore {
         const { poolStore } = this.rootStore;
 
         let formattedSorSwaps: SorMultiSwap[] = [];
-
-        // let maxPrice = MAX_UINT.toString();
-        // let limitReturnAmount = '0';
-        // let limitReturnAmount = maxPrice;
-
-        // If subgraph has failed we must wait for on-chain balance info to be loaded.
-        if (poolStore.onChainPools.pools.length === 0) {
-            console.log(`[SOR] Backup - Must Wait For On-Chain Balances.`);
-            await poolStore.onChainPoolsPromise;
-            console.log(`[SOR] Backup - On-Chain Balances Loaded.`);
-        }
 
         let swapDebug = [];
 
@@ -382,6 +310,12 @@ export default class SorStore {
     ): Promise<[BigNumber, any[][]]> => {
         let processedPaths = this.processedPathsIn;
         let epsOfInterest = this.epsOfInterestIn;
+
+        console.log(`processedPaths`);
+        console.log(processedPaths);
+
+        console.log(`epsOfInterest`);
+        console.log(epsOfInterest);
 
         if (swapType === SwapMethods.EXACT_OUT) {
             processedPaths = this.processedPathsOut;

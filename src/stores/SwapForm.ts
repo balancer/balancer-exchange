@@ -802,16 +802,12 @@ export default class SwapFormStore {
                 return;
             }
 
-            const { poolStore, sorStore } = this.rootStore;
+            const { sorStore } = this.rootStore;
 
             this.inputToken.address = inputTokenAddress;
             localStorage.setItem('inputToken', inputTokenAddress);
             this.account = account;
-            console.log(
-                `[SwapFormStore] fetching Token Pairs: ${inputTokenAddress}`
-            );
-            // Uses SOR & AllPools to retrieve all pairs for address, used for Asset Picker
-            poolStore.fetchAndSetTokenPairs(inputTokenAddress);
+
             // This uses SOR to get paths between in/out tokens. Quite intensive so loaded ASAP to be ready.
             // Required for when asset picker selects new tokens
             sorStore.fetchPathData(inputTokenAddress, this.outputToken.address);
@@ -913,15 +909,12 @@ export default class SwapFormStore {
                 return;
             }
 
-            const { poolStore, sorStore } = this.rootStore;
+            const { sorStore } = this.rootStore;
 
             this.outputToken.address = outputTokenAddress;
             localStorage.setItem('outputToken', outputTokenAddress);
             this.account = account;
-            console.log(
-                `[SwapFormStore] fetching Token Pairs: ${outputTokenAddress}`
-            );
-            poolStore.fetchAndSetTokenPairs(outputTokenAddress);
+
             // Required for when asset picker selects new tokens
             sorStore.fetchPathData(this.inputToken.address, outputTokenAddress);
         } catch (err) {
