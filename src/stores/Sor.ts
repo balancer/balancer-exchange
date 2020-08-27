@@ -49,6 +49,8 @@ export default class SorStore {
     costOutputToken: BigNumber;
     costInputToken: BigNumber;
     @observable isLoadingPaths: boolean;
+    private lastInputToken: string;
+    private lastOutputToken: string;
 
     constructor(rootStore) {
         this.rootStore = rootStore;
@@ -65,7 +67,9 @@ export default class SorStore {
         this.noPools = Number(process.env.REACT_APP_MAX_POOLS || 4);
         this.costOutputToken = bnum(0);
         this.costInputToken = bnum(0);
-        this.isLoadingPaths = false;
+        this.isLoadingPaths = true;
+        this.lastInputToken = '';
+        this.lastOutputToken = '';
         // TODO: Should we fetchPathData on a timer incase user has window open without refreshing?
     }
 
@@ -78,11 +82,26 @@ export default class SorStore {
             assetOptionsStore,
         } = this.rootStore;
 
-        if (inputToken !== '' && outputToken !== '') {
+        if (
+            inputToken !== '' &&
+            outputToken !== '' &&
+            (this.lastInputToken !== inputToken ||
+                this.lastOutputToken !== outputToken)
+        ) {
             this.isLoadingPaths = true;
+            if (poolStore.onChainPools.pools.length === 0) {
+                console.log(
+                    `[SOR] fetchPathData(${inputToken} ${outputToken}) Waiting For Pools To Load...`
+                );
+                return;
+            }
+
             console.log(
-                `!!!! [SOR] fetchPathData(${inputToken} ${outputToken})`
+                `[SOR] fetchPathData(${inputToken} ${outputToken}) Loading Paths...`
             );
+
+            this.lastInputToken = inputToken;
+            this.lastOutputToken = outputToken;
 
             // Use WETH address for Ether
             if (inputToken === EtherKey)

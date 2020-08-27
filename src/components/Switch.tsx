@@ -40,13 +40,11 @@ const Switch = observer(() => {
         swapFormStore.switchInputOutputValues();
     };
 
-    // const showLoader = swapFormStore.showLoader;
-    let showLoader =
+    const showLoader =
         (sorStore.isPathsLoading() && tokenPanelStore.isFocused()) ||
         swapFormStore.showLoader;
-    console.log(`!!!!!! ${sorStore.isPathsLoading()}`);
-    console.log(`!!!!!! ${tokenPanelStore.isFocused()}`);
-    console.log(`!!!!!! ${showLoader}`);
+
+    if (showLoader) swapFormStore.setErrorMessage('Waiting For Pools To Load');
     // showLoader = true;
 
     return (
