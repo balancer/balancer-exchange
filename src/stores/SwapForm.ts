@@ -196,6 +196,13 @@ export default class SwapFormStore {
     }
 
     @action setErrorMessage(message: string) {
+        const { sorStore } = this.rootStore;
+
+        if (sorStore.isPathsLoading()) {
+            this.outputs.activeErrorMessage = 'Waiting For Pools To Load';
+            return;
+        }
+
         this.outputs.activeErrorMessage = message;
     }
 

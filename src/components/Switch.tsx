@@ -44,9 +44,6 @@ const Switch = observer(() => {
         (sorStore.isPathsLoading() && tokenPanelStore.isFocused()) ||
         swapFormStore.showLoader;
 
-    if (showLoader) swapFormStore.setErrorMessage('Waiting For Pools To Load');
-    // showLoader = true;
-
     return (
         <Container>
             <Spinner
