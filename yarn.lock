@@ -2486,7 +2486,7 @@ assert@^1.1.1:
 
 "assets@github:balancer-labs/assets":
   version "1.0.0"
-  resolved "https://codeload.github.com/balancer-labs/assets/tar.gz/1642cde1da52fd38854fe74de02a36a706608ab3"
+  resolved "https://codeload.github.com/balancer-labs/assets/tar.gz/master"
 
 assign-symbols@^1.0.0:
   version "1.0.0"
