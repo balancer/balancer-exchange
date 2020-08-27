@@ -105,9 +105,15 @@ export default class SorStore {
 
             let outPutTokenDecimals: number = 18;
             if (filteredWhitelistedTokens.length === 0) {
-                outPutTokenDecimals = Number(
-                    assetOptionsStore.tokenAssetData.decimals.toString()
-                );
+                if (assetOptionsStore.tokenAssetData) {
+                    if (
+                        assetOptionsStore.tokenAssetData.address === outputToken
+                    ) {
+                        outPutTokenDecimals = Number(
+                            assetOptionsStore.tokenAssetData.decimals.toString()
+                        );
+                    }
+                }
             } else {
                 outPutTokenDecimals = Number(
                     filteredWhitelistedTokens[0].decimals.toString()
@@ -129,9 +135,13 @@ export default class SorStore {
             let inputTokenDecimals: number = 18;
             if (filteredWhitelistedTokens.length === 0) {
                 if (assetOptionsStore.tokenAssetData) {
-                    inputTokenDecimals = Number(
-                        assetOptionsStore.tokenAssetData.decimals.toString()
-                    );
+                    if (
+                        assetOptionsStore.tokenAssetData.address === inputToken
+                    ) {
+                        inputTokenDecimals = Number(
+                            assetOptionsStore.tokenAssetData.decimals.toString()
+                        );
+                    }
                 }
             } else {
                 inputTokenDecimals = Number(
@@ -253,13 +263,14 @@ export default class SorStore {
         );
 
         this.processedPools = pools;
-
         this.processedPathsIn = processPaths(pathData, pools, 'swapExactIn');
+
         this.epsOfInterestIn = processEpsOfInterestMultiHop(
             this.processedPathsIn,
             'swapExactIn',
             this.noPools
         );
+
         this.processedPathsOut = processPaths(pathData, pools, 'swapExactOut');
 
         this.epsOfInterestOut = processEpsOfInterestMultiHop(

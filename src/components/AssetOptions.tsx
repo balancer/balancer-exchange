@@ -133,7 +133,18 @@ const AssetOptions = observer(() => {
 
     const sortAssetOptions = (assets: Asset[], account) => {
         const manualToken = assetOptionsStore.tokenAssetData;
-        if (manualToken) assets.push(manualToken);
+
+        if (manualToken) {
+            if (
+                !assets.find(
+                    asset =>
+                        asset.address.toLowerCase() ===
+                        manualToken.address.toLowerCase()
+                )
+            ) {
+                assets.push(manualToken);
+            }
+        }
 
         const buckets = {
             tradableWithBalance: [] as Asset[],

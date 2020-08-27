@@ -49,7 +49,7 @@ const GeneralNotification = () => {
                     routing which improves overall pricing and gas usage. You
                     will need to unlock tokens again for the new{' '}
                     <Link
-                        href="https://etherscan.io/address/0xB56b171C05d5FfCc623f8Ee497ef1Ce838179169#code"
+                        href="https://etherscan.io/address/0x3E66B66Fd1d0b02fDa6C811Da9E0547970DB2f21"
                         target="_blank"
                         rel="noopener noreferrer"
                     >
