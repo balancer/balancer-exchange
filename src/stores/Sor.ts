@@ -1,4 +1,4 @@
-import { action } from 'mobx';
+import { action, observable } from 'mobx';
 import RootStore from 'stores/Root';
 import CostCalculator from '../utils/CostCalculator';
 import { bnum, fromWei } from 'utils/helpers';
@@ -48,6 +48,7 @@ export default class SorStore {
     noPools: number;
     costOutputToken: BigNumber;
     costInputToken: BigNumber;
+    @observable isLoadingPaths: boolean;
 
     constructor(rootStore) {
         this.rootStore = rootStore;
@@ -64,6 +65,7 @@ export default class SorStore {
         this.noPools = Number(process.env.REACT_APP_MAX_POOLS || 4);
         this.costOutputToken = bnum(0);
         this.costInputToken = bnum(0);
+        this.isLoadingPaths = false;
         // TODO: Should we fetchPathData on a timer incase user has window open without refreshing?
     }
 
@@ -77,7 +79,10 @@ export default class SorStore {
         } = this.rootStore;
 
         if (inputToken !== '' && outputToken !== '') {
-            console.log(`[SOR] fetchPathData(${inputToken} ${outputToken})`);
+            this.isLoadingPaths = true;
+            console.log(
+                `!!!! [SOR] fetchPathData(${inputToken} ${outputToken})`
+            );
 
             // Use WETH address for Ether
             if (inputToken === EtherKey)
@@ -151,7 +156,10 @@ export default class SorStore {
                 swapFormStore.inputs.swapMethod
             );
 
-            console.log(`[SOR] fetchPathData() On-Chain Path Data Loaded`);
+            this.isLoadingPaths = false;
+            console.log(
+                `!!!!! [SOR] fetchPathData() On-Chain Path Data Loaded`
+            );
         }
     }
 
@@ -261,7 +269,7 @@ export default class SorStore {
         );
     };
 
-    loadPathData = async (
+    private loadPathData = async (
         allPools: any,
         tokenIn: string,
         tokenOut: string
@@ -353,4 +361,8 @@ export default class SorStore {
         console.log(`[SOR] costOutputToken: ${cost.toString()}`);
         return cost;
     };
+
+    isPathsLoading(): boolean {
+        return this.isLoadingPaths;
+    }
 }

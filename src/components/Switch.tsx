@@ -33,14 +33,21 @@ const Spinner = styled.img`
 
 const Switch = observer(() => {
     const {
-        root: { swapFormStore },
+        root: { swapFormStore, sorStore, tokenPanelStore },
     } = useStores();
 
     const switchAssets = () => {
         swapFormStore.switchInputOutputValues();
     };
 
-    const showLoader = swapFormStore.showLoader;
+    // const showLoader = swapFormStore.showLoader;
+    let showLoader =
+        (sorStore.isPathsLoading() && tokenPanelStore.isFocused()) ||
+        swapFormStore.showLoader;
+    console.log(`!!!!!! ${sorStore.isPathsLoading()}`);
+    console.log(`!!!!!! ${tokenPanelStore.isFocused()}`);
+    console.log(`!!!!!! ${showLoader}`);
+    // showLoader = true;
 
     return (
         <Container>

@@ -12,6 +12,7 @@ import AppSettingsStore from './AppSettings';
 import PoolStore from './Pool';
 import AssetOptionsStore from './AssetOptions';
 import SorStore from './Sor';
+import TokenPanelStore from './TokenPanel';
 
 export default class RootStore {
     proxyStore: ProxyStore;
@@ -25,6 +26,7 @@ export default class RootStore {
     transactionStore: TransactionStore;
     appSettingsStore: AppSettingsStore;
     assetOptionsStore: AssetOptionsStore;
+    tokenPanelStore: TokenPanelStore;
     sorStore: SorStore;
     errorStore: ErrorStore;
 
@@ -40,6 +42,7 @@ export default class RootStore {
         this.transactionStore = new TransactionStore(this);
         this.appSettingsStore = new AppSettingsStore(this);
         this.assetOptionsStore = new AssetOptionsStore(this);
+        this.tokenPanelStore = new TokenPanelStore(this);
         this.sorStore = new SorStore(this);
         this.errorStore = new ErrorStore(this);
 

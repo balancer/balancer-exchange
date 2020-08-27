@@ -179,8 +179,16 @@ const Token = observer(
         showMax,
     }) => {
         const {
-            root: { swapFormStore },
+            root: { swapFormStore, tokenPanelStore },
         } = useStores();
+
+        const onFocus = async event => {
+            tokenPanelStore.setFocus(true);
+        };
+
+        const onBlur = async event => {
+            tokenPanelStore.setFocus(false);
+        };
 
         const IconError = e => {
             e.target.src = './empty-token.png';
@@ -214,7 +222,13 @@ const Token = observer(
                     </TokenBalance>
                 </TokenContainer>
                 <InputWrapper errorBorders={errorMessage !== ''}>
-                    <input value={value} onChange={onChange} placeholder="0" />
+                    <input
+                        value={value}
+                        onChange={onChange}
+                        onFocus={onFocus}
+                        onBlur={onBlur}
+                        placeholder="0"
+                    />
                     {(tokenAddress === EtherKey &&
                         modalType === ModalType.INPUT) ||
                     !showMax ? (
