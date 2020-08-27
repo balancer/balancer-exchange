@@ -186,9 +186,7 @@ export default class SorStore {
             );
 
             this.isLoadingPaths = false;
-            console.log(
-                `!!!!! [SOR] fetchPathData() On-Chain Path Data Loaded`
-            );
+            console.log(`[SOR] fetchPathData() On-Chain Path Data Loaded`);
         }
     }
 
@@ -348,12 +346,6 @@ export default class SorStore {
     ): Promise<[BigNumber, any[][]]> => {
         let processedPaths = this.processedPathsIn;
         let epsOfInterest = this.epsOfInterestIn;
-
-        console.log(`processedPaths`);
-        console.log(processedPaths);
-
-        console.log(`epsOfInterest`);
-        console.log(epsOfInterest);
 
         if (swapType === SwapMethods.EXACT_OUT) {
             processedPaths = this.processedPathsOut;
