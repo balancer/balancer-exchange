@@ -83,6 +83,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     const supportedChainId = getSupportedChainId();
     const account = providerStore.providerStatus.account;
     const chainId = getSupportedChainId();
+    const library = providerStore.providerStatus.library;
 
     if (!chainId) {
         // Review error message
@@ -90,16 +91,22 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     }
 
     useEffect(() => {
-        if (tokenIn) {
-            console.log(`[SwapForm] Using Input Token From URL: ${tokenIn}`);
-            swapFormStore.setInputAddress(tokenIn);
-        }
+        if (library) {
+            if (tokenIn) {
+                console.log(
+                    `[SwapForm] Using Input Token From URL: ${tokenIn}`
+                );
+                swapFormStore.setInputAddress(tokenIn);
+            }
 
-        if (tokenOut) {
-            console.log(`[SwapForm] Using Output Token From URL: ${tokenOut}`);
-            swapFormStore.setOutputAddress(tokenOut);
+            if (tokenOut) {
+                console.log(
+                    `[SwapForm] Using Output Token From URL: ${tokenOut}`
+                );
+                swapFormStore.setOutputAddress(tokenOut);
+            }
         }
-    }, [tokenIn, tokenOut, swapFormStore, account]); // Only re-run the effect on token address change
+    }, [tokenIn, tokenOut, swapFormStore, account, library]); // Only re-run the effect on token address change
 
     // This loads all the token data after selection
     const inputAddress = swapFormStore.inputToken.address;

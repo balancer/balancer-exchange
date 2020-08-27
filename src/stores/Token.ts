@@ -630,6 +630,9 @@ export default class TokenStore {
                     allowance: allowance,
                 };
             } catch (error) {
+                console.log(
+                    `[Token] Error fetching meta data. ${error.message}`
+                );
                 throw new Error('Non-Supported Token Address');
             }
         }
