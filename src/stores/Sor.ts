@@ -70,10 +70,9 @@ export default class SorStore {
         this.isLoadingPaths = true;
         this.lastInputToken = '';
         this.lastOutputToken = '';
-        // TODO: Should we fetchPathData on a timer incase user has window open without refreshing?
     }
 
-    @action async fetchPathData(inputToken, outputToken) {
+    @action async fetchPathData(inputToken, outputToken, isRefresh = false) {
         const {
             contractMetadataStore,
             poolStore,
@@ -86,7 +85,8 @@ export default class SorStore {
             inputToken !== '' &&
             outputToken !== '' &&
             (this.lastInputToken !== inputToken ||
-                this.lastOutputToken !== outputToken)
+                this.lastOutputToken !== outputToken ||
+                isRefresh)
         ) {
             this.isLoadingPaths = true;
             if (poolStore.onChainPools.pools.length === 0) {

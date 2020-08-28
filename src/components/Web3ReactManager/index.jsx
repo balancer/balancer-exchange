@@ -10,7 +10,8 @@ const Web3Manager = observer(({ children }) => {
     //Fetch user blockchain data on an interval using current params
     blockchainFetchStore.blockchainFetch(false);
     useInterval(() => blockchainFetchStore.blockchainFetch(false), 2000);
-    useInterval(() => poolStore.loadPoolsList(), 120000);
+    useInterval(() => poolStore.fetchPools(), 120000);
+    useInterval(() => poolStore.fetchOnChainBalances(), 60000);
 
     return children;
 });

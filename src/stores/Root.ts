@@ -57,7 +57,7 @@ export default class RootStore {
         this.swapFormStore.setDefaultTokenAddresses(
             this.providerStore.providerStatus.account
         );
-        this.poolStore.loadPoolsList();
+        this.poolStore.fetchPools(true); // Loads SubGraph pools and onChain balances
         this.blockchainFetchStore.blockchainFetch(false);
         // Load on-chain data as soon as a provider is available
     }

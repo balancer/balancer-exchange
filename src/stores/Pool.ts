@@ -20,15 +20,26 @@ export default class PoolStore {
     @observable onChainPools: any;
     poolsList: any;
     rootStore: RootStore;
+    fetchingOnChain: boolean;
 
     constructor(rootStore) {
         this.rootStore = rootStore;
         this.poolsList = { pools: [] };
         this.onChainPools = { pools: [] };
+        this.fetchingOnChain = false;
     }
 
-    // TODO: Should this be fetched on a timer to update? See Root.ts for order
-    async loadPoolsList() {
+    async fetchPools(onChainBalances = false) {
+        console.log(`[Pool] Fetching Pools ${onChainBalances}`);
+
+        this.poolsList = await getAllPublicSwapPools();
+
+        if (onChainBalances) {
+            this.fetchOnChainBalances();
+        }
+    }
+
+    async fetchOnChainBalances() {
         const {
             providerStore,
             contractMetadataStore,
@@ -36,20 +47,25 @@ export default class PoolStore {
             swapFormStore,
         } = this.rootStore;
 
-        this.poolsList = await getAllPublicSwapPools();
+        if (!this.fetchingOnChain) {
+            this.fetchingOnChain = true;
+            console.log(`[Pool] Fetching Onchain Balances`);
 
-        const library = providerStore.providerStatus.library;
+            const library = providerStore.providerStatus.library;
 
-        this.onChainPools = await getAllPoolDataOnChain(
-            this.poolsList,
-            contractMetadataStore.getMultiAddress(),
-            library
-        );
+            this.onChainPools = await getAllPoolDataOnChain(
+                this.poolsList,
+                contractMetadataStore.getMultiAddress(),
+                library
+            );
 
-        sorStore.fetchPathData(
-            swapFormStore.inputToken.address,
-            swapFormStore.outputToken.address
-        );
+            sorStore.fetchPathData(
+                swapFormStore.inputToken.address,
+                swapFormStore.outputToken.address,
+                true
+            );
+            this.fetchingOnChain = false;
+        }
     }
 
     findPoolTokenInfo = (
