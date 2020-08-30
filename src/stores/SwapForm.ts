@@ -100,8 +100,9 @@ export default class SwapFormStore {
         this.inputToken = {
             address: '',
             symbol: '',
+            name: '',
             decimals: 18,
-            iconAddress: 'unknown',
+            hasIcon: false,
             precision: 4,
             balanceFormatted: '0.00',
             balanceBn: bnum(0),
@@ -111,8 +112,9 @@ export default class SwapFormStore {
         this.outputToken = {
             address: '',
             symbol: '',
+            name: '',
             decimals: 18,
-            iconAddress: 'unknown',
+            hasIcon: false,
             precision: 4,
             balanceFormatted: '0.00',
             balanceBn: bnum(0),
@@ -732,7 +734,7 @@ export default class SwapFormStore {
         account: string
     ) => {
         this.inputToken.address = inputTokenAddress;
-        this.inputToken.iconAddress = 'unknown';
+        this.inputToken.hasIcon = false;
 
         const {
             contractMetadataStore,
@@ -746,10 +748,10 @@ export default class SwapFormStore {
 
         if (filteredWhitelistedTokens.length > 0) {
             this.inputToken.symbol = filteredWhitelistedTokens[0].symbol;
+            this.inputToken.name = filteredWhitelistedTokens[0].name;
             this.inputToken.decimals = filteredWhitelistedTokens[0].decimals;
             this.inputToken.precision = filteredWhitelistedTokens[0].precision;
-            this.inputToken.iconAddress =
-                filteredWhitelistedTokens[0].iconAddress;
+            this.inputToken.hasIcon = filteredWhitelistedTokens[0].hasIcon;
 
             let balanceBn;
             if (inputTokenAddress !== EtherKey)
@@ -781,7 +783,8 @@ export default class SwapFormStore {
             const assetOptions = assetOptionsStore.tokenAssetData;
             if (assetOptions) {
                 this.inputToken.symbol = assetOptions.symbol;
-                this.inputToken.iconAddress = assetOptions.iconAddress;
+                this.inputToken.name = assetOptions.name;
+                this.inputToken.hasIcon = assetOptions.hasIcon;
                 this.inputToken.balanceFormatted = assetOptions.userBalance;
                 this.inputToken.balanceBn = assetOptions.balanceBn;
                 this.inputToken.decimals = assetOptions.decimals;
@@ -835,8 +838,9 @@ export default class SwapFormStore {
             this.inputToken = {
                 address: inputTokenAddress,
                 symbol: 'unknown',
+                name: 'unknown',
                 decimals: 18,
-                iconAddress: 'unknown',
+                hasIcon: false,
                 precision: 4,
                 balanceFormatted: '0.00',
                 balanceBn: bnum(0),
@@ -854,7 +858,7 @@ export default class SwapFormStore {
         account: string
     ) => {
         this.outputToken.address = outputTokenAddress;
-        this.outputToken.iconAddress = 'unknown';
+        this.outputToken.hasIcon = false;
 
         const {
             contractMetadataStore,
@@ -867,10 +871,10 @@ export default class SwapFormStore {
         );
         if (filteredWhitelistedTokens.length > 0) {
             this.outputToken.symbol = filteredWhitelistedTokens[0].symbol;
+            this.outputToken.name = filteredWhitelistedTokens[0].name;
             this.outputToken.decimals = filteredWhitelistedTokens[0].decimals;
             this.outputToken.precision = filteredWhitelistedTokens[0].precision;
-            this.outputToken.iconAddress =
-                filteredWhitelistedTokens[0].iconAddress;
+            this.outputToken.hasIcon = filteredWhitelistedTokens[0].hasIcon;
 
             let balanceBn;
 
@@ -902,7 +906,8 @@ export default class SwapFormStore {
             const assetOptions = assetOptionsStore.tokenAssetData;
             if (assetOptions) {
                 this.outputToken.symbol = assetOptions.symbol;
-                this.outputToken.iconAddress = assetOptions.iconAddress;
+                this.outputToken.name = assetOptions.name;
+                this.outputToken.hasIcon = assetOptions.hasIcon;
                 this.outputToken.balanceFormatted = assetOptions.userBalance;
                 this.outputToken.decimals = assetOptions.decimals;
                 this.outputToken.precision = 4;
@@ -950,8 +955,9 @@ export default class SwapFormStore {
             this.outputToken = {
                 address: outputTokenAddress,
                 symbol: 'unknown',
+                name: 'unknown',
                 decimals: 18,
-                iconAddress: 'unknown',
+                hasIcon: false,
                 precision: 4,
                 balanceFormatted: '0.00',
                 balanceBn: bnum(0),
