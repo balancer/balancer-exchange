@@ -64,10 +64,16 @@ const TokenBalance = styled.div`
     margin-top: 12px;
 `;
 
+const ErrorLabel = styled.div`
+    margin-left: 5px;
+    color: var(--error-color);
+`;
+
 interface Asset {
     address: string;
-    iconAddress: string;
     symbol: string;
+    name: string;
+    hasIcon: boolean;
     userBalance: string;
 }
 
@@ -122,8 +128,9 @@ const AssetOptions = observer(() => {
 
             return {
                 address: value.address,
-                iconAddress: value.iconAddress,
                 symbol: value.symbol,
+                name: value.name,
+                hasIcon: value.hasIcon,
                 userBalance: userBalance,
             };
         });
@@ -180,6 +187,9 @@ const AssetOptions = observer(() => {
     };
 
     const selectAsset = token => {
+        if (isUntrustedToken(token.address)) {
+            return;
+        }
         if (assetModalState.input === 'inputAmount') {
             swapFormStore.setSelectedInputTokenMetaData(token.address, account);
         } else {
@@ -190,6 +200,11 @@ const AssetOptions = observer(() => {
         }
         clearInputs();
         swapFormStore.setAssetModalState({ open: false });
+    };
+
+    const isUntrustedToken = (address): boolean => {
+        const untrustedTokens = contractMetadataStore.getUntrustedTokens();
+        return untrustedTokens.includes(address);
     };
 
     const IconError = e => {
@@ -207,7 +222,7 @@ const AssetOptions = observer(() => {
                 >
                     <AssetWrapper>
                         <TokenIcon
-                            src={TokenIconAddress(token.iconAddress)}
+                            src={TokenIconAddress(token.address, token.hasIcon)}
                             onError={e => {
                                 IconError(e);
                             }}
@@ -216,6 +231,11 @@ const AssetOptions = observer(() => {
                     </AssetWrapper>
                     <TokenBalance>
                         {token.userBalance + ' ' + token.symbol}
+                        {isUntrustedToken(token.address) ? (
+                            <ErrorLabel>Bad ERC20</ErrorLabel>
+                        ) : (
+                            <div />
+                        )}
                     </TokenBalance>
                 </AssetPanel>
             ))}

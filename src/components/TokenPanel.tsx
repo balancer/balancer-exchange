@@ -52,10 +52,10 @@ const IconAndNameContainer = styled.div`
     flex-direction: row;
 `;
 
-export const TokenIconAddress = address => {
+export const TokenIconAddress = (address, hasIcon) => {
     if (address === 'ether') {
         return `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/info/logo.png`;
-    } else if (address === 'unknown') {
+    } else if (!hasIcon) {
         return './empty-token.png';
     } else {
         return `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/${isAddress(
@@ -171,10 +171,12 @@ const Token = observer(
         inputID,
         inputName,
         headerText,
+        tokenSymbol,
         tokenName,
         tokenBalance,
         truncatedTokenBalance,
         tokenAddress,
+        tokenHasIcon,
         errorMessage,
         showMax,
     }) => {
@@ -210,15 +212,15 @@ const Token = observer(
                 >
                     <IconAndNameContainer>
                         <TokenIcon
-                            src={TokenIconAddress(tokenAddress)}
+                            src={TokenIconAddress(tokenAddress, tokenHasIcon)}
                             onError={e => {
                                 IconError(e);
                             }}
                         />
-                        <TokenName>{tokenName}</TokenName>
+                        <TokenName>{tokenSymbol}</TokenName>
                     </IconAndNameContainer>
                     <TokenBalance>
-                        {truncatedTokenBalance} {tokenName}
+                        {truncatedTokenBalance} {tokenSymbol}
                     </TokenBalance>
                 </TokenContainer>
                 <InputWrapper errorBorders={errorMessage !== ''}>

@@ -6,10 +6,12 @@ import { useStores } from '../contexts/storesContext';
 const BuyToken = observer(
     ({
         inputName,
+        tokenSymbol,
         tokenName,
         tokenBalance,
         truncatedTokenBalance,
         tokenAddress,
+        tokenHasIcon,
         errorMessage,
         showMax,
     }) => {
@@ -38,10 +40,12 @@ const BuyToken = observer(
                 onChange={e => onChange(e)}
                 updateSwapFormData={updateSwapFormData}
                 inputName={inputName}
+                tokenSymbol={tokenSymbol}
                 tokenName={tokenName}
                 tokenBalance={tokenBalance}
                 truncatedTokenBalance={truncatedTokenBalance}
                 tokenAddress={tokenAddress}
+                tokenHasIcon={tokenHasIcon}
                 errorMessage={errorMessage}
                 showMax={false}
             />

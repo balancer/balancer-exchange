@@ -363,24 +363,28 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
             <RowContainer>
                 <SellToken
                     inputName="inputAmount"
-                    tokenName={swapFormStore.inputToken.symbol}
+                    tokenSymbol={swapFormStore.inputToken.symbol}
+                    tokenName={swapFormStore.inputToken.name}
                     tokenBalance={swapFormStore.inputToken.balanceFormatted}
                     truncatedTokenBalance={
                         swapFormStore.inputToken.balanceFormatted
                     }
-                    tokenAddress={swapFormStore.inputToken.iconAddress}
+                    tokenAddress={swapFormStore.inputToken.address}
+                    tokenHasIcon={swapFormStore.inputToken.hasIcon}
                     errorMessage={errorMessage}
                     showMax={!!account && !!swapFormStore.inputToken.balanceBn}
                 />
                 <Switch />
                 <BuyToken
                     inputName="outputAmount"
-                    tokenName={swapFormStore.outputToken.symbol}
+                    tokenSymbol={swapFormStore.outputToken.symbol}
+                    tokenName={swapFormStore.outputToken.name}
                     tokenBalance={swapFormStore.outputToken.balanceFormatted}
                     truncatedTokenBalance={
                         swapFormStore.outputToken.balanceFormatted
                     }
-                    tokenAddress={swapFormStore.outputToken.iconAddress}
+                    tokenAddress={swapFormStore.outputToken.address}
+                    tokenHasIcon={swapFormStore.outputToken.hasIcon}
                     errorMessage={errorMessage}
                     showMax={!!account && !!swapFormStore.outputToken.balanceBn}
                 />
