@@ -93,6 +93,7 @@ export default class SwapFormStore {
     @observable showLoader: boolean = false;
     account: string = '';
     rootStore: RootStore;
+    @observable isUrlLoaded: boolean;
 
     constructor(rootStore) {
         this.rootStore = rootStore;
@@ -120,30 +121,30 @@ export default class SwapFormStore {
             balanceBn: bnum(0),
             allowance: undefined,
         };
+
+        this.isUrlLoaded = false;
     }
 
-    @action setDefaultTokenAddresses(account) {
-        this.loadDefaultInputToken(account);
-        this.loadDefaultOutputToken(account);
+    private setDefaultTokenAddresses() {
+        this.loadDefaultInputToken();
+        this.loadDefaultOutputToken();
     }
 
-    @action loadDefaultInputToken(account) {
+    private loadDefaultInputToken() {
         const localInputTokenAddr = localStorage.getItem('inputToken');
 
-        if (localInputTokenAddr && account)
-            this.setSelectedInputTokenMetaData(localInputTokenAddr, account);
-        else this.setSelectedInputTokenMetaData('ether', account);
+        if (localInputTokenAddr) this.setInputAddress(localInputTokenAddr);
+        else this.setInputAddress('ether');
     }
 
-    @action loadDefaultOutputToken(account) {
+    private loadDefaultOutputToken() {
         const localOutputTokenAddr = localStorage.getItem('outputToken');
 
-        if (localOutputTokenAddr && account)
-            this.setSelectedOutputTokenMetaData(localOutputTokenAddr, account);
+        if (localOutputTokenAddr) this.setOutputAddress(localOutputTokenAddr);
         else {
             const { contractMetadataStore } = this.rootStore;
             const daiAddr = contractMetadataStore.getDaiAddress();
-            this.setSelectedOutputTokenMetaData(daiAddr, account);
+            this.setOutputAddress(daiAddr);
         }
     }
 
@@ -210,6 +211,10 @@ export default class SwapFormStore {
 
     isValidStatus(value: InputValidationStatus) {
         return value === InputValidationStatus.VALID;
+    }
+
+    getUrlLoaded(): boolean {
+        return this.isUrlLoaded;
     }
 
     @action setSlippageCell(value: number) {
@@ -704,26 +709,40 @@ export default class SwapFormStore {
         };
     }
 
-    @action updateSelectedTokenMetaData(account) {
-        console.log(`[SwapFormStore] updateSelectedTokenMetaData()`);
+    @action loadTokens(account) {
+        console.log(
+            `[SwapForm Store] LoadTokens ${this.inputToken.address} ${this.outputToken.address}`
+        );
+
         if (
             this.inputToken.address !== 'unknown' &&
             !isEmpty(this.inputToken.address)
         )
-            this.setSelectedInputTokenMetaData(
-                this.inputToken.address,
-                account
-            );
+            this.setInputToken(this.inputToken.address, account);
 
         if (
             this.outputToken.address !== 'unknown' &&
             !isEmpty(this.outputToken.address)
         )
-            this.setSelectedOutputTokenMetaData(
-                this.outputToken.address,
-                account
-            );
+            this.setOutputToken(this.outputToken.address, account);
     }
+
+    @action setUrlTokens = async (
+        inputTokenAddress: string,
+        outputTokenAddress: string,
+        account: any
+    ) => {
+        if (!this.isUrlLoaded && inputTokenAddress && outputTokenAddress) {
+            console.log(`[SwapForm Store] Setting Tokens From URL`);
+            this.setInputAddress(inputTokenAddress);
+            this.setOutputAddress(outputTokenAddress);
+        } else if (!this.isUrlLoaded) {
+            console.log(`[SwapForm] Setting Default/LocalStorage Tokens`);
+            this.setDefaultTokenAddresses();
+        }
+
+        this.isUrlLoaded = true;
+    };
 
     @action setInputAddress = async (inputTokenAddress: string) => {
         this.inputToken.address = inputTokenAddress;
@@ -733,89 +752,15 @@ export default class SwapFormStore {
         this.outputToken.address = outputTokenAddress;
     };
 
-    // Fetches and sets the input token metaData.
-    // Fetch will try stored whitelisted info and revert to on-chain if not available
-    // Also loads pool info for token
-    @action setSelectedInputTokenMetaData = async (
-        inputTokenAddress: string,
-        account: string
-    ) => {
-        this.inputToken.address = inputTokenAddress;
-        this.inputToken.hasIcon = false;
-
-        const {
-            contractMetadataStore,
-            assetOptionsStore,
-            tokenStore,
-        } = this.rootStore;
-
-        const filteredWhitelistedTokens = contractMetadataStore.getFilteredTokenMetadata(
-            inputTokenAddress
-        );
-
-        if (filteredWhitelistedTokens.length > 0) {
-            this.inputToken.symbol = filteredWhitelistedTokens[0].symbol;
-            this.inputToken.name = filteredWhitelistedTokens[0].name;
-            this.inputToken.decimals = filteredWhitelistedTokens[0].decimals;
-            this.inputToken.precision = filteredWhitelistedTokens[0].precision;
-            this.inputToken.hasIcon = filteredWhitelistedTokens[0].hasIcon;
-
-            let balanceBn;
-            if (inputTokenAddress !== EtherKey)
-                balanceBn = tokenStore.getBalance(
-                    toChecksum(inputTokenAddress),
-                    account
-                );
-            else balanceBn = tokenStore.getBalance(inputTokenAddress, account);
-
-            if (!balanceBn) balanceBn = bnum(0);
-
-            const userBalance = formatBalanceTruncated(
-                balanceBn,
-                filteredWhitelistedTokens[0].decimals,
-                filteredWhitelistedTokens[0].precision,
-                20
-            );
-
-            const proxyAddress = contractMetadataStore.getProxyAddress();
-            const userAllowance = tokenStore.getAllowance(
-                inputTokenAddress,
-                account,
-                proxyAddress
-            );
-            this.inputToken.allowance = userAllowance;
-            this.inputToken.balanceBn = balanceBn;
-            this.inputToken.balanceFormatted = userBalance;
-        } else {
-            const assetOptions = assetOptionsStore.tokenAssetData;
-            if (assetOptions) {
-                this.inputToken.symbol = assetOptions.symbol;
-                this.inputToken.name = assetOptions.name;
-                this.inputToken.hasIcon = assetOptions.hasIcon;
-                this.inputToken.balanceFormatted = assetOptions.userBalance;
-                this.inputToken.balanceBn = assetOptions.balanceBn;
-                this.inputToken.decimals = assetOptions.decimals;
-                this.inputToken.precision = 4;
-                this.inputToken.allowance = assetOptions.allowance;
-            }
-        }
-
-        console.log(`[SwapFormStore] InputToken`, this.inputToken);
-    };
-
-    @action setSelectedInputToken = async (
+    private setInputToken = async (
         inputTokenAddress: string,
         account: string
     ) => {
         console.log(
-            `[SwapFormStore] setSelectedInputToken: ${account} ${inputTokenAddress}`
+            `[SwapFormStore] setInputToken: ${inputTokenAddress} (Account: ${account})`
         );
 
-        const { contractMetadataStore } = this.rootStore;
-
         try {
-            await contractMetadataStore.addToken(inputTokenAddress, account);
-
             if (
                 inputTokenAddress === EtherKey &&
                 this.outputToken.address === EtherKey
@@ -825,16 +770,82 @@ export default class SwapFormStore {
                 this.resetTradeComposition();
                 return;
             }
+            const {
+                contractMetadataStore,
+                sorStore,
+                tokenStore,
+            } = this.rootStore;
 
-            const { sorStore } = this.rootStore;
+            // If token doesn't already exist in assets this will retrive on-chain info and store
+            await contractMetadataStore.addToken(inputTokenAddress, account);
 
             this.inputToken.address = inputTokenAddress;
             localStorage.setItem('inputToken', inputTokenAddress);
             this.account = account;
+            this.inputToken.hasIcon = false;
+
+            const filteredWhitelistedTokens = contractMetadataStore.getFilteredTokenMetadata(
+                inputTokenAddress
+            );
+
+            if (filteredWhitelistedTokens.length > 0) {
+                this.inputToken.symbol = filteredWhitelistedTokens[0].symbol;
+                this.inputToken.name = filteredWhitelistedTokens[0].name;
+                this.inputToken.decimals =
+                    filteredWhitelistedTokens[0].decimals;
+                this.inputToken.precision =
+                    filteredWhitelistedTokens[0].precision;
+                this.inputToken.hasIcon = filteredWhitelistedTokens[0].hasIcon;
+
+                let balanceBn;
+                if (inputTokenAddress !== EtherKey)
+                    balanceBn = tokenStore.getBalance(
+                        toChecksum(inputTokenAddress),
+                        account
+                    );
+                else
+                    balanceBn = tokenStore.getBalance(
+                        inputTokenAddress,
+                        account
+                    );
+
+                if (!balanceBn) balanceBn = bnum(0);
+
+                const userBalance = formatBalanceTruncated(
+                    balanceBn,
+                    filteredWhitelistedTokens[0].decimals,
+                    filteredWhitelistedTokens[0].precision,
+                    20
+                );
+
+                const proxyAddress = contractMetadataStore.getProxyAddress();
+                const userAllowance = tokenStore.getAllowance(
+                    inputTokenAddress,
+                    account,
+                    proxyAddress
+                );
+                this.inputToken.allowance = userAllowance;
+                this.inputToken.balanceBn = balanceBn;
+                this.inputToken.balanceFormatted = userBalance;
+            } else {
+                this.inputToken = {
+                    address: inputTokenAddress,
+                    symbol: 'unknown',
+                    name: 'unknown',
+                    decimals: 18,
+                    hasIcon: false,
+                    precision: 4,
+                    balanceFormatted: '0.00',
+                    balanceBn: bnum(0),
+                    allowance: undefined,
+                };
+            }
 
             // This uses SOR to get paths between in/out tokens. Quite intensive so loaded ASAP to be ready.
             // Required for when asset picker selects new tokens
             sorStore.fetchPathData(inputTokenAddress, this.outputToken.address);
+
+            console.log(`[SwapFormStore] InputToken Set: `, this.inputToken);
         } catch (err) {
             this.inputToken = {
                 address: inputTokenAddress,
@@ -851,86 +862,15 @@ export default class SwapFormStore {
         }
     };
 
-    // Fetches and sets the input token metaData.
-    // Fetch will try stored whitelisted info and revert to on-chain if not available
-    // Also loads pool info for token
-    @action setSelectedOutputTokenMetaData = async (
-        outputTokenAddress: string,
-        account: string
-    ) => {
-        this.outputToken.address = outputTokenAddress;
-        this.outputToken.hasIcon = false;
-
-        const {
-            contractMetadataStore,
-            assetOptionsStore,
-            tokenStore,
-        } = this.rootStore;
-
-        const filteredWhitelistedTokens = contractMetadataStore.getFilteredTokenMetadata(
-            outputTokenAddress
-        );
-        if (filteredWhitelistedTokens.length > 0) {
-            this.outputToken.symbol = filteredWhitelistedTokens[0].symbol;
-            this.outputToken.name = filteredWhitelistedTokens[0].name;
-            this.outputToken.decimals = filteredWhitelistedTokens[0].decimals;
-            this.outputToken.precision = filteredWhitelistedTokens[0].precision;
-            this.outputToken.hasIcon = filteredWhitelistedTokens[0].hasIcon;
-
-            let balanceBn;
-
-            if (outputTokenAddress !== EtherKey)
-                balanceBn = tokenStore.getBalance(
-                    toChecksum(outputTokenAddress),
-                    account
-                );
-            else balanceBn = tokenStore.getBalance(outputTokenAddress, account);
-
-            if (!balanceBn) balanceBn = bnum(0);
-
-            const userBalance = formatBalanceTruncated(
-                balanceBn,
-                filteredWhitelistedTokens[0].decimals,
-                filteredWhitelistedTokens[0].precision,
-                20
-            );
-            const proxyAddress = contractMetadataStore.getProxyAddress();
-            const userAllowance = tokenStore.getAllowance(
-                outputTokenAddress,
-                account,
-                proxyAddress
-            );
-            this.outputToken.allowance = userAllowance;
-            this.outputToken.balanceBn = balanceBn;
-            this.outputToken.balanceFormatted = userBalance;
-        } else {
-            const assetOptions = assetOptionsStore.tokenAssetData;
-            if (assetOptions) {
-                this.outputToken.symbol = assetOptions.symbol;
-                this.outputToken.name = assetOptions.name;
-                this.outputToken.hasIcon = assetOptions.hasIcon;
-                this.outputToken.balanceFormatted = assetOptions.userBalance;
-                this.outputToken.decimals = assetOptions.decimals;
-                this.outputToken.precision = 4;
-                this.outputToken.allowance = assetOptions.allowance;
-                this.inputToken.balanceBn = assetOptions.balanceBn;
-            }
-        }
-    };
-
-    @action setSelectedOutputToken = async (
+    private setOutputToken = async (
         outputTokenAddress: string,
         account: string
     ) => {
         console.log(
-            `[SwapFormStore] setSelectedOutputToken: ${account} ${outputTokenAddress}`
+            `[SwapFormStore] setOutputToken: ${outputTokenAddress} (Account: ${account})`
         );
 
-        const { contractMetadataStore } = this.rootStore;
-
         try {
-            await contractMetadataStore.addToken(outputTokenAddress, account);
-
             if (
                 outputTokenAddress === EtherKey &&
                 this.inputToken.address === EtherKey
@@ -940,15 +880,82 @@ export default class SwapFormStore {
                 this.resetTradeComposition();
                 return;
             }
+            const {
+                contractMetadataStore,
+                sorStore,
+                tokenStore,
+            } = this.rootStore;
 
-            const { sorStore } = this.rootStore;
+            // If token doesn't already exist in assets this will retrive on-chain info and store
+            await contractMetadataStore.addToken(outputTokenAddress, account);
 
             this.outputToken.address = outputTokenAddress;
             localStorage.setItem('outputToken', outputTokenAddress);
             this.account = account;
+            this.outputToken.hasIcon = false;
 
+            const filteredWhitelistedTokens = contractMetadataStore.getFilteredTokenMetadata(
+                outputTokenAddress
+            );
+
+            if (filteredWhitelistedTokens.length > 0) {
+                this.outputToken.symbol = filteredWhitelistedTokens[0].symbol;
+                this.outputToken.name = filteredWhitelistedTokens[0].name;
+                this.outputToken.decimals =
+                    filteredWhitelistedTokens[0].decimals;
+                this.outputToken.precision =
+                    filteredWhitelistedTokens[0].precision;
+                this.outputToken.hasIcon = filteredWhitelistedTokens[0].hasIcon;
+
+                let balanceBn;
+                if (outputTokenAddress !== EtherKey)
+                    balanceBn = tokenStore.getBalance(
+                        toChecksum(outputTokenAddress),
+                        account
+                    );
+                else
+                    balanceBn = tokenStore.getBalance(
+                        outputTokenAddress,
+                        account
+                    );
+
+                if (!balanceBn) balanceBn = bnum(0);
+
+                const userBalance = formatBalanceTruncated(
+                    balanceBn,
+                    filteredWhitelistedTokens[0].decimals,
+                    filteredWhitelistedTokens[0].precision,
+                    20
+                );
+
+                const proxyAddress = contractMetadataStore.getProxyAddress();
+                const userAllowance = tokenStore.getAllowance(
+                    outputTokenAddress,
+                    account,
+                    proxyAddress
+                );
+                this.outputToken.allowance = userAllowance;
+                this.outputToken.balanceBn = balanceBn;
+                this.outputToken.balanceFormatted = userBalance;
+            } else {
+                this.outputToken = {
+                    address: outputTokenAddress,
+                    symbol: 'unknown',
+                    name: 'unknown',
+                    decimals: 18,
+                    hasIcon: false,
+                    precision: 4,
+                    balanceFormatted: '0.00',
+                    balanceBn: bnum(0),
+                    allowance: undefined,
+                };
+            }
+
+            // This uses SOR to get paths between in/out tokens. Quite intensive so loaded ASAP to be ready.
             // Required for when asset picker selects new tokens
             sorStore.fetchPathData(this.inputToken.address, outputTokenAddress);
+
+            console.log(`[SwapFormStore] OutputToken Set: `, this.outputToken);
         } catch (err) {
             this.outputToken = {
                 address: outputTokenAddress,
@@ -961,7 +968,6 @@ export default class SwapFormStore {
                 balanceBn: bnum(0),
                 allowance: undefined,
             };
-
             this.setErrorMessage(err.message);
         }
     };

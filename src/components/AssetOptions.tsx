@@ -191,12 +191,9 @@ const AssetOptions = observer(() => {
             return;
         }
         if (assetModalState.input === 'inputAmount') {
-            swapFormStore.setSelectedInputTokenMetaData(token.address, account);
+            swapFormStore.setInputAddress(token.address);
         } else {
-            swapFormStore.setSelectedOutputTokenMetaData(
-                token.address,
-                account
-            );
+            swapFormStore.setOutputAddress(token.address);
         }
         clearInputs();
         swapFormStore.setAssetModalState({ open: false });

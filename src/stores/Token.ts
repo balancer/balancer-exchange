@@ -412,7 +412,7 @@ export default class TokenStore {
             );
             this.setDecimals(tokenList, decimalsList);
             console.log('[Token] fetchOnChainTokenDecimals Finished');
-            swapFormStore.updateSelectedTokenMetaData(undefined);
+            swapFormStore.loadTokens(undefined);
         } catch (e) {
             console.log('[Token] fetchOnChainTokenDecimals Error', {
                 error: e,

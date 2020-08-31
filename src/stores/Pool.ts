@@ -59,11 +59,18 @@ export default class PoolStore {
                 library
             );
 
-            sorStore.fetchPathData(
-                swapFormStore.inputToken.address,
-                swapFormStore.outputToken.address,
-                true
-            );
+            if (
+                swapFormStore.inputToken.address &&
+                swapFormStore.outputToken.address
+            ) {
+                console.log(`[Pool] Loading Path Data`);
+                sorStore.fetchPathData(
+                    swapFormStore.inputToken.address,
+                    swapFormStore.outputToken.address,
+                    true
+                );
+            }
+
             this.fetchingOnChain = false;
         }
     }
