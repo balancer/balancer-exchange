@@ -53,11 +53,17 @@ export default class PoolStore {
 
             const library = providerStore.providerStatus.library;
 
-            this.onChainPools = await getAllPoolDataOnChain(
-                this.poolsList,
-                contractMetadataStore.getMultiAddress(),
-                library
-            );
+            try {
+                this.onChainPools = await getAllPoolDataOnChain(
+                    this.poolsList,
+                    contractMetadataStore.getMultiAddress(),
+                    library
+                );
+            } catch (error) {
+                console.log(`[Pool] Error While Loading On-Chain Pools.`);
+                console.log(error.message);
+                this.onChainPools = { pools: [] };
+            }
 
             if (
                 swapFormStore.inputToken.address &&
