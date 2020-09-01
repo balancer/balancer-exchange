@@ -5,7 +5,7 @@ import * as helpers from 'utils/helpers';
 import { bnum, formatBalanceTruncated } from 'utils/helpers';
 import { FetchCode } from './Transaction';
 import { BigNumber } from 'utils/bignumber';
-import { MAX_UINT } from 'utils/helpers';
+import { MAX_UINT, isAddress } from 'utils/helpers';
 import { Interface } from 'ethers/utils';
 import * as ethers from 'ethers';
 
@@ -491,6 +491,15 @@ export default class TokenStore {
         account: string
     ): Promise<TokenMetadata> => {
         console.log(`[Token] fetchOnChainTokenMetadata: ${address} ${account}`);
+
+        // This is required as Asset selector search can pass in non-address
+        const checkSumAddr = isAddress(address);
+        if (!checkSumAddr) {
+            console.log(
+                `[Token] fetchOnChainTokenMetadata, not an address: ${address}`
+            );
+            throw new Error(`Incorrect Address Format.`);
+        }
 
         const { providerStore, contractMetadataStore } = this.rootStore;
 
