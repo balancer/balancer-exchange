@@ -10,7 +10,6 @@ import {
     processPaths,
     processEpsOfInterestMultiHop,
     smartOrderRouterMultiHopEpsOfInterest,
-    filterAllPools,
     getCostOutputToken,
 } from '@balancer-labs/sor';
 import { BigNumber } from '../utils/bignumber';
@@ -305,10 +304,8 @@ export default class SorStore {
         tokenIn = tokenIn.toLowerCase();
         tokenOut = tokenOut.toLowerCase();
 
-        let [, allPoolsNonZeroBalances] = filterAllPools(allPools);
-
         const directPools = await filterPoolsWithTokensDirect(
-            allPoolsNonZeroBalances,
+            allPools.pools,
             tokenIn,
             tokenOut
         );
@@ -319,7 +316,7 @@ export default class SorStore {
             mostLiquidPoolsSecondHop,
             hopTokens,
         ] = await filterPoolsWithTokensMultihop(
-            allPoolsNonZeroBalances,
+            allPools.pools,
             tokenIn,
             tokenOut
         );
