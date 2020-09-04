@@ -372,7 +372,6 @@ export default class SorStore {
         // console.log(`!!!!!!! COST: `, TokenAddr, TokenDecimals, GasPriceWei.toString(), SwapGasCost.toString())
         const cost = await getCostOutputToken(
             TokenAddr,
-            TokenDecimals,
             GasPriceWei,
             SwapGasCost,
             Provider

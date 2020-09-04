@@ -4,6 +4,7 @@ import { getAllPoolDataOnChain } from '@balancer-labs/sor';
 import { BigNumber } from 'utils/bignumber';
 import { toChecksum, scale, bnum, fromWei } from 'utils/helpers';
 import { getAllPublicSwapPools } from 'utils/subGraph';
+import { utils } from 'ethers';
 
 export interface Pool {
     id: string;
@@ -39,6 +40,28 @@ export default class PoolStore {
         }
     }
 
+    private convertToEthString(PoolsList) {
+        for (let i = 0; i < PoolsList.pools.length; i++) {
+            PoolsList.pools[i].swapFee = utils.formatEther(
+                PoolsList.pools[i].swapFee.toString()
+            );
+            PoolsList.pools[i].totalWeight = utils.formatEther(
+                PoolsList.pools[i].totalWeight.toString()
+            );
+            PoolsList.pools[i].tokens.forEach(token => {
+                token.balance = scale(
+                    bnum(token.balance),
+                    -token.decimals
+                ).toString();
+                token.denormWeight = utils.formatEther(
+                    token.denormWeight.toString()
+                );
+            });
+        }
+
+        return PoolsList;
+    }
+
     async fetchOnChainBalances() {
         const {
             providerStore,
@@ -54,11 +77,12 @@ export default class PoolStore {
             const library = providerStore.providerStatus.library;
 
             try {
-                this.onChainPools = await getAllPoolDataOnChain(
+                let poolsBn = await getAllPoolDataOnChain(
                     this.poolsList,
                     contractMetadataStore.getMultiAddress(),
                     library
                 );
+                this.onChainPools = this.convertToEthString(poolsBn); // SOR returns in BigNumber WEI format. Previous SubGraph format was using string/eth format
             } catch (error) {
                 console.log(`[Pool] Error While Loading On-Chain Pools.`);
                 console.log(error.message);
