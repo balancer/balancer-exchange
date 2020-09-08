@@ -4,7 +4,6 @@ import { getAllPoolDataOnChain } from '@balancer-labs/sor';
 import { BigNumber } from 'utils/bignumber';
 import { toChecksum, scale, bnum, fromWei } from 'utils/helpers';
 import { getAllPublicSwapPools } from 'utils/subGraph';
-import { utils } from 'ethers';
 
 export interface Pool {
     id: string;
