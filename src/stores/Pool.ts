@@ -19,7 +19,7 @@ export interface Pool {
 
 export default class PoolStore {
     @observable onChainPools: any;
-    poolsList: any;
+    private poolsList: any;
     rootStore: RootStore;
     fetchingOnChain: boolean;
 
@@ -40,28 +40,6 @@ export default class PoolStore {
         }
     }
 
-    private convertToEthString(PoolsList) {
-        for (let i = 0; i < PoolsList.pools.length; i++) {
-            PoolsList.pools[i].swapFee = utils.formatEther(
-                PoolsList.pools[i].swapFee.toString()
-            );
-            PoolsList.pools[i].totalWeight = utils.formatEther(
-                PoolsList.pools[i].totalWeight.toString()
-            );
-            PoolsList.pools[i].tokens.forEach(token => {
-                token.balance = scale(
-                    bnum(token.balance),
-                    -token.decimals
-                ).toString();
-                token.denormWeight = utils.formatEther(
-                    token.denormWeight.toString()
-                );
-            });
-        }
-
-        return PoolsList;
-    }
-
     async fetchOnChainBalances() {
         const {
             providerStore,
@@ -77,12 +55,11 @@ export default class PoolStore {
             const library = providerStore.providerStatus.library;
 
             try {
-                let poolsBn = await getAllPoolDataOnChain(
+                this.onChainPools = await getAllPoolDataOnChain(
                     this.poolsList,
                     contractMetadataStore.getMultiAddress(),
                     library
                 );
-                this.onChainPools = this.convertToEthString(poolsBn); // SOR returns in BigNumber WEI format. Previous SubGraph format was using string/eth format
             } catch (error) {
                 console.log(`[Pool] Error While Loading On-Chain Pools.`);
                 console.log(error.message);
