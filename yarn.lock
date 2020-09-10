@@ -1832,15 +1832,10 @@
     lodash "^4.17.19"
     to-fast-properties "^2.0.0"
 
-"@balancer-labs/sor@file:../balancer-sor":
-  version "0.4.0-4"
-  dependencies:
-    bignumber.js "^9.0.0"
-    ethers "4.0.48"
-    isomorphic-fetch "^2.2.1"
-
-"@balancer-labs/sor@file:/Users/jg/Documents/balancer-sor":
-  version "0.4.0-4"
+"@balancer-labs/sor@0.4.0-5":
+  version "0.4.0-5"
+  resolved "https://registry.yarnpkg.com/@balancer-labs/sor/-/sor-0.4.0-5.tgz#31ba91c916635520ff5bfbf374144e3740f3a551"
+  integrity sha512-wMdM9s8q1tyH+SVfs3pYGxeDUz7beYBi/bjdMEKw4fLFG8AIPVwDXGOARkSTGhK6SIh9fopxyKqoQmpRnd2xVg==
   dependencies:
     bignumber.js "^9.0.0"
     ethers "4.0.48"
