@@ -109,7 +109,7 @@ export default class ProviderStore {
         );
 
         // Makes sure the Input/Output token data is up to date
-        swapFormStore.updateSelectedTokenMetaData(account);
+        swapFormStore.loadTokens(account);
     };
 
     // account is optional

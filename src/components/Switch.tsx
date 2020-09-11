@@ -33,14 +33,16 @@ const Spinner = styled.img`
 
 const Switch = observer(() => {
     const {
-        root: { swapFormStore },
+        root: { swapFormStore, sorStore, tokenPanelStore },
     } = useStores();
 
     const switchAssets = () => {
         swapFormStore.switchInputOutputValues();
     };
 
-    const showLoader = swapFormStore.showLoader;
+    const showLoader =
+        (sorStore.isPathsLoading() && tokenPanelStore.isFocused()) ||
+        swapFormStore.showLoader;
 
     return (
         <Container>

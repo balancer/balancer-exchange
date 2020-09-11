@@ -27,12 +27,14 @@ export interface TokenMetadata {
 
 export default class ContractMetadataStore {
     @observable contractMetadata: ContractMetadata;
+    private tokensBeingLoaded: { [tokenAddr: string]: boolean };
     rootStore: RootStore;
 
     constructor(rootStore) {
         this.rootStore = rootStore;
         this.contractMetadata = {} as ContractMetadata;
         this.loadWhitelistedTokenMetadata();
+        this.tokensBeingLoaded = {};
     }
 
     // Take the data from the JSON and get it into the store, so we access it just like other data
@@ -67,7 +69,7 @@ export default class ContractMetadataStore {
     }
 
     async addToken(tokenAddr, account) {
-        const { tokenStore, swapFormStore } = this.rootStore;
+        const { tokenStore } = this.rootStore;
         const existingTokens = this.contractMetadata.tokens || undefined;
 
         if (tokenAddr === EtherKey) return;
@@ -78,13 +80,19 @@ export default class ContractMetadataStore {
         });
 
         if (isToken.length === 0) {
-            console.log(`Adding TOken: ${tokenAddr}`);
+            if (this.tokensBeingLoaded[tokenAddr]) {
+                return;
+            }
+            this.tokensBeingLoaded[tokenAddr] = true;
+            console.log(`[MetaData] Adding Token: ${tokenAddr}`);
             const tokenMetadata = await tokenStore.fetchOnChainTokenMetadata(
                 tokenAddr,
                 account
             );
 
-            console.log(`Allowance: ${tokenMetadata.allowance.toString()}`);
+            console.log(
+                `[MetaData] Allowance ${tokenAddr}: ${tokenMetadata.allowance.toString()}`
+            );
             tokenStore.setBalances(
                 [toChecksum(tokenAddr)],
                 [tokenMetadata.balanceBn],
@@ -109,8 +117,8 @@ export default class ContractMetadataStore {
                 isSupported: true,
                 allowance: tokenMetadata.allowance,
             });
-
-            swapFormStore.updateSelectedTokenMetaData(account);
+            this.tokensBeingLoaded[tokenAddr] = false;
+            console.log(`[MetaData] Token Added: ${tokenAddr}`);
         }
     }
 

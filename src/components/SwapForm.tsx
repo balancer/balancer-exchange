@@ -83,6 +83,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     const supportedChainId = getSupportedChainId();
     const account = providerStore.providerStatus.account;
     const chainId = getSupportedChainId();
+    const library = providerStore.providerStatus.library;
 
     if (!chainId) {
         // Review error message
@@ -90,34 +91,27 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     }
 
     useEffect(() => {
-        if (tokenIn) {
-            console.log(`[SwapForm] Using Input Token From URL: ${tokenIn}`);
-            swapFormStore.setInputAddress(tokenIn);
+        if (library) {
+            swapFormStore.setUrlTokens(tokenIn, tokenOut, account); // Doesn't matter if empty as want to set as checked on first load
         }
+    }, [tokenIn, tokenOut, swapFormStore, account, library]); // Want this to run when library is ready as needs on-chain info
 
-        if (tokenOut) {
-            console.log(`[SwapForm] Using Output Token From URL: ${tokenOut}`);
-            swapFormStore.setOutputAddress(tokenOut);
-        }
-    }, [tokenIn, tokenOut, swapFormStore, account]); // Only re-run the effect on token address change
-
-    // This loads all the token data after selection
+    // loadTokens uses store info and/or on-chain info to load token meta data.
+    // To keep UI responsive (i.e. asset selector selection) only address is updated which triggers loadTokens below
     const inputAddress = swapFormStore.inputToken.address;
-    useEffect(() => {
-        if (inputAddress !== '') {
-            console.log(`[SwapForm] Setting Input Token ${inputAddress}`);
-            swapFormStore.setSelectedInputToken(inputAddress, account);
-        }
-    }, [inputAddress, account, swapFormStore]); // Only re-run the effect on token address change
-
-    // This loads all the token data after selection
     const outputAddress = swapFormStore.outputToken.address;
+    const url = swapFormStore.getUrlLoaded();
+
     useEffect(() => {
-        if (outputAddress !== '') {
-            console.log(`[SwapForm] Setting Output Token ${outputAddress}`);
-            swapFormStore.setSelectedOutputToken(outputAddress, account);
+        // To save a duplicate token reload wait until URL token info is updated on first load
+        if (url && library) {
+            swapFormStore.loadTokens(account); // This will load all token meta data (from on-chain if required)
+        } else {
+            console.log(
+                `[SwapForm] Waiting For URL Check & Library Before Loading Tokens`
+            );
         }
-    }, [outputAddress, account, swapFormStore]); // Only re-run the effect on token address change
+    }, [inputAddress, outputAddress, account, swapFormStore, url, library]); // A token address change will trigger this
 
     const buttonActionHandler = (buttonState: ButtonState) => {
         switch (buttonState) {

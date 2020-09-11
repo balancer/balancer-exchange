@@ -83,7 +83,7 @@ export default class TransactionStore {
                             value.blockNumberChecked = currentBlock;
                             if (receipt) {
                                 value.receipt = receipt;
-                                poolStore.loadPoolsList();
+                                poolStore.fetchOnChainBalances();
                             }
                         })
                         .catch(() => {

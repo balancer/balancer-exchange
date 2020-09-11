@@ -1,24 +1,19 @@
-import { action } from 'mobx';
+import { action, observable } from 'mobx';
 import RootStore from 'stores/Root';
 import CostCalculator from '../utils/CostCalculator';
-import { bnum, fromWei, toChecksum } from 'utils/helpers';
+import { bnum, fromWei } from 'utils/helpers';
 import { EtherKey } from './Token';
 import {
     filterPoolsWithTokensDirect,
     filterPoolsWithTokensMultihop,
-    getTokenPairsMultiHop,
     parsePoolData,
     processPaths,
     processEpsOfInterestMultiHop,
     smartOrderRouterMultiHopEpsOfInterest,
-    filterAllPools,
     getCostOutputToken,
 } from '@balancer-labs/sor';
 import { BigNumber } from '../utils/bignumber';
 import { SwapMethods } from './SwapForm';
-import { TokenPairs } from './Pool';
-import ContractMetadataStore from './ContractMetadata';
-// import { calcInGivenOut } from '../utils/balancerCalcs';
 
 interface MultiSwap {
     pool: string;
@@ -41,34 +36,6 @@ export interface SorMultiSwap {
     sequence: MultiSwap[];
 }
 
-export const sorTokenPairs = async (
-    tokenAddress: string,
-    contractMetadataStore: ContractMetadataStore,
-    allPools: any[]
-): Promise<TokenPairs> => {
-    let [allTokensSet] = filterAllPools(allPools);
-    let [, allTokenPairs] = await getTokenPairsMultiHop(
-        tokenAddress.toLowerCase(),
-        allTokensSet
-    );
-    let tokenPairs: TokenPairs = new Set<string>();
-    const sanitizedWeth = toChecksum(contractMetadataStore.getWethAddress());
-    allTokenPairs.forEach(token => {
-        const sanitizedToken = toChecksum(token);
-
-        if (!tokenPairs.has(sanitizedToken)) {
-            tokenPairs.add(sanitizedToken);
-        }
-
-        // Add Ether along with WETH
-        if (sanitizedToken === sanitizedWeth && !tokenPairs.has(EtherKey)) {
-            tokenPairs.add(EtherKey);
-        }
-    });
-
-    return tokenPairs;
-};
-
 export default class SorStore {
     costCalculator: CostCalculator;
     private rootStore: RootStore;
@@ -80,6 +47,9 @@ export default class SorStore {
     noPools: number;
     costOutputToken: BigNumber;
     costInputToken: BigNumber;
+    @observable isLoadingPaths: boolean;
+    private lastInputToken: string;
+    private lastOutputToken: string;
 
     constructor(rootStore) {
         this.rootStore = rootStore;
@@ -96,10 +66,12 @@ export default class SorStore {
         this.noPools = Number(process.env.REACT_APP_MAX_POOLS || 4);
         this.costOutputToken = bnum(0);
         this.costInputToken = bnum(0);
-        // TODO: Should we fetchPathData on a timer incase user has window open without refreshing?
+        this.isLoadingPaths = true;
+        this.lastInputToken = '';
+        this.lastOutputToken = '';
     }
 
-    @action async fetchPathData(inputToken, outputToken) {
+    @action async fetchPathData(inputToken, outputToken, isRefresh = false) {
         const {
             contractMetadataStore,
             poolStore,
@@ -108,8 +80,27 @@ export default class SorStore {
             assetOptionsStore,
         } = this.rootStore;
 
-        if (inputToken !== '' && outputToken !== '') {
-            console.log(`[SOR] fetchPathData(${inputToken} ${outputToken})`);
+        if (
+            inputToken !== '' &&
+            outputToken !== '' &&
+            (this.lastInputToken !== inputToken ||
+                this.lastOutputToken !== outputToken ||
+                isRefresh)
+        ) {
+            this.isLoadingPaths = true;
+            if (poolStore.onChainPools.pools.length === 0) {
+                console.log(
+                    `[SOR] fetchPathData(${inputToken} ${outputToken}) Waiting For Pools To Load...`
+                );
+                return;
+            }
+
+            console.log(
+                `[SOR] fetchPathData(${inputToken} ${outputToken}) Loading Paths...`
+            );
+
+            this.lastInputToken = inputToken;
+            this.lastOutputToken = outputToken;
 
             // Use WETH address for Ether
             if (inputToken === EtherKey)
@@ -117,19 +108,6 @@ export default class SorStore {
 
             if (outputToken === EtherKey)
                 outputToken = contractMetadataStore.getWethAddress();
-
-            if (
-                poolStore.onChainPools.pools.length === 0 &&
-                poolStore.poolsList.pools.length === 0
-            ) {
-                console.log(
-                    `[SOR] fetchPathData, No Pools Loaded, Can't Fetch Paths`
-                );
-                return;
-            }
-
-            // Waits for on-chain pools to finish loading
-            await poolStore.onChainPoolsPromise;
 
             await this.getPathData(
                 poolStore.onChainPools,
@@ -206,6 +184,7 @@ export default class SorStore {
                 swapFormStore.inputs.swapMethod
             );
 
+            this.isLoadingPaths = false;
             console.log(`[SOR] fetchPathData() On-Chain Path Data Loaded`);
         }
     }
@@ -216,17 +195,6 @@ export default class SorStore {
         const { poolStore } = this.rootStore;
 
         let formattedSorSwaps: SorMultiSwap[] = [];
-
-        // let maxPrice = MAX_UINT.toString();
-        // let limitReturnAmount = '0';
-        // let limitReturnAmount = maxPrice;
-
-        // If subgraph has failed we must wait for on-chain balance info to be loaded.
-        if (poolStore.onChainPools.pools.length === 0) {
-            console.log(`[SOR] Backup - Must Wait For On-Chain Balances.`);
-            await poolStore.onChainPoolsPromise;
-            console.log(`[SOR] Backup - On-Chain Balances Loaded.`);
-        }
 
         let swapDebug = [];
 
@@ -328,7 +296,7 @@ export default class SorStore {
         );
     };
 
-    loadPathData = async (
+    private loadPathData = async (
         allPools: any,
         tokenIn: string,
         tokenOut: string
@@ -336,10 +304,8 @@ export default class SorStore {
         tokenIn = tokenIn.toLowerCase();
         tokenOut = tokenOut.toLowerCase();
 
-        let [, allPoolsNonZeroBalances] = filterAllPools(allPools);
-
         const directPools = await filterPoolsWithTokensDirect(
-            allPoolsNonZeroBalances,
+            allPools.pools,
             tokenIn,
             tokenOut
         );
@@ -350,7 +316,7 @@ export default class SorStore {
             mostLiquidPoolsSecondHop,
             hopTokens,
         ] = await filterPoolsWithTokensMultihop(
-            allPoolsNonZeroBalances,
+            allPools.pools,
             tokenIn,
             tokenOut
         );
@@ -406,7 +372,6 @@ export default class SorStore {
         // console.log(`!!!!!!! COST: `, TokenAddr, TokenDecimals, GasPriceWei.toString(), SwapGasCost.toString())
         const cost = await getCostOutputToken(
             TokenAddr,
-            TokenDecimals,
             GasPriceWei,
             SwapGasCost,
             Provider
@@ -414,4 +379,8 @@ export default class SorStore {
         console.log(`[SOR] costOutputToken: ${cost.toString()}`);
         return cost;
     };
+
+    isPathsLoading(): boolean {
+        return this.isLoadingPaths;
+    }
 }
