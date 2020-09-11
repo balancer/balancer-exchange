@@ -371,17 +371,9 @@ export default class ProxyStore {
                 contractMetadataStore,
                 poolStore,
                 sorStore,
-                swapFormStore,
             } = this.rootStore;
 
             this.setPreviewPending(true);
-
-            if (poolStore.onChainPools.pools.length === 0) {
-                swapFormStore.setSwapObjection('Waiting For Pools To Load');
-
-                swapFormStore.showLoader = true;
-                await poolStore.onChainPoolsPromise;
-            }
 
             const tokenAmountIn = scale(bnum(inputAmount), inputDecimals);
 
@@ -473,15 +465,7 @@ export default class ProxyStore {
                 contractMetadataStore,
                 poolStore,
                 sorStore,
-                swapFormStore,
             } = this.rootStore;
-
-            if (poolStore.onChainPools.pools.length === 0) {
-                swapFormStore.setSwapObjection('Waiting For Pools To Load');
-
-                swapFormStore.showLoader = true;
-                await poolStore.onChainPoolsPromise;
-            }
 
             const tokenAmountOut = scale(bnum(outputAmount), outputDecimals);
 
