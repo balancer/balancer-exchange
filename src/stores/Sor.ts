@@ -1,7 +1,7 @@
 import { action, observable } from 'mobx';
 import RootStore from 'stores/Root';
 import CostCalculator from '../utils/CostCalculator';
-import { bnum, fromWei } from 'utils/helpers';
+import { bnum } from 'utils/helpers';
 import { EtherKey } from './Token';
 import {
     filterPoolsWithTokensDirect,
@@ -212,9 +212,7 @@ export default class SorStore {
                 console.log(
                     `Swap:${i} Sequence:${j}, ${swap.pool}: ${swap.tokenIn}->${
                         swap.tokenOut
-                    } Amt:${fromWei(swap.swapAmount)} maxPrice:${
-                        swap.maxPrice
-                    } limitReturn:${swap.limitReturnAmount}`
+                    } Amt:${swap.swapAmount.toString()} maxPrice:${swap.maxPrice.toString()} limitReturn:${swap.limitReturnAmount.toString()}`
                 );
 
                 // Even if we use on-chain backup we need to get decimals from backup as not retrieved by SOR
