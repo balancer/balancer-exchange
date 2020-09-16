@@ -2,7 +2,7 @@ import { observable } from 'mobx';
 import RootStore from 'stores/Root';
 import { getAllPoolDataOnChain } from '@balancer-labs/sor';
 import { BigNumber } from 'utils/bignumber';
-import { toChecksum, scale, bnum, fromWei } from 'utils/helpers';
+import { toChecksum, fromWei } from 'utils/helpers';
 import { getAllPublicSwapPools } from 'utils/subGraph';
 
 export interface Pool {
@@ -119,26 +119,22 @@ export default class PoolStore {
                 id: toChecksum(pool.id),
                 decimalsIn: tI.decimals,
                 decimalsOut: tO.decimals,
-                balanceIn: scale(bnum(tI.balance), tI.decimals),
-                balanceOut: scale(bnum(tO.balance), tO.decimals),
-                weightIn: scale(
-                    bnum(tI.denormWeight).div(bnum(pool.totalWeight)),
-                    18
-                ),
-                weightOut: scale(
-                    bnum(tO.denormWeight).div(bnum(pool.totalWeight)),
-                    18
-                ),
-                swapFee: scale(bnum(pool.swapFee), 18),
+                balanceIn: tI.balance,
+                balanceOut: tO.balance,
+                weightIn: tI.denormWeight,
+                weightOut: tO.denormWeight,
+                swapFee: pool.swapFee,
             };
         }
 
         console.log(
-            `Pool ${obj.id}, BalIn: ${fromWei(
-                obj.balanceIn
-            )}, WeightIn: ${fromWei(obj.weightIn)}, BalOut: ${fromWei(
-                obj.balanceOut
-            )}, WeightOut: ${fromWei(obj.weightOut)}`
+            `Pool ${obj.id}, BalIn: ${obj.balanceIn.toString()} (${
+                obj.decimalsIn
+            }), WeightIn: ${fromWei(
+                obj.weightIn
+            )}, BalOut: ${obj.balanceOut.toString()} (${
+                obj.decimalsOut
+            }), WeightOut: ${fromWei(obj.weightOut)}`
         );
         return obj;
     };
