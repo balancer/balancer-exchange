@@ -233,9 +233,7 @@ export default class ProxyStore {
                 console.log(
                     `${sequence.pool}: ${sequence.tokenIn}->${
                         sequence.tokenOut
-                    }, Amt:${fromWei(sequence.swapAmount)} Limit:${fromWei(
-                        sequence.limitReturnAmount
-                    )} MaxPrice:${fromWei(sequence.maxPrice)}`
+                    }, Amt:${sequence.swapAmount.toString()} Limit:${sequence.limitReturnAmount.toString()})} MaxPrice:${sequence.maxPrice.toString()}`
                 );
             });
         });
@@ -304,8 +302,8 @@ export default class ProxyStore {
         const proxyAddress = contractMetadataStore.getProxyAddress();
 
         console.log(`batchSwapExactOut Swapping: ${tokenIn}->${tokenOut}`);
-        console.log(`Max In: ${fromWei(maxAmountIn)}`);
-        console.log(`Amt Out: ${tokenAmountOut.toString()}`);
+        console.log(`Max In: ${maxAmountIn.toString()} (${decimalsIn})`);
+        console.log(`Amt Out: ${tokenAmountOut.toString()} (${decimalsOut})`);
         console.log(`Swap sequences:`);
         // console.log(`Decimals In: ${decimalsIn}`);
         // console.log(`Decimals Out: ${decimalsOut}`);
@@ -315,9 +313,7 @@ export default class ProxyStore {
                 console.log(
                     `${sequence.pool}: ${sequence.tokenIn}->${
                         sequence.tokenOut
-                    }, Amt:${fromWei(sequence.swapAmount)} Limit:${fromWei(
-                        sequence.limitReturnAmount
-                    )} MaxPrice:${fromWei(sequence.maxPrice)}`
+                    }, Amt:${sequence.swapAmount.toString()} Limit:${sequence.limitReturnAmount.toString()} MaxPrice:${sequence.maxPrice.toString()}`
                 );
             });
         });
@@ -390,7 +386,7 @@ export default class ProxyStore {
             console.log(
                 `[SOR] findBestSwapsMultiEps: ${tokenInToFind} ${tokenOutToFind} ${
                     SwapMethods.EXACT_IN
-                } ${fromWei(tokenAmountIn)}`
+                } ${tokenAmountIn.toString()} ${inputDecimals}`
             );
 
             const [totalOutput, sorSwaps] = await sorStore.findBestSwapsMulti(
