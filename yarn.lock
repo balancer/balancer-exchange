@@ -1841,6 +1841,13 @@
     ethers "4.0.48"
     isomorphic-fetch "^2.2.1"
 
+"@balancer-labs/sor@file:/Users/jg/Documents/balancer-sor":
+  version "0.4.0-4"
+  dependencies:
+    bignumber.js "^9.0.0"
+    ethers "4.0.48"
+    isomorphic-fetch "^2.2.1"
+
 "@cnakazawa/watch@^1.0.3":
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/@cnakazawa/watch/-/watch-1.0.4.tgz#f864ae85004d0fcab6f50be9141c4da368d1656a"
