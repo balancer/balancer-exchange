@@ -66,7 +66,7 @@ export default function Transaction({ hash, pending }) {
         root: { providerStore },
     } = useStores();
 
-    const chainId = providerStore.providerStatus.chainId;
+    const chainId = providerStore.providerStatus.activeChainId;
 
     return (
         <TransactionWrapper key={hash}>
