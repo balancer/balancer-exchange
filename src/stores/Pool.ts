@@ -67,7 +67,8 @@ export default class PoolStore {
 
             if (
                 swapFormStore.inputToken.address &&
-                swapFormStore.outputToken.address
+                swapFormStore.outputToken.address &&
+                swapFormStore.isValidSwapPair
             ) {
                 console.log(`[Pool] Loading Path Data`);
                 sorStore.fetchPathData(
