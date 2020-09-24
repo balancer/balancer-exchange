@@ -94,6 +94,7 @@ export default class SwapFormStore {
     account: string = '';
     rootStore: RootStore;
     @observable isUrlLoaded: boolean;
+    @observable isValidSwapPair: boolean;
 
     constructor(rootStore) {
         this.rootStore = rootStore;
@@ -761,15 +762,6 @@ export default class SwapFormStore {
         );
 
         try {
-            if (
-                inputTokenAddress === EtherKey &&
-                this.outputToken.address === EtherKey
-            ) {
-                this.setErrorMessage('Please Select Alternative Pair');
-                this.setValidSwap(false);
-                this.resetTradeComposition();
-                return;
-            }
             const {
                 contractMetadataStore,
                 sorStore,
@@ -841,6 +833,30 @@ export default class SwapFormStore {
                 };
             }
 
+            if (inputTokenAddress === this.outputToken.address) {
+                this.setErrorMessage('Please Select Alternative Pair');
+                this.setValidSwap(false);
+                this.resetTradeComposition();
+                this.isValidSwapPair = false;
+                return;
+            }
+
+            let wethAddr = contractMetadataStore.getWethAddress();
+            if (
+                (inputTokenAddress === EtherKey ||
+                    inputTokenAddress === wethAddr) &&
+                (this.outputToken.address === EtherKey ||
+                    this.outputToken.address === wethAddr)
+            ) {
+                this.setErrorMessage('Please Wrap/Unwrap Eth Directly');
+                this.setValidSwap(false);
+                this.resetTradeComposition();
+                this.isValidSwapPair = false;
+                return;
+            }
+
+            this.isValidSwapPair = true;
+
             // This uses SOR to get paths between in/out tokens. Quite intensive so loaded ASAP to be ready.
             // Required for when asset picker selects new tokens
             sorStore.fetchPathData(inputTokenAddress, this.outputToken.address);
@@ -871,15 +887,6 @@ export default class SwapFormStore {
         );
 
         try {
-            if (
-                outputTokenAddress === EtherKey &&
-                this.inputToken.address === EtherKey
-            ) {
-                this.setErrorMessage('Please Select Alternative Pair');
-                this.setValidSwap(false);
-                this.resetTradeComposition();
-                return;
-            }
             const {
                 contractMetadataStore,
                 sorStore,
@@ -950,6 +957,31 @@ export default class SwapFormStore {
                     allowance: undefined,
                 };
             }
+
+            let wethAddr = contractMetadataStore.getWethAddress();
+
+            if (this.inputToken.address === outputTokenAddress) {
+                this.setErrorMessage('Please Select Alternative Pair');
+                this.setValidSwap(false);
+                this.resetTradeComposition();
+                this.isValidSwapPair = false;
+                return;
+            }
+
+            if (
+                (this.inputToken.address === EtherKey ||
+                    this.inputToken.address === wethAddr) &&
+                (outputTokenAddress === EtherKey ||
+                    outputTokenAddress === wethAddr)
+            ) {
+                this.setErrorMessage('Please Wrap/Unwrap Eth Directly');
+                this.setValidSwap(false);
+                this.resetTradeComposition();
+                this.isValidSwapPair = false;
+                return;
+            }
+
+            this.isValidSwapPair = true;
 
             // This uses SOR to get paths between in/out tokens. Quite intensive so loaded ASAP to be ready.
             // Required for when asset picker selects new tokens
