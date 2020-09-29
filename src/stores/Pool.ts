@@ -65,6 +65,14 @@ export default class PoolStore {
                 this.onChainPools = { pools: [] };
             }
 
+            if (!this.onChainPools) {
+                console.log(`[Pool] Issue While Loading On-Chain Pools.`);
+                this.onChainPools = { pools: [] };
+                swapFormStore.setErrorMessage(
+                    'Issue While Loading On-Chain Pool Data - Please Check Provider'
+                );
+            }
+
             if (
                 swapFormStore.inputToken.address &&
                 swapFormStore.outputToken.address &&
