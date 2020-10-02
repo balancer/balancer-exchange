@@ -199,6 +199,8 @@ const Token = observer(
         const modalType =
             inputName === 'inputAmount' ? ModalType.INPUT : ModalType.OUTPUT;
 
+        let isDisabled = !swapFormStore.isValidSwapPair;
+
         return (
             <Panel>
                 <PanelHeader>{headerText}</PanelHeader>
@@ -230,6 +232,7 @@ const Token = observer(
                         onFocus={onFocus}
                         onBlur={onBlur}
                         placeholder="0"
+                        disabled={isDisabled}
                     />
                     {(tokenAddress === EtherKey &&
                         modalType === ModalType.INPUT) ||

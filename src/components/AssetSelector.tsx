@@ -124,14 +124,20 @@ const AssetSelector = observer(() => {
         if (inputRef !== null) inputRef.current.focus();
     });
 
-    useOnClickOutside(ref, () =>
-        swapFormStore.setAssetModalState({ open: false })
-    );
+    useOnClickOutside(ref, () => {
+        closeModal();
+    });
 
     const { assetModalState } = swapFormStore;
 
-    const onChange = async event => {
-        swapFormStore.setAssetSelectFilter(event.target.value);
+    const onChange = value => {
+        swapFormStore.setAssetSelectFilter(value);
+    };
+
+    const closeModal = () => {
+        swapFormStore.setAssetModalState({ open: false });
+        inputRef.current.value = '';
+        onChange('');
     };
 
     return (
@@ -144,17 +150,13 @@ const AssetSelector = observer(() => {
                             ? `Sell for ${swapFormStore.outputToken.symbol}`
                             : `Buy with ${swapFormStore.inputToken.symbol}`}
                     </HeaderContent>
-                    <ExitComponent
-                        onClick={() => {
-                            swapFormStore.setAssetModalState({ open: false });
-                        }}
-                    >
+                    <ExitComponent onClick={() => closeModal()}>
                         +
                     </ExitComponent>
                 </AssetSelectorHeader>
                 <InputContainer>
                     <input
-                        onChange={e => onChange(e)}
+                        onChange={e => onChange(e.target.value)}
                         placeholder="Search Token Name, Symbol, or Address"
                         ref={inputRef}
                     />

@@ -1832,10 +1832,10 @@
     lodash "^4.17.19"
     to-fast-properties "^2.0.0"
 
-"@balancer-labs/sor@0.4.0-5":
-  version "0.4.0-5"
-  resolved "https://registry.yarnpkg.com/@balancer-labs/sor/-/sor-0.4.0-5.tgz#31ba91c916635520ff5bfbf374144e3740f3a551"
-  integrity sha512-wMdM9s8q1tyH+SVfs3pYGxeDUz7beYBi/bjdMEKw4fLFG8AIPVwDXGOARkSTGhK6SIh9fopxyKqoQmpRnd2xVg==
+"@balancer-labs/sor@0.4.0-6":
+  version "0.4.0-6"
+  resolved "https://registry.yarnpkg.com/@balancer-labs/sor/-/sor-0.4.0-6.tgz#2c0d52b6ca58785c493f17b18f86aa614408f7e7"
+  integrity sha512-Dsmd9InSmt2JMGjZu9urwwTDrd4BY7NMO5uwuLMXQLfCgnK5BCKosOpYjPBDn4VV/9+UeseWApcjKV5HJ55zHA==
   dependencies:
     bignumber.js "^9.0.0"
     ethers "4.0.48"

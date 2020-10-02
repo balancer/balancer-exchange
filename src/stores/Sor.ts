@@ -302,7 +302,7 @@ export default class SorStore {
         tokenIn = tokenIn.toLowerCase();
         tokenOut = tokenOut.toLowerCase();
 
-        const directPools = await filterPoolsWithTokensDirect(
+        const directPools = filterPoolsWithTokensDirect(
             allPools.pools,
             tokenIn,
             tokenOut
@@ -313,11 +313,7 @@ export default class SorStore {
             mostLiquidPoolsFirstHop,
             mostLiquidPoolsSecondHop,
             hopTokens,
-        ] = await filterPoolsWithTokensMultihop(
-            allPools.pools,
-            tokenIn,
-            tokenOut
-        );
+        ] = filterPoolsWithTokensMultihop(allPools.pools, tokenIn, tokenOut);
 
         let pools, pathData;
         [pools, pathData] = parsePoolData(
