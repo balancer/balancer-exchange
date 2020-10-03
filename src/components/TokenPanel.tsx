@@ -5,6 +5,7 @@ import { EtherKey } from '../stores/Token';
 import { ModalType } from '../stores/SwapForm';
 import { observer } from 'mobx-react';
 import { useStores } from '../contexts/storesContext';
+import logos from '../utils/logos.json';
 
 const Panel = styled.div`
     width: 180px;
@@ -53,6 +54,8 @@ const IconAndNameContainer = styled.div`
 `;
 
 export const TokenIconAddress = (address, hasIcon) => {
+    if (logos.includes(address.toLowerCase()))
+        return `https://raw.githubusercontent.com/balancer-labs/assets/master/assets/${address.toLowerCase()}.png`;
     if (address === 'ether') {
         return `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/info/logo.png`;
     } else if (!hasIcon) {
