@@ -70,6 +70,7 @@ export const TokenIconAddress = (address, hasIcon) => {
 const TokenIcon = styled.img`
     width: 28px;
     height: 28px;
+    border-radius: 14px;
     margin-right: 12px;
 `;
 
