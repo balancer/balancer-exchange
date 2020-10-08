@@ -1,5 +1,5 @@
-import registry from 'assets/generated/dex/registry.homestead.json';
-import registryKovan from 'assets/generated/dex/registry.kovan.json';
+import registry from '@balancer-labs/assets/generated/dex/registry.homestead.json';
+import registryKovan from '@balancer-labs/assets/generated/dex/registry.kovan.json';
 import { getSupportedChainName } from '../provider/connectors';
 
 function getContracts(chainName: string) {
