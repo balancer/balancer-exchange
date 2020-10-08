@@ -6,6 +6,7 @@ import { EtherKey } from '../stores/Token';
 import { ModalType } from '../stores/SwapForm';
 import { observer } from 'mobx-react';
 import { useStores } from '../contexts/storesContext';
+import logos from '../utils/logos.json';
 
 const Panel = styled.div`
     width: 180px;
