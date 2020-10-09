@@ -72,6 +72,7 @@ const TokenIcon = styled.img`
     height: 28px;
     border-radius: 14px;
     margin-right: 12px;
+    background-color: white;
 `;
 
 const TokenName = styled.div`
