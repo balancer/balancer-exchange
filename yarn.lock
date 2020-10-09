@@ -1832,9 +1832,9 @@
     lodash "^4.17.19"
     to-fast-properties "^2.0.0"
 
-"@balancer-labs/assets@github:balancer-labs/assets":
+"@balancer-labs/assets@github:balancer-labs/assets#master":
   version "1.0.0"
-  resolved "https://codeload.github.com/balancer-labs/assets/tar.gz/8998629180bc8e1846c9b528a38f6abdf2dc47c5"
+  resolved "https://codeload.github.com/balancer-labs/assets/tar.gz/master"
 
 "@balancer-labs/sor@0.4.0-6":
   version "0.4.0-6"
