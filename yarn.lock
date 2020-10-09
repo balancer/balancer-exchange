@@ -1834,7 +1834,7 @@
 
 "@balancer-labs/assets@github:balancer-labs/assets#master":
   version "1.0.0"
-  resolved "https://codeload.github.com/balancer-labs/assets/tar.gz/a8e16c793c1c7fe48e68e3119ac6a7d5012caf98"
+  resolved "https://codeload.github.com/balancer-labs/assets/tar.gz/master"
 
 "@balancer-labs/sor@0.4.0-6":
   version "0.4.0-6"
