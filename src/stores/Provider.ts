@@ -173,6 +173,9 @@ export default class ProviderStore {
             account
         );
 
+        console.log('Raw Swap Log Data Below');
+        console.log(JSON.stringify(params));
+
         const response = await sendAction({
             contract,
             action,
