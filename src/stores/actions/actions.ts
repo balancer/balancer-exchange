@@ -1,5 +1,6 @@
 import { Contract } from 'ethers';
 import { TransactionResponse } from 'ethers/providers';
+import { setGoal } from '../../utils/fathom';
 
 interface ActionRequest {
     contract: Contract;
@@ -56,6 +57,7 @@ export const sendAction = async (
 
     try {
         actionResponse.txResponse = await contract[action](...data, overrides);
+        actionResponse.txResponse.wait().then(() => setGoal(action));
     } catch (e) {
         actionResponse.error = e;
     }
