@@ -1,12 +1,18 @@
 import { action, observable } from 'mobx';
+import { BigNumber } from 'utils/bignumber';
 import RootStore from 'stores/Root';
 
 interface Asset {
     address: string;
-    iconAddress: string;
     symbol: string;
+    name: string;
+    hasIcon: boolean;
     userBalance: string;
     isTradable: boolean;
+    decimals: number;
+    precision: number;
+    allowance: BigNumber;
+    balanceBn: BigNumber;
 }
 
 export default class AssetOptions {
@@ -31,10 +37,15 @@ export default class AssetOptions {
 
             this.tokenAssetData = {
                 address: tokenMetadata.address,
-                iconAddress: tokenMetadata.iconAddress,
                 symbol: tokenMetadata.symbol,
+                name: tokenMetadata.name,
+                hasIcon: tokenMetadata.hasIcon,
                 userBalance: tokenMetadata.balanceFormatted,
                 isTradable: true,
+                decimals: tokenMetadata.decimals,
+                precision: tokenMetadata.precision,
+                allowance: tokenMetadata.allowance,
+                balanceBn: tokenMetadata.balanceBn,
             };
         } catch (err) {
             this.tokenAssetData = undefined;

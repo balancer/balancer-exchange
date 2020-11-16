@@ -16,8 +16,12 @@ import { useStores } from '../contexts/storesContext';
 import { ErrorIds } from '../stores/Error';
 import { BigNumber } from 'utils/bignumber';
 import { getSupportedChainId } from '../provider/connectors';
-import { calcMaxAmountIn, calcMinAmountOut } from '../utils/sorWrapper';
-import { ExactAmountInPreview, ExactAmountOutPreview } from '../stores/Proxy';
+import {
+    ExactAmountInPreview,
+    ExactAmountOutPreview,
+    calcMaxAmountIn,
+    calcMinAmountOut,
+} from '../stores/Proxy';
 
 const RowContainer = styled.div`
     font-family: var(--roboto);
@@ -79,6 +83,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     const supportedChainId = getSupportedChainId();
     const account = providerStore.providerStatus.account;
     const chainId = getSupportedChainId();
+    const library = providerStore.providerStatus.library;
 
     if (!chainId) {
         // Review error message
@@ -86,24 +91,27 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
     }
 
     useEffect(() => {
-        if (tokenIn && isEmpty(swapFormStore.inputToken.address)) {
-            console.log(`[SwapForm] Using Input Token From URL: ${tokenIn}`);
-            swapFormStore.setSelectedInputToken(tokenIn, account);
-        } else if (isEmpty(swapFormStore.inputToken.address)) {
-            console.log(`[SwapForm] No Input Token Selected, Loading Default.`);
-            swapFormStore.loadDefaultInputToken(account);
+        if (library) {
+            swapFormStore.setUrlTokens(tokenIn, tokenOut, account); // Doesn't matter if empty as want to set as checked on first load
         }
+    }, [tokenIn, tokenOut, swapFormStore, account, library]); // Want this to run when library is ready as needs on-chain info
 
-        if (tokenOut && isEmpty(swapFormStore.outputToken.address)) {
-            console.log(`[SwapForm] Using Output Token From URL: ${tokenOut}`);
-            swapFormStore.setSelectedOutputToken(tokenOut, account);
-        } else if (isEmpty(swapFormStore.outputToken.address)) {
+    // loadTokens uses store info and/or on-chain info to load token meta data.
+    // To keep UI responsive (i.e. asset selector selection) only address is updated which triggers loadTokens below
+    const inputAddress = swapFormStore.inputToken.address;
+    const outputAddress = swapFormStore.outputToken.address;
+    const url = swapFormStore.getUrlLoaded();
+
+    useEffect(() => {
+        // To save a duplicate token reload wait until URL token info is updated on first load
+        if (url && library) {
+            swapFormStore.loadTokens(account); // This will load all token meta data (from on-chain if required)
+        } else {
             console.log(
-                `[SwapForm] No Output Token Selected, Loading Default.`
+                `[SwapForm] Waiting For URL Check & Library Before Loading Tokens`
             );
-            swapFormStore.loadDefaultOutputToken(account);
         }
-    }, [tokenIn, tokenOut, swapFormStore, account]); // Only re-run the effect on token address change
+    }, [inputAddress, outputAddress, account, swapFormStore, url, library]); // A token address change will trigger this
 
     const buttonActionHandler = (buttonState: ButtonState) => {
         switch (buttonState) {
@@ -169,6 +177,7 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                 spotInput,
                 expectedSlippage,
                 swaps,
+                totalInput,
             } = swapFormStore.preview as ExactAmountOutPreview;
 
             const maxAmountIn = calcMaxAmountIn(
@@ -176,10 +185,12 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
                 expectedSlippage.plus(extraSlippageAllowance)
             );
 
+            let maxIn = maxAmountIn.gt(totalInput) ? maxAmountIn : totalInput;
+
             await proxyStore.batchSwapExactOut(
                 swaps,
                 swapFormStore.inputToken.address,
-                maxAmountIn,
+                maxIn, //totalInput, //maxAmountIn,
                 swapFormStore.inputToken.decimals,
                 swapFormStore.outputToken.address,
                 bnum(outputAmount),
@@ -338,29 +349,29 @@ const SwapForm = observer(({ tokenIn, tokenOut }) => {
             <AssetSelector />
             <RowContainer>
                 <SellToken
-                    key="122"
-                    inputID="amount-in"
                     inputName="inputAmount"
-                    tokenName={swapFormStore.inputToken.symbol}
+                    tokenSymbol={swapFormStore.inputToken.symbol}
+                    tokenName={swapFormStore.inputToken.name}
                     tokenBalance={swapFormStore.inputToken.balanceFormatted}
                     truncatedTokenBalance={
                         swapFormStore.inputToken.balanceFormatted
                     }
-                    tokenAddress={swapFormStore.inputToken.iconAddress}
+                    tokenAddress={swapFormStore.inputToken.address}
+                    tokenHasIcon={swapFormStore.inputToken.hasIcon}
                     errorMessage={errorMessage}
                     showMax={!!account && !!swapFormStore.inputToken.balanceBn}
                 />
                 <Switch />
                 <BuyToken
-                    key="123"
-                    inputID="amount-out"
                     inputName="outputAmount"
-                    tokenName={swapFormStore.outputToken.symbol}
+                    tokenSymbol={swapFormStore.outputToken.symbol}
+                    tokenName={swapFormStore.outputToken.name}
                     tokenBalance={swapFormStore.outputToken.balanceFormatted}
                     truncatedTokenBalance={
                         swapFormStore.outputToken.balanceFormatted
                     }
-                    tokenAddress={swapFormStore.outputToken.iconAddress}
+                    tokenAddress={swapFormStore.outputToken.address}
+                    tokenHasIcon={swapFormStore.outputToken.hasIcon}
                     errorMessage={errorMessage}
                     showMax={!!account && !!swapFormStore.outputToken.balanceBn}
                 />

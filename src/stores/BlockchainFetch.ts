@@ -12,7 +12,11 @@ export default class BlockchainFetchStore {
     }
 
     @action blockchainFetch(accountSwitchOverride?: boolean) {
-        const { providerStore } = this.rootStore;
+        const {
+            providerStore,
+            tokenStore,
+            contractMetadataStore,
+        } = this.rootStore;
 
         const active = providerStore.providerStatus.active;
         const chainId = providerStore.providerStatus.activeChainId;
@@ -31,10 +35,14 @@ export default class BlockchainFetchStore {
 
                     if (doFetch) {
                         console.log('[Fetch Loop] Fetch Blockchain Data', {
+                            lastCheckedBlock,
                             blockNumber,
                             chainId,
                             account,
                         });
+
+                        // Using on-chain balances. These may change so need to be updated.
+                        // poolStore.fetchOnchainPools();
 
                         // Set block number
                         providerStore.setCurrentBlockNumber(blockNumber);
@@ -55,6 +63,10 @@ export default class BlockchainFetchStore {
                                 .catch(e => {
                                     console.log(e);
                                 });
+                        } else {
+                            tokenStore.fetchOnChainTokenDecimals(
+                                contractMetadataStore.getTrackedTokenAddresses()
+                            );
                         }
                     }
                 })

@@ -125,6 +125,14 @@ const PieChartWrapper = styled.div`
     height: 96px;
 `;
 
+const Arrow = styled.div`
+    color: var(--highlighted-selector-background);
+    margin-left: 16px;
+    font-family: var(--roboto);
+    font-size: 20px;
+    font-weight: 900;
+`;
+
 const TradeComposition = observer(() => {
     const {
         root: { swapFormStore },
@@ -199,6 +207,58 @@ const TradeComposition = observer(() => {
         }
     };
 
+    const renderAddress = swap => {
+        if (swap.isOthers) {
+            return <Address>Others</Address>;
+        }
+        if (swap.noPools === 1) {
+            return (
+                <Address>
+                    <AddressLink
+                        href={getEtherscanLink(
+                            supportedChainId,
+                            swap.firstPoolAddress,
+                            'address'
+                        )}
+                        target="_blank"
+                    >
+                        {toAddressStub(swap.firstPoolAddress)}
+                    </AddressLink>
+                </Address>
+            );
+        } else if (swap.noPools === 2) {
+            return (
+                <>
+                    <Address>
+                        <AddressLink
+                            href={getEtherscanLink(
+                                supportedChainId,
+                                swap.firstPoolAddress,
+                                'address'
+                            )}
+                            target="_blank"
+                        >
+                            {toAddressStub(swap.firstPoolAddress)}
+                        </AddressLink>
+                    </Address>
+                    <Arrow>></Arrow>
+                    <Address>
+                        <AddressLink
+                            href={getEtherscanLink(
+                                supportedChainId,
+                                swap.secondPoolAddress,
+                                'address'
+                            )}
+                            target="_blank"
+                        >
+                            {toAddressStub(swap.secondPoolAddress)}
+                        </AddressLink>
+                    </Address>
+                </>
+            );
+        }
+    };
+
     const renderChartRows = (chartData: ChartData, formatting) => {
         if (chartData.validSwap) {
             return chartData.swaps.map((swap, index) => {
@@ -208,22 +268,8 @@ const TradeComposition = observer(() => {
                             <BulletPoint
                                 color={formatting.borderColor[index]}
                             />
-                            <Address>
-                                {swap.isOthers ? (
-                                    'Others'
-                                ) : (
-                                    <AddressLink
-                                        href={getEtherscanLink(
-                                            supportedChainId,
-                                            swap.poolAddress,
-                                            'address'
-                                        )}
-                                        target="_blank"
-                                    >
-                                        {toAddressStub(swap.poolAddress)}
-                                    </AddressLink>
-                                )}
-                            </Address>
+
+                            {renderAddress(swap)}
                         </AddressAndBullet>
                         <Percentage>{swap.percentage}%</Percentage>
                     </PoolLine>
@@ -321,8 +367,8 @@ const TradeComposition = observer(() => {
                 style={{ display: tradeCompositionOpen ? 'flex' : 'none' }}
             >
                 <CompositionTitle>
-                    Your order has been optimized using {chartData.swaps.length}{' '}
-                    Balancer pool{chartData.swaps.length > 1 ? 's' : ''} 🎉
+                    Your order has been optimized using {chartData.noPools}{' '}
+                    Balancer pool{chartData.noPools > 1 ? 's' : ''} 🎉
                 </CompositionTitle>
                 <PoolLineContainer>
                     {renderChartRows(chartData, formatting)}

@@ -4,7 +4,6 @@ import { TokenIconAddress } from './TokenPanel';
 import { useStores } from '../contexts/storesContext';
 import { bnum, formatBalanceTruncated, isEmpty } from 'utils/helpers';
 import { isChainIdSupported } from '../provider/connectors';
-import { ModalType } from '../stores/SwapForm';
 import { observer } from 'mobx-react';
 
 const AssetPanelContainer = styled.div`
@@ -45,6 +44,7 @@ const AssetWrapper = styled.div`
 const TokenIcon = styled.img`
     width: 28px;
     height: 28px;
+    border-radius: 14px;
     margin-right: 12px;
 `;
 
@@ -65,17 +65,17 @@ const TokenBalance = styled.div`
     margin-top: 12px;
 `;
 
-const NoPool = styled.div`
+const ErrorLabel = styled.div`
     margin-left: 5px;
     color: var(--error-color);
 `;
 
 interface Asset {
     address: string;
-    iconAddress: string;
     symbol: string;
+    name: string;
+    hasIcon: boolean;
     userBalance: string;
-    isTradable: boolean;
 }
 
 const AssetOptions = observer(() => {
@@ -87,7 +87,6 @@ const AssetOptions = observer(() => {
             contractMetadataStore,
             swapFormStore,
             tokenStore,
-            poolStore,
             assetOptionsStore,
         },
     } = useStores();
@@ -95,8 +94,7 @@ const AssetOptions = observer(() => {
     const account = providerStore.providerStatus.account;
     const chainId = providerStore.providerStatus.activeChainId;
 
-    const { assetModalState } = swapFormStore;
-    const assetSelectFilter = assetModalState.input;
+    const { assetSelectFilter, assetModalState } = swapFormStore;
 
     useEffect(() => {
         if (!isEmpty(assetSelectFilter))
@@ -107,20 +105,10 @@ const AssetOptions = observer(() => {
         const filteredWhitelistedTokens = contractMetadataStore.getFilteredTokenMetadata(
             filter
         );
+        // filteredWhitelistedTokens.forEach(token => console.log(token))
 
         let assetSelectorData: Asset[] = [];
         let userBalances = {};
-        let tradableTokens;
-
-        if (assetModalState.type === ModalType.INPUT) {
-            tradableTokens = poolStore.getTokenPairs(
-                swapFormStore.outputToken.address
-            );
-        } else {
-            tradableTokens = poolStore.getTokenPairs(
-                swapFormStore.inputToken.address
-            );
-        }
 
         if (account && isChainIdSupported(chainId)) {
             userBalances = tokenStore.getAccountBalances(
@@ -141,12 +129,10 @@ const AssetOptions = observer(() => {
 
             return {
                 address: value.address,
-                iconAddress: value.iconAddress,
                 symbol: value.symbol,
+                name: value.name,
+                hasIcon: value.hasIcon,
                 userBalance: userBalance,
-                isTradable: tradableTokens
-                    ? tradableTokens.has(value.address)
-                    : false,
             };
         });
 
@@ -155,26 +141,30 @@ const AssetOptions = observer(() => {
 
     const sortAssetOptions = (assets: Asset[], account) => {
         const manualToken = assetOptionsStore.tokenAssetData;
-        if (manualToken) assets.push(manualToken);
+
+        if (manualToken) {
+            if (
+                !assets.find(
+                    asset =>
+                        asset.address.toLowerCase() ===
+                        manualToken.address.toLowerCase()
+                )
+            ) {
+                assets.push(manualToken);
+            }
+        }
 
         const buckets = {
             tradableWithBalance: [] as Asset[],
             tradableWithoutBalance: [] as Asset[],
-            notTradableWithBalance: [] as Asset[],
-            notTradableWithoutBalance: [] as Asset[],
         };
         assets.forEach(asset => {
-            const isTradable = asset.isTradable;
             const hasBalance = account && bnum(asset.userBalance).gt(0);
 
-            if (isTradable && hasBalance) {
+            if (hasBalance) {
                 buckets.tradableWithBalance.push(asset);
-            } else if (isTradable && !hasBalance) {
+            } else if (!hasBalance) {
                 buckets.tradableWithoutBalance.push(asset);
-            } else if (!isTradable && hasBalance) {
-                buckets.notTradableWithBalance.push(asset);
-            } else if (!isTradable && !hasBalance) {
-                buckets.notTradableWithoutBalance.push(asset);
             }
         });
 
@@ -182,8 +172,6 @@ const AssetOptions = observer(() => {
         return [
             ...buckets.tradableWithBalance,
             ...buckets.tradableWithoutBalance,
-            ...buckets.notTradableWithBalance,
-            ...buckets.notTradableWithoutBalance,
         ];
     };
 
@@ -200,21 +188,21 @@ const AssetOptions = observer(() => {
     };
 
     const selectAsset = token => {
-        if (assetModalState.type === ModalType.INPUT) {
-            swapFormStore.setSelectedInputToken(token.address, account);
+        if (isUntrustedToken(token.address)) {
+            return;
+        }
+        if (assetModalState.input === 'inputAmount') {
+            swapFormStore.setInputAddress(token.address);
         } else {
-            swapFormStore.setSelectedOutputToken(token.address, account);
+            swapFormStore.setOutputAddress(token.address);
         }
         clearInputs();
-        swapFormStore.closeModal();
+        swapFormStore.setAssetModalState({ open: false });
     };
 
-    const TradableToken = ({ isTradable }) => {
-        if (isTradable) {
-            return <div />;
-        } else {
-            return <NoPool>No Pool</NoPool>;
-        }
+    const isUntrustedToken = (address): boolean => {
+        const untrustedTokens = contractMetadataStore.getUntrustedTokens();
+        return untrustedTokens.includes(address);
     };
 
     const IconError = e => {
@@ -232,7 +220,7 @@ const AssetOptions = observer(() => {
                 >
                     <AssetWrapper>
                         <TokenIcon
-                            src={TokenIconAddress(token.iconAddress)}
+                            src={TokenIconAddress(token.address, token.hasIcon)}
                             onError={e => {
                                 IconError(e);
                             }}
@@ -241,7 +229,11 @@ const AssetOptions = observer(() => {
                     </AssetWrapper>
                     <TokenBalance>
                         {token.userBalance + ' ' + token.symbol}
-                        <TradableToken isTradable={token.isTradable} />
+                        {isUntrustedToken(token.address) ? (
+                            <ErrorLabel>Bad ERC20</ErrorLabel>
+                        ) : (
+                            <div />
+                        )}
                     </TokenBalance>
                 </AssetPanel>
             ))}

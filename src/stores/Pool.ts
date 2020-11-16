@@ -1,163 +1,150 @@
-import { action, observable } from 'mobx';
+import { observable } from 'mobx';
 import RootStore from 'stores/Root';
-import { EtherKey } from './Token';
-import { sorTokenPairs } from '../utils/sorWrapper';
-import { supportedChainId } from '../provider/connectors';
-import { AsyncStatus, TokenPairsFetch } from './actions/fetch';
+import { getAllPoolDataOnChain } from '@balancer-labs/sor';
+import { BigNumber } from 'utils/bignumber';
+import { toChecksum, fromWei } from 'utils/helpers';
+import { getAllPublicSwapPools } from 'utils/subGraph';
 
-export type TokenPairs = Set<string>;
-
-export interface TokenPairData {
-    tokenPairs: TokenPairs;
-    lastFetched: number;
-}
-
-interface TokenPairsMap {
-    [index: string]: TokenPairData;
+export interface Pool {
+    id: string;
+    decimalsIn: number;
+    decimalsOut: number;
+    balanceIn: BigNumber;
+    balanceOut: BigNumber;
+    weightIn: BigNumber;
+    weightOut: BigNumber;
+    swapFee: BigNumber;
 }
 
 export default class PoolStore {
-    @observable tokenPairs: TokenPairsMap;
+    @observable onChainPools: any;
+    private poolsList: any;
     rootStore: RootStore;
+    fetchingOnChain: boolean;
 
     constructor(rootStore) {
         this.rootStore = rootStore;
-        this.tokenPairs = {};
+        this.poolsList = { pools: [] };
+        this.onChainPools = { pools: [] };
+        this.fetchingOnChain = false;
     }
 
-    @action fetchAndSetTokenPairs(tokenAddress): void {
-        this.fetchTokenPairs(tokenAddress).then(response => {
-            const { status, request, payload } = response;
-            if (status === AsyncStatus.SUCCESS) {
-                this.setTokenPairs(
-                    request.tokenAddress,
-                    payload.tokenPairs,
-                    payload.lastFetched
+    async fetchPools(onChainBalances = false) {
+        console.log(`[Pool] Fetching Pools ${onChainBalances}`);
+
+        this.poolsList = await getAllPublicSwapPools();
+
+        if (onChainBalances) {
+            this.fetchOnChainBalances();
+        }
+    }
+
+    async fetchOnChainBalances() {
+        const {
+            providerStore,
+            contractMetadataStore,
+            sorStore,
+            swapFormStore,
+        } = this.rootStore;
+
+        if (!this.fetchingOnChain) {
+            this.fetchingOnChain = true;
+            console.log(`[Pool] Fetching Onchain Balances`);
+
+            const library = providerStore.providerStatus.library;
+
+            try {
+                this.onChainPools = await getAllPoolDataOnChain(
+                    this.poolsList,
+                    contractMetadataStore.getMultiAddress(),
+                    library
+                );
+            } catch (error) {
+                console.log(`[Pool] Error While Loading On-Chain Pools.`);
+                console.log(error.message);
+                this.onChainPools = { pools: [] };
+            }
+
+            if (!this.onChainPools) {
+                console.log(`[Pool] Issue While Loading On-Chain Pools.`);
+                this.onChainPools = { pools: [] };
+                swapFormStore.setErrorMessage(
+                    'Issue While Loading On-Chain Pool Data - Please Check Provider'
                 );
             }
-        });
+
+            if (
+                swapFormStore.inputToken.address &&
+                swapFormStore.outputToken.address &&
+                swapFormStore.isValidSwapPair
+            ) {
+                console.log(`[Pool] Loading Path Data`);
+                sorStore.fetchPathData(
+                    swapFormStore.inputToken.address,
+                    swapFormStore.outputToken.address,
+                    true
+                );
+            }
+
+            this.fetchingOnChain = false;
+        }
     }
 
-    @action async fetchTokenPairs(tokenAddress: string) {
-        const { providerStore, contractMetadataStore } = this.rootStore;
-        const fetchBlock = providerStore.getCurrentBlockNumber();
+    findPoolTokenInfo = (
+        poolId: string,
+        tokenIn: string,
+        tokenOut: string
+    ): Pool => {
+        // Use Subgraph pools as a backup until on-chain loaded
+        let pool;
 
-        //Pre-fetch stale check
-        const stale =
-            fetchBlock <= this.getTokenPairsLastFetched(tokenAddress) &&
-            fetchBlock !== -1;
-
-        console.log({
-            currentBlock: fetchBlock,
-            lastFetched: this.getTokenPairsLastFetched(tokenAddress),
-        });
-
-        if (!stale) {
-            const tokenAddressToFind =
-                tokenAddress === EtherKey
-                    ? contractMetadataStore.getWethAddress()
-                    : tokenAddress;
-
-            const tokenPairs = await sorTokenPairs(
-                tokenAddressToFind,
-                contractMetadataStore.getWethAddress()
+        if (this.onChainPools.pools.length === 0) {
+            pool = this.poolsList.pools.find(
+                p => toChecksum(p.id) === toChecksum(poolId)
             );
-
-            console.log('[Token Pairs Fetch] - Success', {
-                tokenAddress,
-                tokenPairs,
-                fetchBlock,
-            });
-            return new TokenPairsFetch({
-                status: AsyncStatus.SUCCESS,
-                request: {
-                    chainId: supportedChainId,
-                    tokenAddress,
-                    fetchBlock,
-                },
-                payload: {
-                    tokenPairs: tokenPairs,
-                    lastFetched: fetchBlock,
-                },
-            });
         } else {
-            console.log('[Token Pairs Fetch] - Stale', {
-                tokenAddress,
-                fetchBlock,
-            });
-            return new TokenPairsFetch({
-                status: AsyncStatus.STALE,
-                request: {
-                    chainId: supportedChainId,
-                    tokenAddress,
-                    fetchBlock,
-                },
-                payload: undefined,
-            });
-        }
-    }
-
-    getTokenPairsLastFetched(tokenAddress: string): number {
-        if (this.tokenPairs[tokenAddress]) {
-            return this.tokenPairs[tokenAddress].lastFetched;
-        }
-
-        return -1;
-    }
-
-    getTokenPairs(tokenAddress): TokenPairs | undefined {
-        if (this.tokenPairs[tokenAddress]) {
-            return this.tokenPairs[tokenAddress].tokenPairs;
-        }
-
-        return undefined;
-    }
-
-    @action setTokenPairs(
-        tokenAddress: string,
-        tokenPairs: Set<string>,
-        fetchBlock: number
-    ): void {
-        this.tokenPairs[tokenAddress] = {
-            tokenPairs,
-            lastFetched: fetchBlock,
-        };
-
-        console.log('[setTokenPairs]', {
-            tokenAddress,
-            tokenPairs,
-            fetchBlock,
-            allTokenPairs: { ...this.tokenPairs },
-        });
-    }
-
-    areTokenPairsLoaded(chainId, tokenAddress: string): boolean {
-        this.verifyChainId(chainId);
-
-        console.log('[are token pairs loaded?', {
-            tokenAddress,
-            pairs: this.tokenPairs[tokenAddress],
-        });
-        return !!this.tokenPairs[tokenAddress];
-    }
-
-    isTokenPairTradable(chainId, fromToken: string, toToken: string): boolean {
-        this.verifyChainId(chainId);
-
-        if (!this.areTokenPairsLoaded(chainId, fromToken)) {
-            throw new Error(
-                `Token pair data for ${fromToken} on network ${chainId} not loaded`
+            pool = this.onChainPools.pools.find(
+                p => toChecksum(p.id) === toChecksum(poolId)
             );
         }
 
-        return this.tokenPairs[chainId][fromToken].tokenPairs.has(toToken);
-    }
-
-    private verifyChainId(chainId) {
-        if (!this.tokenPairs[chainId]) {
+        if (!pool) {
             throw new Error(
-                'Attempting to access token pairs for non-supported chainId'
+                '[Invariant] No pool found for selected balancer index'
             );
         }
-    }
+
+        let tI: any = pool.tokens.find(
+            t => toChecksum(t.address) === toChecksum(tokenIn)
+        );
+        let tO: any = pool.tokens.find(
+            t => toChecksum(t.address) === toChecksum(tokenOut)
+        );
+
+        let obj: Pool;
+
+        if (tI.balance > 0 && tO.balance > 0) {
+            obj = {
+                id: toChecksum(pool.id),
+                decimalsIn: tI.decimals,
+                decimalsOut: tO.decimals,
+                balanceIn: tI.balance,
+                balanceOut: tO.balance,
+                weightIn: tI.denormWeight,
+                weightOut: tO.denormWeight,
+                swapFee: pool.swapFee,
+            };
+        }
+
+        console.log(
+            `Pool ${obj.id}, BalIn: ${obj.balanceIn.toString()} (${
+                obj.decimalsIn
+            }), WeightIn: ${fromWei(
+                obj.weightIn
+            )}, BalOut: ${obj.balanceOut.toString()} (${
+                obj.decimalsOut
+            }), WeightOut: ${fromWei(obj.weightOut)}`
+        );
+        return obj;
+    };
 }

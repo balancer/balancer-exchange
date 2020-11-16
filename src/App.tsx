@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import Web3ReactManager from 'components/Web3ReactManager';
 import Header from 'components/Header';
 import SwapForm from 'components/SwapForm';
+import { isAddress, toChecksum } from 'utils/helpers';
 import './App.css';
 
 const BuildVersion = styled.div`
@@ -28,7 +29,13 @@ const BuildLink = styled.a`
 
 const App = () => {
     const PoolSwapView = props => {
-        const { tokenIn, tokenOut } = props.match.params;
+        let { tokenIn, tokenOut } = props.match.params;
+        if (isAddress(tokenIn)) {
+            tokenIn = toChecksum(tokenIn);
+        }
+        if (isAddress(tokenOut)) {
+            tokenOut = toChecksum(tokenOut);
+        }
 
         return <SwapForm tokenIn={tokenIn} tokenOut={tokenOut} />;
     };

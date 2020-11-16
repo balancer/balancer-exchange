@@ -1,31 +1,14 @@
 import { action, observable } from 'mobx';
-import * as helpers from 'utils/helpers';
-import {
-    bnum,
-    printPoolData,
-    printSorSwaps,
-    printSwapInput,
-    printSwaps,
-    scale,
-} from 'utils/helpers';
+import { bnum, scale, fromWei } from 'utils/helpers';
 import RootStore from 'stores/Root';
 import { BigNumber } from 'utils/bignumber';
 import * as log from 'loglevel';
 import { ContractTypes } from './Provider';
 import { SwapMethods } from './SwapForm';
-import CostCalculator from '../utils/CostCalculator';
-import {
-    calcExpectedSlippage,
-    calcPrice,
-    calcTotalInput,
-    calcTotalOutput,
-    calcTotalSpotValue,
-    findBestSwaps,
-    findPoolsWithTokens,
-    formatSwapsExactAmountIn,
-    formatSwapsExactAmountOut,
-} from '../utils/sorWrapper';
+import { ethers } from 'ethers';
 import { EtherKey } from './Token';
+import { SorMultiSwap } from './Sor';
+import { calcSpotPrice, bmul, bdiv } from '../utils/balancerCalcs';
 
 export type SwapPreview = ExactAmountInPreview | ExactAmountOutPreview;
 
@@ -36,7 +19,8 @@ export interface ExactAmountOutPreview {
     effectivePrice: BigNumber | null;
     spotPrice: BigNumber | null;
     expectedSlippage: BigNumber | null;
-    swaps: Swap[];
+    swaps: any[][];
+    sorSwapsFormatted: SorMultiSwap[];
     validSwap: boolean;
     error?: string;
 }
@@ -48,63 +32,126 @@ export interface ExactAmountInPreview {
     effectivePrice: BigNumber | null;
     spotPrice: BigNumber | null;
     expectedSlippage: BigNumber | null;
-    swaps: Swap[];
+    swaps: any[][];
+    sorSwapsFormatted: SorMultiSwap[];
     validSwap: boolean;
     error?: string;
 }
 
-export interface SwapInput {
-    method: SwapMethods;
-    tokenIn: string;
-    tokenOut: string;
-    tokenAmountIn?: BigNumber;
-    tokenAmountOut?: BigNumber;
-    minAmountOut?: BigNumber;
-    maxAmountIn?: BigNumber;
-    maxPrice: BigNumber;
-}
-
-export interface Pool {
-    id: string;
-    decimalsIn: number;
-    decimalsOut: number;
-    balanceIn: BigNumber;
-    balanceOut: BigNumber;
-    weightIn: BigNumber;
-    weightOut: BigNumber;
-    swapFee: BigNumber;
-}
-
-export interface SorSwap {
-    pool: string;
-    amount: BigNumber;
-}
-
-export type Swap = {
-    pool: string;
-    tokenInParam: string;
-    tokenOutParam: string;
-    maxPrice: string;
+const calcPrice = (amountIn, amountOut) => {
+    console.log('[calcPrice]', {
+        amountIn: amountIn.toString(),
+        amountOut: amountOut.toString(),
+        price: amountIn.div(amountOut).toString(),
+    });
+    return amountIn.div(amountOut);
 };
 
-function printDebugInfo(
-    input: SwapInput,
-    swaps: Swap[],
-    sorSwaps: SorSwap[],
-    poolData: Pool[],
-    result: BigNumber,
+const calcExpectedSlippage = (
+    spotPrice: BigNumber,
     effectivePrice: BigNumber
-) {
-    console.log('[Swap Preview]');
-    printSwapInput(input);
-    printPoolData(poolData);
-    printSorSwaps(sorSwaps);
-    printSwaps(input.method, swaps);
-    console.log('[Result]', {
-        result: result.toString(),
+) => {
+    const spotPercentage = spotPrice.div(effectivePrice).times(100);
+    console.log('[calcExpectedSlippage]', {
+        spotPrice: spotPrice.toString(),
         effectivePrice: effectivePrice.toString(),
+        spotPercentage: spotPercentage.toString(),
+        expectedSlippage: bnum(100)
+            .minus(spotPercentage)
+            .toString(),
     });
-}
+
+    return bnum(100).minus(spotPercentage);
+};
+
+const calcTotalSpotValue = async (
+    method: SwapMethods,
+    swaps: SorMultiSwap[],
+    allPools: any[]
+): Promise<BigNumber> => {
+    let totalValue = bnum(0);
+
+    for (let i = 0; i < swaps.length; i++) {
+        let sorMultiSwap = swaps[i];
+
+        let spotPrices = [];
+        // for each swap in sequence calculate spot price. spot price of sequence is product of all spot prices.
+        for (let j = 0; j < sorMultiSwap.sequence.length; j++) {
+            let swap = sorMultiSwap.sequence[j];
+            /*
+            console.log(
+                `!!!!!! Checking Swap:${i} Sequence:${j}, ${swap.pool}: ${
+                    swap.tokenInParam
+                }->${swap.tokenOutParam} Amount:${fromWei(swap.swapAmount)}`
+            );
+            */
+
+            const spotPrice = calcSpotPrice(
+                swap.balanceIn,
+                swap.weightIn,
+                swap.balanceOut,
+                swap.weightOut,
+                swap.swapFee
+            );
+            // console.log(`!!!!!!! swap[${i}:${j}] spotPrice: ${fromWei(spotPrice)}`);
+
+            spotPrices.push(spotPrice);
+        }
+
+        const spotPrice = spotPrices.reduce((a, b) => bmul(a, b));
+
+        if (method === SwapMethods.EXACT_IN) {
+            const swapAmount = sorMultiSwap.sequence[0].swapAmount;
+            totalValue = totalValue.plus(bdiv(bnum(swapAmount), spotPrice));
+        } else if (method === SwapMethods.EXACT_OUT) {
+            let swapAmount = sorMultiSwap.sequence[0].swapAmount;
+
+            if (sorMultiSwap.sequence.length > 1)
+                swapAmount = sorMultiSwap.sequence[1].swapAmount;
+
+            totalValue = totalValue.plus(bmul(bnum(swapAmount), spotPrice));
+            // console.log(`swap[${i}] spotPriceProduct: ${fromWei(spotPrice)} swapAmt: ${fromWei(swapAmount)}: tv:${fromWei(totalValue)}`);
+        }
+    }
+    // console.log(`!!!!!!! calcTotalSpotValue: ${fromWei(totalValue)}`)
+
+    return totalValue;
+};
+
+export const calcMinAmountOut = (
+    spotValue: BigNumber,
+    slippagePercent: BigNumber
+): BigNumber => {
+    const result = spotValue
+        .minus(spotValue.times(slippagePercent.div(100)))
+        .integerValue(); // TODO - fix this to be fully integer math
+
+    console.log('[Min Out]', {
+        spotValue: spotValue.toString(),
+        slippagePercent: slippagePercent.toString(),
+        results: spotValue
+            .minus(spotValue.times(slippagePercent.div(100)))
+            .toString(),
+    });
+
+    return result.gt(0) ? result : bnum(0);
+};
+
+export const calcMaxAmountIn = (
+    spotValue: BigNumber,
+    slippagePercent: BigNumber
+): BigNumber => {
+    const result = spotValue
+        .plus(spotValue.times(slippagePercent.div(100)))
+        .integerValue(); // TODO - fix this to be fully integer math
+
+    console.log('[Max In]', {
+        spotValue: spotValue.toString(),
+        slippagePercent: slippagePercent.toString(),
+        results: result.toString(),
+    });
+    return result;
+};
 
 export function emptyExactAmountInPreview(
     inputAmount,
@@ -118,6 +165,7 @@ export function emptyExactAmountInPreview(
         spotPrice: null,
         expectedSlippage: null,
         swaps: null,
+        sorSwapsFormatted: null,
         validSwap: false,
         error: !!e ? e : undefined,
     };
@@ -135,6 +183,7 @@ export function emptyExactAmountOutPreview(
         spotPrice: null,
         expectedSlippage: null,
         swaps: null,
+        sorSwapsFormatted: null,
         validSwap: false,
         error: !!e ? e : undefined,
     };
@@ -142,17 +191,11 @@ export function emptyExactAmountOutPreview(
 
 export default class ProxyStore {
     @observable previewPending: boolean;
-    costCalculator: CostCalculator;
     rootStore: RootStore;
 
     constructor(rootStore) {
         this.rootStore = rootStore;
         this.previewPending = false;
-        this.costCalculator = new CostCalculator({
-            gasPrice: bnum(0),
-            gasPerTrade: bnum(0),
-            outTokenEthPrice: bnum(0),
-        });
     }
 
     isPreviewPending() {
@@ -167,7 +210,7 @@ export default class ProxyStore {
         Swap Methods - Action
     */
     @action batchSwapExactIn = async (
-        swaps: Swap[],
+        swaps: any[][],
         tokenIn: string,
         tokenAmountIn: BigNumber,
         decimalsIn: number,
@@ -178,24 +221,54 @@ export default class ProxyStore {
         const { providerStore, contractMetadataStore } = this.rootStore;
         const proxyAddress = contractMetadataStore.getProxyAddress();
 
+        console.log(`batchSwapExactIn Swapping: ${tokenIn}->${tokenOut}`);
+        console.log(`Amt In: ${tokenAmountIn.toString()}`);
+        console.log(`Min Amt Out: ${fromWei(minAmountOut)}`);
+        console.log(`Swap sequences:`);
+        // console.log(`Decimals In: ${decimalsIn}`);
+        // console.log(`Decimals Out: ${decimalsOut}`);
+
+        swaps.forEach(swap => {
+            swap.forEach(sequence => {
+                console.log(
+                    `${sequence.pool}: ${sequence.tokenIn}->${
+                        sequence.tokenOut
+                    }, Amt:${sequence.swapAmount.toString()} Limit:${sequence.limitReturnAmount.toString()})} MaxPrice:${sequence.maxPrice.toString()}`
+                );
+            });
+        });
+
         if (tokenIn === EtherKey) {
+            tokenIn = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
+
             await providerStore.sendTransaction(
                 ContractTypes.ExchangeProxy,
                 proxyAddress,
-                'batchEthInSwapExactIn',
-                [swaps, tokenOut, minAmountOut.toString()],
-                {
-                    value: scale(tokenAmountIn, decimalsIn).toString(),
-                }
-            );
-        } else if (tokenOut === EtherKey) {
-            await providerStore.sendTransaction(
-                ContractTypes.ExchangeProxy,
-                proxyAddress,
-                'batchEthOutSwapExactIn',
+                'multihopBatchSwapExactIn',
                 [
                     swaps,
                     tokenIn,
+                    tokenOut,
+                    scale(tokenAmountIn, decimalsIn).toString(),
+                    minAmountOut.toString(),
+                ],
+                {
+                    value: ethers.utils.bigNumberify(
+                        scale(tokenAmountIn, decimalsIn).toString()
+                    ),
+                }
+            );
+        } else if (tokenOut === EtherKey) {
+            tokenOut = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
+
+            await providerStore.sendTransaction(
+                ContractTypes.ExchangeProxy,
+                proxyAddress,
+                'multihopBatchSwapExactIn',
+                [
+                    swaps,
+                    tokenIn,
+                    tokenOut,
                     scale(tokenAmountIn, decimalsIn).toString(),
                     minAmountOut.toString(),
                 ]
@@ -204,7 +277,7 @@ export default class ProxyStore {
             await providerStore.sendTransaction(
                 ContractTypes.ExchangeProxy,
                 proxyAddress,
-                'batchSwapExactIn',
+                'multihopBatchSwapExactIn',
                 [
                     swaps,
                     tokenIn,
@@ -217,7 +290,7 @@ export default class ProxyStore {
     };
 
     @action batchSwapExactOut = async (
-        swaps: Swap[],
+        swaps: any[][],
         tokenIn: string,
         maxAmountIn: BigNumber,
         decimalsIn: number,
@@ -228,26 +301,49 @@ export default class ProxyStore {
         const { providerStore, contractMetadataStore } = this.rootStore;
         const proxyAddress = contractMetadataStore.getProxyAddress();
 
+        console.log(`batchSwapExactOut Swapping: ${tokenIn}->${tokenOut}`);
+        console.log(`Max In: ${maxAmountIn.toString()} (${decimalsIn})`);
+        console.log(`Amt Out: ${tokenAmountOut.toString()} (${decimalsOut})`);
+        console.log(`Swap sequences:`);
+        // console.log(`Decimals In: ${decimalsIn}`);
+        // console.log(`Decimals Out: ${decimalsOut}`);
+
+        swaps.forEach(swap => {
+            swap.forEach(sequence => {
+                console.log(
+                    `${sequence.pool}: ${sequence.tokenIn}->${
+                        sequence.tokenOut
+                    }, Amt:${sequence.swapAmount.toString()} Limit:${sequence.limitReturnAmount.toString()} MaxPrice:${sequence.maxPrice.toString()}`
+                );
+            });
+        });
+
         if (tokenIn === EtherKey) {
+            tokenIn = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
+
             await providerStore.sendTransaction(
                 ContractTypes.ExchangeProxy,
                 proxyAddress,
-                'batchEthInSwapExactOut',
-                [swaps, tokenOut],
-                { value: maxAmountIn.toString() }
+                'multihopBatchSwapExactOut',
+                [swaps, tokenIn, tokenOut, maxAmountIn.toString()],
+                {
+                    value: ethers.utils.bigNumberify(maxAmountIn.toString()),
+                }
             );
         } else if (tokenOut === EtherKey) {
+            tokenOut = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
+
             await providerStore.sendTransaction(
                 ContractTypes.ExchangeProxy,
                 proxyAddress,
-                'batchEthOutSwapExactOut',
-                [swaps, tokenIn, maxAmountIn.toString()]
+                'multihopBatchSwapExactOut',
+                [swaps, tokenIn, tokenOut, maxAmountIn.toString()]
             );
         } else {
             await providerStore.sendTransaction(
                 ContractTypes.ExchangeProxy,
                 proxyAddress,
-                'batchSwapExactOut',
+                'multihopBatchSwapExactOut',
                 [swaps, tokenIn, tokenOut, maxAmountIn.toString()]
             );
         }
@@ -267,22 +363,15 @@ export default class ProxyStore {
         inputDecimals: number
     ): Promise<ExactAmountInPreview> => {
         try {
+            const {
+                contractMetadataStore,
+                poolStore,
+                sorStore,
+            } = this.rootStore;
+
             this.setPreviewPending(true);
 
-            if (
-                tokenIn === '0xbf6a2fa04860f0b2f9e7d5a76d841ccbabaffb8f' ||
-                tokenOut === '0xbf6a2fa04860f0b2f9e7d5a76d841ccbabaffb8f' ||
-                tokenIn === '0xb60fde5d798236fbf1e2697b2a0645380921fccf' ||
-                tokenOut === '0xb60fde5d798236fbf1e2697b2a0645380921fccf'
-            )
-                throw Error('Unsupported Token');
-
-            const { contractMetadataStore, providerStore } = this.rootStore;
-
             const tokenAmountIn = scale(bnum(inputAmount), inputDecimals);
-
-            let maxPrice = helpers.setPropertyToMaxUintIfEmpty();
-            let minAmountOut = helpers.setPropertyToZeroIfEmpty();
 
             // Use WETH address for Ether
             const tokenInToFind =
@@ -294,24 +383,22 @@ export default class ProxyStore {
                     ? contractMetadataStore.getWethAddress()
                     : tokenOut;
 
-            const poolData = await findPoolsWithTokens(
-                tokenInToFind,
-                tokenOutToFind,
-                providerStore.providerStatus.library,
-                contractMetadataStore.getMultiAddress()
+            console.log(
+                `[SOR] findBestSwapsMultiEps: ${tokenInToFind} ${tokenOutToFind} ${
+                    SwapMethods.EXACT_IN
+                } ${tokenAmountIn.toString()} ${inputDecimals}`
             );
 
-            const costOutputToken = this.costCalculator.getCostOutputToken();
-
-            const sorSwaps = findBestSwaps(
-                poolData,
+            const [totalOutput, sorSwaps] = await sorStore.findBestSwapsMulti(
                 SwapMethods.EXACT_IN,
                 tokenAmountIn,
-                3,
-                costOutputToken
+                sorStore.noPools,
+                sorStore.costOutputToken
             );
 
-            if (sorSwaps.length === 0) {
+            const sorSwapsFormatted = await sorStore.formatSorSwaps(sorSwaps);
+
+            if (sorSwapsFormatted.length === 0) {
                 this.setPreviewPending(false);
                 return emptyExactAmountInPreview(
                     inputAmount,
@@ -319,22 +406,18 @@ export default class ProxyStore {
                 );
             }
 
-            const swaps = formatSwapsExactAmountIn(
-                sorSwaps,
-                poolData,
-                bnum(maxPrice),
-                bnum(minAmountOut)
-            );
-
-            const spotOutput = calcTotalSpotValue(
+            let spotOutput = await calcTotalSpotValue(
                 SwapMethods.EXACT_IN,
-                swaps,
-                poolData
+                sorSwapsFormatted,
+                poolStore.onChainPools.pools
             );
 
             const spotPrice = calcPrice(tokenAmountIn, spotOutput);
 
-            const totalOutput = calcTotalOutput(swaps, poolData);
+            console.log('[Spot Price Calc]', {
+                tokenAmountIn: tokenAmountIn.toString(),
+                spotOutput: spotOutput.toString(),
+            });
 
             const effectivePrice = this.calcEffectivePrice(
                 tokenAmountIn,
@@ -346,22 +429,8 @@ export default class ProxyStore {
                 effectivePrice
             );
 
-            printDebugInfo(
-                {
-                    method: SwapMethods.EXACT_IN,
-                    tokenIn,
-                    tokenOut,
-                    tokenAmountIn,
-                    maxPrice: bnum(0),
-                },
-                swaps,
-                sorSwaps,
-                poolData,
-                totalOutput,
-                effectivePrice
-            );
-
             this.setPreviewPending(false);
+
             return {
                 tokenAmountIn,
                 totalOutput,
@@ -369,7 +438,8 @@ export default class ProxyStore {
                 effectivePrice,
                 spotPrice,
                 expectedSlippage,
-                swaps,
+                swaps: sorSwaps,
+                sorSwapsFormatted: sorSwapsFormatted,
                 validSwap: true,
             };
         } catch (e) {
@@ -387,21 +457,13 @@ export default class ProxyStore {
     ): Promise<ExactAmountOutPreview> => {
         try {
             this.setPreviewPending(true);
-
-            if (
-                tokenIn === '0xbf6a2fa04860f0b2f9e7d5a76d841ccbabaffb8f' ||
-                tokenOut === '0xbf6a2fa04860f0b2f9e7d5a76d841ccbabaffb8f' ||
-                tokenIn === '0xb60fde5d798236fbf1e2697b2a0645380921fccf' ||
-                tokenOut === '0xb60fde5d798236fbf1e2697b2a0645380921fccf'
-            )
-                throw Error('Unsupported Token');
-
-            const { contractMetadataStore, providerStore } = this.rootStore;
+            const {
+                contractMetadataStore,
+                poolStore,
+                sorStore,
+            } = this.rootStore;
 
             const tokenAmountOut = scale(bnum(outputAmount), outputDecimals);
-
-            let maxPrice = helpers.setPropertyToMaxUintIfEmpty();
-            let maxAmountIn = helpers.setPropertyToMaxUintIfEmpty();
 
             // Use WETH address for Ether
             const tokenInToFind =
@@ -413,23 +475,23 @@ export default class ProxyStore {
                     ? contractMetadataStore.getWethAddress()
                     : tokenOut;
 
-            const poolData = await findPoolsWithTokens(
-                tokenInToFind,
-                tokenOutToFind,
-                providerStore.providerStatus.library,
-                contractMetadataStore.getMultiAddress()
+            console.log(
+                `[SOR] findBestSwapsMultiEps: ${tokenInToFind} ${tokenOutToFind} ${
+                    SwapMethods.EXACT_OUT
+                } ${fromWei(tokenAmountOut)}`
             );
-            const costOutputToken = this.costCalculator.getCostOutputToken();
 
-            let sorSwaps: SorSwap[] = findBestSwaps(
-                poolData,
+            // sorSwaps is the unchanged info from SOR that can be directly passed to proxy transaction
+            const [totalInput, sorSwaps] = await sorStore.findBestSwapsMulti(
                 SwapMethods.EXACT_OUT,
                 tokenAmountOut,
-                20,
-                costOutputToken
+                sorStore.noPools,
+                sorStore.costInputToken
             );
 
-            if (sorSwaps.length === 0) {
+            const sorSwapsFormatted = await sorStore.formatSorSwaps(sorSwaps);
+
+            if (sorSwapsFormatted.length === 0) {
                 this.setPreviewPending(false);
                 return emptyExactAmountOutPreview(
                     outputAmount,
@@ -437,56 +499,32 @@ export default class ProxyStore {
                 );
             }
 
-            const swaps = formatSwapsExactAmountOut(
-                sorSwaps,
-                poolData,
-                bnum(maxPrice),
-                bnum(maxAmountIn)
-            );
-
-            const totalInput = calcTotalInput(
-                swaps,
-                poolData,
-                maxPrice,
-                maxAmountIn
-            );
-
-            const spotInput = calcTotalSpotValue(
+            const spotInput = await calcTotalSpotValue(
                 SwapMethods.EXACT_OUT,
-                swaps,
-                poolData
+                sorSwapsFormatted,
+                poolStore.onChainPools.pools
             );
-
-            const spotPrice = calcPrice(tokenAmountOut, spotInput);
 
             console.log('[Spot Price Calc]', {
                 tokenAmountOut: tokenAmountOut.toString(),
                 totalInputSpot: spotInput.toString(),
             });
+            const spotPrice = calcPrice(tokenAmountOut, spotInput);
 
             const effectivePrice = this.calcEffectivePrice(
                 tokenAmountOut,
                 totalInput
             );
 
+            console.log('[Eff Price Calc]', {
+                tokenAmountOut: tokenAmountOut.toString(),
+                totalInput: totalInput.toString(),
+                effectivePrice: effectivePrice.toString(),
+            });
+
             const expectedSlippage = calcExpectedSlippage(
                 effectivePrice,
                 spotPrice
-            );
-
-            printDebugInfo(
-                {
-                    method: SwapMethods.EXACT_OUT,
-                    tokenIn,
-                    tokenOut,
-                    tokenAmountOut,
-                    maxPrice: bnum(0),
-                },
-                swaps,
-                sorSwaps,
-                poolData,
-                totalInput,
-                effectivePrice
             );
 
             if (totalInput.isNaN()) {
@@ -501,7 +539,8 @@ export default class ProxyStore {
                 effectivePrice,
                 spotPrice,
                 expectedSlippage,
-                swaps,
+                swaps: sorSwaps,
+                sorSwapsFormatted: sorSwapsFormatted,
                 validSwap: true,
             };
         } catch (e) {

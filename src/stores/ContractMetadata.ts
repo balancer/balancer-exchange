@@ -1,64 +1,125 @@
 import { action, observable } from 'mobx';
 import RootStore from 'stores/Root';
-import * as deployed from 'deployed.json';
-import { getSupportedChainName } from '../provider/connectors';
+import { contracts, assets } from 'configs';
+import { BigNumber } from 'utils/bignumber';
+import { toChecksum } from '../utils/helpers';
+import { EtherKey } from './Token';
 
 export interface ContractMetadata {
     bFactory: string;
     proxy: string;
     weth: string;
     multicall: string;
-    defaultPrecision: number;
     tokens: TokenMetadata[];
+    untrusted: string[];
 }
 
 export interface TokenMetadata {
     address: string;
     symbol: string;
+    name: string;
     decimals: number;
-    iconAddress: string;
+    hasIcon: boolean;
     precision: number;
     isSupported: boolean;
+    allowance: BigNumber;
 }
 
 export default class ContractMetadataStore {
     @observable contractMetadata: ContractMetadata;
+    private tokensBeingLoaded: { [tokenAddr: string]: boolean };
     rootStore: RootStore;
 
     constructor(rootStore) {
         this.rootStore = rootStore;
         this.contractMetadata = {} as ContractMetadata;
         this.loadWhitelistedTokenMetadata();
+        this.tokensBeingLoaded = {};
     }
 
     // Take the data from the JSON and get it into the store, so we access it just like other data
     @action loadWhitelistedTokenMetadata() {
-        const chainName = getSupportedChainName();
-        const metadata = JSON.parse(JSON.stringify(deployed));
-        const tokenMetadata = metadata.default[chainName].tokens;
+        const { tokens, untrusted } = assets;
 
         const contractMetadata = {
-            bFactory: metadata.default[chainName].bFactory,
-            proxy: metadata.default[chainName].proxy,
-            weth: metadata.default[chainName].weth,
-            multicall: metadata.default[chainName].multicall,
-            defaultPrecision: metadata.default[chainName].defaultPrecision,
+            bFactory: contracts.bFactory,
+            proxy: contracts.proxy,
+            weth: contracts.weth,
+            multicall: contracts.multicall,
             tokens: [] as TokenMetadata[],
+            untrusted,
         };
 
-        tokenMetadata.forEach(token => {
-            const { address, symbol, iconAddress, precision } = token;
+        Object.keys(tokens).forEach(tokenAddress => {
+            const token = tokens[tokenAddress];
+            const { address, symbol, name, precision, hasIcon } = token;
             contractMetadata.tokens.push({
                 address,
                 symbol,
-                decimals: undefined,
-                iconAddress,
+                name,
+                decimals: 18,
+                hasIcon,
                 precision,
                 isSupported: true,
+                allowance: new BigNumber(0),
             });
         });
 
         this.contractMetadata = contractMetadata;
+    }
+
+    async addToken(tokenAddr, account) {
+        const { tokenStore } = this.rootStore;
+        const existingTokens = this.contractMetadata.tokens || undefined;
+
+        if (tokenAddr === EtherKey) return;
+
+        let isToken = existingTokens.filter(value => {
+            if (value.address === EtherKey) return false;
+            return toChecksum(tokenAddr) === toChecksum(value.address);
+        });
+
+        if (isToken.length === 0) {
+            if (this.tokensBeingLoaded[tokenAddr]) {
+                return;
+            }
+            this.tokensBeingLoaded[tokenAddr] = true;
+            console.log(`[MetaData] Adding Token: ${tokenAddr}`);
+            const tokenMetadata = await tokenStore.fetchOnChainTokenMetadata(
+                tokenAddr,
+                account
+            );
+
+            console.log(
+                `[MetaData] Allowance ${tokenAddr}: ${tokenMetadata.allowance.toString()}`
+            );
+            tokenStore.setBalances(
+                [toChecksum(tokenAddr)],
+                [tokenMetadata.balanceBn],
+                account,
+                20000
+            );
+            tokenStore.setAllowances(
+                [tokenAddr],
+                account,
+                this.getProxyAddress(),
+                [tokenMetadata.allowance],
+                20000
+            );
+
+            this.contractMetadata.tokens.push({
+                address: tokenAddr,
+                symbol: tokenMetadata.symbol,
+                name: tokenMetadata.name,
+                decimals: tokenMetadata.decimals,
+                hasIcon: tokenMetadata.hasIcon,
+                precision: tokenMetadata.precision,
+                isSupported: true,
+                allowance: tokenMetadata.allowance,
+            });
+            this.tokensBeingLoaded[tokenAddr] = false;
+            console.log(`[MetaData] Token Added: ${tokenAddr}`);
+        }
     }
 
     getProxyAddress(): string {
@@ -91,6 +152,10 @@ export default class ContractMetadataStore {
         return multiAddress;
     }
 
+    getUntrustedTokens(): string[] {
+        return this.contractMetadata.untrusted;
+    }
+
     // Used for asset options
     getFilteredTokenMetadata(filter: string): TokenMetadata[] {
         const tokens = this.contractMetadata.tokens || undefined;
@@ -103,10 +168,14 @@ export default class ContractMetadataStore {
 
         let filteredMetadata: TokenMetadata[] = [];
 
-        if (filter.indexOf('0x') === 0) {
-            //Search by address
+        if (filter === 'ether') {
             filteredMetadata = tokens.filter(value => {
                 return value.address === filter;
+            });
+        } else if (filter.indexOf('0x') === 0) {
+            //Search by address
+            filteredMetadata = tokens.filter(value => {
+                return value.address.toLowerCase() === filter.toLowerCase();
             });
         } else {
             //Search by symbol
@@ -122,17 +191,13 @@ export default class ContractMetadataStore {
 
     // Provider uses this to get balances
     getTrackedTokenAddresses(): string[] {
+        const { assetOptionsStore } = this.rootStore;
         const tokens = this.contractMetadata.tokens;
-        return tokens.map(token => token.address);
-    }
+        let tokenList = tokens.map(token => token.address);
+        if (assetOptionsStore.tokenAssetData)
+            tokenList.push(assetOptionsStore.tokenAssetData.address);
 
-    getWhiteListedTokenIcon(address: string): string {
-        const tokenList = this.contractMetadata.tokens.filter(
-            token => token.isSupported
-        );
-        const tokenUrl = tokenList.find(t => t.address === address);
-        if (tokenUrl) return tokenUrl.iconAddress;
-        else return 'unknown';
+        return tokenList;
     }
 
     getWhiteListedTokenPrecision(address: string): number {

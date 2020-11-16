@@ -1,14 +1,13 @@
 import { action, observable } from 'mobx';
-import { Interface } from '@ethersproject/abi';
-import { parseBytes32String } from '@ethersproject/strings'
 import RootStore from 'stores/Root';
 import { ContractTypes } from 'stores/Provider';
 import * as helpers from 'utils/helpers';
 import { bnum, formatBalanceTruncated } from 'utils/helpers';
 import { FetchCode } from './Transaction';
 import { BigNumber } from 'utils/bignumber';
-import { isAddress, MAX_UINT } from 'utils/helpers';
-import { getSupportedChainName } from '../provider/connectors';
+import { MAX_UINT, isAddress } from 'utils/helpers';
+import { Interface } from 'ethers/utils';
+import * as ethers from 'ethers';
 
 const tokenAbi = require('../abi/TestToken').abi;
 
@@ -47,8 +46,9 @@ export interface BigNumberMap {
 export interface TokenMetadata {
     address: string;
     symbol: string;
+    name: string;
     decimals: number;
-    iconAddress: string;
+    hasIcon: boolean;
     precision: number;
     balanceFormatted?: string;
     balanceBn?: BigNumber;
@@ -122,7 +122,7 @@ export default class TokenStore {
         );
     }
 
-    private setAllowances(
+    setAllowances(
         tokens: string[],
         owner: string,
         spender: string,
@@ -178,7 +178,7 @@ export default class TokenStore {
         return chainBalances[tokenAddress][account].lastFetched < blockNumber;
     }
 
-    private setBalances(
+    setBalances(
         tokens: string[],
         balances: BigNumber[],
         account: string,
@@ -213,6 +213,22 @@ export default class TokenStore {
         };
     }
 
+    getBalance(tokenAddress: string, account: string): BigNumber | undefined {
+        const chainBalances = this.balances;
+        if (chainBalances) {
+            const tokenBalances = chainBalances[tokenAddress];
+            if (tokenBalances) {
+                const balance = tokenBalances[account];
+                if (balance) {
+                    if (balance.balance) {
+                        return balance.balance;
+                    }
+                }
+            }
+        }
+        return undefined;
+    }
+
     private setDecimals(tokens: string[], decimals: number[]) {
         const { contractMetadataStore } = this.rootStore;
 
@@ -228,22 +244,6 @@ export default class TokenStore {
                 index += 1;
             }
         });
-    }
-
-    getBalance(tokenAddress: string, account: string): BigNumber | undefined {
-        const chainBalances = this.balances;
-        if (chainBalances) {
-            const tokenBalances = chainBalances[tokenAddress];
-            if (tokenBalances) {
-                const balance = tokenBalances[account];
-                if (balance) {
-                    if (balance.balance) {
-                        return balance.balance;
-                    }
-                }
-            }
-        }
-        return undefined;
     }
 
     private getBalanceLastFetched(tokenAddress, account): number | undefined {
@@ -296,7 +296,7 @@ export default class TokenStore {
         const multiAddress = contractMetadataStore.getMultiAddress();
         const multi = providerStore.getContract(
             ContractTypes.Multicall,
-            multiAddress,
+            multiAddress
         );
 
         const iface = new Interface(tokenAbi);
@@ -306,11 +306,11 @@ export default class TokenStore {
             if (address !== EtherKey) {
                 balanceCalls.push([
                     address,
-                    iface.encodeFunctionData("balanceOf", [account]),
+                    iface.functions.balanceOf.encode([account]),
                 ]);
                 allowanceCalls.push([
                     address,
-                    iface.encodeFunctionData("allowance", [
+                    iface.functions.allowance.encode([
                         account,
                         contractMetadataStore.getProxyAddress(),
                     ]),
@@ -318,7 +318,7 @@ export default class TokenStore {
 
                 decimalsCalls.push([
                     address,
-                    iface.encodeFunctionData("decimals"),
+                    iface.functions.decimals.encode([]),
                 ]);
             }
         });
@@ -336,16 +336,21 @@ export default class TokenStore {
                 [, mulDecimals],
             ] = await Promise.all(promises);
 
-            const balances = mulBalance.map(value => bnum(value));
-            const allowances = mulAllowance.map(value => bnum(value));
+            const balances = mulBalance.map(value =>
+                bnum(iface.functions.balanceOf.decode(value))
+            );
+
+            const allowances = mulAllowance.map(value =>
+                bnum(iface.functions.allowance.decode(value))
+            );
 
             const ethBalance = bnum(mulEth);
             balances.unshift(ethBalance);
             allowances.unshift(bnum(helpers.setPropertyToMaxUintIfEmpty()));
 
-            const decimalsList = mulDecimals.map(value => bnum(value));
-
-            this.setBalances(tokenList, balances, account, balBlock.toNumber());
+            const decimalsList = mulDecimals.map(value =>
+                bnum(iface.functions.decimals.decode(value)).toNumber()
+            );
 
             this.setAllowances(
                 tokenList,
@@ -356,10 +361,62 @@ export default class TokenStore {
             );
 
             this.setDecimals(tokenList, decimalsList);
-
+            this.setBalances(tokenList, balances, account, balBlock.toNumber());
             console.debug('[All Fetches Success]');
         } catch (e) {
             console.error('[Fetch] Balancer Token Data', { error: e });
+            return FetchCode.FAILURE;
+        }
+        return FetchCode.SUCCESS;
+    };
+
+    @action fetchOnChainTokenDecimals = async (
+        tokensToTrack: string[]
+    ): Promise<FetchCode> => {
+        const {
+            providerStore,
+            contractMetadataStore,
+            swapFormStore,
+        } = this.rootStore;
+        const promises: Promise<any>[] = [];
+        const decimalsCalls = [];
+        const tokenList = [];
+
+        console.log('[Token] fetchOnChainTokenDecimals');
+
+        const multiAddress = contractMetadataStore.getMultiAddress();
+        const multi = providerStore.getContract(
+            ContractTypes.Multicall,
+            multiAddress
+        );
+
+        const iface = new Interface(tokenAbi);
+
+        tokensToTrack.forEach(address => {
+            tokenList.push(address);
+            if (address !== EtherKey) {
+                decimalsCalls.push([
+                    address,
+                    iface.functions.decimals.encode([]),
+                ]);
+            }
+        });
+
+        promises.push(multi.aggregate(decimalsCalls));
+
+        try {
+            const [[, mulDecimals]] = await Promise.all(promises);
+
+            const decimalsList = mulDecimals.map(value =>
+                bnum(iface.functions.decimals.decode(value))
+            );
+            this.setDecimals(tokenList, decimalsList);
+            console.log('[Token] fetchOnChainTokenDecimals Finished');
+            swapFormStore.loadTokens(undefined);
+        } catch (e) {
+            console.log('[Token] fetchOnChainTokenDecimals Error', {
+                error: e,
+            });
             return FetchCode.FAILURE;
         }
         return FetchCode.SUCCESS;
@@ -380,28 +437,6 @@ export default class TokenStore {
             }
         }
         return undefined;
-    };
-
-    fetchTokenIconAddress = (address): string => {
-        if (address === 'ether') return 'ether';
-
-        // Checksum addr needed for retrieval of icon from trustwallet asset repo
-        const checkSumAddr = isAddress(address);
-
-        if (!checkSumAddr) {
-            throw new Error(`Token address in wrong format.`);
-        }
-
-        const chainName = getSupportedChainName();
-
-        // kovan icons still retrieved from meta data.
-        // trustwallet asset repo used for mainnet token addresses.
-        if (chainName === 'kovan') {
-            const { contractMetadataStore } = this.rootStore;
-            return contractMetadataStore.getWhiteListedTokenIcon(address);
-        } else {
-            return checkSumAddr;
-        }
     };
 
     async getTokenBalance(
@@ -451,16 +486,19 @@ export default class TokenStore {
         }
     }
 
-    fetchOnChainTokenMetadata = async (address: string, account: string) => {
+    fetchOnChainTokenMetadata = async (
+        address: string,
+        account: string
+    ): Promise<TokenMetadata> => {
         console.log(`[Token] fetchOnChainTokenMetadata: ${address} ${account}`);
 
-        let iconAddress;
-
-        try {
-            iconAddress = this.fetchTokenIconAddress(address);
-        } catch (err) {
-            console.log(`[Token] Error. ${address}`);
-            throw new Error('Incorrect Address Format');
+        // This is required as Asset selector search can pass in non-address
+        const checkSumAddr = isAddress(address);
+        if (!checkSumAddr) {
+            console.log(
+                `[Token] fetchOnChainTokenMetadata, not an address: ${address}`
+            );
+            throw new Error(`Incorrect Address Format.`);
         }
 
         const { providerStore, contractMetadataStore } = this.rootStore;
@@ -472,8 +510,9 @@ export default class TokenStore {
             tokenMetadata = {
                 address: address,
                 symbol: 'ETH',
+                name: 'Ether',
                 decimals: 18,
-                iconAddress: 'ether',
+                hasIcon: true,
                 precision: 4,
                 balanceBn: bnum(0),
                 balanceFormatted: '0.00',
@@ -493,8 +532,9 @@ export default class TokenStore {
                 tokenMetadata = {
                     address: address,
                     symbol: 'ETH',
+                    name: 'Ether',
                     decimals: 18,
-                    iconAddress: 'ether',
+                    hasIcon: true,
                     precision: 4,
                     balanceBn: bnum(balanceWei),
                     balanceFormatted: balanceFormatted,
@@ -512,8 +552,10 @@ export default class TokenStore {
                 const tokenDecimals = await tokenContract.decimals();
 
                 let tokenSymbol;
+                let tokenName;
                 try {
                     tokenSymbol = await tokenContract.symbol();
+                    tokenName = await tokenContract.name();
                 } catch (err) {
                     console.log('[Token] Trying TokenBytes');
                     const tokenContractBytes = providerStore.getContract(
@@ -522,7 +564,11 @@ export default class TokenStore {
                     );
 
                     const tokenSymbolBytes = await tokenContractBytes.symbol();
-                    tokenSymbol = parseBytes32String(tokenSymbolBytes);
+                    tokenSymbol = ethers.utils.parseBytes32String(
+                        tokenSymbolBytes
+                    );
+                    const tokenNameBytes = await tokenContractBytes.name();
+                    tokenName = ethers.utils.parseBytes32String(tokenNameBytes);
                 }
 
                 const precision = contractMetadataStore.getWhiteListedTokenPrecision(
@@ -537,7 +583,7 @@ export default class TokenStore {
                     precision
                 );
 
-                let allowance;
+                let allowance = bnum(0);
                 if (account) {
                     allowance = this.getAllowance(
                         address,
@@ -563,14 +609,18 @@ export default class TokenStore {
                 tokenMetadata = {
                     address: address,
                     symbol: tokenSymbol,
+                    name: tokenName,
                     decimals: tokenDecimals,
-                    iconAddress: iconAddress,
+                    hasIcon: true,
                     precision: precision,
                     balanceBn: balance.balanceBn,
                     balanceFormatted: balance.balanceFormatted,
                     allowance: allowance,
                 };
             } catch (error) {
+                console.log(
+                    `[Token] Error fetching meta data. ${error.message}`
+                );
                 throw new Error('Non-Supported Token Address');
             }
         }

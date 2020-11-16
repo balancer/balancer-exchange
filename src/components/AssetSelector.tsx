@@ -2,7 +2,6 @@ import React, { useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import AssetOptions from './AssetOptions';
 import { observer } from 'mobx-react';
-import { ModalType } from '../stores/SwapForm';
 import { useStores } from '../contexts/storesContext';
 
 const Container = styled.div`
@@ -125,12 +124,20 @@ const AssetSelector = observer(() => {
         if (inputRef !== null) inputRef.current.focus();
     });
 
-    useOnClickOutside(ref, () => swapFormStore.closeModal());
+    useOnClickOutside(ref, () => {
+        closeModal();
+    });
 
     const { assetModalState } = swapFormStore;
 
-    const onChange = async event => {
-        swapFormStore.setAssetSelectFilter(event.target.value);
+    const onChange = value => {
+        swapFormStore.setAssetSelectFilter(value);
+    };
+
+    const closeModal = () => {
+        swapFormStore.setAssetModalState({ open: false });
+        inputRef.current.value = '';
+        onChange('');
     };
 
     return (
@@ -139,22 +146,17 @@ const AssetSelector = observer(() => {
                 <AssetSelectorHeader>
                     <HeaderContent>
                         Select Token to{' '}
-                        {assetModalState.type === ModalType.INPUT
+                        {assetModalState.input === 'inputAmount'
                             ? `Sell for ${swapFormStore.outputToken.symbol}`
                             : `Buy with ${swapFormStore.inputToken.symbol}`}
                     </HeaderContent>
-                    <ExitComponent
-                        onClick={() => {
-                            swapFormStore.closeModal();
-                        }}
-                    >
+                    <ExitComponent onClick={() => closeModal()}>
                         +
                     </ExitComponent>
                 </AssetSelectorHeader>
                 <InputContainer>
                     <input
-                        value={assetModalState.input}
-                        onChange={e => onChange(e)}
+                        onChange={e => onChange(e.target.value)}
                         placeholder="Search Token Name, Symbol, or Address"
                         ref={inputRef}
                     />

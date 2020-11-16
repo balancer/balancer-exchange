@@ -1,10 +1,11 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import styled from 'styled-components';
 import { isAddress } from '../utils/helpers';
 import { EtherKey } from '../stores/Token';
 import { ModalType } from '../stores/SwapForm';
 import { observer } from 'mobx-react';
 import { useStores } from '../contexts/storesContext';
+import logos from '../utils/logos.json';
 
 const Panel = styled.div`
     width: 180px;
@@ -52,10 +53,12 @@ const IconAndNameContainer = styled.div`
     flex-direction: row;
 `;
 
-export const TokenIconAddress = address => {
+export const TokenIconAddress = (address, hasIcon) => {
+    if (logos.includes(address.toLowerCase()))
+        return `https://raw.githubusercontent.com/balancer-labs/assets/master/assets/${address.toLowerCase()}.png`;
     if (address === 'ether') {
         return `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/info/logo.png`;
-    } else if (address === 'unknown') {
+    } else if (!hasIcon) {
         return './empty-token.png';
     } else {
         return `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/${isAddress(
@@ -63,9 +66,11 @@ export const TokenIconAddress = address => {
         )}/logo.png`;
     }
 };
+
 const TokenIcon = styled.img`
     width: 28px;
     height: 28px;
+    border-radius: 14px;
     margin-right: 12px;
 `;
 
@@ -164,46 +169,74 @@ const MaxLink = styled.div`
 
 const Token = observer(
     ({
-        defaultValue,
+        value,
         onChange,
         updateSwapFormData,
         inputID,
         inputName,
         headerText,
+        tokenSymbol,
         tokenName,
         tokenBalance,
         truncatedTokenBalance,
         tokenAddress,
-        setFocus,
+        tokenHasIcon,
         errorMessage,
         showMax,
     }) => {
-        const textInput = useRef(null);
         const {
-            root: { swapFormStore },
+            root: { swapFormStore, tokenPanelStore },
         } = useStores();
 
-        useEffect(() => {
-            if (setFocus) {
-                textInput.current.focus();
-            }
-        });
+        const onFocus = async event => {
+            tokenPanelStore.setFocus(true);
+        };
+
+        const onBlur = async event => {
+            tokenPanelStore.setFocus(false);
+        };
+
+        const IconError = e => {
+            e.target.src = './empty-token.png';
+        };
 
         const modalType =
             inputName === 'inputAmount' ? ModalType.INPUT : ModalType.OUTPUT;
 
-        const InputContainer = ({ errorMessage }) => {
-            // TODO make sure conditional is checking the correct thing
-            const errorBorders = errorMessage === '' ? false : true;
-            return (
-                <InputWrapper errorBorders={errorBorders}>
+        let isDisabled = !swapFormStore.isValidSwapPair;
+
+        return (
+            <Panel>
+                <PanelHeader>{headerText}</PanelHeader>
+                <TokenContainer
+                    onClick={() => {
+                        swapFormStore.setAssetModalState({
+                            open: true,
+                            input: inputName,
+                        });
+                    }}
+                >
+                    <IconAndNameContainer>
+                        <TokenIcon
+                            src={TokenIconAddress(tokenAddress, tokenHasIcon)}
+                            onError={e => {
+                                IconError(e);
+                            }}
+                        />
+                        <TokenName>{tokenSymbol}</TokenName>
+                    </IconAndNameContainer>
+                    <TokenBalance>
+                        {truncatedTokenBalance} {tokenSymbol}
+                    </TokenBalance>
+                </TokenContainer>
+                <InputWrapper errorBorders={errorMessage !== ''}>
                     <input
-                        id={inputID}
-                        name={inputName}
-                        defaultValue={defaultValue}
+                        value={value}
                         onChange={onChange}
-                        ref={textInput}
+                        onFocus={onFocus}
+                        onBlur={onBlur}
                         placeholder="0"
+                        disabled={isDisabled}
                     />
                     {(tokenAddress === EtherKey &&
                         modalType === ModalType.INPUT) ||
@@ -217,35 +250,6 @@ const Token = observer(
                         </MaxLink>
                     )}
                 </InputWrapper>
-            );
-        };
-
-        const IconError = e => {
-            e.target.src = './empty-token.png';
-        };
-
-        return (
-            <Panel>
-                <PanelHeader>{headerText}</PanelHeader>
-                <TokenContainer
-                    onClick={() => {
-                        swapFormStore.openModal(modalType);
-                    }}
-                >
-                    <IconAndNameContainer>
-                        <TokenIcon
-                            src={TokenIconAddress(tokenAddress)}
-                            onError={e => {
-                                IconError(e);
-                            }}
-                        />
-                        <TokenName>{tokenName}</TokenName>
-                    </IconAndNameContainer>
-                    <TokenBalance>
-                        {truncatedTokenBalance} {tokenName}
-                    </TokenBalance>
-                </TokenContainer>
-                <InputContainer errorMessage={errorMessage} />
             </Panel>
         );
     }
