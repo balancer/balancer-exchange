@@ -28,7 +28,22 @@ export async function getAllPublicSwapPools() {
 async function getSubgraphPools() {
     const query = `
       {
-          pools (first: 1000, where: {publicSwap: true, active: true}) {
+          pools0: pools (first: 1000, where: {publicSwap: true, active: true}) {
+            id
+            swapFee
+            totalWeight
+            publicSwap
+            tokens {
+              id
+              address
+              balance
+              decimals
+              symbol
+              denormWeight
+            }
+            tokensList
+          },
+          pools1000: pools (first: 1000, skip: 1000, where: {publicSwap: true, active: true}) {
             id
             swapFee
             totalWeight
@@ -58,6 +73,7 @@ async function getSubgraphPools() {
     });
 
     const { data } = await response.json();
-    console.log(`[SubGraph] Number Of Pools: ${data.pools.length}`);
-    return data;
+    let pools = data.pools0.concat(data.pools1000);
+    console.log(`[SubGraph] Number Of Pools: ${pools.length}`);
+    return { pools: pools };
 }
