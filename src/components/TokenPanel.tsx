@@ -1,11 +1,11 @@
 import React from 'react';
 import styled from 'styled-components';
+import logos from '@balancer-labs/assets/assets/index.json';
 import { isAddress } from '../utils/helpers';
 import { EtherKey } from '../stores/Token';
 import { ModalType } from '../stores/SwapForm';
 import { observer } from 'mobx-react';
 import { useStores } from '../contexts/storesContext';
-import logos from '../utils/logos.json';
 
 const Panel = styled.div`
     width: 180px;
@@ -72,6 +72,7 @@ const TokenIcon = styled.img`
     height: 28px;
     border-radius: 14px;
     margin-right: 12px;
+    background-color: white;
 `;
 
 const TokenName = styled.div`

@@ -1832,6 +1832,10 @@
     lodash "^4.17.19"
     to-fast-properties "^2.0.0"
 
+"@balancer-labs/assets@github:balancer-labs/assets#master":
+  version "1.0.0"
+  resolved "https://codeload.github.com/balancer-labs/assets/tar.gz/master"
+
 "@balancer-labs/sor@0.4.0-6":
   version "0.4.0-6"
   resolved "https://registry.yarnpkg.com/@balancer-labs/sor/-/sor-0.4.0-6.tgz#2c0d52b6ca58785c493f17b18f86aa614408f7e7"
@@ -3067,10 +3071,6 @@ assert@^1.1.1:
   dependencies:
     object-assign "^4.1.1"
     util "0.10.3"
-
-"assets@github:balancer-labs/assets":
-  version "1.0.0"
-  resolved "https://codeload.github.com/balancer-labs/assets/tar.gz/master"
 
 assign-symbols@^1.0.0:
   version "1.0.0"
