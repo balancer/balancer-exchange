@@ -3,7 +3,7 @@ import { supportedChainId } from '../provider/connectors';
 const actionToGoalId = {
     multihopBatchSwapExactIn: 'OAXZQIBH',
     multihopBatchSwapExactOut: 'ZT892CNN',
-    approve: 'ST3CSJFO'
+    approve: 'ST3CSJFO',
 };
 
 export function setGoal(action, value = 0) {
