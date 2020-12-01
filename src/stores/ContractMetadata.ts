@@ -10,6 +10,7 @@ export interface ContractMetadata {
     proxy: string;
     weth: string;
     multicall: string;
+    sorMulticall: string;
     tokens: TokenMetadata[];
     untrusted: string[];
 }
@@ -46,6 +47,7 @@ export default class ContractMetadataStore {
             proxy: contracts.proxy,
             weth: contracts.weth,
             multicall: contracts.multicall,
+            sorMulticall: contracts.sorMulticall,
             tokens: [] as TokenMetadata[],
             untrusted,
         };
@@ -150,6 +152,16 @@ export default class ContractMetadataStore {
             );
         }
         return multiAddress;
+    }
+
+    getSorMultiAddress(): string {
+        const sorMultiAddress = this.contractMetadata.sorMulticall;
+        if (!sorMultiAddress) {
+            throw new Error(
+                '[Invariant] Trying to get non-loaded static address'
+            );
+        }
+        return sorMultiAddress;
     }
 
     getUntrustedTokens(): string[] {
