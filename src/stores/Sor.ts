@@ -4,13 +4,13 @@ import CostCalculator from '../utils/CostCalculator';
 import { bnum } from 'utils/helpers';
 import { EtherKey } from './Token';
 import {
-    filterPoolsWithTokensDirect,
-    filterPoolsWithTokensMultihop,
+    filterPools,
     parsePoolData,
     processPaths,
     processEpsOfInterestMultiHop,
     smartOrderRouterMultiHopEpsOfInterest,
     getCostOutputToken,
+    sortPoolsMostLiquid,
 } from '@balancer-labs/sor';
 import { BigNumber } from '../utils/bignumber';
 import { SwapMethods } from './SwapForm';
@@ -302,21 +302,25 @@ export default class SorStore {
         tokenIn = tokenIn.toLowerCase();
         tokenOut = tokenOut.toLowerCase();
 
-        const directPools = filterPoolsWithTokensDirect(
-            allPools.pools,
-            tokenIn,
-            tokenOut
-        );
+        const [
+            directPools,
+            hopTokens,
+            poolsTokenIn,
+            poolsTokenOut,
+        ] = filterPools(allPools.pools, tokenIn, tokenOut, this.noPools);
 
-        let mostLiquidPoolsFirstHop, mostLiquidPoolsSecondHop, hopTokens;
-        [
+        const [
             mostLiquidPoolsFirstHop,
             mostLiquidPoolsSecondHop,
+        ] = sortPoolsMostLiquid(
+            tokenIn,
+            tokenOut,
             hopTokens,
-        ] = filterPoolsWithTokensMultihop(allPools.pools, tokenIn, tokenOut);
+            poolsTokenIn,
+            poolsTokenOut
+        );
 
-        let pools, pathData;
-        [pools, pathData] = parsePoolData(
+        const [pools, pathData] = parsePoolData(
             directPools,
             tokenIn,
             tokenOut,

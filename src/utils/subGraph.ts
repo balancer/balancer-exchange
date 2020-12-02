@@ -1,9 +1,6 @@
 import fetch from 'isomorphic-fetch';
 import * as allPools from 'allPublicPools.json';
-
-const SUBGRAPH_URL =
-    process.env.REACT_APP_SUBGRAPH_URL ||
-    'https://api.thegraph.com/subgraphs/name/balancer-labs/balancer';
+import { SUBGRAPH_URL } from 'provider/connectors';
 
 // Returns all public pools
 export async function getAllPublicSwapPools() {

@@ -253,7 +253,7 @@ export default class ProxyStore {
                     minAmountOut.toString(),
                 ],
                 {
-                    value: ethers.utils.bigNumberify(
+                    value: ethers.BigNumber.from(
                         scale(tokenAmountIn, decimalsIn).toString()
                     ),
                 }
@@ -327,7 +327,7 @@ export default class ProxyStore {
                 'multihopBatchSwapExactOut',
                 [swaps, tokenIn, tokenOut, maxAmountIn.toString()],
                 {
-                    value: ethers.utils.bigNumberify(maxAmountIn.toString()),
+                    value: ethers.BigNumber.from(maxAmountIn.toString()),
                 }
             );
         } else if (tokenOut === EtherKey) {

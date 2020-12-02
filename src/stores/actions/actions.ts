@@ -1,5 +1,5 @@
 import { Contract } from 'ethers';
-import { TransactionResponse } from 'ethers/providers';
+import { providers } from 'ethers';
 import { setGoal } from '../../utils/fathom';
 
 interface ActionRequest {
@@ -15,7 +15,7 @@ export interface ActionResponse {
     action: string;
     sender: string;
     data: object;
-    txResponse: TransactionResponse | undefined;
+    txResponse: providers.TransactionResponse | undefined;
     error: any | undefined;
 }
 
