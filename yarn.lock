@@ -1836,9 +1836,10 @@
   version "1.0.0"
   resolved "https://codeload.github.com/balancer-labs/assets/tar.gz/master"
 
-"@balancer-labs/sor@github:balancer-labs/balancer-sor#john/bal-334-calculate-and-return-spot-price":
-  version "0.3.3"
-  resolved "https://codeload.github.com/balancer-labs/balancer-sor/tar.gz/ded6ef7b75da5ecae61deb5e26c570550b156f6e"
+"@balancer-labs/sor@^1.0.0-0":
+  version "1.0.0-0"
+  resolved "https://registry.yarnpkg.com/@balancer-labs/sor/-/sor-1.0.0-0.tgz#cebd1af1be7a37498ee565b3bf00c8829015c917"
+  integrity sha512-y59F8GmKRvX1XTF2sYyudJaMO/RgPn/y1XODtbfe1G5ggaHpa92v0F67WcZIRdUPdLdZU6BVVJlM/0qC/tmmhw==
   dependencies:
     "@ethersproject/address" "^5.0.5"
     "@ethersproject/constants" "^5.0.5"
