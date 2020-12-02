@@ -8,7 +8,7 @@
         "@babel/plugin-transform-react-jsx": "^7.3.0",
         "@babel/types": "^7.7.4",
         "@balancer-labs/assets": "github:balancer-labs/assets#master",
-        "@balancer-labs/sor": "github:balancer-labs/balancer-sor#john/bal-334-calculate-and-return-spot-price",
+        "@balancer-labs/sor": "^1.0.0-0",
         "@portis/web3": "^2.0.0-beta.55",
         "@reach/dialog": "^0.6.4",
         "@svgr/webpack": "4.3.2",
