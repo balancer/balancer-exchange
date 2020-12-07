@@ -62,6 +62,9 @@ export const SUBGRAPH_URLS: { [chainId: number]: string } = {
     42: process.env.REACT_APP_SUBGRAPH_URL_42 as string,
 };
 
+export const SUBGRAPH_URL =
+    SUBGRAPH_URLS[process.env.REACT_APP_SUPPORTED_NETWORK_ID];
+
 export const backupUrls = {};
 backupUrls[supportedChainId] = RPC_URLS[supportedChainId];
 

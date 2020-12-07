@@ -1,13 +1,14 @@
 // Libraries
 import React from 'react';
 import jazzicon from 'jazzicon';
-import { ethers, utils } from 'ethers';
+import * as ethers from 'ethers';
+import * as utils from 'ethers/lib/utils';
 import { BigNumber } from 'utils/bignumber';
 import { SUPPORTED_THEMES } from '../theme';
 
 // Utils
-export const MAX_GAS = utils.bigNumberify('0xffffffff');
-export const MAX_UINT = utils.bigNumberify(ethers.constants.MaxUint256);
+export const MAX_GAS = ethers.BigNumber.from('0xffffffff');
+export const MAX_UINT = ethers.BigNumber.from(ethers.constants.MaxUint256);
 
 export function toChecksum(address) {
     return utils.getAddress(address);
@@ -25,7 +26,7 @@ export const addZero = value => {
 };
 
 export function bnum(
-    val: string | number | utils.BigNumber | BigNumber
+    val: string | number | ethers.BigNumber | BigNumber
 ): BigNumber {
     return new BigNumber(val.toString());
 }
@@ -36,11 +37,11 @@ export function scale(input: BigNumber, decimalPlaces: number): BigNumber {
     return input.times(scaleMul);
 }
 
-export function fromWei(val: string | utils.BigNumber | BigNumber): string {
+export function fromWei(val: string | ethers.BigNumber | BigNumber): string {
     return utils.formatEther(val.toString());
 }
 
-export function toWei(val: string | utils.BigNumber | BigNumber): BigNumber {
+export function toWei(val: string | ethers.BigNumber | BigNumber): BigNumber {
     return scale(bnum(val.toString()), 18).integerValue();
 }
 

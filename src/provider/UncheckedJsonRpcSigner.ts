@@ -38,6 +38,18 @@ class UncheckedJsonRpcSigner extends ethers.Signer {
     signMessage(message) {
         return this.signer.signMessage(message);
     }
+
+    signTransaction(
+        transaction: ethers.ethers.utils.Deferrable<
+            ethers.ethers.providers.TransactionRequest
+        >
+    ): Promise<string> {
+        return this.signer.signTransaction(transaction);
+    }
+
+    connect(provider: ethers.ethers.providers.Provider): ethers.ethers.Signer {
+        return this.signer.connect(provider);
+    }
 }
 
 export default UncheckedJsonRpcSigner;

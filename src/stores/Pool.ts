@@ -56,7 +56,7 @@ export default class PoolStore {
             try {
                 this.onChainPools = await getAllPoolDataOnChain(
                     this.poolsList,
-                    contractMetadataStore.getMultiAddress(),
+                    contractMetadataStore.getSorMultiAddress(),
                     library
                 );
             } catch (error) {
