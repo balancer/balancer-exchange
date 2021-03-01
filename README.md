@@ -2,6 +2,10 @@
 
 ## Development
 
+-   Note
+
+    This is Exchange Proxy for first generation SOR/Front end. An updated version can be found at [balancer-registry](https://github.com/balancer-labs/balancer-registry).
+
 -   Environment Config
 
     -   Copy .env.example -> .env
